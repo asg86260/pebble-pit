@@ -1,5 +1,5 @@
 // The scales in the water: knocked off the serpent and sinking to the floor
-// (`S.sinking`), and paid, rising off the bed to the station that took them
+// (chips of the place 'deep', stepChips; `S.sinking` the tossed), and paid, rising off the bed to the station that took them
 // (`S.lifting`). The ones lying on the floor are the bed's, drawn by its
 // painter (render/deep.js, `drawDeepBed`).
 //
@@ -30,11 +30,14 @@ function overCrusher(m, c) {
   return c && m.x + P > c.x && m.x < c.x + c.w && m.y + P > c.y && m.y < c.y + c.h;
 }
 
-function drawFlutter(list, behind) {
+// `only` keeps a chip list to the water's own (the one air carries every
+// place's goods; a scale in the water is the chip of the place 'deep').
+function drawFlutter(list, behind, only = null) {
   const t = now();
   const c = S.snatched ? crusherRect() : null;
   for (let i = 0; i < list.length; i++) {
     const m = list[i];
+    if (only && m.place !== only) continue;
     if (overCrusher(m, c) !== behind) continue;
     const x = Math.round(m.x), y = Math.round(m.y);
     ctx.fillStyle = typeof m.s === 'number' ? shadeOf(m.s) : '#000';
@@ -69,7 +72,8 @@ export function drawFang(f) {
 
 export const drawSinking = () => {
   drawFlutter(S.sinking, false);
+  drawFlutter(S.chips, false, 'deep');
   for (const f of S.fangsLoose || []) drawFang(f);
 };
 export const drawLifting = () => drawFlutter(S.lifting, false);
-export const drawIntoCrusher = () => { drawFlutter(S.sinking, true); drawFlutter(S.lifting, true); };
+export const drawIntoCrusher = () => { drawFlutter(S.sinking, true); drawFlutter(S.chips, true, 'deep'); drawFlutter(S.lifting, true); };

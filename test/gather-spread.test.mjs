@@ -8,6 +8,7 @@ import { P, WORKER } from '../src/config.js';
 import { deepBed } from '../src/state.js';
 import { addGrain } from '../src/grid.js';
 import { tossX } from '../src/deep/place.js';
+import { afloat } from '../src/deep/scales.js';
 
 const S = yard.S;
 const gatherers = () => S.workers.filter(w => w.type === 'gatherer');
@@ -29,7 +30,7 @@ group('gatherers spread over the scales rather than stacking on one heap', async
   let shared = 0, picking = 0, longest = 0, pair = '';
   const run = new Map();
   const was = new Map();
-  for (let f = 0; f < 60 * 90 && (deepBed.n || S.sinking.length || arms()); f++) {
+  for (let f = 0; f < 60 * 90 && (deepBed.n || afloat() || arms()); f++) {
     yard.fast(1 / 60);
     const gs = gatherers();
     const moving = gs.filter(g => {
@@ -54,7 +55,7 @@ group('gatherers spread over the scales rather than stacking on one heap', async
         if (n > longest) { longest = n; pair = `${k} at ${Math.round(a.x)},${Math.round(a.y)} ${a.goal}/${b.goal} f${f}`; }
       }
   }
-  runUntil(() => deepBed.n === 0 && S.sinking.length === 0 && arms() === 0, 300);
+  runUntil(() => deepBed.n === 0 && afloat() === 0 && arms() === 0, 300);
   return [
     ok(gatherers().length === CREW, `${CREW} gatherers down there`, `${gatherers().length}`),
     ok(picking > 0 && shared / picking < 0.05, 'they head for different scales',
@@ -77,7 +78,7 @@ group('one heap is shared along its length, not scooped by bodies stood in one p
   const laid = deepBed.n;
   const arms = () => gatherers().reduce((n, g) => n + (g.carry || 0), 0);
   let stacked = 0, scooping = 0;
-  for (let f = 0; f < 60 * 120 && (deepBed.n || S.sinking.length || arms()); f++) {
+  for (let f = 0; f < 60 * 120 && (deepBed.n || afloat() || arms()); f++) {
     yard.fast(1 / 60);
     const at = gatherers().filter(g => g.goal === 'scoop');
     if (at.length >= 2) scooping++;
@@ -85,7 +86,7 @@ group('one heap is shared along its length, not scooped by bodies stood in one p
       for (let j = i + 1; j < at.length; j++)
         if (Math.abs(at[i].x - at[j].x) < WORKER) stacked++;
   }
-  runUntil(() => deepBed.n === 0 && S.sinking.length === 0 && arms() === 0, 300);
+  runUntil(() => deepBed.n === 0 && afloat() === 0 && arms() === 0, 300);
   return [
     ok(scooping > 0, 'more than one works the heap at once', `${scooping} frames`),
     ok(stacked === 0, 'and no two scoop within a body\'s width of each other', `${stacked} frames`),

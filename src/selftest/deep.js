@@ -479,12 +479,13 @@ TESTS.push(['deep: a handful swept off the floor shows on the pointer, and let g
   let differ = 0;
   for (let i = 0; i < withHand.length; i += 4) if (withHand[i] !== without[i] || withHand[i + 1] !== without[i + 1]) differ++;
   point('pointerup', ...onScreen(hx, hy));
-  const inWater = S.sinking.length;
+  const inWater = afloat();
   // One grain's path, every frame, for the report when it misses.
-  const one = S.sinking[0], path = [];
+  window.__fast(1 / 60);
+  const one = S.chips.find(ch => ch.place === 'deep'), path = [];
   for (let f = 0; f < 60 * 15; f++) {
     window.__fast(1 / 60);
-    if (f % 20 === 0 && S.sinking.includes(one)) path.push(`${Math.round(one.x - c.x)},${Math.round(one.y - c.y)}`);
+    if (f % 20 === 0 && S.chips.includes(one)) path.push(`${Math.round(one.x - c.x)},${Math.round(one.y - c.y)}`);
   }
   return [
     ok(held > 0, 'the press took scales off the floor', `${held}`),
@@ -498,7 +499,7 @@ TESTS.push(['deep: a handful swept off the floor shows on the pointer, and let g
 // where scales are sinking catches them out of the water, the way the yard's
 // hand catches dust in the air. The floor is bare, so whatever the hand holds
 // came from the water.
-import { shed } from '../deep/scales.js';
+import { shed, afloat } from '../deep/scales.js';
 import { deepBed } from '../state.js';
 TESTS.push(['deep: a press held in the water catches the scales sinking past it', async () => {
   window.__fullSites();
@@ -513,12 +514,13 @@ TESTS.push(['deep: a press held in the water catches the scales sinking past it'
   const bed = deepBed.n;
   const x = c.x + c.w + P * 20, y = deepTop() + (deepFloor() - deepTop()) * 0.4;
   shed(x, y, 12);
-  const sank = S.sinking.length;
+  const water = () => S.chips.filter(ch => ch.place === 'deep');
+  const sank = afloat();
   run(0.1);
-  const one = S.sinking[0];
+  const one = water()[0];
   point('pointerdown', ...onScreen(one.x, one.y));
   run(0.3);
-  const held = S.heldScales, left = S.sinking.length;
+  const held = S.heldScales, left = afloat();
   point('pointerup', ...onScreen(one.x, one.y));
   return [
     ok(held > 0, 'the held press caught scales out of the water', `${held} held, ${left} of ${sank} still sinking`),
@@ -808,9 +810,9 @@ TESTS.push(['deep: a click on a creature startles it, and it shakes loose a hand
   window.__look(first.x - S.viewW / 2);
   run(0.1);
   const f = window.__fauna()[first.i];
-  const sinking = S.sinking.length;
+  const sinking = afloat();
   click(f.x, f.y);
-  const shaken = S.sinking.length - sinking;
+  const shaken = afloat() - sinking;
   const after = window.__fauna()[f.i];
   return [
     ok(!f.bolting && !f.reacting, 'it was there to be clicked', `${f.kind} at ${Math.round(f.x)},${Math.round(f.y)}`),
