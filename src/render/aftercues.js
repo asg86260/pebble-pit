@@ -36,13 +36,13 @@ export const HAND = {
                              '#o#oooooo#', '#oooooooo#', '.#ooooooo#', '..#oooooo#', '...######.'] },
   grab:  { at: [5, 3.5], m: ['.##.##.##.', '#oo#oo#oo#', '#oooooooo#', '#oooooooo#', '#oooooooo#', '.#ooooooo#', '..#######.'] }
 };
-export function handOn(g, x, y, pose) {
-  const h = HAND[pose], x0 = dsnap(x - h.at[0] * D), y0 = dsnap(y - h.at[1] * D);
+export function handOn(g, x, y, pose, z = D, line = GREY[MID]) {
+  const h = HAND[pose], x0 = Math.round((x - h.at[0] * z) / z) * z, y0 = Math.round((y - h.at[1] * z) / z) * z;
   for (let j = 0; j < h.m.length; j++) for (let i = 0; i < h.m[j].length; i++) {
     const ch = h.m[j][i];
     if (ch === '.') continue;
-    g.fillStyle = GREY[ch === '#' ? MID : W];
-    g.fillRect(x0 + i * D, y0 + j * D, D, D);
+    g.fillStyle = ch === '#' ? line : GREY[W];
+    g.fillRect(x0 + i * z, y0 + j * z, z, z);
   }
 }
 
@@ -144,6 +144,9 @@ function cueAt(key, r) {
 // the drawing.
 let shown = {};   // cache: what the last frame drew, rewritten whole each draw
 export const cueShown = () => shown;
+// A scripted cursor (a scene playing the hand: scenes.js, 'after-mill-hand'):
+// drawn over the place as the ghost hand is, and the ghost kept off while it is.
+export const demoHand = { x: 0, y: 0, pose: null };
 
 export function drawAfterCues() {
   const view = gestureView();
@@ -154,7 +157,7 @@ export function drawAfterCues() {
   for (const r of view) {
     // One hand: the first uses' cue, or the same hand faint while the
     // pointer is over the part, the stronger of the two; never while held.
-    const ink = r.open && !r.held ? Math.max(r.cueA, (r.hintA || 0) * GESTURE_CUE_HOVER) * GESTURE_CUE_ALPHA : 0;
+    const ink = r.open && !r.held && !demoHand.pose ? Math.max(r.cueA, (r.hintA || 0) * GESTURE_CUE_HOVER) * GESTURE_CUE_ALPHA : 0;
     const at = ink > 0.01 && cueAt(r.key, r);
     shown[r.key] = at ? ink : 0;
     if (at && at.x >= S.camX - P * 4 && at.x <= S.camX + S.viewW + P * 4) { ctx.globalAlpha = ink; handOn(ctx, at.x, at.y, at.pose); }
@@ -162,4 +165,5 @@ export function drawAfterCues() {
     if (r.key === 'heap' && r.load) drawLoad(r.load, t);
   }
   ctx.globalAlpha = 1;
+  if (demoHand.pose) handOn(ctx, demoHand.x, demoHand.y, demoHand.pose, P / 2, '#000');
 }

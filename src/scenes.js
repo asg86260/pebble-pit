@@ -46,7 +46,10 @@ import { godFront } from './after/sky.js';
 // his stage square under him.
 const godView = () => godFront();
 import { CROWD_X0, CROWD_FILES, AFTER_COIN_UNDER_S, STRIKE_SHARE, AFTER_PODIUM_CLIMB, AFTER_PLANT_S, AFTER_PILES } from './config.js';
-import { millView } from './after/mill.js';
+import { millView, bedWants } from './after/mill.js';
+import { gestureDown, gestureMove, gestureUp, partsOf } from './after/gestures.js';
+import { STEPS } from './game.js';
+import { demoHand } from './render/aftercues.js';
 import { siteLoads } from './after/build.js';
 import { dropSpot, goodsRead } from './after/piles.js';
 import { stripOf as groundStrip, units as groundUnits, counted as groundCounted } from './after/ground.js';
@@ -3653,6 +3656,63 @@ function millStage(done, grant = {}) {
   pinCamera(x); window.__look(x);
   window.__still(true); window.__holdShot();
 }
+// The hand at the saw mill, played by the real hand a player has (hands.js's
+// sweep and release, the wheel's gesture in after/gestures.js) on the game's
+// own clock, so the bench and the shot tool see the same loop: press on the
+// log pile, carry the log to the bed, let go, take the wheel and turn it
+// until the log is cut and its blocks are out, rest, and stand it again.
+// A cursor is drawn where the hand is (render/aftercues.js, `demoHand`).
+const MILL_HAND = { look: 0.5, carry: 1.3, set: 0.7, reach: 0.6, spinMax: 14, tail: 1.2, rest: 1.2, turnsPerS: 2 };
+function millHandDemo() {
+  const mine = S.after;
+  let ph = 'look', t = 0, from = null, to = null, ang = 0;
+  const wheel = () => partsOf('mill').wheel;
+  const rim = a => ({ x: wheel().x + Math.cos(a) * wheel().r, y: wheel().y + Math.sin(a) * wheel().r });
+  const goTo = (p, pose) => { demoHand.x = p.x; demoHand.y = p.y; demoHand.pose = pose; S.mouse = { x: p.x, y: p.y }; };
+  const lerp = (a, b, k) => ({ x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k });
+  const go = next => { ph = next; t = 0; };
+  const pile = () => window.__afterPile('mill', 'logs');
+  const idx = STEPS.findIndex(q => q.name === 'millhand');
+  if (idx >= 0) STEPS.splice(idx, 1);
+  STEPS.push({ name: 'millhand', step: c => {
+    if (!S.after || S.after !== mine) { demoHand.pose = null; STEPS.splice(STEPS.findIndex(q => q.name === 'millhand'), 1); return; }
+    const dt = c.dt / 1000, M = MILL_HAND;
+    t += dt;
+    if (ph === 'look') {
+      const p = pile(); goTo({ x: p.x, y: p.y - P * 4 }, 'point');
+      if (t >= M.look) { goTo(p, 'grab'); S.trail = []; window.__afterHand(p.x, p.y, 'press'); from = p; to = bedWants() || { x: from.x + P * 14, y: from.y - P * 2 }; go('carry'); }
+    } else if (ph === 'carry') {
+      const k = Math.min(1, t / M.carry), e = k * k * (3 - 2 * k), p = lerp(from, to, e);
+      p.y -= Math.sin(e * Math.PI) * P * 5;
+      goTo(p, 'grab'); window.__afterHand(p.x, p.y, 'move');
+      if (k >= 1) { go('set'); S.trail = []; }
+    } else if (ph === 'set') {
+      if (t < M.set * 0.4) goTo(to, 'grab');
+      else if (S.held) { S.trail = []; window.__afterHand(to.x, to.y, 'drop'); goTo(to, 'point'); }
+      if (t >= M.set) { from = to; to = rim(0); go('reach'); }
+    } else if (ph === 'reach') {
+      const k = Math.min(1, t / M.reach), e = k * k * (3 - 2 * k);
+      goTo(lerp(from, to, e), k < 1 ? 'point' : 'grab');
+      if (k >= 1) { ang = 0; gestureDown(to.x, to.y); go('spin'); }
+    } else if (ph === 'spin') {
+      ang += dt * M.turnsPerS * 2 * Math.PI;
+      const p = rim(ang); goTo(p, 'grab'); gestureMove(p.x, p.y);
+      if ((t > 1 && !millSaw().bed) || t >= M.spinMax) { gestureUp(p.x, p.y); go('tail'); }
+    } else if (ph === 'tail') {
+      const sw = millSaw(), p = rim(ang);
+      goTo({ x: p.x + P * 6, y: p.y + P * 8 }, 'point');
+      if (t >= M.tail && !sw.out.length && !sw.dust.length) go('rest');
+    } else if (ph === 'rest') {
+      if (t >= M.rest) {
+        // stood again: the pile and the mounds as they began
+        S.after.saw = null;
+        const r = window.__afterRead();
+        window.__afterGrant({ logs: 4 - r.logs, timber: 6 - r.timber, sawdust: 9 - r.sawdust });
+        go('look');
+      }
+    }
+  } });
+}
 const millTrip = (ph, k) => () => { const tr = millSaw().trip; return !!tr && tr.ph === ph && tr.t >= k; };
 Object.assign(SCENES, {
   'after-mill-carry': { about: 'the acts', branch: 'a3-mill-machine', review: 'act 3: the saw mill machine', stage: 'built: the real build on branch a3-mill-machine -- not on main yet; lands when you sign it off', option: 'A carry', say: "the sawyer out of the treadwheel, carrying the top log off the saw mill's pile round to the bed",
@@ -3667,15 +3727,15 @@ Object.assign(SCENES, {
     run: () => millStage(() => millSaw().out.some(o => { const p = millBlockAt(o.a); return p.x > AFTER_MILL.chute.x0 + 2 && p.x < AFTER_MILL.chute.x1; })) },
   'after-mill-full': { about: 'the acts', branch: 'a3-mill-machine', review: 'act 3: the saw mill machine', stage: 'built: the real build on branch a3-mill-machine -- not on main yet; lands when you sign it off', option: 'E full', say: "the saw mill's heap at its brim: the saw stopped with a log on its bed, the pile-full mark up",
     run: () => millStage(() => !!millSaw().bed && window.__afterRead().sawdust >= 24 && !millSaw().out.length && !millSaw().dust.length, { sawdust: 15, timber: 14 }) },
-  'after-mill-hand': { about: 'the acts', branch: 'a3-mill-machine', review: 'act 3: the saw mill machine', stage: 'built: the real build on branch a3-mill-machine -- not on main yet; lands when you sign it off', option: 'F hand', say: "the saw mill with nobody at it and its bed bare: the ghost hand shows a log swept off the pile onto the bed, then the wheel",
+  'after-mill-hand': { about: 'the acts', branch: 'a3-mill-machine', review: 'act 3: the saw mill machine', stage: 'built: the real build on branch a3-mill-machine -- not on main yet; lands when you sign it off', option: 'F by hand', say: "With nobody at the saw, you do it yourself: pick a log off the pile, drop it on the bed, then turn the wheel to cut it.",
     run: () => {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
       if (!S.after.built.includes('mill')) S.after.built.push('mill');
       window.__afterGrant({ logs: 4, timber: 6, sawdust: 9 });
-      window.__fast(1.5);
+      window.__fast(0.5);
       const b = stationBox('mill'), x = b.x + b.w / 2 + P * 4 - S.viewW / 2;
       pinCamera(x); window.__look(x);
-      window.__still(true); window.__holdShot();
+      millHandDemo();
     } },
   'after-mill-brim': { about: 'the acts', say: "a cut block tossed off the chute's foot onto a timber mound nearly at its brim",
     run: () => millStage(() => millSaw().out.some(o => { const p = millBlockAt(o.a); return p.x > AFTER_MILL.chute.x1 - 0.5; }), { timber: 15 }) }
