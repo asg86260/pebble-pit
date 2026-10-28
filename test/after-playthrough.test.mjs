@@ -19,6 +19,7 @@
 //  - rebel for the seats and the stations past the saw mill, granted in one
 //    block once the axe's and the mill's have been earned off the bubbles.
 import { group, ok, run, yard, P } from './helpers.mjs';
+import { lying } from '../src/after/ground.js';
 import { AFTER_GATES, AFTER_BUILDS, AFTER_UPGRADES, AFTER_SEAT_BILLS, GESTURE_STUMP_DRAG, AFTER_FIRST_MEMBERS, AFTER_LOG_TIMBER } from '../src/config.js';
 import { gestureDown, gestureMove, gestureUp, partsOf } from '../src/after/gestures.js';
 import { sawOn, saw, spin } from './after-hands.mjs';
@@ -157,7 +158,7 @@ group('act 3 from the go-on card to the strike, played as a player plays it', as
   // A tree sawn down by hand, and its stump pulled out on its own.
   const sawn = sawTree(0);
   run(3);
-  const logsDown = S.after.groundLogs.filter(q => q.i === 0).length;
+  const logsDown = lying().filter(q => q.i === 0).length;
   const pulled = pullStump(0);
   const replanted = S.after.plots[0].stage;
   note(`sawn ${JSON.stringify(sawn)} logs ${logsDown} pulled ${JSON.stringify(pulled)}`);

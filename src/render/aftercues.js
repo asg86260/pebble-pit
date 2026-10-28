@@ -17,9 +17,9 @@ import { P, GREY, GESTURE_CUE_ALPHA, GESTURE_CUE_HOVER, GESTURE_CUE_DOT, GESTURE
 import { ctx } from './ctx.js';
 import { S } from '../state.js';
 import { gestureView, partsOf, lowestBubble, groveIcons } from '../after/gestures.js';
-import { stationParts, groundOf } from '../after/place.js';
+import { stationParts, groundOf, AP } from '../after/place.js';
 import { bedWants } from '../after/mill.js';
-import { plotOf } from '../after/piles.js';
+import { stripBox } from '../after/ground.js';
 import { drawGroveIcons } from './after/pine.js';
 import { K, W, PALE, MID } from './after/kit.js';
 
@@ -121,7 +121,7 @@ function cueAt(key, r) {
     // then the wheel turned.
     const bed = bedWants();
     if (bed) {
-      const b = plotOf('logs'), k = Math.min(1, u * 1.4), x0 = b.x + b.p / 2, y0 = b.y + b.rows * b.p - b.p / 2;
+      const b = stripBox('logs'), k = Math.min(1, u * 1.4), half = b.size * AP / 2, x0 = b.x + half, y0 = b.bottom - half;
       return { x: x0 + (bed.x - x0) * k, y: y0 + (bed.y - y0) * k - Math.sin(k * Math.PI) * P * 4, pose: 'grab' };
     }
     const w = partsOf('mill').wheel;

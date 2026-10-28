@@ -11,10 +11,12 @@
 // standing, goods granted on its piles, the yard's carry bought up a rung
 // (its own checks are the yard's).
 import { group, ok, run, runUntil, yard, restartReloadClock } from './helpers.mjs';
+import { goodsRead } from '../src/after/piles.js';
+import { lying } from '../src/after/ground.js';
 import { P, RIM_PIECES, AFTER_BLOCK } from '../src/config.js';
 import { capacity } from '../src/levels.js';
 import { track, sweep, release, heldGoods, handTakes } from '../src/hands.js';
-import { plotOf, AFTER_PLOTS } from '../src/after/piles.js';
+import { stripBox, unitNear } from '../src/after/ground.js';
 import { floorAt, afterX0, afterX1, AP } from '../src/after/place.js';
 import { bottomY, addGrain, grainsIn } from '../src/grid.js';
 import { floor } from '../src/state.js';
@@ -22,14 +24,14 @@ import { loadKind } from '../src/cells.js';
 
 const S = yard.S;
 const OPENING = ['house-fall', 'arrive', 'meet-god', 'refuse'];
-const stock = () => S.after.stock;
-const laid = kind => S.after.groundLogs.filter(q => q.kind === kind);
+const stock = () => goodsRead();
+const laid = kind => lying().filter(q => q.kind === kind);
 const inAir = kind => S.chips.filter(c => c.place === 'after' && c.kind === kind).length;
 // The middle of a pile's bottom row: a block is there whenever the pile has any.
-const on = what => { const b = plotOf(what); return { x: b.x + b.cols * b.p / 2, y: bottomY(b) - b.p / 2 }; };
+const on = what => { const b = stripBox(what); return { x: b.x + b.w / 2, y: b.bottom - b.size * AP / 2 }; };
 // Over a pile's heap, a couple of blocks up off its top, where a let-go
 // falls straight onto it.
-const over = what => { const b = plotOf(what); return { x: b.x + b.cols * b.p / 2, y: b.y - b.p * 2 }; };
+const over = what => { const b = stripBox(what); return { x: b.x + b.w / 2, y: b.top - b.size * AP * 2 }; };
 
 function up(members = 0) {
   window.__actsOn(true);
@@ -45,7 +47,7 @@ function up(members = 0) {
   S.carryLevel = 8;     // twenty grains of weight: five planks to a hand, one log
   window.__afterGrant({ timber: 12, logs: 4 });
   run(1);
-  S.held = 0; S.motes = []; S.trail = [];
+  window.__emptyHand(); S.trail = [];
 }
 // A let-go held still (no flick): the trail is the one point.
 function letGo(p) { S.trail = []; track(p.x, p.y); release(p.x, p.y); }
@@ -53,12 +55,12 @@ function letGo(p) { S.trail = []; track(p.x, p.y); release(p.x, p.y); }
 // the floor.
 function openSpot() {
   let x = afterX0() + AP * 20;
-  const clear = x0 => [-3, 0, 3].every(k => !AFTER_PLOTS.at(x0 + k * AFTER_BLOCK.plank * AP, floorAt(x0) - P * 2, AP * 6));
+  const clear = x0 => [-3, 0, 3].every(k => !unitNear(x0 + k * AFTER_BLOCK.plank * AP, floorAt(x0) - P * 2, AP * 6));
   while (x < afterX1() - AP * 20 && !clear(x)) x += P * 4;
   return { x, y: floorAt(x) - AP * 10 };
 }
 function down() { return runUntil(() => !S.chips.some(c => c.place), 10); }
-const done = () => { S.held = 0; S.motes = []; S.carryLevel = 0; window.__actsOn(null); };
+const done = () => { window.__emptyHand(); S.carryLevel = 0; window.__actsOn(null); };
 
 group('a sweep on the timber pile takes blocks into the hand, and a let-go over it puts them back', async () => {
   up();
@@ -183,23 +185,23 @@ group('the hand holds one log, a share of planks by size, and a full hand of dus
     S.carryLevel = lvl;
     const cap = capacity();
     // a second of sweeping on the forestry shack's logs, frame by frame
-    S.held = 0; S.motes = [];
+    window.__emptyHand();
     const g0 = stock().grovelogs, p = on('grovelogs');
     let most = 0;
     for (let k = 0; k < 60; k++) { S.mouse = { ...p }; sweep(p.x, p.y); run(1 / 60); most = Math.max(most, S.held); }
     const logs = { held: S.held, most, off: g0 - stock().grovelogs };
-    window.__afterGrant({ grovelogs: logs.held }); S.held = 0; S.motes = [];
+    window.__afterGrant({ grovelogs: logs.held }); window.__emptyHand();
     // and on the saw mill's timber
     const t0 = stock().timber, q = on('timber');
     for (let k = 0; k < 60; k++) { S.mouse = { ...q }; sweep(q.x, q.y); run(1 / 60); }
     const planks = { held: S.held, off: t0 - stock().timber, want: Math.max(1, Math.floor(cap / 4)) };
-    window.__afterGrant({ timber: planks.held }); S.held = 0; S.motes = [];
+    window.__afterGrant({ timber: planks.held }); window.__emptyHand();
     // and the yard's dust, a heap set down on its floor
     const gx = floor.x + floor.cols * P / 2;
     for (let i = 0; i < cap * 3; i++) addGrain(floor, gx);
     for (let k = 0; k < 10; k++) { sweep(gx, bottomY(floor) - P / 2); run(1 / 60); }
     const dust = { held: S.held, cap };
-    S.held = 0; S.motes = [];
+    window.__emptyHand();
     counts[lvl] = { logs, planks, dust };
   }
   done();
@@ -293,7 +295,7 @@ group('the yard\'s dust thrown up is still caught back by a press on it', async 
   S.carryLevel = 8;     // twenty grains of weight: five planks to a hand, one log
   const gx = floor.x + floor.cols * P / 2, gy = bottomY(floor) - P / 2;
   for (let i = 0; i < capacity() * 2; i++) addGrain(floor, gx);
-  S.held = 0; S.motes = [];
+  window.__emptyHand();
   S.dragging = true; S.trail = []; track(gx, gy); S.mouse = { x: gx, y: gy };
   for (let k = 0; k < 6 && S.held < capacity(); k++) sweep(gx, gy);
   const took = S.held;
@@ -302,14 +304,14 @@ group('the yard\'s dust thrown up is still caught back by a press on it', async 
   const yardPress = p => { S.dragging = true; S.trail = []; track(p.x, p.y); S.mouse = { ...p }; sweep(p.x, p.y); return true; };
   const c = catchBack(air, yardPress);
   const held = S.held;
-  S.dragging = false; S.held = 0; S.motes = []; S.carryLevel = 0;
+  S.dragging = false; window.__emptyHand(); S.carryLevel = 0;
   return [
     ok(took > 0 && c.thrown === took && held === took && c.left === 0, 'every grain thrown is caught back', JSON.stringify({ took, held, ...c }))
   ];
 });
 
 // Picked up again where it came down: a block thrown onto open floor is the
-// hand's as a pile's blocks are (after/piles.js, AFTER_PLOTS `at`), as act
+// hand's as a pile's blocks are (after/ground.js, `unitNear`), as act
 // 1's dust is the hand's wherever it lies. A press on it, then the hold
 // dragged over each block lying there (input.js's pointermove sweeps).
 function repick(kind) {

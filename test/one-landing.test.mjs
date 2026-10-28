@@ -9,12 +9,13 @@
 // each thing stands. The setup it is not about: the act on and its opening
 // played, the saw mill standing, goods granted on its piles.
 import { group, ok, run, runUntil, yard, state, openSites, restartReloadClock } from './helpers.mjs';
+import { goodCount } from '../src/after/piles.js';
 import { P, AFTER_BLOCK, AFTER_MILL, DEEP_GRAV } from '../src/config.js';
 import { S, floor, pit, afterGround, deepBed } from '../src/state.js';
 import { spawnChip } from '../src/dust.js';
 import { colOf, bottomY, topRow, at } from '../src/grid.js';
 import { track, sweep, release } from '../src/hands.js';
-import { plotOf } from '../src/after/piles.js';
+import { stripBox } from '../src/after/ground.js';
 import { millView } from '../src/after/mill.js';
 import { units, counted, stripOf } from '../src/after/ground.js';
 import { floorAt, afterX0, afterX1, stationX0, groundOf, AP } from '../src/after/place.js';
@@ -61,16 +62,16 @@ function up() {
   if (!S.after.built.includes('mill')) S.after.built.push('mill');
   S.carryLevel = 3;
   run(1);
-  S.held = 0; S.motes = []; S.trail = [];
+  window.__emptyHand(); S.trail = [];
 }
-const done = () => { S.held = 0; S.motes = []; S.carryLevel = 0; S.dragging = false; window.__actsOn(null); };
+const done = () => { window.__emptyHand(); S.carryLevel = 0; S.dragging = false; window.__actsOn(null); };
 const letGo = p => { S.trail = []; track(p.x, p.y); release(p.x, p.y); };
 const press = p => { S.dragging = true; S.trail = []; track(p.x, p.y); S.mouse = { ...p }; sweep(p.x, p.y); S.dragging = false; };
 const aloft = () => runUntil(() => !S.chips.some(c => c.place === 'after'), 10);
 // A log taken off the log pile's top by the hand, held.
 function takeLog() {
-  const b = plotOf('logs');
-  press({ x: b.x + b.p / 2, y: bottomY(b) - b.p / 2 });
+  const b = stripBox('logs');
+  press({ x: b.x + b.size * AP / 2, y: b.bottom - b.size * AP / 2 });
   return S.held;
 }
 // Open floor well clear of every pile and good, a long way up off it.
@@ -95,16 +96,16 @@ group('a log thrown in act 3 lands on the saw bed, on a pile by the heap rule, o
   letGo({ x: wx(AFTER_MILL.seat.x + LOG / 2), y: wy(AFTER_MILL.frame.bed - LOG * 2) });
   const onBed = runUntil(() => !!millView().log, 5);
   // 2. onto the log pile: it joins the heap, the pile's count one more
-  const logs0 = S.after.stock.logs;
-  press({ x: plotOf('grovelogs').x + AP, y: bottomY(plotOf('grovelogs')) - AP });
+  const logs0 = goodCount('logs');
+  press({ x: stripBox('grovelogs').x + AP, y: stripBox('grovelogs').bottom - AP });
   const held2 = S.held;
-  const b = plotOf('logs');
-  letGo({ x: b.x + b.cols * b.p / 2, y: b.y - b.p * 2 });
+  const b = stripBox('logs');
+  letGo({ x: b.x + b.w / 2, y: b.top - b.size * AP * 2 });
   aloft();
-  const onPile = S.after.stock.logs - logs0;
+  const onPile = goodCount('logs') - logs0;
   // 3. onto open ground: it lies there as a block, counted by no pile
   const spot = openSpot();
-  press({ x: plotOf('grovelogs').x + AP, y: bottomY(plotOf('grovelogs')) - AP });
+  press({ x: stripBox('grovelogs').x + AP, y: stripBox('grovelogs').bottom - AP });
   const held3 = S.held;
   if (spot) letGo(spot);
   aloft();
@@ -112,7 +113,7 @@ group('a log thrown in act 3 lands on the saw bed, on a pile by the heap rule, o
   done();
   return [
     ok(took === 1 && onBed, 'a log let go over the bed lands on the bed', `${took} held, on the bed ${onBed}`),
-    ok(held2 >= 1 && onPile === held2, 'one let go over the log pile joins its heap', `${held2} let go, pile ${logs0} -> ${S.after.stock.logs}`),
+    ok(held2 >= 1 && onPile === held2, 'one let go over the log pile joins its heap', `${held2} let go, pile ${logs0} -> ${goodCount('logs')}`),
     ok(!!spot && held3 >= 1 && lying.length === held3, 'and one let go over open ground lies there as a block of its own', `${held3} let go, ${lying.length} lying`),
     ok(S.chips.length === 0, 'with nothing left in the air', `${S.chips.length}`)
   ];

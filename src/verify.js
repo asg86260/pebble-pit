@@ -46,8 +46,9 @@ import { deepTop, deepFloor, deepX1, coilLine, coilThick, standOfStation } from 
 import { yardReads } from './persist.js';
 import { afterlifeOn, hellOn } from './acts.js';
 import { AFTER_STORY } from './after/story.js';
-import { PILED, plotOf, pileLedger } from './after/piles.js';
-import { stripCount, units } from './after/ground.js';   // one ground
+import { units } from './after/ground.js';   // one ground
+import { census, CENSUS_KINDS } from './conserve.js';
+import { flowNet, flowBy } from './flow.js';
 import { afterGround } from './state.js';                // one ground
 import { blockProblems } from './grid.js';              // one ground
 import { millView } from './after/mill.js';   // track A: saw mill
@@ -709,19 +710,17 @@ export function verifyWorld() {
     if (off.length) fail('an act 3 station stands off its own ground', off.join('; '));
   }
 
-  // --- rule 23: an act 3 pile is its stock -------------------------------------
-  // A counted pile is a strip of the act's ground and its count is the
-  // strip's units of its good (after/ground.js), copied into the stock by the
-  // survey every door runs. A count its cells disagree with is a write that
-  // went round the doors. The cells are walked, not read off the copy, and
-  // the pile's plot as its old readers see it (`plotOf`) holds a cell a unit.
-  if (afterlifeOn() && S.after) {
-    for (const what of PILED) {
-      const n = stripCount(what), shown = count(plotOf(what));
-      if (n !== S.after.stock[what] || shown !== n) fail('an act 3 pile does not hold its stock', `${what}: ${S.after.stock[what]} counted, ${n} blocks in its strip, ${shown} on its plot`);
-    }
-    handOffs();
-  }
+  // --- rule 23: a unit appears or vanishes only at a named door -------------
+  // The units of act 3 -- on its ground, in the hand, in the air, in its
+  // bodies' arms, inside the saw mill -- change in number only where a door
+  // says so (src/flow.js): a tree felled, a cut at the saw, a sign joined, a
+  // tip through the hatch, a sign planted, an order laid, a band laid. A
+  // pile's count is no number but its cells, so there is nothing for it to
+  // disagree with; what can go wrong is a unit written or erased round the
+  // doors, and that is the frame this fails on. Read against the frame
+  // before, and started over whenever the act's state is replaced (a save
+  // read, the act begun), which sets the units from the save and not by a door.
+  if (afterlifeOn() && S.after) conserved(); else unitsWas = null;
 
   // one ground
   // --- rule 26: act 3's ground holds every unit whole, apart, and held up ----
@@ -881,28 +880,17 @@ let playedWas = 0, playedReads = -1;  // cache: keyed by yardReads
 let levelWas = -1, levelReads = -1;  // cache: keyed by yardReads
 export function forgetSerpent() { serpentWas = -1; levelWas = -1; stunWas = false; mealWas = S.meal; forgetFangs(); }
 
-// track B: carried goods
-// --- rule 24: no act 3 pile's count moves but by a hand-off ------------------------
-// Every block that joins or leaves a pile is moved by a body, the player's
-// hand or a tool (DESIGN.md, "Act 3's goods are blocks, and bodies carry
-// every one", rule 2 and its check): a body setting down or taking up, the
-// hand sweeping or landing, the saw's cut or the bench's joining -- each of
-// which goes through a pile's single-block doors (after/piles.js), which
-// tally it. So between two frames a pile's count moves by exactly its tally,
-// and nothing takes blocks off in bulk, the door a bill once lifted timber
-// through with no hands behind it. Read against the frame before, and
-// started over whenever the piles are stood up again (a save read, the act
-// begun), which sets counts from the save rather than by hand-offs.
-let pilesWas = null;   // cache: the act, its plots and each pile's count and tally on the frame before
-function handOffs() {
-  const a = S.after, led = pileLedger();
-  const now = { a, plots: PILED.map(plotOf), stock: PILED.map(w => a.stock[w]), net: PILED.map(w => led.net[w] || 0), bulk: led.bulk };
-  const was = pilesWas;
-  pilesWas = now;
-  if (!was || was.a !== a || was.plots.some((p, i) => p !== now.plots[i])) return;
-  PILED.forEach((what, i) => {
-    const moved = now.stock[i] - was.stock[i], handed = now.net[i] - was.net[i];
-    if (moved !== handed) fail('an act 3 pile moved with nobody handing a block', `${what}: ${was.stock[i]} -> ${now.stock[i]}, ${handed} handed`);
-  });
-  if (now.bulk !== was.bulk) fail('an act 3 pile had blocks lifted with no hands behind them', `${now.bulk - was.bulk} taken in bulk`);
+let unitsWas = null;   // cache: the act, its census and the doors' net on the frame before
+function conserved() {
+  const now = { a: S.after, n: census(), net: { ...flowNet() } };
+  const was = unitsWas;
+  unitsWas = now;
+  if (!was || was.a !== now.a) return;
+  for (const kind of CENSUS_KINDS) {
+    const moved = now.n[kind] - was.n[kind], made = (now.net[kind] || 0) - (was.net[kind] || 0);
+    if (moved !== made) {
+      const doors = Object.entries(flowBy()).filter(([k]) => k.startsWith(kind + ':')).map(([k, v]) => `${k} ${v}`).join(', ');
+      fail('a unit appeared or vanished away from a source or a sink', `${kind}: ${was.n[kind]} -> ${now.n[kind]}, the doors made ${made} (${doors || 'none yet'})`);
+    }
+  }
 }

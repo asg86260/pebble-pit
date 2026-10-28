@@ -11,6 +11,8 @@
 // the row bought (`__buy`). The setup it is not about: the yard's carry level
 // (`__levels`), the act's coins and its members walked out.
 import { group, ok, run, runUntil, yard, quickCrew } from './helpers.mjs';
+import { goodCount } from '../src/after/piles.js';
+import { source } from '../src/flow.js';
 import { floor, deepBed } from '../src/state.js';
 import { addGrain, kindOf } from '../src/grid.js';
 import { KINDS, RIM_PIECES, AFTER_PILES, AFTER_UPGRADES, AFTER_SITE_LOAD } from '../src/config.js';
@@ -97,6 +99,7 @@ group('act 3 members carry by weight, off the top of a pile and onto its home, n
   const x0 = stationDoor('mill') - P * 90;
   for (let i = 0; i < 6; i++) layGood('plank', x0 + i * P * 3, afterFloor());
   for (let i = 0; i < 3; i++) layGood('log', x0 - P * 60 - i * P * 5, afterFloor());
+  source('plank', 6, 'test setup'); source('log', 3, 'test setup');   // laid by hand, not by a door
   const planks0 = onGround('plank') + arms('plank'), logs0 = onGround('log') + arms('log');
   let mostPlank = 0, mostLog = 0, drift = 0, bad = 0;
   const done = () => units().filter(u => u.kind === 'plank' || u.kind === 'log').every(u => { const s = window.__afterRead(); return true; });
@@ -126,7 +129,7 @@ group('a bought row\'s timber is carried block by block and the row lands on the
   const stood = camp(6);
   const bill = AFTER_UPGRADES[REACH].bills[0].find(([c]) => c === 'timber')[1];
   window.__afterGrant({ timber: AFTER_PILES.timber.brim });
-  const t0 = S.after.stock.timber;
+  const t0 = goodCount('timber');
   const bought = window.__buy(REACH);
   const reserved = timberReserved();
   let carried = 0, phantoms = 0;
@@ -136,7 +139,7 @@ group('a bought row\'s timber is carried block by block and the row lands on the
       const inArms = arms('plank');
       carried = Math.max(carried, inArms);
       // taken up = claimed: the blocks off the mound plus those in arms and set down
-      if (o.claimed > S.after.stock.timber * 0 + o.n) phantoms++;
+      if (o.claimed > goodCount('timber') * 0 + o.n) phantoms++;
     }
     return !S.after.orders.length;
   }, 300);

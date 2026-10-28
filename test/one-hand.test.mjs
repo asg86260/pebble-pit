@@ -43,7 +43,7 @@ function flick(p) {
 }
 // A let-go held still: the trail is the one point.
 function letGo(p) { S.dragging = false; S.trail = []; track(p.x, p.y); S.mouse = { ...p }; release(p.x, p.y); }
-const empty = () => { S.held = 0; S.motes = []; S.trail = []; S.dragging = false; };
+const empty = () => { window.__emptyHand(); S.trail = []; S.dragging = false; };
 const mid = cs => ({ x: cs.reduce((a, c) => a + c.x, 0) / cs.length, y: cs.reduce((a, c) => a + c.y, 0) / cs.length });
 // Six frames after the throw, the hand down where the thrown things are, and
 // kept on them while it is held (game.js, the 'catch' step) until none is left.

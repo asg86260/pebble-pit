@@ -3,8 +3,8 @@
 // timber walked to it off the timber mound, four blocks to a sign; a sign
 // carried out of its rack to the crowd; a bill paid in timber an order whose
 // blocks idle members carry to its station, the row landing on the last;
-// and the rule that no pile's count moves but by a hand-off (verify.js, rule
-// 24), which every group in the node tier asks on every frame.
+// and the rule that no unit appears or vanishes but at a named door
+// (verify.js, rule 23), which every group in the node tier asks on every frame.
 //
 // Reached the way a player reaches it: both stations ordered off the shack
 // (`__buy`), the joiner put on through the roster's + (`__afterPress`), the
@@ -12,11 +12,11 @@
 // opening played, members walked out of God's yard, the yard's and the
 // act's coins granted, timber granted on the mound.
 import { group, ok, run, runUntil, yard } from './helpers.mjs';
+import { goodsRead } from '../src/after/piles.js';
 import { loadKind } from '../src/carry.js';
 import { RIM_PIECES, AFTER_SIGN_TIMBER, AFTER_UPGRADES, AFTER_PILES } from '../src/config.js';
 import { AFTER_JOB } from '../src/jobs.js';
-import { putBlock, cellOf, count } from '../src/grid.js';
-import { plotOf } from '../src/after/piles.js';
+import { putBlock, cellOf } from '../src/grid.js';
 import { stripOf, slotTop } from '../src/after/ground.js';
 import { afterGround } from '../src/state.js';
 import { stationBox, stationDoor, pileMid } from '../src/after/place.js';
@@ -27,7 +27,7 @@ import { msg } from '../src/lang.js';
 
 const S = yard.S;
 const OPENING = ['house-fall', 'arrive', 'meet-god', 'refuse'];
-const stock = () => S.after.stock;
+const stock = () => goodsRead();
 // The workshop's bigger sign, a bill paid in timber, carried to the workshop.
 const REACH = 'after-signreach';
 const REACH_TIMBER = AFTER_UPGRADES[REACH].bills[0].find(([c]) => c === 'timber')[1];
@@ -130,24 +130,27 @@ group('a sign is carried out of the rack to the crowd and planted there', async 
   ];
 });
 
-group('a pile whose count moves with nobody handing a block is caught by the rules', async () => {
+group('a unit written round the doors is caught by the rules', async () => {
   camp(2);
   window.__afterGrant({ timber: 4 });
   run(1);
-  // A block written straight onto the mound's strip of the ground and its
-  // count, round the doors: its strip still holds its stock (rule 23 is
-  // satisfied), but no body, hand or tool handed it.
+  // A block written straight onto the mound's strip of the ground, round the
+  // doors: no body, hand, tool or named source made it.
+  const t0 = stock().timber;
   const s = stripOf('timber'), c = s.c0 + Math.floor((s.c1 - s.c0) / s.z / 2) * s.z;
   putBlock(afterGround, c, slotTop(c, s.z), cellOf('plank'));
-  stock().timber += 1;
-  const b = plotOf('timber');
+  const there = stock().timber === t0 + 1;
   let caught = '';
   try { run(1 / 30); } catch (e) { caught = e.message; }
-  const matches = count(b) === stock().timber;
+  // And the same unit made at a named door is no complaint at all.
+  window.__afterGrant({ timber: 1 });
+  let quiet = true;
+  try { run(1 / 30); } catch (e) { quiet = false; }
   window.__actsOn(null);
   return [
-    ok(matches, 'the plot and the count agree, so only the hand-off rule can speak'),
-    ok(/nobody handing a block/.test(caught), 'rule 24 is red for it', caught.slice(0, 120))
+    ok(there, 'the stray block is on the mound, counted off the cells'),
+    ok(/appeared or vanished/.test(caught), 'rule 23 is red for it', caught.slice(0, 160)),
+    ok(quiet, 'a unit made at a door (a grant) is not')
   ];
 });
 

@@ -75,14 +75,14 @@ export const TESTS = [
     await upThere();
     const h = stationParts('heap').heap;
     window.__look(h.x - S.viewW / 2);
-    S.after.stock.sawdust = 1e6;
+    window.__afterGrant({ sawdust: 1e6 });
     await settle(0.3);
     const full = !!S.pileFull['after-sawdust'];
     const at = window.__pileMarkAt('after-sawdust');
     await hoverAt(at.x, at.y);
     await until(() => tipText() === msg('after-stall-heap'));
     const tip = tipText(), cursor = canvas().style.cursor;
-    S.after.stock.sawdust = 0;
+    window.__afterGrant({ sawdust: -1e6 });
     await settle(0.3);
     const cleared = !S.pileFull['after-sawdust'];
     window.__actsOn(null);

@@ -15,11 +15,12 @@
 // mill standing, goods granted on its piles.
 import { readFileSync } from 'node:fs';
 import { group, ok, run, runUntil, yard, restartReloadClock } from './helpers.mjs';
+import { goodCount, goodsRead } from '../src/after/piles.js';
 import { loadKind } from '../src/carry.js';
 import { P, AFTER_BLOCK, KINDS } from '../src/config.js';
 import { track, sweep, release } from '../src/hands.js';
-import { plotOf } from '../src/after/piles.js';
-import { units, counted, stripOf, lying } from '../src/after/ground.js';
+import { units, counted, stripOf, stripBox, lying } from '../src/after/ground.js';
+import { census } from '../src/conserve.js';
 import { floorAt, afterX0, afterX1, AP } from '../src/after/place.js';
 import { bottomY, blockProblems } from '../src/grid.js';
 import { afterGround } from '../src/state.js';
@@ -28,10 +29,10 @@ const S = yard.S;
 const KEY = 'boulder-clicker/v4';
 const OPENING = ['house-fall', 'arrive', 'meet-god', 'refuse'];
 const LOG = AFTER_BLOCK.log;
-const stock = () => S.after.stock;
+const stock = () => goodsRead();
 // The middle of a pile's bottom row, and a spot well over its heap.
-const on = what => { const b = plotOf(what); return { x: b.x + b.cols * b.p / 2, y: bottomY(b) - b.p / 2 }; };
-const over = what => { const b = plotOf(what); return { x: b.x + b.cols * b.p / 2, y: b.y - b.p * 2 }; };
+const on = what => { const b = stripBox(what); return { x: b.x + b.w / 2, y: b.bottom - b.size * AP / 2 }; };
+const over = what => { const b = stripBox(what); return { x: b.x + b.w / 2, y: b.top - b.size * AP * 2 }; };
 // The middle of a pile's highest block: where a player presses to take one.
 const onTop = what => {
   const s = stripOf(what), us = units().filter(u => u.c0 >= s.c0 && u.c0 < s.c1 && counted(u));
@@ -48,9 +49,9 @@ function up() {
   if (!S.after.built.includes('mill')) S.after.built.push('mill');
   S.carryLevel = 3;
   run(1);
-  S.held = 0; S.motes = []; S.trail = [];
+  window.__emptyHand(); S.trail = [];
 }
-const done = () => { S.held = 0; S.motes = []; S.carryLevel = 0; S.dragging = false; window.__actsOn(null); };
+const done = () => { window.__emptyHand(); S.carryLevel = 0; S.dragging = false; window.__actsOn(null); };
 // A let-go held still (no flick): the trail is the one point.
 function letGo(p) { S.trail = []; track(p.x, p.y); release(p.x, p.y); }
 function press(p) { S.dragging = true; S.trail = []; track(p.x, p.y); S.mouse = { ...p }; sweep(p.x, p.y); S.dragging = false; }
@@ -149,19 +150,10 @@ group('a press on a pile takes the top block, and the blocks under it stay where
 });
 
 // Every good of a kind wherever it is: on the ground (its piles and open
-// floor), in the hand, in the air, in a body's arms and in the saw.
+// floor), in the hand, in the air, in a body's arms, in the saw and the heap
+// (src/conserve.js, the census the conservation rule reads).
 function goods() {
-  const a = S.after, saw = a.saw || {};
-  const n = { log: 0, plank: 0, sign: 0, sawdust: a.stock.sawdust || 0 };
-  for (const u of units()) n[u.kind]++;
-  if (S.held && S.motes[0] && S.motes[0].kind) n[S.motes[0].kind] += S.held;
-  for (const ch of S.chips) if (ch.place === 'after' && ch.kind) n[ch.kind]++;
-  for (const b of a.bodies) if (loadKind(b) in n) n[loadKind(b)] += b.carry;
-  if (saw.bed) n.log++;
-  const tr = saw.trip;
-  if (tr && (tr.ph === 'carry' || (tr.ph === 'lift' && tr.log) || (tr.ph === 'set' && !tr.down))) n.log++;
-  n.plank += (saw.out || []).length;
-  n.sawdust += (saw.dust || []).length;
+  const { load, ...n } = census();
   return n;
 }
 // The same, off an older save's raw object.
@@ -185,7 +177,7 @@ group('an older save\'s piles, lying goods, held planks and the saw caught mid-t
   yard.restore();
   const got = goods();
   const loose = lying();
-  const piles = ['logs', 'grovelogs', 'timber'].map(w => [w, S.after.stock[w], raw.after.stock[w]]);
+  const piles = ['logs', 'grovelogs', 'timber'].map(w => [w, goodCount(w), raw.after.stock[w]]);
   const blob = JSON.parse(JSON.stringify(S.after));
   run(5);
   const later = goods();

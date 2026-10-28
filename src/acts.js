@@ -20,9 +20,9 @@ import { AFTER_PLACE } from './after/place.js';
 import { godFront, restW } from './after/sky.js';
 import { HELL_PLACE } from './hell/place.js';
 import { AFTER_CREW } from './after/bodies.js';
-import { AFTER_PLOTS, AFTER_LANDING } from './after/piles.js';
+import { AFTER_LANDING } from './after/piles.js';
 import { DEEP_LANDING } from './deep/scales.js';
-import { takeAt, takeTopOf, survey } from './after/ground.js';
+import { takeAt, takeTopOf } from './after/ground.js';
 import { blockAt, takeUnit, kindOf } from './grid.js';
 import { HELL_CREW } from './hell/bodies.js';
 import { S, afterGround } from './state.js';
@@ -50,9 +50,7 @@ const AFTER_GROUND = {
     // a block with another on it is not the one to take: the top of its column is
     // (the owner, 2026-10-28: a pile is taken off the top)
     if (a) return takeAt(a.r * afterGround.cols + a.c) || takeTopOf(c, kindOf(afterGround.grid[r * afterGround.cols + c]).key);
-    const v = takeUnit(afterGround, c, r);
-    if (v) survey(true);
-    return v;
+    return takeUnit(afterGround, c, r);
   }
 };
 
@@ -70,11 +68,9 @@ const AFTER_AT_YARD = {
   x1: () => godFront() + restW() / 2,
   get margin() { const m = S.worldH - S.groundY; return Number.isFinite(m) && m > 0 ? m : AFTER_PLACE.margin; },
   get crew() { return AFTER_CREW; },
-  // Its piles as plots the yard's hand sweeps and throws onto (hands.js;
-  // after/piles.js, AFTER_PLOTS).
-  get plots() { return AFTER_PLOTS; },
   // Its ground, for the one hand (hands.js, groundAt).
-  get ground() { return AFTER_GROUND; },
+  get ground() { return AFTER_GROUND; }
+,
   // Where a good of its own, thrown into the air, comes down (game.js, `stepChips`).
   get landing() { return AFTER_LANDING; }
 };

@@ -97,10 +97,6 @@ export const AFTER_GATES = ['meeting', 'slowdown', 'strike'];
 // and the trees), the saw mill and the workshop. Keys, not words: every
 // name a player reads is the owner's, in locales/en.ftl.
 export const AFTER_CARDS = ['pedestal', 'shack', 'grove', 'mill', 'workshop'];
-// What the chain holds, made and spent (S.after.stock). Signs are spent into
-// the crowd, never a bill. The saw mill's logs (`logs`) are where its
-// haulers drop them off the forestry shack's pile (`grovelogs`).
-export const AFTER_STOCK = ['logs', 'timber', 'sawdust', 'signs', 'grovelogs'];
 
 // --- act 3's loop, placeholder (track A, 2026-10-17; reworked 2026-10-18) ----------
 // The grove and the press on the scaffold, every drawing a placeholder of
@@ -306,7 +302,6 @@ export const AFTER_DIG_S = 4;              // a woodcutter digging a stump out
 // a moment.
 // A post bought on its card then works it on the worker's clock, slower.
 export const AFTER_WORK_HOLD_S = 0.3;
-export const AFTER_LOG_SAWDUST = 2;        // what a log saws into besides its timber (config/afterpiles.js): sawdust
 export const AFTER_SAWDUST_BRIM = 24;      // the heap's brim
 export const AFTER_SAWDUST_BRIM_UP = 48;   // ...with the mill's bigger heap
 // The saw never stops for good: a click on the heap tips
@@ -322,13 +317,6 @@ export const AFTER_SIGN_TIMBER = 4;        // timber blocks a sign: signs are ti
 export const AFTER_SIGN_S = 25;             // a joiner's sign
 export const AFTER_BENCH_SIGNS = 2;        // signs a joining with the workshop's second bench
 export const AFTER_PLANT_S = 1.5;          // a carrier planting a sign
-// What a thing up here takes of the yard's carry (`haulCap`, grains a load;
-// the owner, 2026-10-20: "The act 3 resources should be carried the same as
-// act 1. But take up more slots."): a body carries as many as its load holds,
-// one at the least, picked up and set down one a beat (AFTER_PUT_S). Keyed
-// by what a body's `load` says it carries.
-// A plank is the hand's good's default: a log's weight.
-export const AFTER_CARRY_SLOTS = { log: 2, plank: 2, sign: 2 };
 export const AFTER_PUT_S = 0.3;
 // --- goods on the floor ---
 // The pile a good lying on the floor is carried back to by a gatherer: the
@@ -571,25 +559,7 @@ export const AFTER_PEDESTAL_SIGN_GAP = { shack: 8, crowd: 3 };
 // station behind it.
 export const AFTER_COUNT_LIFT = P;
 
-// track a3-logs
-// The saw's cut drops out of its right side onto its timber pile (the owner,
-// 2026-10-26: "lets have the logs fall out of the saw on the right side and
-// pile up"): a plank sliding off the bed past the right post and falling onto
-// the pile, over this long (render/after/drop.js), `from` art cells over the
-// mill's ground where it leaves the bed (the mill's drawing, MILL.bed less the
-// plank), and `back` art cells in from the frame's right edge.
-export const AFTER_DROP = { s: 0.5, from: 8, back: 6 };
-
 // track B: carried goods
-// The workshop's own timber, carried to it off the timber mound
-// (config/afterpiles.js, `benchtimber`): a stock key like every pile's, so a
-// save from before it reads back with none.
-AFTER_STOCK.push('benchtimber');
-// A timber block is half the timber unit it was before the units halved
-// (DESIGN.md, "The numbers": "only the timber unit changes"), so a load holds
-// twice as many of them for the same timber a trip: a block takes one of the
-// yard's carry slots where the plank it halved took two.
-AFTER_CARRY_SLOTS.plank = 1;
 // track A: saw mill
 // The saw mill as a machine a log is followed through (DESIGN.md, "Act 3's
 // goods are blocks, and bodies carry every one", "The saw mill"; the voted

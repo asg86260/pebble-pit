@@ -7,6 +7,7 @@
 // it there. The harness reads the save back every five seconds, so a log
 // mid-roll and a body mid-walk stand where they were.
 import { group, ok, run, runUntil, yard } from './helpers.mjs';
+import { lying } from '../src/after/ground.js';
 import { loadKind } from '../src/carry.js';
 import { AFTER_LOGS_A_TREE, AFTER_LOG_ROLL_S, AFTER_FALL_S, AFTER_FALL_BOUNCE_S } from '../src/config.js';
 import { plotX } from '../src/after/place.js';
@@ -31,15 +32,15 @@ group('a felled tree\'s logs roll to rest, idle hands carry each to the forestry
   sawOn(0);
   saw(0, () => S.after.plots[0].fall != null);
   runUntil(() => S.after.plots[0].fall == null, AFTER_FALL_S + 1);
-  const split = S.after.groundLogs.filter(q => q.i === 0);
+  const split = lying().filter(q => q.i === 0);
   const fell = S.after.plots[0].fell, rolling = split.length && split.every(q => q.x > q.x0 && q.at > fell);
   run(AFTER_FALL_BOUNCE_S + AFTER_LOG_ROLL_S + 0.5);
-  const lying = S.after.groundLogs.length, inGrove = S.after.groundLogs.every(q => q.x > plotX(0) && q.x < plotX(1));
+  const lying = lying().length, inGrove = lying().every(q => q.x > plotX(0) && q.x < plotX(1));
   // Nobody on a job: the idle at the podium go for them.
   let carried = false;
   const all = runUntil(() => {
     carried = carried || S.after.bodies.some(b => b.job == null && b.errand === 'gatherer' && loadKind(b) === 'log');
-    return S.after.groundLogs.length === 0 && read().grovelogs === AFTER_LOGS_A_TREE;
+    return lying().length === 0 && read().grovelogs === AFTER_LOGS_A_TREE;
   }, 600);
   // A sawyer, the saw mill standing: it fetches the pile on to the mill.
   window.__afterGrant({ rebel: 5000 });

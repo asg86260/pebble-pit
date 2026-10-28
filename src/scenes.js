@@ -45,8 +45,8 @@ import { godFront } from './after/sky.js';
 // The window's middle at the camera's last window over act 3: God in it,
 // his stage square under him.
 const godView = () => godFront();
-import { CROWD_X0, CROWD_FILES, AFTER_COIN_UNDER_S, STRIKE_SHARE, AFTER_PODIUM_CLIMB, AFTER_PLANT_S, AFTER_DROP, AFTER_PILES } from './config.js';
-import { sawDrops } from './after/mill.js';
+import { CROWD_X0, CROWD_FILES, AFTER_COIN_UNDER_S, STRIKE_SHARE, AFTER_PODIUM_CLIMB, AFTER_PLANT_S, AFTER_PILES } from './config.js';
+import { millView } from './after/mill.js';
 import { stripOf as groundStrip, units as groundUnits, counted as groundCounted } from './after/ground.js';
 import { afterGround } from './state.js';
 import { FINALE_HOUSE_W, APOTH_POTS_MAX } from './config.js';
@@ -2980,7 +2980,7 @@ export const SCENES = {
       S.carryLevel = Math.max(S.carryLevel, 2);
       window.__afterGrant({ grovelogs: 6 });
       // let go over the saw mill's pile, it is bare, so they have room on it
-      if (letGo) window.__afterGrant({ logs: -S.after.stock.logs });
+      if (letGo) window.__afterGrant({ logs: -window.__afterRead().logs });
       const from = window.__afterPile('forestry', 'grovelogs'), to = window.__afterPile('mill', 'logs');
       to.y -= P * 12;
       pinCamera((from.x + to.x) / 2 - S.viewW / 2);
@@ -3124,7 +3124,7 @@ export const SCENES = {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
       if (!S.after.built.includes('mill')) S.after.built.push('mill');
       window.__afterGrant({ logs: 4 });
-      S.after.stock.sawdust = 1e6;
+      window.__afterGrant({ sawdust: 1e6 });
       window.__look(heapMid() - S.viewW / 2); window.__fast(0.5); window.__holdShot();
     } },
   // The UPGRADES buttons over the camp's rosters (roster.js), framed as the
@@ -3148,7 +3148,7 @@ export const SCENES = {
       window.__afterGrant({ grovelogs: 60 });
       const b = stationBox('mill');
       const near = w => w.errand === AFTER_JOB.HAUL && loadKind(w) === 'log' && w.target === 'mill' && w.x > b.x - P * 40 && w.x < b.x;
-      const falling = () => sawDrops().length > 0 && S.after.t - sawDrops().at(-1) > AFTER_DROP.s * 0.15 && S.after.t - sawDrops().at(-1) < AFTER_DROP.s * 0.3;
+      const falling = () => millView().out.length > 0;
       for (let k = 0; k < 6000 && !(S.after.bodies.some(near) && falling()); k++) window.__fast(1 / 30);
       const mid = b.x + b.w / 2 - P * 10;
       pinCamera(mid - S.viewW / 2);
@@ -3582,7 +3582,7 @@ function carriedScenes() {
     'after-bench-walk': { about: 'the acts', branch: 'a3-bodies-carry', review: 'act 3: workers carry every block', stage: 'built: the real build on branch a3-bodies-carry -- not on main yet; lands when you sign it off', option: 'A timber to the bench', say: "the workshop's timber walked to it off the timber mound, a load of blocks overhead, its rack beside the shed",
       run: () => {
         afterChain(false);
-        window.__afterGrant({ benchtimber: -S.after.stock.benchtimber, signs: -S.after.stock.signs }); timberUp();
+        window.__afterGrant({ benchtimber: -window.__afterRead().benchtimber, signs: -window.__afterRead().signs }); timberUp();
         carryShot(w => loadKind(w) === 'plank' && !w.pick && (w.target === 'workshop' || w.job === AFTER_JOB.JOIN) && pastMill(w));
       } },
     'after-sign-out': { about: 'the acts', branch: 'a3-bodies-carry', review: 'act 3: workers carry every block', stage: 'built: the real build on branch a3-bodies-carry -- not on main yet; lands when you sign it off', option: 'B a sign carried out', say: 'a sign carried out of the workshop\'s rack toward the crowd, the rack a block short',

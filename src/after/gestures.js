@@ -48,6 +48,7 @@ import { stationParts } from './place.js';
 import { standing, stumped, chopTree, digStump, trees, treeAt } from './grove.js';
 import { tipSawdust, turnWheel, strokesLanded } from './mill.js';
 import { pairBuilding } from './build.js';
+import { pileCount } from './piles.js';
 import { workAfter } from './work.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -248,7 +249,7 @@ const DEFS = {
 };
 // The timber a blank is cut from: the workshop's own bench pile where it has
 // one (track B's `benchtimber`), else the timber mound.
-const benchTimber = () => S.after.stock.benchtimber ?? S.after.stock.timber;
+const benchTimber = () => pileCount('benchtimber');
 const benchShort = () => benchTimber() < AFTER_SIGN_TIMBER;
 // Whether the blow about to land is the one that drives the last nail flush.
 const lastTap = g => g.nails.reduce((n, k) => n + (GESTURE_NAIL_TAPS - k), 0) === 1;
@@ -257,7 +258,7 @@ const lastTap = g => g.nails.reduce((n, k) => n + (GESTURE_NAIL_TAPS - k), 0) ==
 // never driven only for the four to be pulled with no sign made.
 function signFits() {
   const brim = AFTER_PILES.signs?.brim;
-  return !benchShort() && (brim == null || S.after.stock.signs < brim);
+  return !benchShort() && (brim == null || pileCount('signs') < brim);
 }
 // Four nails driven flush: the sign is done, joined off the timber, and a new
 // blank stood in the bench.

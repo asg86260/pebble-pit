@@ -17,10 +17,12 @@
 // the act on and its opening played, members walked out of God's yard, the
 // mill's logs granted onto its pile.
 import { group, ok, run, runUntil, yard, restartReloadClock } from './helpers.mjs';
+import { goodsRead } from '../src/after/piles.js';
+import { lying } from '../src/after/ground.js';
 import { RIM_PIECES, AFTER_BLOCK, AFTER_LOG_TIMBER, AFTER_KERF_GRAINS, AFTER_MILL, AFTER_TIP_LOAD } from '../src/config.js';
 import { AFTER_JOB } from '../src/jobs.js';
 import { track, sweep, release } from '../src/hands.js';
-import { plotOf } from '../src/after/piles.js';
+import { stripBox } from '../src/after/ground.js';
 import { saw, millView, sawyerPose, sawyerHolds, millLanded, heapPlot } from '../src/after/mill.js';
 import { stationX0, groundOf, AP } from '../src/after/place.js';
 import { bottomY, count } from '../src/grid.js';
@@ -29,7 +31,7 @@ import { spin, click } from './after-hands.mjs';
 const S = yard.S;
 const OPENING = ['house-fall', 'arrive', 'meet-god', 'refuse'];
 const LOG = AFTER_BLOCK.log, PLANK = AFTER_BLOCK.plank;
-const st = () => S.after.stock;
+const st = () => goodsRead();
 
 // The act begun, `n` members walked out, the saw mill ordered off the shack
 // and raised.
@@ -54,7 +56,7 @@ function cells() {
   const bed = v.log ? v.log.left * LOG + v.grow * PLANK * PLANK + v.teeth : 0;
   return st().logs * LOG * LOG + (sawyerHolds() ? LOG * LOG : 0) + Math.round(bed)
     + s.out.length * PLANK * PLANK + s.dust.length + st().timber * PLANK * PLANK + st().sawdust
-    + S.after.groundLogs.reduce((n, q) => n + (q.kind === 'log' ? LOG * LOG : q.kind === 'plank' ? PLANK * PLANK : 0), 0);
+    + lying().reduce((n, q) => n + (q.kind === 'log' ? LOG * LOG : q.kind === 'plank' ? PLANK * PLANK : 0), 0);
 }
 const wx = c => stationX0('mill') + c * AP;
 const wy = r => groundOf('mill') + r * AP;
@@ -106,8 +108,8 @@ group('by hand: a log swept off the pile and let go over the bed, the wheel drag
   const bareTurns = saw().turn - turn0, bareCut = st().timber + st().sawdust - bare0, bareLogs = st().logs;
   const total = cells();
   // the log pile's top block under the hand, then let go over the bed's seat
-  const b = plotOf('logs');
-  const from = { x: b.x + b.p / 2, y: bottomY(b) - b.p / 2 };
+  const b = stripBox('logs');
+  const from = { x: b.x + b.size * AP / 2, y: b.bottom - b.size * AP / 2 };
   S.trail = []; track(from.x, from.y); sweep(from.x, from.y);
   const took = S.held;
   const to = { x: wx(AFTER_MILL.seat.x + LOG / 2), y: wy(AFTER_MILL.frame.bed - LOG * 2) };

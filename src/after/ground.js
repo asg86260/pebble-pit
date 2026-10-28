@@ -17,12 +17,11 @@
 // whole block over its neighbor, and is only ever taken off the top.
 //
 // The ground is the goods, and nothing else is: a pile's count is its
-// strip's units of its good, read off the cells after every write (`survey`)
-// into `S.after.stock`, which stays as that copy until its last readers are
-// moved onto the cells (the design's step 4). Every write goes through the
-// doors below, which tally each pile's change as they survey it; verify.js
-// rule 24 holds a pile's count to its tally, so nothing but a door -- no
-// settle pass, no stray write -- moves a pile.
+// strip's units of its good, read off the cells (`countOf`) when they have
+// changed, and kept nowhere. The only numbers stored beside goods are the
+// accounts behind a sink and a claim on cells (DESIGN.md, section 5). Every
+// unit made or unmade says so at a named door (src/flow.js); verify.js rule
+// 23 holds every kind's units to those doors.
 //
 // Saved as the yard's floor is: the cells run-length, the terrain left out
 // (it is laid from the profile), and the blocks' bottom-left cells, so every
@@ -130,8 +129,7 @@ function layTerrain() {
   version++;
 }
 
-// --- where a unit came from, for the drawing (TEMP: step 3's carry replaces
-// the groundLogs rows these feed) ----------------------------------------------------
+// --- where a unit came from, for the drawing -----------------------------------------
 // A unit's arrival, by its bottom-left cell: a felled log's plot and the x it
 // split off the trunk at, and when it set off rolling (`i`, `x0`, `at`); a
 // good let go of, the height it fell from and for how long (`y0`, `fall`,
@@ -144,42 +142,32 @@ function tags() {
 }
 export const tagOf = ai => (S.after ? tags().get(ai) || null : null);
 
-// --- the tally (verify.js, rule 24) -----------------------------------------------------
-// Every change to a pile's count made through a door, and the blocks taken
-// in bulk with nobody's hands behind them, kept on the act's state and out of
-// its save.
-export function ledger() {
-  const a = S.after;
-  if (!Object.prototype.hasOwnProperty.call(a, 'handoffs')) Object.defineProperty(a, 'handoffs', { value: { net: {}, bulk: 0 }, writable: true, configurable: true, enumerable: false });
-  return a.handoffs;
-}
-
-// Each pile's count read off the cells into `S.after.stock`; with `tally`, the
-// change is a door's and goes on the pile's tally.
-export function survey(tally = false) {
-  const a = S.after;
-  if (!a || !G.grid) return;
+// --- the counts ------------------------------------------------------------------------
+// Each pile's count, its strip's units of its good, walked off the cells when
+// they have changed and held until they change again; a kind's total on the
+// whole ground too, for the checks. Nothing writes a count: a count is what
+// the cells say.
+let counted_ = null, countedAt = -1, countedFor = null; // cache: the pile counts, as of `version` and the ground they were read from
+function walkCounts() {
+  if (countedFor === G.grid && countedAt === version && counted_) return counted_;
   const n = {};
   for (const s of STRIPS) n[s.what] = 0;
-  if (G.blockN && G.blockGrid === G.grid) {
+  if (G.grid && G.blockN && G.blockGrid === G.grid) {
     for (const ai of G.blockSet) {
       const s = stripAt(ai % G.cols), k = kindOf(G.grid[ai]);
       if (s && k && k.key === s.kind) n[s.what]++;
     }
   }
-  const led = tally ? ledger().net : null;
-  for (const s of STRIPS) {
-    const d = n[s.what] - (a.stock[s.what] || 0);
-    if (led && d) led[s.what] = (led[s.what] || 0) + d;
-    a.stock[s.what] = n[s.what];
-  }
+  countedFor = G.grid; countedAt = version;
+  return (counted_ = n);
 }
-// A pile's count walked off the cells, never the copy: for verify.js.
-export function stripCount(what) {
-  const s = stripOf(what);
-  if (!s || !G.grid || !G.blockN || G.blockGrid !== G.grid) return 0;
+// A pile's count: its strip's units of its good. Zero before the act is laid.
+export const countOf = what => (S.after && G.grid ? walkCounts()[what] || 0 : 0);
+// Every unit of `kind` on the ground, anywhere.
+export function onGround(kind) {
   let n = 0;
-  for (const ai of G.blockSet) { const c = ai % G.cols, k = kindOf(G.grid[ai]); if (c >= s.c0 && c < s.c1 && k && k.key === s.kind) n++; }
+  if (!G.grid || !G.blockN || G.blockGrid !== G.grid) return n;
+  for (const ai of G.blockSet) { const k = kindOf(G.grid[ai]); if (k && k.key === kind) n++; }
   return n;
 }
 
@@ -223,22 +211,50 @@ export function units() {
 // and is its good; everything else lying is loose, a gatherer's to carry home.
 export const counted = u => { const s = stripAt(u.c0); return !!s && s.kind === u.kind; };
 
-// The loose units as rows (TEMP: the groundLogs list's shape, so step 3's
-// carry and hand, and the checks reading it, keep working until they read
-// the cells): { id, kind, x, y, w, free } -- `id` its bottom-left cell,
+// The loose units, the goods a gatherer carries home and the hand takes up,
+// as rows: { id, kind, x, y, w, free } -- `id` a unit's bottom-left cell,
 // `x`, `y` its top left in the world, `free` whether a hand or a body may
-// take it now (nothing on it, not falling), and its arrival (`tagOf`).
+// take it now (nothing on it, not falling), and its arrival (`tagOf`). A kind
+// with no home (a site's load) is no good to carry anywhere and is not one.
 let lyingRows = null, lyingAt = -1; // cache: the loose units, as of `version`
 export function lying() {
   if (!S.after || !G.grid) return [];
   if (lyingRows && lyingAt === version) return lyingRows;
   lyingAt = version;
-  lyingRows = units().filter(u => !counted(u)).map(u => ({
+  lyingRows = units().filter(u => !counted(u) && KINDS[u.kind].home).map(u => ({
     id: u.ai, kind: u.kind, x: colX(u.c0), y: rowY(u.r0 + u.z), w: u.z * AP,
     free: uncovered(u.ai) && restsOn(u.ai), ...(tagOf(u.ai) || {})
   }));
   return lyingRows;
 }
+// The world distance from (x, y) to a unit: 0 inside it.
+const nearOf = (u, x, y) => {
+  const w = u.z * AP, x0 = colX(u.c0), top = rowY(u.r0 + u.z);
+  return Math.hypot(Math.max(x0 - x, 0, x - (x0 + w)), Math.max(top - y, 0, y - (top + w)));
+};
+// The unit nearest (x, y) within `reach` px of it, of `kind` if one is near,
+// else any: what the hand finds there. Null over bare ground.
+export function unitNear(x, y, reach = 0, kind = null) {
+  if (!S.after || !G.grid) return null;
+  let best = null, d0 = Infinity;
+  for (const u of units()) {
+    const d = nearOf(u, x, y);
+    if (d > reach) continue;
+    const score = d + (kind && u.kind !== kind ? 1e6 : 0);
+    if (score < d0) { d0 = score; best = u; }
+  }
+  return best;
+}
+// A pile's strip in the world: { x, w } across, `bottom` the world y of its
+// floor and `top` the world y its brim's heap stands to.
+export function stripBox(what) {
+  const s = stripOf(what);
+  if (!s || !G.grid) return null;
+  let low = Infinity, high = 0;
+  for (let c = s.c0; c < s.c1; c++) { low = Math.min(low, terrainAt(c)); high = Math.max(high, G.ceiling(c)); }
+  return { x: colX(s.c0), w: (s.c1 - s.c0) * AP, bottom: rowY(low), top: rowY(high), cols: (s.c1 - s.c0) / s.z, size: s.z };
+}
+const terrainAt = c => { let r = 0; while (r < G.rows && G.fixed(c, r)) r++; return r; };
 
 // --- the doors ---------------------------------------------------------------------------
 // Taking a unit, off the top only (grid.js, `takeUnit`): the block whose
@@ -250,7 +266,7 @@ export function takeAt(ai) {
   const a = blockAt(G, ai % G.cols, Math.floor(ai / G.cols));
   if (!a || a.r * G.cols + a.c !== ai) return 0;
   const got = takeUnit(G, a.c, a.r);
-  if (got) { tags().delete(ai); survey(true); }
+  if (got) tags().delete(ai);
   return got;
 }
 // The top unit of column c, if it is of `kind` (any, with none) and has
@@ -270,9 +286,7 @@ export function takeTopOf(c, kind = null) {
 export function putIn(v, x) {
   if (!G.grid) return -1;
   if (!addBlock(G, x, v)) return -1;
-  const ai = lastAnchor();
-  survey(true);
-  return ai;
+  return lastAnchor();
 }
 // The unit just written by addBlock: grid.js leaves the column and row it
 // went in at in `landed`, a block's bottom-left cell.
@@ -332,7 +346,6 @@ export function heapAt(v, x, n) {
     const t = best >= 0 ? slotTop(best, z) : -1;
     out.push(best >= 0 && putBlock(G, best, t, v) ? t * G.cols + best : putSomewhere(v, x));
   }
-  survey(true);
   return out;
 }
 // Tag a unit's arrival (see `tags`).
@@ -342,7 +355,7 @@ export function tag(ai, t) { if (ai >= 0 && S.after) tags().set(ai, t); }
 // The ground laid for the act state now on `S.after`: the terrain, then what
 // the save kept (`S.after.ground`, written by `groundRecord`), then anything
 // an older save handed over to lay (`S.after.lay`, the one-ground migration),
-// all settled to rest before the first frame and surveyed into the stock.
+// all settled to rest before the first frame.
 export function standGround(lay = []) {
   const a = S.after;
   if (!a) { G.grid = null; G.blockN = 0; return; }
@@ -352,28 +365,23 @@ export function standGround(lay = []) {
   const rec = a.ground;
   a.ground = null;
   if (rec) readRecord(rec);
-  survey(false);
   for (const item of lay) item();
   rest();
-  survey(false);
 }
 // Settled until nothing moves: a save read stands as the blocks left it.
 export function rest() {
   for (let i = 0; i < 4 * G.rows && settle(G); i++) { /* until nothing moves */ }
 }
 // One frame's share of the ground: a pass of the heap rule over the awake
-// columns, the count surveyed after.
+// columns.
 export function settleGround() {
-  if (!G.grid) return 0;
-  const did = settle(G);
-  if (did) survey(false);
-  return did;
+  return G.grid ? settle(G) : 0;
 }
 
 // --- the save --------------------------------------------------------------------------------
 // Runs of "value x length", as persist.js's `gridStr`, over the cells less
 // the terrain.
-function runsOf(cells) {
+export function runsOf(cells) {
   const out = [];
   let run = cells[0] || 0, len = 1;
   for (let i = 1; i < cells.length; i++) {
@@ -384,7 +392,7 @@ function runsOf(cells) {
   out.push(run + 'x' + len);
   return out.join('.');
 }
-function cellsOfRuns(str, n) {
+export function cellsOfRuns(str, n) {
   if (typeof str !== 'string' || !str) return null;
   const cells = new Uint8Array(n);
   let i = 0;

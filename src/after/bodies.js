@@ -25,6 +25,7 @@
 // has walked out by the thousand costs the frame nothing while it waits.
 
 import { S } from '../state.js';
+import { sink } from '../flow.js';
 import { AFTER_JOB } from '../jobs.js';
 import { P, AFTER_SLOT_GAP, AFTER_JOBS, AFTER_JOB_POST, AFTER_AGITATE_S, AFTER_FELL_S, AFTER_DIG_S, AFTER_PLANT_S,
          AFTER_PUT_S, AFTER_SAW_S, AFTER_CHOP_HOLD_S,
@@ -41,7 +42,7 @@ import { agitate } from './rebel.js';
 import { standing, stumped, chopTree, digStump, settled, layGood } from './grove.js';
 import { isPiled, setBlock, pileCount, pileRoom, pileBrim } from './piles.js';
 import { stripOf, units, counted, uncovered, takeAt, colX, lying } from './ground.js';
-import { sweepDue, tipSawdust, sawyerHolds } from './mill.js';
+import { sweepDue, tipSawdust, sawyerHolds, sawdustCount } from './mill.js';
 import { signSpot, plantSign } from './press.js';
 import { workAfter } from './work.js';
 import { fillBuilders, stepBuilder, isIdle, handsFree, timberReserved, nextOrder, orderOf, orderAt, orderBrought } from './build.js';
@@ -302,13 +303,13 @@ const goodOf = what => AFTER_PILES[what].good;
 const fedAt = what => pileMid(pileOwner(what), what);
 // What a pile can give up: the timber mound less the blocks a carried order
 // has spoken for (build.js), every other pile all it holds.
-const spareOf = what => S.after.stock[what] - (what === 'timber' ? timberReserved() : 0);
+const spareOf = what => pileCount(what) - (what === 'timber' ? timberReserved() : 0);
 function fetchLogs(w, key, dt) {
   const a = S.after, mine = PILE[key], from = FROM[key];
   // The sawyer with a log in its hands on the mill's own trip (mill.js) has
   // its log: fetching another would drop the one it carries.
   if (key === 'mill' && sawyerHolds()) return false;
-  if (!carried(w) && !w.pick && (a.stock[mine] >= UNIT[key] || spareOf(from) <= 0 || hauledTo(key))) return false;
+  if (!carried(w) && !w.pick && (pileCount(mine) >= UNIT[key] || spareOf(from) <= 0 || hauledTo(key))) return false;
   w.at = null;
   if (!carried(w) || w.pick) {
     if (go(w, fedAt(from), floorY(), dt)) w.pick = !pickUp(w, dt, goodOf(from), () => spareOf(from), () => takeFromPile(from, w.x));
@@ -347,7 +348,7 @@ const hauledTo = key => haulers().some(o => o.target === key);
 const WORKER = { mill: AFTER_JOB.SAW };
 const worked = key => !WORKER[key] || bodiesOf(WORKER[key]).length > 0;
 // Never past the pile's brim: a hauler sets no block on a full pile.
-const shortOf = key => (built(key) && worked(key) ? Math.max(0, Math.min(haulWant(key), pileBrim(PILE[key])) - S.after.stock[PILE[key]] - inbound(key)) : 0);
+const shortOf = key => (built(key) && worked(key) ? Math.max(0, Math.min(haulWant(key), pileBrim(PILE[key])) - pileCount(PILE[key]) - inbound(key)) : 0);
 // The station most short for its want, the saw mill on a tie, among those
 // fed with `kind` (any, with none) and whose feed has a block to give: null
 // when none is.
@@ -367,11 +368,11 @@ const haulNeed = () => HAULED.reduce((n, key) => n + Math.min(Math.max(0, spareO
 // the notch while the saw is worked and tips a load each time the heap
 // comes within a load of its brim, so the saw never stops on its own
 // sawdust.
-const tipReady = () => S.after.stock.sawdust >= heapBrim() - AFTER_TIP_LOAD;
+const tipReady = () => sawdustCount() >= heapBrim() - AFTER_TIP_LOAD;
 const chainRuns = () => atStation('mill').length > 0;
 const sweeping = () => S.after.bodies.some(o => o.errand === AFTER_JOB.SWEEP);
 // Goods lying still on the floor -- the grove's felled logs, and whatever the
-// hand threw there (after/piles.js, AFTER_PLOTS) -- taken up nearest first, the
+// hand threw there (after/ground.js) -- taken up nearest first, the
 // next of the same kind while the load has room (the yard's carter), and
 // carried to that kind's pile (AFTER_GOODS_HOME: a log the forestry shack's,
 // a plank the saw mill's timber) a good a beat; `w.log` is the one walked
@@ -412,7 +413,7 @@ function gather(w, dt) {
 // once its hands are empty again) and goes back to its bench.
 function takeOut(w, dt, kind, stock, room, round) {
   if (!w.out) {
-    if (S.after.stock[stock] < holds(kind) || !room()) return false;
+    if (pileCount(stock) < holds(kind) || !room()) return false;
     Object.assign(w, { out: true, at: null, target: null, t: 0, pick: false });
   }
   if (round(w, dt)) w.out = false;
@@ -487,7 +488,7 @@ const JOB_STEP = {
     let o = w.order != null ? orderOf(w.order) : null;
     if (carried(w) && !w.pick) {
       if (!o) { if (go(w, mound, floorY(), dt) && toPile(w, dt, 'timber')) w.order = null; return; }
-      if (go(w, orderAt(o), floorY(), dt) && putDown(w, dt, () => { orderBrought(o); return true; })) w.order = null;
+      if (go(w, orderAt(o), floorY(), dt) && putDown(w, dt, () => { sink('plank', 1, 'order'); orderBrought(o); return true; })) w.order = null;
       return;
     }
     if (!o || o.claimed >= o.n) {
@@ -495,7 +496,7 @@ const JOB_STEP = {
       o = nextOrder(); w.order = o ? o.id : null;
     }
     if (!o) return;
-    if (go(w, mound, floorY(), dt)) w.pick = !pickUp(w, dt, 'plank', () => Math.min(o.n - o.claimed, a.stock.timber), () => { const v = takeFromPile('timber', w.x); if (v) o.claimed += 1; return v; });
+    if (go(w, mound, floorY(), dt)) w.pick = !pickUp(w, dt, 'plank', () => Math.min(o.n - o.claimed, pileCount('timber')), () => { const v = takeFromPile('timber', w.x); if (v) o.claimed += 1; return v; });
   },
   sawyer(w, dt) {
     // Off the saw while the heap has stood at its brim: to the notch beside
@@ -543,7 +544,7 @@ const JOB_STEP = {
     if (!carried(w) || w.target == null) {
       if (!go(w, signFetchX(), floorY(), dt)) return;
       if (!signSpot()) return toPile(w, dt, 'signs');
-      if (!pickUp(w, dt, 'sign', () => a.stock.signs, () => takeFromPile('signs', w.x))) return false;
+      if (!pickUp(w, dt, 'sign', () => pileCount('signs'), () => takeFromPile('signs', w.x))) return false;
       if (!carried(w)) return true;
       w.target = signSpot(); w.t = 0;
       if (!w.target) return false;
@@ -554,7 +555,7 @@ const JOB_STEP = {
     if (w.t >= AFTER_PLANT_S) {
       plantSign(s.f, s.r); w.t = 0;
       // The next in hand to the next spot free, or back to the door.
-      pop(w);
+      pop(w); sink('sign', 1, 'planted');
       if (isEmpty(w)) { w.target = null; return true; }
       w.target = signSpot();
     }
@@ -577,9 +578,9 @@ const ERRANDS = [
   // One sweeper, kept at the notch while the chain runs (`hold`).
   { job: AFTER_JOB.SWEEP, per: 1, left: () => (chainRuns() && !sweeping() ? 1 : 0), hold: chainRuns },
   // A bought row's timber, while any of it waits on the mound (build.js).
-  { job: AFTER_JOB.ORDER, kind: 'plank', left: () => Math.min(timberReserved(), S.after.stock.timber) },
+  { job: AFTER_JOB.ORDER, kind: 'plank', left: () => Math.min(timberReserved(), pileCount('timber')) },
   { job: AFTER_JOB.HAUL, kind: 'log', left: haulNeed },
-  { job: AFTER_JOB.CARRY, kind: 'sign', left: () => (built('workshop') ? S.after.stock.signs : 0) }
+  { job: AFTER_JOB.CARRY, kind: 'sign', left: () => (built('workshop') ? pileCount('signs') : 0) }
 ];
 const fetching = job => S.after.bodies.filter(o => onRound(o, job) && !carried(o)).length;
 const errandFor = () => ERRANDS.find(e => e.left() > fetching(e.job) * (e.per ?? holds(e.kind)))?.job || null;
@@ -617,14 +618,14 @@ function runErrand(w, dt) {
 const lent = w => w.job && w.errand === AFTER_JOB.ORDER;
 function lendHands() {
   const a = S.after;
-  if (!timberReserved() || a.stock.timber <= 0 || a.camp > 0 || idleBodies().some(o => !o.errand) || a.bodies.some(o => o.errand === AFTER_JOB.ORDER)) return;
+  if (!timberReserved() || pileCount('timber') <= 0 || a.camp > 0 || idleBodies().some(o => !o.errand) || a.bodies.some(o => o.errand === AFTER_JOB.ORDER)) return;
   const mound = fedAt('timber');
   const free = a.bodies.filter(o => o.job && o.job !== AFTER_JOB.BUILD && o.state === 'work' && handsFree(o) && !o.out && !o.pick)
     .sort((p, q) => Math.abs(p.x - mound) - Math.abs(q.x - mound));
   if (free[0]) Object.assign(free[0], { errand: AFTER_JOB.ORDER, order: null, at: null, t: 0 });
 }
 function lentStep(w, dt) {
-  if (!carried(w) && !w.pick && (!nextOrder() || S.after.stock.timber <= 0)) { w.errand = null; w.order = null; return; }
+  if (!carried(w) && !w.pick && (!nextOrder() || pileCount('timber') <= 0)) { w.errand = null; w.order = null; return; }
   JOB_STEP.orderer(w, dt);
 }
 const orLent = step => (w, dt) => (lent(w) ? lentStep(w, dt) : step(w, dt));

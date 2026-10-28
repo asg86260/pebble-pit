@@ -41,7 +41,6 @@ import { drawFistFlag } from './aftercrowd.js';
 import { heap, heapCells, drawGround, goodBlock, buildPile, BUILD_SLOTS, plankAt, blockAt } from './after/piles.js';
 import { goodsLook, MOCK_DUST, seedOf } from './after/piles.js'; // MOCK
 import { drawBody } from './crew.js';
-import { drawSawDrops } from './after/drop.js';
 import { onDevice } from './wardrobe.js';
 import { siteOf } from '../after/build.js';
 import { drawPillar, drawPair, drawBubbles, drawRebelPile } from './after/pedestal.js';
@@ -203,7 +202,6 @@ export function drawAfterPiles() {
   if (!a) return;
   drawGround(a.t);
   if (built('mill')) drawMillHeap(frameOf('mill'));
-  drawSawDrops();
 }
 export function drawAfterCamp() {
   const a = A();

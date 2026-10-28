@@ -22,15 +22,16 @@
 // (it fades in); `logs` only a save's from before the logs lay where they
 // fell, laid on the ground on its first frame. A log on the ground is a
 // unit of the act's one ground, as is every good the hand or a body let go
-// of (`groundLogs`, below).
+// of (after/ground.js).
 
 import { S } from '../state.js';
+import { source } from '../flow.js';
 import { P, TREE_CHOPS, AFTER_LOGS_A_TREE, AFTER_LOGS_BIG_TREE, AFTER_FALL_S, AFTER_CROWN_FADE_S, AFTER_DIG_CLICKS,
          AFTER_PLOTS0, AFTER_FALL_BOUNCE_S, AFTER_LOG_ROLL, AFTER_LOG_ROLL_S, AFTER_LOG_SPAN, KINDS } from '../config.js';
 import { secs, nextId } from './util.js';
 import { growS, bigTrees } from './levels.js';
 import { PINE_GROWN, stationParts, plotX, AP } from './place.js';
-import { putSomewhere, heapAt, takeAt, tag, fallTag, lying, colX } from './ground.js';
+import { putSomewhere, heapAt, tag, fallTag, lying, colX } from './ground.js';
 import { afterGround as G } from '../state.js';
 import { cellOf } from '../grid.js';
 
@@ -99,10 +100,9 @@ export function digStump(i, hand = false) {
 // --- the logs on the ground ---------------------------------------------------------
 // A log or any good lying on the act's floor is a unit of its one ground
 // (after/ground.js), wherever it came down: it stacks, rolls and rests by the
-// heap rule every block settles by, and is taken off the top. What follows
-// keeps the lying list's old shape over the ground (TEMP: step 3's carry and
-// hand read the cells): a row a loose unit, { id, kind, x, y, w, free } and
-// its arrival, `x0` and `at` a felled log's, `y0` and `fall` a good let go of.
+// heap rule every block settles by, and is taken off the top. The loose units
+// are the ground's rows (`lying`): { id, kind, x, y, w, free } and their
+// arrival, `x0` and `at` a felled log's, `y0` and `fall` a good let go of.
 const snap = v => Math.round(v / P) * P;
 const hsh = n => { let h = Math.imul(n ^ 0x9e3779b9, 2654435761); h ^= h >>> 15; return (h >>> 0) / 4294967296; };
 // Plot i's trunk split into `n` logs across the fallen tree, which come to
@@ -115,6 +115,7 @@ function dropLogs(i, n, at) {
   const [a, b] = AFTER_LOG_SPAN, mid = plotX(i) + ((a + b) / 2 + KINDS.log.size / 2) * AP;
   for (const ai of heapAt(cellOf('log'), mid, n)) {
     if (ai < 0) continue;
+    source('log', 1, 'tree');
     const roll = (AFTER_LOG_ROLL[0] + (AFTER_LOG_ROLL[1] - AFTER_LOG_ROLL[0]) * hsh(nextId())) * AP;
     tag(ai, { i, x0: snap(colX(ai % G.cols) - roll), at });
   }
@@ -127,17 +128,12 @@ export const kindOf = q => q.kind || 'log';
 // A good lying still on the floor under (x, y), `pad` px of slack round it,
 // for the hover to name: the last in the list first.
 export function lyingAt(x, y, pad = 0) {
-  const list = groundLogs();
+  const list = lying();
   for (let i = list.length - 1; i >= 0; i--) if (settled(list[i]) && under(list[i], x, y, pad)) return list[i];
   return null;
 }
 // Whether (x, y) is on a lying good, `pad` px of slack round it.
 const under = (q, x, y, pad) => x >= q.x - pad && x <= q.x + q.w + pad && y >= q.y - pad && y <= q.y + q.w + pad;
-// Every good lying free within `pad` px of (x, y), nearest first.
-export function lyingNear(x, y, pad) {
-  const mid = q => q.x + q.w / 2;
-  return groundLogs().filter(q => settled(q) && under(q, x, y, pad)).sort((a, b) => Math.abs(mid(a) - x) - Math.abs(mid(b) - x));
-}
 // A good let go of at (x, y), off any pile: x its left edge, y the height it
 // falls from under the yard's gravity, down onto whatever stands under it on
 // the ground, where it lies until a gatherer takes it up. Its fall is drawn
@@ -146,16 +142,6 @@ export function layGood(kind, x, y) {
   const ai = putSomewhere(cellOf(kind), x + KINDS[kind].size * AP / 2);
   fallTag(ai, y);
 }
-// A gatherer taking good `id` up off the ground: only off the top, and only
-// once it is down.
-export function takeGroundLog(id) {
-  const q = groundLogs().find(o => o.id === id);
-  if (!q || !settled(q)) return false;
-  return !!takeAt(id);
-}
-// The goods lying on the ground, for the drawing and the bodies.
-export const groundLogs = () => (S.after ? lying() : []);
-
 // One frame of the grove: the trees growing, and those coming down landing.
 export function stepGrove(c) {
   const a = S.after, dt = secs(c);

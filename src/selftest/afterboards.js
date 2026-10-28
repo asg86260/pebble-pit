@@ -13,8 +13,8 @@ import { shopOf } from '../pages.js';
 import { support } from '../after/union.js';
 import { msg } from '../lang.js';
 import { openBoard } from '../board.js';
-import { stationBox, floorAt } from '../after/place.js';
-import { plotOf, AFTER_PLOTS } from '../after/piles.js';
+import { stationBox, floorAt, AP } from '../after/place.js';
+import { stripBox, unitNear, lying } from '../after/ground.js';
 import { toScreen } from '../world.js';
 import { shopBoxOf } from '../roster.js';
 
@@ -214,7 +214,7 @@ export const TESTS = [
     await settle();
     await upThere();
     S.after.built.push('mill');
-    window.__afterGrant({ logs: -S.after.stock.logs, grovelogs: -S.after.stock.grovelogs, timber: -S.after.stock.timber });
+    { const r = window.__afterRead(); window.__afterGrant({ logs: -r.logs, grovelogs: -r.grovelogs, timber: -r.timber }); }
     const b = stationBox('mill'), r = canvas().getBoundingClientRect();
     window.__look(b.x + b.w / 2 - S.viewW / 2);
     await settle(0.2);
@@ -286,17 +286,17 @@ export const TESTS = [
     window.__afterGrant({ grovelogs: 6 });
     await settle(0.3);
     const from = window.__afterPile('forestry', 'grovelogs');
-    const mill = plotOf('logs'), to = { x: mill.x + mill.cols * mill.p / 2, y: mill.y - mill.p * 2 };
+    const mill = stripBox('logs'), to = { x: mill.x + mill.w / 2, y: mill.top - AP * 8 };
     window.__look((from.x + to.x) / 2 - S.viewW / 2);
     await settle(0.3);
     const r = canvas().getBoundingClientRect();
     const at = p => { const s = toScreen(p.x, p.y); return [r.left + s.x, r.top + s.y]; };
-    const pile0 = S.after.stock.grovelogs, mill0 = S.after.stock.logs, lying0 = S.after.groundLogs.length;
+    const pile0 = window.__afterRead().grovelogs, mill0 = window.__afterRead().logs, lying0 = lying().length;
     point('pointermove', ...at(from), 0);
     await raf();
     point('pointerdown', ...at(from), 1, 0);
     await raf();
-    const took = S.held, kind = S.motes[0]?.kind, off = pile0 - S.after.stock.grovelogs;
+    const took = S.held, kind = S.motes[0]?.kind, off = pile0 - window.__afterRead().grovelogs;
     for (let k = 1; k <= 30; k++) {
       point('pointermove', ...at({ x: from.x + (to.x - from.x) * k / 30, y: from.y + (to.y - from.y) * k / 30 }), 1, -1);
       window.__fast(1 / 60);
@@ -307,7 +307,7 @@ export const TESTS = [
     point('pointerup', ...at(to), 0, 0);
     const thrown = S.chips.filter(c => c.place === 'after').length, empty = S.held === 0;
     for (let f = 0; f < 240 && S.chips.some(c => c.place); f++) { window.__fast(1 / 60); await raf(); }
-    const counts = { pile: S.after.stock.grovelogs, mill: S.after.stock.logs, lying: S.after.groundLogs.length - lying0 };
+    const counts = { pile: window.__afterRead().grovelogs, mill: window.__afterRead().logs, lying: lying().length - lying0 };
     S.carryLevel = 0;
     window.__actsOn(null);
     return [
@@ -350,13 +350,13 @@ export const TESTS = [
     for (let f = 0; f < 40 && flying().length; f++) { const c = flying()[0]; point('pointermove', ...at(c), 1, -1); await frame(); }
     const caught = S.held === 1 && S.motes[0]?.kind === 'log' && !flying().length;
     // carried off to open floor, held still, let go: it comes down there
-    const clear = x => [-24, 0, 24].every(k => !AFTER_PLOTS.at(x + k, floorAt(x) - P * 2, P * 6));
+    const clear = x => [-24, 0, 24].every(k => !unitNear(x + k, floorAt(x) - P * 2, P * 6));
     let x = from.x - P * 20;
     while (x > from.x - P * 200 && !clear(x)) x -= P * 2;
     const spot = { x, y: floorAt(x) - P * 6 };
     for (let k = 0; k < 12; k++) { point('pointermove', ...at(spot), 1, -1); await frame(); }
     point('pointerup', ...at(spot), 0, 0);
-    const laid = () => S.after.groundLogs.filter(q => q.kind === 'log' && q.fall != null);
+    const laid = () => lying().filter(q => q.kind === 'log' && q.fall != null);
     for (let f = 0; f < 120 && !laid().length; f++) await frame();
     const q = laid()[0];
     const lay = q ? { x: q.x + P * 2, y: floorAt(q.x + P) - P * 2 } : spot;

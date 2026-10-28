@@ -11,6 +11,7 @@
 // played, members walked out of God's yard (`__afterCrowd`), coins granted.
 import { sawyerHolds } from '../src/after/mill.js';
 import { group, ok, run, runUntil, yard } from './helpers.mjs';
+import { goodCount } from '../src/after/piles.js';
 import { loadKind, holds } from '../src/carry.js';
 import { RIM_PIECES, AFTER_WALK, AFTER_AGITATE_S, AFTER_AGITATE_REBEL, KINDS, AFTER_LOG_TIMBER } from '../src/config.js';
 import { haulCap } from '../src/levels.js';
@@ -152,9 +153,9 @@ group('logs are carried by weight: a log takes sixteen grains of the yard\'s car
   // Every log: on a pile, in a hand, in the sawyer's hands or on the saw's
   // bed (after/mill.js), or sawn through (the sawyer stays at the saw while a
   // hauler brings them, so some are cut before the count is taken).
-  const timber0 = S.after.stock.timber;
+  const timber0 = goodCount('timber');
   let sawn = 0, onBed = false;
-  const total = () => S.after.stock.grovelogs + S.after.stock.logs + S.after.bodies.reduce((n, b) => n + (loadKind(b) === 'log' ? b.carry || 0 : 0), 0)
+  const total = () => goodCount('grovelogs') + goodCount('logs') + S.after.bodies.reduce((n, b) => n + (loadKind(b) === 'log' ? b.carry || 0 : 0), 0)
     + (sawyerHolds() ? 1 : 0) + (S.after.saw && S.after.saw.bed ? 1 : 0) + sawn;
   const t0 = total();
   // The first body to take logs up for the mill: the sawyer, or an idle
@@ -177,7 +178,7 @@ group('logs are carried by weight: a log takes sixteen grains of the yard\'s car
     ok(pressed && want === Math.max(1, Math.floor(haulCap() / KINDS.log.weight)), 'a sawyer put on, a log weighing what the hand reads for it', `${want}`),
     ok(most === want, 'it takes as many logs as its load holds', `${most} of ${want}`),
     ok(stepped, 'picked up and set down a log at a time'),
-    ok(S.after.stock.logs + (sawyerHolds() ? 1 : 0) + (onBed ? 1 : 0) + sawn >= want && kept, 'and fetches them to the mill\'s own pile, none lost', `${S.after.stock.logs} at the mill`)
+    ok(goodCount('logs') + (sawyerHolds() ? 1 : 0) + (onBed ? 1 : 0) + sawn >= want && kept, 'and fetches them to the mill\'s own pile, none lost', `${goodCount('logs')} at the mill`)
   ];
 });
 
@@ -256,7 +257,7 @@ group('a lone joiner plants its own signs', async () => {
 group('a roster says what its job does, or why it is standing still', async () => {
   up(1);
   S.after.built.push('mill');
-  window.__afterGrant({ logs: -S.after.stock.logs, grovelogs: -S.after.stock.grovelogs });
+  window.__afterGrant({ logs: -goodCount('logs'), grovelogs: -goodCount('grovelogs') });
   const p = window.__afterRoster().find(r => r.job === 'sawyer');
   const stalled = jobSays('sawyer');
   window.__afterGrant({ grovelogs: 3 });
