@@ -260,13 +260,8 @@ function place(el, at) {
   // runs away from it off the anchor's near edge instead, so however wide it
   // is it never covers the station.
   const mid = at.x + (at.w || 0) / 2;
-  // ...and if the window has no room on its side, off the other side: clamped
-  // back against the edge it would cover what it stands beside.
-  const rightAt = toScreen(at.x + (at.w || 0), 0).x, leftAt = toScreen(at.x, 0).x - w;
-  const side = at.side === 'right' && rightAt + w > S.W - GAP ? 'left'
-             : at.side === 'left' && leftAt < GAP ? 'right' : at.side;
-  const want = side === 'right' ? rightAt
-             : side === 'left' ? leftAt
+  const want = at.side === 'right' ? toScreen(at.x, 0).x
+             : at.side === 'left' ? toScreen(at.x + at.w, 0).x - w
              : toScreen(mid, 0).x - w / 2;
   const x = Math.round(Math.max(GAP, Math.min(want, S.W - w - GAP)));
 
