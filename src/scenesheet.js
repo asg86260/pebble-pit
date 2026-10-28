@@ -126,7 +126,12 @@ Object.assign(window, {
       const text = [sc.option, sc.say, sc.stage, String(sc.run), String(sc.swap || '')].join('\n');
       by.get(sc.review).push({ scene: name, label: sc.option || name, say: sc.say, swap: !!sc.swap, stage: sc.stage || null, text });
     }
-    return [...by].map(([name, options]) => ({ name, options }));
+    // A review's `branch`/`branches` (where its build lives) and `supersedes`
+    // (the review names a built one replaces) are gathered over its scenes:
+    // the dev server asks git whether those have landed on main.
+    const all = (opts, f) => [...new Set(opts.flatMap(o => [].concat(SCENES[o.scene][f] || [])))];
+    return [...by].map(([name, options]) => ({ name, options,
+      branches: [...new Set([...all(options, 'branch'), ...all(options, 'branches')])], supersedes: all(options, 'supersedes') }));
   },
   __myYard: myYard
 });

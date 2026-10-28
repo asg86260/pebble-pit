@@ -79,7 +79,13 @@ address), one option's scene, or a prefix of its scenes' names
 (`after-shopbtn` for `after-shopbtn-a` and `-b`). The whole tagged file
 counts, so one tag line a file is enough. A bare `// MOCK` lights every
 open review; untagged code a scene depends on (a shared helper, the game
-itself) lights none.
+itself) lights none, and a tag in `scenes.js` is ignored (the scene's own
+source counts already), so review setup goes in the scene's `run` or a
+tagged module. **A review puts itself away when it lands**: give its
+scenes `branch: '<branch>'` (or `branches: [...]`) naming where its build
+lives, and it drops off the tab row once every one is merged into main; a
+built review's `supersedes: ['<review name>']` puts away the mock it came
+from. "landed (n)" at the end of the row shows them again, greyed.
 Options drawn only to be judged live on a throwaway branch, marked
 `// MOCK`, never merged.
 
