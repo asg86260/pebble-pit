@@ -30,6 +30,8 @@ export function myYard() {
   saveRaw(raw);
   forget();
   S.staged = false;
+  // Back to your own yard is back to your own motion setting too.
+  forceMotion(null);
   restore();
   bootYard();
   refresh();
