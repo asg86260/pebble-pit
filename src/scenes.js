@@ -50,7 +50,7 @@ import { sawDrops } from './after/mill.js';
 import { FINALE_HOUSE_W, APOTH_POTS_MAX } from './config.js';
 import { houseX } from './home.js';
 import { goOnAlpha } from './actbeats.js';
-import { pref, setPref } from './prefs.js';
+import { forceMotion, motionForcedNow } from './prefs.js';
 import { stopById } from './stops.js';
 import { INDEX } from './config/index.js';
 import { ABYSS_AT, RIFTLIFE_SPEED, RIFTLIFE_COIL, DEEP_W } from './config.js';
@@ -757,10 +757,10 @@ function firstTrip() {
   for (let i = 0; i < 60 * 30 && S.workers.some(w => w.falling); i++) window.__fast(1 / 60);
   window.__view('yard');
   window.__look(portalX() - S.viewW / 2);
-  const was = pref('motion');
-  setPref('motion', false);
+  const was = motionForcedNow();
+  forceMotion(false);
   goDeep();
-  setPref('motion', was);
+  forceMotion(was);
   for (let i = 0; i < 60 * 3 && S.viewFade < 0.75 && S.viewTo; i++) window.__fast(1 / 60);
 }
 
@@ -772,10 +772,10 @@ const glideAt = (to, k) => () => {
   // A glide under reduced motion is a cut, and a headless browser asks for
   // reduced motion: full motion for the one call that starts it, and the
   // preference as it was straight after.
-  const was = pref('motion');
-  setPref('motion', false);
+  const was = motionForcedNow();
+  forceMotion(false);
   if (to === 'deep') goDeep(); else goUp();
-  setPref('motion', was);
+  forceMotion(was);
   S.viewFade = k;
   poseGlide();
 };
@@ -3121,15 +3121,15 @@ export const SCENES = {
       window.__look(mid - S.viewW / 2);
       window.__still(true); window.__holdShot();
     } },
-  // MOCK after-goods: what act 3's goods look like (mock-goods-look3, never merged). The
+  // MOCK after-goods: what act 3's goods look like (mock-goods-look4, never merged). The
   // chain run and every pile topped up, framed from the forestry shack's log
   // pile to the workshop's signs, a member carrying while it holds; `look`
   // the drawing mode (render/after/piles.js, `__goodsLook`), null the real one.
   ...Object.fromEntries([[null, 'current', "the goods as they are drawn now: each block a flat tone with a one-pixel seam on its right and bottom only"],
     ['a', 'A subtle mottle (last round)', "round 2's pick to iterate on: every block keeps its own shade, as act 1's grains do, and a cell in four is a step off it"],
-    ['d', 'D neighbors apart', "quieter: a cell in twenty a step off, and every block's base tone differs from each block it touches, so each 4x4 log and 2x2 timber reads as its own"],
-    ['e', 'E lit top and left', "every block one base tone, a cell in sixteen a step off, and a step lighter along its own top row and left column (a 2x2 timber, its top-left cell): one lit edge a block to count"],
-    ['f', 'F both, quietest', "a cell in twenty-five a step off, every block's base apart from its neighbors', and its own top and left a step lighter (a 2x2 timber, its top-left cell)"]]
+    ['b1', 'B1 colors, neighbors apart', "act 1's way with color: each good its own family of four shades (logs bark brown, timber pale wood, signs slate, sawdust pale wood grains), each block one flat shade, its own shade unless that sits within a step of a block it touches; no texture"],
+    ['b2', 'B2 colors, a shade each', "the same families, each block keeping the one shade it was set down with, as each of act 1's grains keeps its own; a pile reads as a heap of shades, and two the same can sit side by side"],
+    ['b3', 'B3 greys, neighbors apart', "B1 inside act 3's black and white: each block one flat grey of its good's own range, its own unless that sits within a step of a block it touches; no texture, no color"]]
     .map(([look, option, say]) => [`after-goods-${look || 'now'}`, { about: 'the acts', review: 'act 3: what the goods look like', // MOCK
       stage: 'mock: throwaway review code, never merged -- shows how it would look; the real build comes after you pick', option, say, // MOCK
       swap: () => { globalThis.__goodsLook = look; }, // MOCK
@@ -3495,8 +3495,8 @@ function pushback(what) {
 // The hops are made under reduced motion, so the camera is there at once and
 // no yard time passes for a beat to start in; the preference is put back.
 function padTo(id) {
-  const pad = window.__pad, was = pref('motion');
-  setPref('motion', true);
+  const pad = window.__pad, was = motionForcedNow();
+  forceMotion(true);
   pad.on();
   pad.press('b');
   // A press toward it along whichever way it lies further, the other way if
@@ -3512,7 +3512,7 @@ function padTo(id) {
     pad.press(first);
     if (pad.focus() === f) pad.press(then);
   }
-  setPref('motion', was);
+  forceMotion(was);
 }
 
 // The names under each part, in ABOUT's order.
