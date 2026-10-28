@@ -70,7 +70,7 @@ export const purse = money =>
   // Act 3's: rebel on the act; timber the mound less the blocks orders have
   // spoken for (after/build.js).
   money === 'rebel' ? (S.after ? S.after.rebel : 0) :
-  money === 'timber' ? (S.after ? (S.after.stock.timber || 0) - timberReserved() : 0) :
+  money === 'timber' ? (S.after ? Math.max(0, (S.after.stock.timber || 0) - timberReserved()) : 0) :
   S.stored;
 
 // What a unit is *drawn* as, for the units the yard has a coin for. A unit not

@@ -146,3 +146,33 @@ group('a pile whose count moves with nobody handing a block is caught by the rul
     ok(/nobody handing a block/.test(caught), 'rule 24 is red for it', caught.slice(0, 120))
   ];
 });
+
+group('with every member on a job, a timber bill still lands: one is lent to carry it and goes back to its post', async () => {
+  const stood = camp(4);
+  S.after.camp = 0;
+  // Every member there put on a job through the roster, a seat bought where
+  // the job's are full.
+  const press = job => window.__afterPress(job) || (window.__afterGrant({ timber: AFTER_PILES.timber.brim }), window.__buy(`after-seat-${job}`)
+    && runUntil(() => !S.after.orders.length, 240) && window.__afterPress(job));
+  const idle = () => S.after.bodies.some(b => b.job == null && b.state === 'work');
+  for (let k = 0; k < 40 && idle(); k++) press([AFTER_JOB.SAW, AFTER_JOB.CUT, AFTER_JOB.JOIN][k % 3]);
+  runUntil(() => !idle(), 60);
+  const busy = !idle();
+  window.__afterGrant({ rebel: 9000 });
+  window.__afterGrant({ timber: AFTER_PILES.timber.brim });
+  const jobs0 = S.after.bodies.filter(b => b.job).length;
+  const bought = window.__buy(REACH);
+  let wasLent = false;
+  const landed = runUntil(() => {
+    wasLent = wasLent || S.after.bodies.some(b => b.job && b.errand === AFTER_JOB.ORDER && b.load === 'plank');
+    return !S.after.orders.length;
+  }, 300);
+  const back = runUntil(() => !S.after.bodies.some(b => b.errand === AFTER_JOB.ORDER), 60);
+  window.__actsOn(null);
+  return [
+    ok(stood && busy && bought, 'every member on a job, the row bought', `${stood} ${busy} ${bought} ${S.after.bodies.map(b => b.job + ':' + b.state + ':' + b.pair).join()}`),
+    ok(landed && S.after.ups[REACH] === 1, 'the order is carried and the row lands'),
+    ok(wasLent, 'by a member lent off its job, its job kept'),
+    ok(back && S.after.bodies.filter(b => b.job).length === jobs0, 'and back at its post after', `${jobs0}`)
+  ];
+});

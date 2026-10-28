@@ -597,8 +597,27 @@ function runErrand(w, dt) {
 // are filled site by site (build.js, `fillBuilders`). None fills itself by a
 // count through the engine (no `want`): the roster's count is met by members
 // already standing in the place (`staff`), so nobody is made out of nothing.
+// A bought row's timber never waits for want of hands, as a station's
+// raising never does (build.js, `offPosts`): with nobody idle, the member on
+// a job nearest the mound, its hands empty, is lent to the order -- it keeps
+// its job, so its roster still counts it, carries a load, and goes back to
+// its post once no order has a block left to take up.
+const lent = w => w.job && w.errand === AFTER_JOB.ORDER;
+function lendHands() {
+  const a = S.after;
+  if (!timberReserved() || a.stock.timber <= 0 || a.camp > 0 || idleBodies().length || a.bodies.some(o => o.errand === AFTER_JOB.ORDER)) return;
+  const mound = fedAt('timber');
+  const free = a.bodies.filter(o => o.job && o.job !== AFTER_JOB.BUILD && o.state === 'work' && o.load == null && !o.out && !o.pick)
+    .sort((p, q) => Math.abs(p.x - mound) - Math.abs(q.x - mound));
+  if (free[0]) Object.assign(free[0], { errand: AFTER_JOB.ORDER, order: null, at: null, t: 0 });
+}
+function lentStep(w, dt) {
+  if (!carried(w) && !w.pick && (!nextOrder() || S.after.stock.timber <= 0)) { w.errand = null; w.order = null; return; }
+  JOB_STEP.orderer(w, dt);
+}
+const orLent = step => (w, dt) => (lent(w) ? lentStep(w, dt) : step(w, dt));
 export const AFTER_JOB_ROWS = {
-  ...Object.fromEntries(AFTER_JOBS.map(job => [job, { step: JOB_STEP[job] }])),
+  ...Object.fromEntries(AFTER_JOBS.map(job => [job, { step: orLent(JOB_STEP[job]) }])),
   [AFTER_JOB.BUILD]: { step: JOB_STEP.builder }
 };
 
@@ -643,6 +662,7 @@ export const AFTER_CREW = {
     if (a.bodies.some(w => w.state === 'gone')) a.bodies = a.bodies.filter(w => w.state !== 'gone');
     crowdLines(f.dt);
     staff();
+    lendHands();
     fillBuilders();
   },
   spare: () => S.after.camp > 0,
