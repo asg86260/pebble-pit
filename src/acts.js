@@ -22,8 +22,8 @@ import { HELL_PLACE } from './hell/place.js';
 import { AFTER_CREW } from './after/bodies.js';
 import { AFTER_PLOTS, AFTER_LANDING } from './after/piles.js';
 import { DEEP_LANDING } from './deep/scales.js';
-import { takeAt, survey } from './after/ground.js';
-import { blockAt, takeUnit } from './grid.js';
+import { takeAt, takeTopOf, survey } from './after/ground.js';
+import { blockAt, takeUnit, kindOf } from './grid.js';
 import { HELL_CREW } from './hell/bodies.js';
 import { S, afterGround } from './state.js';
 
@@ -47,7 +47,9 @@ const AFTER_GROUND = {
   b: afterGround, place: 'after',
   take(c, r) {
     const a = blockAt(afterGround, c, r);
-    if (a) return takeAt(a.r * afterGround.cols + a.c);
+    // a block with another on it is not the one to take: the top of its column is
+    // (the owner, 2026-10-28: a pile is taken off the top)
+    if (a) return takeAt(a.r * afterGround.cols + a.c) || takeTopOf(c, kindOf(afterGround.grid[r * afterGround.cols + c]).key);
     const v = takeUnit(afterGround, c, r);
     if (v) survey(true);
     return v;
