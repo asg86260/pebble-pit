@@ -1,6 +1,6 @@
 // Act 3's boards through the page (docs/wave-act3-build.md, track C): each
-// station's board opened as its plain click opens it (`__openAfterBoard`, what
-// Track A's click calls), drawn by the yard's own board builder in the yard's
+// station's board opened as its way in opens it (`__openAfterBoard`, the
+// board its UPGRADES button or, with no roster, its click asks for), drawn by the yard's own board builder in the yard's
 // sheet, and every row on it bought by a press on its tile, the way a player
 // buys it. The yard's objective line and its call to build the bench fade
 // out up there. What each board lists, and the crowd's readings against the

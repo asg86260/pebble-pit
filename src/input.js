@@ -127,8 +127,9 @@ canvas.addEventListener('auxclick', e => { if (e.button === 1) e.preventDefault(
 // thing to press there: a board opened under it would cover it and its bar.
 const overOrb = (x, y) => S.view === 'deep' && !!onOrb(x, y);
 // Up there a station's moving parts stand inside its ground, and are the hand
-// work's: the shop opens on the rest of the station, never on what a press
-// would take hold of (DESIGN.md, "Act 3's goods are blocks", rule 4).
+// work's: a station with no roster opens its shop on the rest of it, never
+// on what a press would take hold of (DESIGN.md, "Act 3's goods are blocks",
+// rule 4).
 const overWork = (x, y) => S.view === 'after' && gestureUnder(x, y);
 // The station whose board the pointer asks for: the hover, the click and the
 // tap all ask this one.

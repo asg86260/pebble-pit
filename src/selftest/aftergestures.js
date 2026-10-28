@@ -1,8 +1,9 @@
 // Act 3's hand work through the real pointer (after/gestures.js, wired in
 // input.js): a press, moves and a release dispatched on the canvas, the way a
 // mouse makes them, with the camera up in the afterlife. A station's moving
-// part is dragged where it stands; a plain click anywhere else on a station
-// opens its board beside it, and taking hold of a part shuts it (DESIGN.md,
+// part is dragged where it stands; its board opens from the UPGRADES button
+// over its roster (a station with none, from a plain click anywhere else on
+// it), and taking hold of a part shuts it (DESIGN.md,
 // "Act 3's goods are blocks", rule 4). The motions' rules are the node
 // tier's (test/after-gestures.test.mjs); this is only that the page's
 // pointer reaches them.

@@ -1,7 +1,8 @@
 // Act 3's hand work in the world (after/gestures.js; docs/wave-act3-build.md,
 // track A): every station worked by dragging its own moving part where it
-// stands, the faster the sooner, and a plain click on a station asking for
-// its board. Each motion is made the way the pointer makes it -- a press,
+// stands, the faster the sooner; a station's board asked for by the UPGRADES
+// button over its roster, or by a plain click on a station with no roster.
+// Each motion is made the way the pointer makes it -- a press,
 // moves and a release through the very calls input.js makes, at the world
 // points where the part is drawn, a frame of the act's clock between moves
 // (test/after-hands.mjs); the pad's through `__pad`. The setup each check
