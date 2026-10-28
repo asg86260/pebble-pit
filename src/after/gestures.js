@@ -32,7 +32,7 @@
 // clock with `run` and reads a fact about the game, not about the machine.
 
 import { S } from '../state.js';
-import { P, AFTER_SIGN_TIMBER, AFTER_SIGN_S, GESTURE_CUE_USES, GESTURE_CUE_FADE_S, GESTURE_CUE_IDLE_S, GESTURE_MARK_HOLD_S, GESTURE_MARK_FADE_S,
+import { P, AFTER_PILES, AFTER_SIGN_TIMBER, AFTER_SIGN_S, GESTURE_CUE_USES, GESTURE_CUE_FADE_S, GESTURE_CUE_IDLE_S, GESTURE_MARK_HOLD_S, GESTURE_MARK_FADE_S,
          GESTURE_BUBBLE_CRIT, GESTURE_BUBBLE_SLACK, GESTURE_GRAB_SLACK,
          GESTURE_SAW_AMP, GESTURE_SAW_VMAX, GESTURE_SAW_FOLLOW, GESTURE_SAW_END, GESTURE_SAW_EASE,
          GESTURE_STUMP_DRAG, GESTURE_STUMP_MAX, GESTURE_STUMP_FOLLOW, GESTURE_STUMP_SINK, GESTURE_STRAIN_LIFT, GESTURE_STRAIN_S,
@@ -213,7 +213,8 @@ const DEFS = {
       const t = T();
       // A tap off a nail, or a nail already flush, is a miss: nothing.
       if (k == null || k < 0 || t - g.strike < GESTURE_SWING_S) return 'tap';
-      if (S.after.stock.timber < AFTER_SIGN_TIMBER && g.nails.every(n => n === 0)) return 'tap';   // no blank without timber
+      if (benchShort() && g.nails.every(n => n === 0)) return 'tap';   // no blank without timber
+      if (lastTap(g) && !signFits()) return 'tap';                      // the last blow waits for a sign it can make
       g.strike = t; g.hit = k; g.last = t;
       g.nails[k] += 1;
       used(g);
@@ -227,7 +228,8 @@ const DEFS = {
       const t = T(), joiner = S.after.bodies.some(b => b.at === 'workshop');
       const every = AFTER_SIGN_S / (GESTURE_NAILS * GESTURE_NAIL_TAPS);
       if (!joiner || t - g.last < GESTURE_JOINER_WAIT_S || t - g.auto < every) return;
-      if (g.nails.every(n => n === 0) && S.after.stock.timber < AFTER_SIGN_TIMBER) return;
+      if (g.nails.every(n => n === 0) && benchShort()) return;
+      if (lastTap(g) && !signFits()) return;
       const k = g.nails.findIndex(n => n < GESTURE_NAIL_TAPS);
       g.auto = t; g.strike = t; g.hit = k; g.nails[k] += 1;
       settleSign(g);
@@ -244,6 +246,19 @@ const DEFS = {
     down(g) { tip(g, 1); return 'tap'; },
   }
 };
+// The timber a blank is cut from: the workshop's own bench pile where it has
+// one (track B's `benchtimber`), else the timber mound.
+const benchTimber = () => S.after.stock.benchtimber ?? S.after.stock.timber;
+const benchShort = () => benchTimber() < AFTER_SIGN_TIMBER;
+// Whether the blow about to land is the one that drives the last nail flush.
+const lastTap = g => g.nails.reduce((n, k) => n + (GESTURE_NAIL_TAPS - k), 0) === 1;
+// Whether a sign could be made now: timber on the bench for it and room in
+// the rack (its brim, where the rack is a counted pile), so the last nail is
+// never driven only for the four to be pulled with no sign made.
+function signFits() {
+  const brim = AFTER_PILES.signs?.brim;
+  return !benchShort() && (brim == null || S.after.stock.signs < brim);
+}
 // Four nails driven flush: the sign is done, joined off the timber, and a new
 // blank stood in the bench.
 function settleSign(g) {
