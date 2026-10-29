@@ -24,6 +24,9 @@
   .card.sel { outline: 3px solid var(--fg); outline-offset: 1px; }
   .card.phantom { cursor: default; border-style: dashed; }
   .card .t { font-weight: 700; line-height: 1.25; }
+  .card .ch { font-size: 11px; color: var(--dim); margin: -2px 0 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .changes { margin: 0 0 6px; font-size: 12px; }
+  .changes .flag { margin-left: 0; margin-right: 4px; }
   .card .w { font-size: 11px; color: var(--dim); margin: 2px 0 4px; }
   .landedrow { border: 1px solid var(--hair); padding: 4px 8px; color: var(--dim); margin-bottom: 10px; font-size: 12px; background: var(--bg); display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
   .landedrow button { font-size: 11px; padding: 0 8px; border-width: 1px; }
@@ -177,7 +180,7 @@ async function fetchPrints() {
   } catch { printed = null; }
 }
 // What agents are doing (written) and what the owner has said (notes).
-let info = { entries: [], notes: [] };
+let info = { entries: [], notes: [], changes: [] };
 async function fetchInfo() {
   try { const r = await fetch('/__review/status', { cache: 'no-store' }); if (r.ok) info = await r.json(); } catch {}
 }
@@ -194,6 +197,9 @@ const isLanded = x => !!landedOf(x)?.landed;
 const STALE_MS = 2 * 3600e3;
 const LBL = { waiting: 'WAITING ON YOU', iterating: 'ITERATING', building: 'BUILDING', signed: 'SIGNED OFF', landed: 'LANDED' };
 const notesOf = x => info.notes.filter(n => slug(n.review) === slug(x.name));
+const changesOf = x => (info.changes || []).filter(c => slug(c.review) === slug(x.name)).sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
+const lastNoteAt = x => notesOf(x).reduce((a, n) => Math.max(a, Date.parse(n.at) || 0), 0);
+const isNewChange = (x, c) => Date.parse(c.at) > lastNoteAt(x);
 const entryOf = x => info.entries.find(e => slug(e.review) === slug(x.name));
 const sceneOfNote = n => (/\(([^()]+)\)\s*$/.exec(n?.option || '') || [])[1];
 // -> { state, what, since, stale, rebuilding (the scene a signed-off review is redoing) }
@@ -232,8 +238,9 @@ function drawBoard() {
       : p ? `ready · updated ${ago(p.since)}` : '';
     const chips = x.options.map(o => `<span class="chip ${s.rebuilding === o.scene ? 'rebuild' : ''}" title="${esc(o.label)}"><span class="cl">${esc(chipLabel(o.label))}</span> ${mkHtml(optKind(x, o))}</span>`).join('')
       || '<span class="dim">no options yet</span>';
+    const c0 = x.phantom ? null : changesOf(x)[0], ch = c0 && isNewChange(x, c0) ? `<div class="ch" title="${esc(c0.text)}">changed: ${esc(c0.text)}</div>` : '';
     return `<button class="card ${x === rev ? 'sel' : ''} ${x.phantom ? 'phantom' : ''}" data-rev="${slug(x.name)}" data-state="${s.state}"><div class="t">${esc(x.name)}${flagHtml(flag)}</div>`
-      + `<div class="w">${w}${s.stale ? '<span class="stale">stale?</span>' : ''}</div><div>${chips}</div></button>`;
+      + `<div class="w">${w}${s.stale ? '<span class="stale">stale?</span>' : ''}</div>${ch}<div>${chips}</div></button>`;
   };
   const open = cs.filter(x => st.get(x).state !== 'landed'), landed = cs.filter(x => st.get(x).state === 'landed');
   let html = `<div class="kan">${COLS.map(([s, t, hot]) => {
@@ -255,9 +262,10 @@ function drawBoard() {
 // The open review's heading, its in-flight line and its history: redrawn on every poll
 function drawHead() {
   if (!rev) return;
-  const s = statusOf(rev), p = printed?.reviews[slug(rev.name)];
+  const s = statusOf(rev), p = printed?.reviews[slug(rev.name)], cl = changesOf(rev).slice(0, 3);
   $('head').innerHTML = `<h2>${esc(rev.name)} <span class="pill s-${s.state}">${LBL[s.state]}</span>${flagHtml(revFlag(rev))} ${p ? `<span class="dim">updated ${ago(p.since)}</span>` : ''}</h2>`
-    + `<div class="flight ${live(s) ? '' : 'none'}"><span class="dim">in flight:</span> ${inFlight(s)}</div>`;
+    + `<div class="flight ${live(s) ? '' : 'none'}"><span class="dim">in flight:</span> ${inFlight(s)}</div>`
+    + (cl.length ? `<div class="changes"><b>changes:</b> ${cl.map(c => `${isNewChange(rev, c) ? '<span class="flag new">new</span>' : ''}${hhmm(c.at)} ${esc(c.text)}`).join(' &nbsp;|&nbsp; ')}</div>` : '');
   const ns = notesOf(rev).sort((a, b) => Date.parse(a.at) - Date.parse(b.at)).slice(-3), line = n => `${hhmm(n.at)} you: ${n.verdict === 'stop' ? 'stop' : 'keep iterating'}${n.say ? ` "${esc(n.say)}"` : ''}`;
   $('hist').innerHTML = `<b>last:</b> ${ns.length ? ns.reverse().map(line).join(' &nbsp;|&nbsp; ') : 'no note yet.'}`;
 }
