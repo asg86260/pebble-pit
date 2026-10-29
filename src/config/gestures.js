@@ -106,20 +106,6 @@ export const GESTURE_SWING_S = 0.12;
 export const GESTURE_JOINER_WAIT_S = 1.5;
 
 
-// The sawdust heap: a load dragged to the edge tips there; flung toward it
-// at least GESTURE_FLING_MIN px a second it flies, and the faster up to
-// GESTURE_FLING_MAX the more loads go with it, up to GESTURE_FLING_LOADS. The
-// fling is read over the last GESTURE_FLING_WINDOW_S of the drag; a flung load
-// falls under this gravity, thrown up this fast, and a load let go short of
-// the edge fades back onto the heap over GESTURE_LOAD_FADE_S.
-export const GESTURE_FLING_MIN = 80;
-export const GESTURE_FLING_MAX = 300;
-export const GESTURE_FLING_LOADS = 3;
-export const GESTURE_FLING_WINDOW_S = 0.1;
-export const GESTURE_FLING_GRAV = 400;
-export const GESTURE_FLING_LIFT = 90;
-export const GESTURE_LOAD_FADE_S = 0.4;
-
 // The pad (the mock's pad lines): a press of A on the stump lifts it this
 // much; the stick's turn counts a stir or a spin past this much push; a flick
 // toward the heap's edge is read off its furthest push.

@@ -70,8 +70,7 @@ export const AFTER_TONES = { paper: 0, pale: 3, mid: 6, ink: 10 };
 export const AFTER_GOODS = {
   log:     ['#9c6a3c', '#805731', '#75502d', '#5a3d23'],   // the felled log: bark brown
   plank:   ['#e6c896', '#bda47b', '#ac9670', '#857457'],   // timber: sawn pale wood
-  sign:    ['#57606b', '#474f58', '#414850', '#32383e'],   // the sign: a painted slate board
-  sawdust: ['#f0dcb6', '#c5b495', '#b4a588', '#8b806a']    // sawdust: the timber's wood a step paler, a grain each
+  sign:    ['#57606b', '#474f58', '#414850', '#32383e']    // the sign: a painted slate board
 };
 
 // The same families on the dark page, lifted a step toward the light as
@@ -81,8 +80,7 @@ export const AFTER_GOODS = {
 export const AFTER_GOODS_DARK = {
   log:     ['#b8814a', '#98683b', '#8a5d34', '#6c4727'],
   plank:   ['#efd6a6', '#cdb68b', '#bba57d', '#988764'],
-  sign:    ['#8793a1', '#707b88', '#667180', '#4f5a67'],
-  sawdust: ['#f5e6c4', '#d2c3a3', '#c1b496', '#9a8e76']
+  sign:    ['#8793a1', '#707b88', '#667180', '#4f5a67']
 };
 
 // Act 3 on the dark page (DESIGN.md, "The sky, redrawn flat"): the same order

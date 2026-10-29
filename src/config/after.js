@@ -49,9 +49,8 @@ export const AFTER_PUFF_LEAST = 4;        // cells: a run of billow narrower tha
 // dropped, "i dont want the hills to go up then down"): each station's whole
 // ground raised this many cells off the floor line, its own shelf, and an
 // eased ramp of cloud between two shelves at different heights. The grove,
-// the pedestal and God's crowd stand on the line itself; the sawdust heap
-// and its notch are the saw mill's. Three times the first shelves (the
-// owner, 2026-10-26: "C. shelves and slopes", the camp rising about twenty
+// the pedestal and God's crowd stand on the line itself. Three times the first
+// shelves (the owner, 2026-10-26: "C. shelves and slopes", the camp rising about twenty
 // cells), each ramp a cell a column at its steepest, the stations laid as
 // far apart as their ramp needs (after/art.js, `rampRun`).
 // The lip of billows along the path's front (render/after/ground.js; the
@@ -302,16 +301,6 @@ export const AFTER_DIG_S = 4;              // a woodcutter digging a stump out
 // a moment.
 // A post bought on its card then works it on the worker's clock, slower.
 export const AFTER_WORK_HOLD_S = 0.3;
-export const AFTER_SAWDUST_BRIM = 24;      // the heap's brim
-export const AFTER_SAWDUST_BRIM_UP = 48;   // ...with the mill's bigger heap
-// The saw never stops for good: a click on the heap tips
-// a load through the cloud's edge beside it (a notch in the floor), the heap
-// held tipped a moment and the grains falling and fading; and a sawyer tips
-// a load there too once the heap has stood at its brim a while.
-export const AFTER_TIP_LOAD = 8;           // sawdust a tip takes, by the click or a sawyer
-export const AFTER_TIP_HOLD_S = 0.4;       // the heap held tipped
-export const AFTER_SPILL_S = 1.2;          // the grains falling through the notch and fading
-export const AFTER_SWEEP_WAIT_S = 8;       // the heap stands at its brim, its mark up, this long before a sawyer tips
 export const AFTER_SAW_S = 3;              // a sawyer's cut
 export const AFTER_SIGN_TIMBER = 4;        // timber blocks a sign: signs are timber alone (call 11), a 4x4 of four 2x2s
 export const AFTER_SIGN_S = 25;             // a joiner's sign
@@ -377,11 +366,6 @@ export const AFTER_ROSTER_DOWN = P * 10;
 // ...and this much further: a post with a board carries its UPGRADES button
 // over its count (roster.js), and the button must clear the cloud's lip.
 export const AFTER_ROSTER_SHOP_DROP = P * 6;
-// The sawdust heap's pile-full mark hangs under the heap, in the strip the
-// saw mill's UPGRADES button stands in; where the two would meet, the mark
-// stands this far past the button's right edge (its middle), clear of the
-// button's hit and its own hover's half-slot (render/pilemarks.js).
-export const AFTER_HEAP_MARK_OFF = P * 5;
 // A job's seats past the first, the bill for each in turn (the owner,
 // 2026-10-20: "Each station should be locked to one worker, and more slots
 // can be purchased per station"): rebel and dust first, then timber and
@@ -454,7 +438,6 @@ export const AFTER_UPGRADES = {
   // the timber on signs and has no way to the next tree.
   'after-stumps':      { card: 'grove',     bills: [[['rebel', 200], ['dust', 40000], ['spore', 10000]]] },                                   // stump removal: woodcutters dig stumps too
   'after-blade':       { card: 'mill',      bills: [[['rebel', 180], ['timber', 15], ['dust', 35000], ['spore', 8000]]] },                    // a second blade
-  'after-heap':        { card: 'mill',      bills: [[['rebel', 80], ['timber', 8], ['dust', 15000]]] },                                      // a bigger heap
   'after-bench':       { card: 'workshop',  bills: [[['rebel', 300], ['timber', 18], ['dust', 70000], ['spore', 18000], ['shard', 18000], ['scale', 1000]]] },  // a second bench
   'after-signreach':   { card: 'workshop',  bills: [[['rebel', 600], ['timber', 18], ['dust', 120000], ['spore', 45000], ['shard', 50000], ['scale', 2500], ['spark', 10000]]] }   // a bigger sign
 };
@@ -584,9 +567,8 @@ export const AFTER_COUNT_LIFT = P;
 //             the span of log middles a log thrown by hand lands on the bed in
 //   approach  cells a stroke the bed carries a log up to the blade: more than the
 //             seat's span, so a log anywhere on it reaches the blade in one stroke
-//   strokes   down-strokes a column of the log takes, column by column: three
-//             columns of timber, a 2x2 block each, then the kerf, four grains,
-//             one a down-stroke
+//   strokes   down-strokes a column of the log takes, column by column: four
+//             columns of timber, a 2x2 block each
 //   stroke_s  a stroke at the sawyer's pace, seconds
 //   pose      where the sawyer's body stands (its left column, top row): in the
 //             wheel, where it climbs out at its side, at the log pile and at the bed
@@ -594,11 +576,7 @@ export const AFTER_COUNT_LIFT = P;
 //             bottom on it; `ride` cells a second a cut block rides the bed out,
 //             `slide` the seconds down the chute; off its foot a block keeps
 //             its speed and falls onto the mound's near column (after/mill.js)
-//   heap      the sawdust heap under the bed between the legs, its left column,
-//             columns and rows (a grain a cell); `hatch` the two columns of the
-//             floor under it a load is tipped through, and `tipAt` the column a
-//             body stands on to tip it, clear of the frame's right foot
-//   fall      a grain's fall under the blade, cells a second squared
+//   fall      a cut block's fall off the chute's foot, cells a second squared
 //   set_s     a log set down on the bed: lifted and swung over, then held down;
 //             `held` of it the held set-down, `puff` the puff off its ends
 //   chips_s   the burst of chips at each stroke's bottom
@@ -608,19 +586,11 @@ export const AFTER_MILL = {
   beam: { x: 35, y: -25, long: 8, short: 5, stroke: 3 },
   seat: { x: 34, land: [33, 38] },
   approach: 6,
-  strokes: [2, 2, 2, 4],
+  strokes: [4, 4, 4, 4],
   stroke_s: 0.56,
   pose: { wheel: { x: 17.5, y: -7 }, side: 10, pile: 6, bed: 28 },
   chute: { x0: 50, y0: -6, x1: 58, y1: -3, ride: 4, slide: 0.5 },
-  heap: { x: 34, cols: 13, rows: 4, hatch: 44, tipAt: 51 },
   fall: 36,
   set_s: 0.6, held: 0.25, puff: 0.3,
   chips_s: 0.6
 };
-// A pass of the sand rules over the sawdust heap, seconds: grains settle
-// quicker than blocks (AFTER_PILE_SETTLE_S), as act 1's dust does.
-export const AFTER_HEAP_SETTLE_S = 0.04;
-// What a log saws into besides its timber: the kerf, its last column, a grain
-// a cell (16 cells less the three 2x2 timber blocks).
-import { AFTER_LOG_TIMBER as LOG_TIMBER } from './afterpiles.js';
-export const AFTER_KERF_GRAINS = AFTER_BLOCK.log * AFTER_BLOCK.log - LOG_TIMBER * AFTER_BLOCK.plank * AFTER_BLOCK.plank;

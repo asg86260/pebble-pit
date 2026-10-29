@@ -56,7 +56,7 @@ import { sayGoOn } from './actbeats.js';
 import { onGoOn } from './render/portals.js';
 import * as AFTER_PLACE from './after/index.js';
 import { gestureDown, gestureMove, gestureUp, gestureHeld, gestureUnder, gestureHover, pressTaken } from './after/gestures.js';
-import { stationParts, pileOwner, pileBox } from './after/place.js';
+import { pileOwner, pileBox } from './after/place.js';
 import { built } from './after/levels.js';
 import { lyingAt, kindOf } from './after/grove.js';
 import { JOB_NAMES } from './after/rows.js';
@@ -581,7 +581,6 @@ function afterAt(x, y) {
     const owner = pileOwner(what);
     if (owner && built(owner) && inRect(pileBox(owner, what, AFTER_PILE_REACH), x, y)) return msg(key);
   }
-  if (S.after && built('mill') && inRect(stationParts('heap').heap, x, y)) return msg('hover-heap');
   for (const r of STATIONS) {
     if (r.place !== 'after' || !r.name || !r.stand || !r.open()) continue;
     if (nearStation(r.key, x, y) || inRect(standRect(r.key), x, y)) return r.name;

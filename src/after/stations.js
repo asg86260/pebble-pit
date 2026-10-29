@@ -14,14 +14,13 @@
 
 import { held } from '../reset.js';
 import { S } from '../state.js';
-import { P, AFTER_ROSTER_DOWN, AFTER_ROSTER_SHOP_DROP, AFTER_HEAP_MARK_OFF } from '../config.js';
+import { P, AFTER_ROSTER_DOWN, AFTER_ROSTER_SHOP_DROP } from '../config.js';
 import { msg } from '../lang.js';
 import { afterlifeOn } from '../acts.js';
 import { built } from './levels.js';
 import { stationBox, groundOf, afterFloor, closed, pilePlace, pileOwner } from './place.js';
 import { PILED, pileFull } from './piles.js';
 import { godCampAt, godMid, faceY } from './sky.js';
-import { heapFull, heapMarkBox, HEAP_PILE } from './mill.js';
 import { shopBoxOf, rosterShops } from '../roster.js';
 import { drawnMid } from '../footprints.js';
 
@@ -112,23 +111,6 @@ export const AFTER_STATION_ROWS = [
   })),
   // A press on a tree is the saw's (after/gestures.js).
   row('grove', { open: live }),
-  // The sawdust heap at its brim is a pile that can fill: the shared mark
-  // hangs under it and its hover says why the saw stopped. It is no place to
-  // press (`hit` answers nothing); its name is the one its hover gives it.
-  // The heap is under the bed and the saw mill's UPGRADES button is centered
-  // on the mill's drawing, both in the strip under the floor: where they
-  // would meet, the mark stands past the button's right edge instead.
-  {
-    key: HEAP_PILE, place: 'after', glyph: 'crate', after: [], needs: () => false,
-    get name() { return msg('hover-heap'); },
-    open: live, hit: () => false,
-    stand: () => {
-      const b = heapMarkBox(), k = shopBoxOf('after-mill'), x = k ? Math.max(b.x + b.w / 2, k.x + k.w + AFTER_HEAP_MARK_OFF) : b.x + b.w / 2;
-      return { ...b, x: x - b.w / 2 };
-    },
-    pile: heapFull,
-    get full() { return msg('after-stall-heap'); }
-  },
   // The counted piles at their brims (after/piles.js): each wears the same
   // mark over its plot, and its hover is the yard's own "pile is full".
   ...PILED.map(what => ({

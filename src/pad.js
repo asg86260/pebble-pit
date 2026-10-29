@@ -588,10 +588,10 @@ function yardPresses(p, dirs, pressed, released, lx, ly, dt) {
 
   // An act-3 station under the focus: A and the stick work its own motion
   // where it stands (after/gestures.js), Y opens its board (the grove's for
-  // a tree or a stump, the saw mill's for its heap); the d-pad hops off it.
+  // a tree or a stump); the d-pad hops off it.
   if ((S.padFocus || '').startsWith('ag:')) {
     const key = S.padFocus.slice(3);
-    if (pressed('y')) { openAfterBoard(key === 'tree' || key === 'stump' ? 'grove' : key === 'heap' ? 'mill' : key); return; }
+    if (pressed('y')) { openAfterBoard(key === 'tree' || key === 'stump' ? 'grove' : key); return; }
     padGesture(key, { a: !!p.down.a, pressed: pressed('a'), released: released('a'), lx, ly });
     if ((pressed('lb') || pressed('rb')) && !carried) turnBoard(pressed('rb') ? 1 : -1);
     return;

@@ -7,7 +7,7 @@
 // trunk ten cells tall; the handsaw across the trunk (saw 3 of
 // docs/mocks/act3-saw-2026-10-18, one person's: a grip at the near end, no
 // peg at the tip), its kerf opening from the near side a column at a time in
-// the blade's rows, sawdust at the foot; the fall, the tree over the stump
+// the blade's rows; the fall, the tree over the stump
 // turned as one drawing by its true angle about the cut, quicker as it goes
 // (the motion rule, the owner 2026-10-20), hitting the ground with the dust
 // coming up and rocking back once; then its trunk splitting into the logs,
@@ -358,8 +358,7 @@ export function drawGrove() {
       pine(d, stageOf(p.stage, big), a);
       // The saw on its trunk where the hand has put it, on whole cells; or,
       // with a woodcutter at it, pushed and pulled in held steps while the
-      // chops come. Its kerf opens a column a third of the chops, and
-      // sawdust gathers at the foot.
+      // chops come. Its kerf opens a column a third of the chops.
       if (p.stage === GROWN) {
         const st = stageOf(GROWN, big), [w, h] = st.trunk, kerf = Math.round(Math.min(1, p.chops / TREE_CHOPS) * w);
         const inHand = hand && hand.i === i, cutting = p.chip != null && t - p.chip < AFTER_ART_WORK_S;

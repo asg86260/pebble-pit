@@ -40,7 +40,7 @@ group('each board lists its rows on its shelves: seats, then upgrades; the shack
     shack: [[msg('after-sect-build'), ['mill', 'workshop'].map(s => `after-build-${s}`)]],
     pedestal: [[ups, ['after-recruit', 'after-podium']]],
     grove: [[seats, ['after-seat-woodcutter']], [ups, ['after-axe', 'after-plot', 'after-grow', 'after-tree', 'after-stumps']]],
-    mill: [[seats, ['after-seat-sawyer']], [ups, ['after-blade', 'after-heap']]],
+    mill: [[seats, ['after-seat-sawyer']], [ups, ['after-blade']]],
     workshop: [[seats, ['after-seat-joiner']], [ups, ['after-bench', 'after-signreach']]]
   };
   const off = Object.entries(want).filter(([k, v]) => JSON.stringify(all[k]) !== JSON.stringify(v)).map(([k]) => k);

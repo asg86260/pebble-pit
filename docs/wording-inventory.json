@@ -5894,13 +5894,6 @@
   "text": "sign"
  },
  {
-  "id": "hover-heap",
-  "group": "Hover",
-  "where": "src/after/stations.js",
-  "context": "the hover over the sawdust heap on the saw mill's ground",
-  "text": "sawdust heap"
- },
- {
   "id": "hover-portal-up",
   "group": "Hover",
   "where": "src/input.js",
@@ -8141,13 +8134,6 @@
   "text": "second blade"
  },
  {
-  "id": "after-row-heap",
-  "group": "Act 4 (placeholder)",
-  "where": "src/after/rows.js",
-  "context": "act 3 card row (placeholder): the saw mill's bigger sawdust heap",
-  "text": "bigger heap"
- },
- {
   "id": "after-row-bench",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
@@ -8194,7 +8180,7 @@
   "group": "Act 4 (placeholder)",
   "where": "src/after/roster.js",
   "context": "act 3 job name (placeholder): a sawyer, named on its seat row",
-  "text": "fetches logs from the forestry shack and saws them into timber and sawdust"
+  "text": "fetches logs from the forestry shack and saws them into timber"
  },
  {
   "id": "after-job-joiner",
@@ -8230,13 +8216,6 @@
   "where": "src/selftest/afterboards.js",
   "context": "act 3 roster hover (placeholder): why a station's worker is standing still",
   "text": "waiting on logs"
- },
- {
-  "id": "after-stall-heap",
-  "group": "Act 4 (placeholder)",
-  "where": "src/after/stations.js",
-  "context": "act 3 roster hover (placeholder): why a station's worker is standing still",
-  "text": "the sawdust heap is full"
  },
  {
   "id": "after-stall-timber",

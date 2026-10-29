@@ -95,15 +95,6 @@ export function nailSign(every = GESTURE_SWING_S * 2) {
   return taps;
 }
 
-// A load off the heap carried slowly to the notch and let go there.
-export function tipHeap() {
-  const p = partsOf('heap'), a = mid(p.heap), to = p.edge + P;
-  if (!gestureDown(a.x, a.y)) return false;
-  timeTo(t => gestureMove(a.x + Math.min(1, t / 1.5) * (to - a.x), a.y), () => false, 1.6);
-  gestureUp(to, a.y);
-  run(0.5);
-  return true;
-}
 // A log off the saw mill's pile onto its bed by hand (DESIGN.md, "The saw
 // mill": "by hand the player sweeps a log off the pile and lets it go over
 // the bed"): the yard's hand pressed on the pile's first column, then let go

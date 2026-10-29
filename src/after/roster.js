@@ -21,7 +21,6 @@ import { built, seatsOf, stumpsOn } from './levels.js';
 import { groundOf, closed } from './place.js';
 import { crewAt, bodiesOf, spareMembers, putOn, walkLeft, holds } from './bodies.js';
 import { standing, stumped } from './grove.js';
-import { heapFull } from './mill.js';
 import { pileFull, pileCount } from './piles.js';
 import { lying } from './ground.js';
 import { JOB_NAMES } from './rows.js';
@@ -45,7 +44,7 @@ const SRC = {
 const noLogs = pile => pileCount(pile) <= 0 && pileCount('grovelogs') <= 0;
 const STALL = {
   woodcutter: () => (!lying().length && !S.after.plots.some(p => standing(p) || (stumpsOn() && stumped(p))) ? 'after-stall-trees' : null),
-  sawyer: () => (heapFull() ? 'after-stall-heap' : pileFull('timber') ? 'hover-pile-full' : noLogs('logs') ? 'after-stall-logs' : null),
+  sawyer: () => (pileFull('timber') ? 'hover-pile-full' : noLogs('logs') ? 'after-stall-logs' : null),
   joiner: () => (pileCount('timber') < AFTER_SIGN_TIMBER && pileCount('signs') < holds('sign') ? 'after-stall-timber' : null)
 };
 const DOES = {

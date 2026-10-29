@@ -2732,9 +2732,6 @@ hover-plank = plank
 # the hover over a sign in the hand's reach in act 3, lying on the floor
 hover-sign = sign
 
-# the hover over the sawdust heap on the saw mill's ground
-hover-heap = sawdust heap
-
 # the hover over the portal, from the deep
 hover-portal-up = the portal — up to the yard
 
@@ -3541,9 +3538,6 @@ after-row-stumps = stump removal
 # act 3 card row (placeholder): the saw mill's second blade, two logs a cut
 after-row-blade = second blade
 
-# act 3 card row (placeholder): the saw mill's bigger sawdust heap
-after-row-heap = bigger heap
-
 # act 3 card row (placeholder): the workshop's second bench, two signs at once
 after-row-bench = second bench
 
@@ -3559,7 +3553,7 @@ after-job-woodcutter = woodcutter
 
 # act 3 job name (placeholder): a sawyer, named on its seat row
 after-job-sawyer = sawyer
-    .says = fetches logs from the forestry shack and saws them into timber and sawdust
+    .says = fetches logs from the forestry shack and saws them into timber
 
 # act 3 job name (placeholder): a joiner, named on its seat row
 after-job-joiner = joiner
@@ -3573,9 +3567,6 @@ after-stall-trees = waiting on a tree to grow
 
 # act 3 roster hover (placeholder): why a station's worker is standing still
 after-stall-logs = waiting on logs
-
-# act 3 roster hover (placeholder): why a station's worker is standing still
-after-stall-heap = the sawdust heap is full
 
 # act 3 roster hover (placeholder): why a station's worker is standing still
 after-stall-timber = waiting on timber

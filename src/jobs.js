@@ -97,9 +97,6 @@ export const AFTER_JOB = Object.freeze({
   SAW:     'sawyer',
   JOIN:    'joiner',
   CARRY:   'carrier',
-  // An idle member tipping the sawdust heap at its notch: an errand, bought
-  // by no post.
-  SWEEP:   'sweeper',
   // An idle member carrying a timber bill's blocks off the mound to the
   // station it bought (after/build.js, the orders): an errand too.
   ORDER:   'orderer',

@@ -1,6 +1,6 @@
 // Act 3 keeps no stock (DESIGN.md, "One resource system for every act",
 // section 5): a pile's count is its strip's units on the ground and the
-// sawdust heap's is its grains, read off the cells and written nowhere, so a
+// read off the cells and written nowhere, so a
 // count can never disagree with what lies there. The only numbers left beside
 // goods are the accounts behind a sink and a claim on cells.
 //
@@ -11,10 +11,7 @@
 import { group, ok, run, runUntil, yard } from './helpers.mjs';
 import { goodCount, goodsRead, PILED } from '../src/after/piles.js';
 import { units, counted, stripOf } from '../src/after/ground.js';
-import { heapPlot, sawdustCount } from '../src/after/mill.js';
-import { count } from '../src/grid.js';
 import { RIM_PIECES } from '../src/config.js';
-import { SAVE_V } from '../src/config/saves.js';
 
 const S = yard.S;
 const KEY = 'boulder-clicker/v4';
@@ -37,15 +34,14 @@ function camp(n) {
 // A pile's units walked off the cells apart from the count that is asked for.
 const walked = what => { const s = stripOf(what); return units().filter(u => u.c0 >= s.c0 && u.c0 < s.c1 && counted(u)).length; };
 
-group('act 3 keeps no stock: every pile is its cells, the heap is its grains, and a save holds the cells', async () => {
+group('act 3 keeps no stock: every pile is its cells, and a save holds the cells', async () => {
   camp(6);
   window.__afterGrant({ grovelogs: 8, logs: 4, timber: 6 });
   window.__afterPress('sawyer'); window.__afterPress('joiner');
-  let agree = true, peak = 0;
+  let agree = true;
   for (let k = 0; k < 600; k++) {
     run(0.5);
-    peak = Math.max(peak, sawdustCount());
-    if (PILED.some(w => walked(w) !== goodCount(w)) || sawdustCount() !== count(heapPlot())) agree = false;
+    if (PILED.some(w => walked(w) !== goodCount(w))) agree = false;
   }
   yard.persist();
   const blob = JSON.parse(localStorage.getItem(KEY));
@@ -55,27 +51,8 @@ group('act 3 keeps no stock: every pile is its cells, the heap is its grains, an
   window.__actsOn(null);
   return [
     ok(!('stock' in S.after) && !('stock' in blob.after), 'the act keeps no stock, in the game or in its save', Object.keys(blob.after).join(' ')),
-    ok(agree && peak > 0, 'through a run of the chain every pile reads what its strip holds and the heap what it carries', `${peak} grains at most`),
-    ok(typeof blob.after.heap === 'string' && blob.after.ground && blob.after.ground.blocks.length > 0, 'and the save holds the heap and the ground as cells', `${typeof blob.after.heap}`),
+    ok(agree, 'through a run of the chain every pile reads what its strip holds'),
+    ok(blob.after.ground && blob.after.ground.blocks.length > 0, 'and the save holds the ground as cells'),
     ok(JSON.stringify(before) === JSON.stringify(after), 'read back, every count is what it was', `${JSON.stringify(before)} -> ${JSON.stringify(after)}`)
-  ];
-});
-
-group('a save of the day before, with its stock numbers, reads back with its sawdust on the heap', async () => {
-  camp(2);
-  run(2);
-  yard.persist();
-  const blob = JSON.parse(localStorage.getItem(KEY));
-  // the shape of v32: a stock copy of the piles and the heap's count, no heap cells
-  blob.saveV = 32;
-  blob.after.stock = { logs: 0, timber: 0, sawdust: 9, signs: 0, grovelogs: 0, benchtimber: 0 };
-  blob.after.heap = null;
-  localStorage.setItem(KEY, JSON.stringify(blob));
-  yard.restore();
-  const grains = sawdustCount();
-  window.__actsOn(null);
-  return [
-    ok(SAVE_V >= 33 && grains === 9, 'the nine grains of sawdust the old save counted are on the heap', `${grains}`),
-    ok(!('stock' in S.after), 'and the stock is gone')
   ];
 });

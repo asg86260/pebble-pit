@@ -103,7 +103,7 @@ const UP_NAMES = {
   'after-podium': () => msg('after-row-podium'), 'after-axe': () => msg('after-row-axe'),
   'after-plot': () => msg('after-row-plot'), 'after-grow': () => msg('after-row-grow'),
   'after-tree': () => msg('after-row-tree'), 'after-stumps': () => msg('after-row-stumps'),
-  'after-blade': () => msg('after-row-blade'), 'after-heap': () => msg('after-row-heap'),
+  'after-blade': () => msg('after-row-blade'),
   'after-bench': () => msg('after-row-bench'), 'after-signreach': () => msg('after-row-signreach')
 };
 // What a purchase does beyond counting itself: a plot cleared and a sapling

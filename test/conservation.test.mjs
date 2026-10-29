@@ -1,7 +1,7 @@
 // One conservation rule (DESIGN.md, "One resource system for every act",
 // sections 5 and 8; verify.js rule 23): a unit of act 3 appears or vanishes
 // only at a named source or sink -- a tree felled, a cut at the saw, a sign
-// joined, a tip through the hatch, a sign planted, an order laid, a band
+// joined, a sign planted, an order laid, a band
 // laid, a load made at the shack's door -- and every group in the node tier
 // asks it on every frame. These checks are about the rule itself: it is quiet
 // through the played chain, with every door named, and red for a unit written
@@ -18,7 +18,6 @@ import { deepBed } from '../src/state.js';
 import { putBlock, takeUnit, addGrain, cellOf } from '../src/grid.js';
 import { afterGround } from '../src/state.js';
 import { stripOf, slotTop } from '../src/after/ground.js';
-import { heapPlot } from '../src/after/mill.js';
 import { chopTree } from '../src/after/grove.js';
 import { push } from '../src/cells.js';
 import { flowBy } from '../src/flow.js';
@@ -51,7 +50,7 @@ group('the played chain is quiet, and every door that made or unmade a unit is n
   let quiet = true;
   try { for (let k = 0; k < 1200; k++) run(1); } catch (e) { quiet = false; console.log(e.message); }
   const by = flowBy();
-  const doors = ['log:tree', 'log:saw', 'plank:saw', 'sawdust:saw', 'plank:sign', 'sign:workshop', 'load:shack', 'load:band'];
+  const doors = ['log:tree', 'log:saw', 'plank:saw', 'plank:sign', 'sign:workshop', 'load:shack', 'load:band'];
   const missing = doors.filter(d => !(d in by));
   window.__actsOn(null);
   return [
@@ -76,9 +75,6 @@ group('a unit written or erased round the doors turns the rule red', async () =>
   const lo = afterGround.blockSet && [...afterGround.blockSet][0];
   takeUnit(afterGround, lo % afterGround.cols, Math.floor(lo / afterGround.cols));
   out.push(['a block erased from the ground', says()]);
-  // a grain on the sawdust heap
-  addGrain(heapPlot(), heapPlot().x + 4, undefined, 3, true);
-  out.push(['a grain written on the heap', says()]);
   // a unit conjured into a member's arms
   const w = S.after.bodies.find(b => b.state === 'work');
   push(w, cellOf('sign'));
