@@ -6,7 +6,7 @@ import { PURPLES } from './deeptones.js';
 import { S } from '../state.js';
 import { SITES, rowFor, siteBox, worksAt } from '../works.js';
 import { ctx } from './ctx.js';
-import { turnedOver, xorInk } from '../ink.js';
+import { xorInk } from '../ink.js';
 import { invertByFilter } from './invert.js';
 import { groundOf } from '../deep/place.js';
 
@@ -99,11 +99,16 @@ export function drawSilt() {
 // Where the invert filter is exact (render/invert.js) the grains are the
 // frame under them turned over through it, not a `difference` fill: on
 // Firefox's card a fill of that kind is the whole window taken to the
-// processor and back, a grain at a time. The patch under this half's grains
-// is copied out once, turned over on the way, and each grain's cell drawn
-// back from it at the grain's alpha. A cell two grains share is drawn once,
-// at the alpha the two fills in turn come to (`a + b - 2ab`: two whole
-// grains on one cell turn it back), so it comes out as the fills did.
+// processor and back, a grain at a time, and a canvas that does that on its
+// first frames after a load is drawn on the processor for the rest of the
+// page's life (PERF.md, "Firefox's canvas off the card"). The dark page goes
+// the same way: its fill is its paper and ink summed, one step under white
+// (DARK_PAPER + DARK_INK), so the filter lands a grain one step off the fill.
+// The patch under this half's grains is copied out once, turned over on the
+// way, and each grain's cell drawn back from it at the grain's alpha. A cell
+// two grains share is drawn once, at the alpha the two fills in turn come to
+// (`a + b - 2ab`: two whole grains on one cell turn it back), so it comes out
+// as the fills did.
 let patch = null, patchCtx = null;   // cache: a scratch canvas, written before each read
 const cells = new Map();
 const fade = g => Math.max(0, 1 - (g.t / g.life) ** 2);
@@ -112,7 +117,7 @@ function paintGrit(sea) {
   let any = false;
   for (const g of S.grit) if (!g.sea === !sea) { any = true; break; }
   if (!any) return;
-  if (!turnedOver() && invertByFilter(ctx)) turnGrit(sea);
+  if (invertByFilter(ctx)) turnGrit(sea);
   else xorGrit(sea);
 }
 

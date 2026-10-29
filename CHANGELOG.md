@@ -221,6 +221,7 @@ this section; the release that switches it on moves these under Unreleased.
 - A game tab that is not being saved -- another tab has the save, or the browser refused it -- shows a struck-through disk in the corner instead of playing on in silence, takes the save back by itself once its game is the newest, and a game tab opened in the background no longer takes the save from the one you are playing (test/save-alarm.test.mjs).
 - The browser closing the save's database under the page no longer stops the game; the save is retried on a fresh connection (src/selftest/savemark.js).
 - The save as it was before an update changed its shape is kept beside it, so a bad update can be rolled back (test/save-alarm.test.mjs).
+- In Firefox on the dark page, a builder at work no longer drops the whole game to twenty-odd frames a second after a reload (src/selftest/work.js, "the dark page draws a builder's grit with no difference fill").
 - A worker's hat in a roster counter sits flush on its head instead of a pixel to one side with ragged seams (src/selftest/rosterhats.js).
 - Saving on the very frame the star's sphere closes no longer leaves the ring uncut after a reload (test/sphere.test.mjs).
 - Shop cards keep one width and one height, so buying a rung, a deeper bill or a card being built no longer shifts the board (src/selftest/boardwords.js).

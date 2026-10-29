@@ -55,6 +55,11 @@ export function askInvert() {
   if (exact === null) exact = filterIsExact();
 }
 
+// The answer, set by hand: the browser tier runs in Chrome, whose filter is a
+// step off, so the path Firefox takes is only reached by saying so. `null`
+// asks again.
+export function pinInvert(v) { exact = v; asked = v !== null; }
+
 // Whether to turn the frame over through the filter rather than a
 // `difference` fill. A frame that needs the answer before the page has been
 // idle asks for it after itself.

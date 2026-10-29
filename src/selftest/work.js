@@ -1,6 +1,12 @@
 // Putting people to work, taking them off again, and startling a bird.
 
 import { until, state, ok, point, onScreen, hoverBench, run, haveRock, put } from './kit.js';
+import { S } from '../state.js';
+import { spawnGrit } from '../grit.js';
+import { draw } from '../render.js';
+import { ctx } from '../render/ctx.js';
+import { setTheme } from '../ink.js';
+import { pinInvert } from '../render/invert.js';
 
 export const TESTS = [
   ['a worker put on the rock works it', async () => {
@@ -95,6 +101,48 @@ export const TESTS = [
          `bird at ${bird.x}, grains at ${hit.chipX.join(' ')}`),
       ok(settled.stored === bank, 'and none of it is banked for free',
          `${bank} -> ${settled.stored}`)
+    ];
+  }],
+
+  // A `difference` fill on the frame's canvas is the one thing Firefox's card
+  // cannot do, and a page that did it on its first frames after a load was
+  // drawn on the processor from then on: on the dark page, with a builder at
+  // work, the yard ran at twenty frames (PERF.md, "Firefox's canvas off the
+  // card"). Wherever the invert filter is exact the grit goes through it, on
+  // either page. The control pins the filter inexact, which must still fill,
+  // so the spy is known to see a fill when there is one.
+  ['the dark page draws a builder\'s grit with no difference fill where the filter is exact', async () => {
+    const root = document.documentElement;
+    const was = root.classList.contains('dim') ? 'dim' : root.classList.contains('dark') ? 'dark' : 'light';
+    const ops = [];
+    const proto = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'globalCompositeOperation');
+    Object.defineProperty(ctx, 'globalCompositeOperation', {
+      configurable: true,
+      get() { return proto.get.call(this); },
+      set(v) { ops.push(v); proto.set.call(this, v); }
+    });
+    const fills = exact => {
+      pinInvert(exact);
+      S.grit.length = 0;
+      spawnGrit(S.camX + S.viewW / 2, S.camY + S.viewH / 2, { n: 20 });
+      ops.length = 0;
+      draw();
+      return ops.filter(o => o === 'difference').length;
+    };
+    let byFilter, byFill;
+    try {
+      setTheme('dark');
+      byFilter = fills(true);
+      byFill = fills(false);
+    } finally {
+      delete ctx.globalCompositeOperation;
+      pinInvert(null);
+      S.grit.length = 0;
+      setTheme(was);
+    }
+    return [
+      ok(byFilter === 0, 'dark page, exact filter: no difference fill on the frame', `${byFilter}`),
+      ok(byFill > 0, 'control: an inexact filter still fills, so the spy sees fills', `${byFill}`)
     ];
   }],
 
