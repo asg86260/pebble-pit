@@ -31,6 +31,7 @@ import { gestureView, groveIcons } from '../../after/gestures.js';
 import { goodBlock } from './piles.js';
 import { seedOf } from './piles.js'; // MOCK after-goods
 import { ctx } from '../ctx.js';
+import { drawGroveMock, groveMockOn } from './grovemock.js'; // MOCK grove
 import { themed } from '../../ink.js';
 import { GREY } from '../../config.js';
 
@@ -292,6 +293,7 @@ const ICONS = {
 // pointer's marks, not the grove's material.
 const iconSeen = new Map();
 export function drawGroveIcons() {
+  if (groveMockOn()) return; // MOCK grove  no glyphs: the ghost hand teaches
   const t = now(), shown = new Set();
   for (const c of groveIcons()) {
     const id = `${c.kind}${c.i}`;
@@ -327,6 +329,7 @@ function plotSeen(i, p) {
 }
 
 export function drawGrove() {
+  if (groveMockOn()) { drawGroveMock(); return; } // MOCK grove
   const t = now(), fl = afterFloor();
   const view = gestureView() || [], hand = view.find(r => r.key === 'tree'), lift = view.find(r => r.key === 'stump');
   trees().forEach((p, i) => {

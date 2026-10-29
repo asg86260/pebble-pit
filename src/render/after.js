@@ -36,6 +36,7 @@ import { drawFloor } from './after/floor.js';
 import { deepAt } from '../after/sky.js';
 import { drawCloudSky } from './after/cloudsky.js';
 import { drawGrove } from './after/pine.js';
+import { drawGroveMockBodies, groveMockOn } from './after/grovemock.js'; // MOCK grove
 import { DRAW, workerPose, GLYPHS, backOf, drawMillHeap } from './after/stations.js';
 import { drawFistFlag } from './aftercrowd.js';
 import { heap, heapCells, drawGround, goodBlock } from './after/piles.js';
@@ -302,6 +303,7 @@ export function drawAfterMembers() {
   // and the goods in the hand and in the air, over every body, as a lifted
   // one is
   drawHandGoods();
+  if (groveMockOn()) drawGroveMockBodies(); // MOCK grove
 }
 
 // --- the counts ----------------------------------------------------------------------

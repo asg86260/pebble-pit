@@ -22,6 +22,7 @@ import { bedWants } from '../after/mill.js';
 import { stripBox } from '../after/ground.js';
 import { drawGroveIcons } from './after/pine.js';
 import { K, W, PALE, MID } from './after/kit.js';
+import { drawGroveMockCues, groveMockOn } from './after/grovemock.js'; // MOCK grove
 
 const D = GESTURE_CUE_DOT;
 const snap = v => Math.round(v / P) * P;
@@ -157,7 +158,7 @@ export function drawAfterCues() {
   for (const r of view) {
     // One hand: the first uses' cue, or the same hand faint while the
     // pointer is over the part, the stronger of the two; never while held.
-    const ink = r.open && !r.held && !demoHand.pose ? Math.max(r.cueA, (r.hintA || 0) * GESTURE_CUE_HOVER) * GESTURE_CUE_ALPHA : 0;
+    const ink = r.open && !r.held && !demoHand.pose && !groveMockOn() /* MOCK grove */ ? Math.max(r.cueA, (r.hintA || 0) * GESTURE_CUE_HOVER) * GESTURE_CUE_ALPHA : 0;
     const at = ink > 0.01 && cueAt(r.key, r);
     shown[r.key] = at ? ink : 0;
     if (at && at.x >= S.camX - P * 4 && at.x <= S.camX + S.viewW + P * 4) { ctx.globalAlpha = ink; handOn(ctx, at.x, at.y, at.pose); }
@@ -166,4 +167,5 @@ export function drawAfterCues() {
   }
   ctx.globalAlpha = 1;
   if (demoHand.pose) handOn(ctx, demoHand.x, demoHand.y, demoHand.pose, P / 2, '#000');
+  if (groveMockOn()) drawGroveMockCues(); // MOCK grove
 }

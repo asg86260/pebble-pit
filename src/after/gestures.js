@@ -117,7 +117,9 @@ const DEFS = {
     // `i` the tree the saw is on (its icon clicked), null with the saw put up.
     init: () => ({ i: null, s: 0, target: 0, s0: 0, gx: 0, from: 0, v: 0, grab: false }),
     open: () => !!S.after.axe && trees().some(standing),
-    grab(g, x, y) { const p = g.i != null && trees()[g.i]; return p && standing(p) && inBox(x, y, sawBox(g.i, g.s), G_S) ? g.i : null; },
+    grab(g, x, y) {
+      if (globalThis.__groveMock && g.i == null) { const k = trees().findIndex(standing); if (k >= 0 && inBox(x, y, sawBox(k, 0), G_S)) g.i = k; } // MOCK grove  the saw lies on the trunk, taken by a press on it: no icon
+      const p = g.i != null && trees()[g.i]; return p && standing(p) && inBox(x, y, sawBox(g.i, g.s), G_S) ? g.i : null; },
     down(g, i, x) { g.grab = true; g.gx = x; g.s0 = g.target; return true; },
     move(g, x) { g.target = clamp(g.s0 + (x - g.gx), -GESTURE_SAW_AMP, GESTURE_SAW_AMP); },
     up(g) { g.grab = false; },

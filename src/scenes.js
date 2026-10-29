@@ -3743,3 +3743,35 @@ Object.assign(SCENES, {
   'after-mill-brim': { about: 'the acts', say: "a cut block tossed off the chute's foot onto a timber mound nearly at its brim",
     run: () => millStage(() => millSaw().out.some(o => { const p = millBlockAt(o.a); return p.x > AFTER_MILL.chute.x1 - 0.5; }), { timber: 15 }) }
 });
+
+// MOCK grove: act 3's grove redesign as review scenes (after/grovemock.js,
+// render/after/grovemock.js), never merged. Each beat its own option, plot 0
+// framed `at` px in from the left; `swap` stands the option again, since
+// each is its own setup.
+import { startGroveMock } from './after/grovemock.js'; // MOCK grove
+import { plotX } from './after/place.js'; // MOCK grove
+const GROVE_MOCK = [ // MOCK grove
+  ['a1', 'A1 a worker plants it', 110, "A worker brings a cone out of the forestry shack, kneels at the bare plot and plants it, and a shoot comes up."], // MOCK grove
+  ['a2', 'A2 you plant it', 110, "You plant it yourself: take the cone set out at the forestry shack's door, carry it over the bare plot and let go, and it sinks in and a shoot comes up."], // MOCK grove
+  ['b1', 'B1 grows row by row', 330, "The planted cone grows into the pine a row at a time from the ground up, the trunk first and then the crown, sped up to ten seconds."], // MOCK grove
+  ['b2', 'B2 grows all over', 330, "The planted cone grows into the pine all over at once, taller and wider a cell at a time, sped up to ten seconds."], // MOCK grove
+  ['c', 'C the fall: the crown breaks', 300, "The sawn pine goes over whole as it does today, and its crown breaks into pieces where it hits, which scatter and fade; the trunk lies."], // MOCK grove
+  ['d1', 'D1 bucked with a saw', 300, "The woodcutter stands on the felled trunk and saws one log off the far end at a time; each rolls off, and the trunk is a log shorter until all four are cut."], // MOCK grove
+  ['d2', 'D2 bucked with an axe', 300, "The same with the axe: three blows a log, each log rolling off the end, the trunk a log shorter each time until all four are cut."], // MOCK grove
+  ['e', "E the woodcutter's own axe", 300, "The woodcutter walks up with its axe, fells the pine a blow at a time, hops up on the trunk and bucks it into its four logs with the same axe."], // MOCK grove
+  ['f1', 'F1 you saw', 300, "You saw: the faint hand shows the stroke, then you drag the saw on the trunk until the pine goes over, and saw the trunk into its four logs one at a time."], // MOCK grove
+  ['f2', 'F2 you swing the axe', 300, "You swing the axe: the faint hand shows the stroke, then each stroke into the trunk is a blow, and on the fourth the pine goes over."], // MOCK grove
+  ['f3', 'F3 you dig the stump', 300, "You dig the stump: the faint hand shows the lift, then you pull it up root by root until it comes out whole as a log's block, carry it off and let go."] // MOCK grove
+]; // MOCK grove
+Object.assign(SCENES, Object.fromEntries(GROVE_MOCK.map(([opt, option, at, say]) => [`after-grove-mock-${opt}`, { // MOCK grove
+  about: 'the acts', review: 'act 3: the grove', // MOCK grove
+  stage: 'mock: throwaway review code, never merged -- shows how it would look; the real build comes after you pick', option, say, // MOCK grove
+  swap: () => { globalThis.__groveMock = opt; window.__scene(`after-grove-mock-${opt}`); }, // MOCK grove
+  run: () => { // MOCK grove
+    window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1); // MOCK grove
+    if (opt === 'f1' || opt === 'f2') window.__afterAxe(); // MOCK grove
+    const x = plotX(0) - at; // MOCK grove
+    pinCamera(x); window.__look(x); // MOCK grove
+    startGroveMock(opt, STEPS); // MOCK grove
+    window.__fast(1 / 60); // MOCK grove
+  } }]))); // MOCK grove

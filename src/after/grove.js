@@ -94,6 +94,7 @@ export function digStump(i, hand = false) {
   p.chip = a.t;
   if (p.dug < AFTER_DIG_CLICKS) return true;
   p.stump = false; p.dug = 0; p.stage = 1; p.grow = 0; p.big = bigTrees();
+  if (globalThis.__groveMock) p.stage = 0; // MOCK grove  no sapling set free: a tree is planted
   return true;
 }
 
@@ -155,6 +156,7 @@ export function stepGrove(c) {
     if (p.fall != null && a.t - p.fall >= AFTER_FALL_S) {
       p.fall = null; p.fell = a.t;
       p.stage = 0; p.stump = true;
+      if (!globalThis.__groveMock) // MOCK grove  the trunk lies whole, bucked log by log (after/grovemock.js)
       dropLogs(i, p.big ? AFTER_LOGS_BIG_TREE : AFTER_LOGS_A_TREE, a.t + AFTER_FALL_BOUNCE_S);
     }
     if (p.fell != null && a.t - p.fell > AFTER_FALL_BOUNCE_S + AFTER_CROWN_FADE_S) p.fell = null;
