@@ -8,7 +8,7 @@
 import { P, GREY, AFTER_COUNT_LIFT, AFTER_BLOCK, AFTER_PILES } from '../../config.js';
 import { ctx } from '../ctx.js';
 import { AFTER_LOG_ROLL_S } from '../../config.js';
-import { units, colX, rowY, tagOf, glideAt } from '../../after/ground.js'; // MOCK after-heaps -- glideAt
+import { units, colX, rowY, tagOf } from '../../after/ground.js';
 import { AP } from '../../after/place.js';
 import { SPLIT_S } from './pine.js';
 import { K, W, PALE, MID, DUST, hash, pileAlpha, pileState, countAt, pendingCounts, clamp01, inView } from './kit.js';
@@ -72,14 +72,11 @@ export function drawGround(t) {
       x = tg.x0 + (x - tg.x0) * e;
       a = clamp01((since + SPLIT_S) / SPLIT_S);
     }
-    const gl = glideAt(tg, t); if (gl) { x += gl.x; y += gl.y; } // MOCK after-heaps
     if (!inView(x - z, z * 3)) continue;
-    if (gl && gl.rot) { ctx.save(); ctx.translate(Math.round(x) + z / 2, Math.round(y) + z / 2); ctx.rotate(gl.rot); ctx.translate(-Math.round(x) - z / 2, -Math.round(y) - z / 2); } // MOCK after-heaps
     const was = ctx.globalAlpha;
     ctx.globalAlpha = was * a;
     goodBlock(Math.round(x), Math.round(y), u.kind, goodsLook() === 'c' ? u.v : seedOf(u.ai), bases && bases.get(u.ai)); // MOCK after-goods -- seed, base
     ctx.globalAlpha = was;
-    if (gl && gl.rot) ctx.restore(); // MOCK after-heaps
   }
 }
 

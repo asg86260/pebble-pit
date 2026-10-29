@@ -140,7 +140,6 @@ export function standPiles() {
 // so a block set down is seen rolling to rest.
 export function stepPiles(c) {
   if (!G.grid) return;
-  if (globalThis.__heapSeq) globalThis.__heapSeq(); // MOCK after-heaps -- the scenes' events, on the sim's clock
   if (!G.awakeN) { G.t = 0; return; }
   for (G.t += secs(c); G.t >= AFTER_PILE_SETTLE_S; G.t -= AFTER_PILE_SETTLE_S) settleGround();
 }
