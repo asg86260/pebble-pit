@@ -121,6 +121,7 @@ export const TESTS = [
       get() { return proto.get.call(this); },
       set(v) { ops.push(v); proto.set.call(this, v); }
     });
+    const unpin = pinInvert(true);
     const fills = exact => {
       pinInvert(exact);
       S.grit.length = 0;
@@ -136,7 +137,7 @@ export const TESTS = [
       byFill = fills(false);
     } finally {
       delete ctx.globalCompositeOperation;
-      pinInvert(null);
+      unpin();
       S.grit.length = 0;
       setTheme(was);
     }

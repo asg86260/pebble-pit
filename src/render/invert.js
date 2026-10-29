@@ -56,9 +56,15 @@ export function askInvert() {
 }
 
 // The answer, set by hand: the browser tier runs in Chrome, whose filter is a
-// step off, so the path Firefox takes is only reached by saying so. `null`
-// asks again.
-export function pinInvert(v) { exact = v; asked = v !== null; }
+// step off, so the path Firefox takes is only reached by saying so. Returns
+// what puts the page's own answer back, so the probe's readback is not run
+// again near the next frames.
+export function pinInvert(v) {
+  const was = exact, wasAsked = asked;
+  exact = v;
+  asked = true;
+  return () => { exact = was; asked = wasAsked; };
+}
 
 // Whether to turn the frame over through the filter rather than a
 // `difference` fill. A frame that needs the answer before the page has been

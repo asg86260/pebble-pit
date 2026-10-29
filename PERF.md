@@ -329,7 +329,18 @@ takes a restored sky nearly to nothing, and carries its own measurements.
   first and dropped: the `difference` fill moved onto the scratch patch
   instead -- the main canvas stayed on the card, but the patch went to the
   processor and copying the frame into it was a readback every frame (the
-  grit layer alone 6 ms). Not the cause, measured on the same save: the
+  grit layer alone 6 ms).
+
+  Still open: the lamp hats' light (render/lamplight.js) is laid with
+  `darken` (`lighten` on the dark page) straight onto the frame, and Firefox's
+  card has neither. Panning onto the owner's quarry, its quarriers in lamp
+  hats, took a page that had never been reloaded off the card on either page
+  (`page` 0.74-1.11 ms, draw 8.3-11.3 ms, 68 fps), and with the light
+  switched off the same pan stayed on it (draw 2.7 ms, 118 fps). That is the
+  drop "when the camera moves". Drawing the wedge without the blend changes
+  the picture, so it waits on the owner.
+
+  Not the cause, measured on the same save: the
   sim (0.4 ms a frame in node, nothing growing over an hour), the autosave
   (2 ms a second), and the pointer handler (0.3-0.5 ms a move; 1,000 moves
   a second through it still held 128 fps headless).
