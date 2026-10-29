@@ -110,7 +110,7 @@ export function takeSawdust(n) {
 }
 // A grain's value names it, a byte's worth (the grid's cells): the drawing
 // picks its tone off it (render/after/stations.js), so it keeps it as it rolls.
-const grainTone = b => (globalThis.__goodsLook === 'c' || globalThis.__goodsLook === 'd' ? 1 + mockShade(10) : 1 + ((b.seq = (b.seq || 0) + 1) % 255)); // MOCK after-goods  C: a random shade of six, once, per grain
+const grainTone = b => (globalThis.__goodsLook ? 1 + mockShade(10) : 1 + ((b.seq = (b.seq || 0) + 1) % 255)); // MOCK after-goods  C: a random shade of six, once, per grain
 function takeTop(b) {
   let col = -1, hi = -1;
   for (let c = 0; c < b.cols; c++) { const r = topRow(b, c); if (r > hi) { hi = r; col = c; } }

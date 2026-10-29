@@ -473,9 +473,10 @@ export const toneOf = v => (KIND_OF[v] ? v - KIND_OF[v].first : -1);
 // MOCK after-goods  a stored shade of n: C uniform over six, D near the middle of ten as act 1's `shadeNear` is, the ends rare
 export const mockShade = (n, block) => {
   const look = globalThis.__goodsLook;
-  if (look !== 'c' && look !== 'd') return 0;
+  if (!look) return 0;
   const u = () => ((Math.sin((globalThis.__goodsSeq = (globalThis.__goodsSeq || 0) + 1) * 12.9898) * 43758.5453) % 1 + 1) % 1;
   if (look === 'c') return Math.floor(u() * Math.min(n, 6));
+  if (look !== 'd') return Math.floor(u() * 4); // b1, b2, b3: four tones, each as likely, as act 1's someFind
   return Math.max(0, Math.min(9, Math.round(4.5 + (u() + u() - 1) * 4.5)));
 };
 export const cellOf = (kind, tone) => {

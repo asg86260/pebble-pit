@@ -22,9 +22,9 @@ import { K, W, PALE, MID, DUST, hash, silhouette } from './kit.js';
 import { held } from '../../reset.js';
 import { ctx } from '../ctx.js';
 import { goodBlock } from './piles.js';
-import { goodsLook, SAWDUST_HUES, SAWDUST_C, SAWDUST_D, famOf, toneIdx, STORED } from './piles.js'; // MOCK after-goods
+import { goodsLook, SAWDUST_HUES, dustOf, famOf, toneIdx, STORED } from './piles.js'; // MOCK after-goods
 // MOCK after-goods: each option's sawdust, a grain each: the wood family's paler shades in b1/b2, the heap's own greys otherwise
-const LOOK_DUST = () => (goodsLook() === 'd' ? SAWDUST_D : STORED() ? SAWDUST_C : goodsLook() === 'b1' || goodsLook() === 'b2' ? SAWDUST_HUES : null); // MOCK after-goods
+const LOOK_DUST = () => dustOf(); // MOCK after-goods
 import { wheelAngle, millView, sawyerPose } from '../../after/mill.js';
 import { at } from '../../grid.js';
 
@@ -177,7 +177,7 @@ function mill(d, work, t, h, body = false) {
     }
     for (const b of live.out) blockOn(d, b.x - PL / 2, b.y - PL, 'plank', b.v);
     for (const g of live.dust) { // MOCK after-goods
-      if (STORED() && g.v) { const p = d.world(g.x, g.y); ctx.fillStyle = (goodsLook() === 'd' ? SAWDUST_D : SAWDUST_C)[(g.v - 1) % (goodsLook() === 'd' ? 10 : 6)]; ctx.fillRect(Math.round(p.x), Math.round(p.y), Math.round(S1), Math.round(S1)); } else d.px(g.x * P, g.y * P, P, P, MID);
+      if (STORED() && g.v && dustOf()) { const p = d.world(g.x, g.y); const df = dustOf(); ctx.fillStyle = df[(g.v - 1) % df.length]; ctx.fillRect(Math.round(p.x), Math.round(p.y), Math.round(S1), Math.round(S1)); } else d.px(g.x * P, g.y * P, P, P, MID);
     }
     if (live.hitAt != null) chips(d, t - live.hitAt, Math.floor(live.hitAt * 7));
     if (live.setAt != null) puff(d, AFTER_MILL.seat.x, t - live.setAt);
