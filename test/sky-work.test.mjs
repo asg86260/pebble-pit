@@ -195,6 +195,16 @@ group('the sky holds one body per hat, and they do not stand in each other', asy
 // the spot, the progress runs from nought to one, and a hat lands at the end of
 // it. The bar over the tower and the windows lighting up the shaft are drawn
 // off exactly these two numbers -- see `drawTowerBar`.
+// Frame by frame until somebody is on the hat. A hat takes ten seconds now
+// (BUILD_MIN_S), so a whole second of walking is a tenth of the hat.
+const walkIn = limit => {
+  for (let i = 0; i < limit * 4 * 60; i++) {
+    if (yard.brewAt() > 0) return true;
+    run(1 / 60);
+  }
+  return false;
+};
+
 group('a hat is worked on, and the tower says how far along it is', async () => {
   window.__meteor();
   // Hands to train one with. A hat is somebody's work now rather than a wall
@@ -214,7 +224,7 @@ group('a hat is worked on, and the tower says how far along it is', async () => 
   // Measured from the first frame somebody is actually on it, the readout is
   // exactly proportional: a quarter in is 0.256, three quarters is 0.756. So
   // this asks for that rather than for a band wide enough to swallow a walk.
-  const walked = runUntil(() => yard.brewAt() > 0, secs);
+  const walked = walkIn(secs);
   run(secs / 4);
   const quarter = yard.brewAt();
   run(secs / 2);
@@ -378,6 +388,7 @@ group('a hat on the go survives a reload', async () => {
   window.__meteor();
   window.__crew(0, 2);                      // hands to train one with
   const secs = window.__brew();
+  walkIn(secs);                             // the walk out is the yard's, not the hat's
   run(secs / 3);
   const before = state();
   const at = yard.brewAt();
