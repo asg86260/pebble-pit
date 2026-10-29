@@ -171,7 +171,7 @@ export const TESTS = [
         const booted = () => { const x = f.contentWindow; return !!(x?.__scene && x.__board && x.__fast); };
         while (!booted() && performance.now() - t0 < 20000) await raf();   // the frame's boot, not the yard's: no turning
         const w = f.contentWindow;
-        if (!booted()) { checks.push(ok(false, `${mode}: the game boots in a frame`)); continue; }
+        if (!booted()) { checks.push(ok(false, `${lang} ${mode}: the game boots in a frame`)); continue; }
         await w.document.fonts.ready;
         const face = w.getComputedStyle(w.document.body).fontFamily;
         const step = () => new Promise(r => { w.__fast(1 / 60); w.requestAnimationFrame(() => r()); });

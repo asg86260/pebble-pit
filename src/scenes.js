@@ -155,12 +155,18 @@ const quarryGoingUp = () => {
 // on this one's spot, and in the node yard, where a frame is a timer, it kept
 // the process alive after its checks were done, so a sweep never finished.
 const PIN_FRAMES = 240;
+// A pin outlives the scene that set it by up to PIN_FRAMES, so a check that
+// stands a scene and goes on would have its camera held under it: the next
+// group's `newRun` lets go (`__unpin`).
+let pinned = 0;
 function pinCamera(x) {
   if (typeof window.__scene !== 'function') return;     // the page's alone
   let left = PIN_FRAMES;
-  const pin = () => { window.__look(x); if (--left > 0) requestAnimationFrame(pin); };
+  const mine = ++pinned;
+  const pin = () => { if (mine !== pinned) return; window.__look(x); if (--left > 0) requestAnimationFrame(pin); };
   pin();
 }
+if (typeof window !== 'undefined') window.__unpin = () => { pinned++; };
 
 const sphereAt = secs => {
   rich();

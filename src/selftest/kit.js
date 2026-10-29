@@ -35,6 +35,7 @@ export const SEED = 20250830;
 // form's tick) finds the slot as the seed cleared it.
 export const newRun = () => {
   claimSave();
+  window.__unpin?.();                  // a scene's camera pin outlives the scene
   S.yielded = false;
   window.__seed(SEED);
   window.__verify(true);
