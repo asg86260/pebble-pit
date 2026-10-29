@@ -58,7 +58,6 @@ import '@fontsource/courier-prime/700.css';
 import '@fontsource/dm-mono/400.css';
 import '@fontsource/dm-mono/500.css';
 import { mountRows } from './src/shop.js';
-import { fitSlot } from './src/slotfit.js';
 import { S } from './src/state.js';
 import { LADDER, TIER_BAND, TIER_RUNGS, TIER_OWN } from './src/config.js';
 Object.assign(S, { stored: 9000, shards: 60, spores: 5000, sparks: 0, scales: 400, pinned: 'critchance' });
@@ -122,13 +121,6 @@ const page2 = document.createElement('div'); page2.className = 'page';
 page2.innerHTML = '<div class="title">queued again</div><div class="rows"></div>';
 out.prepend(page2);
 mountRows(page2.querySelector('.rows'), queued);
-
-// Each board's slot fitted to its words, as the game's board does when it
-// opens (board.js, `pinWidth`), once the face is in.
-// A layout first: until the words are laid out the face is not asked for, and
-// `ready` answers at once, before it lands.
-void document.body.offsetWidth;
-document.fonts.ready.then(() => { for (const r of document.querySelectorAll('.rows.shelves')) fitSlot(r); });
 
 </script>
 </body>

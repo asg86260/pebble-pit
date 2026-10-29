@@ -357,6 +357,18 @@
 /* A half with nothing to do -- the refund while the only copy is being
    built, the next copy while the purse is short -- pales as a short tag does. */
 .rows.shelves > .tile .strip > i.dead { color: var(--ink-5); cursor: default; }
+/* A tile that can ever carry a strip keeps its room all the time, so queueing
+   a copy or handing one back never lowers the plank under it (the owner,
+   2026-10-29: nothing on a board moves when a card changes). */
+.rows.shelves > .tile:has(> .strip):not(.goal) { padding-bottom: calc(var(--shelf-foot, 8px) + var(--shelf-refund, 18px)); }
+/* ...and the tag's row keeps the tallest tag a bill can make (four coins, two
+   a line, and the clock), so a bill deepening a band -- or a climbed ladder
+   going back to one line -- never moves what is under it. A box in the tag's
+   cell and nothing to see: the tag itself stays its own size. */
+.rows.shelves > .tile:has(.ladder:not(:empty)):not(.goal)::after {
+  content: ''; grid-row: 4; grid-column: 1; height: var(--shelf-tag-tall, 42px); pointer-events: none;
+}
+.rows.shelves > .tile:has(.ladder:not(:empty)):not(.goal) .tag { grid-column: 1; }
 .rows.shelves > .tile.stripped { cursor: default; padding-bottom: calc(var(--shelf-foot, 8px) + var(--shelf-refund, 18px)); }
 @media (hover: hover) {
   .rows.shelves > .tile .strip > i:not(.dead):hover { background: var(--fill) var(--dots-on-fill); color: var(--on-fill); }

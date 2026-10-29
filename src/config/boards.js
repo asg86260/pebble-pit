@@ -64,7 +64,15 @@ export const QUEUE_PIPS = 5;
 // with its name, its gain and one price tag under it (DESIGN.md, "The shelf").
 // Every step is here and nowhere else, so a shelf on one board is the shelf on
 // every board.
-export const SHELF_SLOT = 140;      // px, one item's width
+export const SHELF_SLOT = 140;      // px, one item's width in a language with no entry below
+// A tile is ONE width on every board for the whole session, so nothing on a
+// board moves when a card's words change (the owner, 2026-10-29). It is the
+// widest slot any board in the language needs for the words that cannot fold
+// (slotfit.js, `UNFOLDING`), measured at the house type and the readable face
+// and rounded up; the board check in src/selftest/boardwords.js reads every
+// board in every language against it and goes red when a word is cut.
+export const SHELF_SLOT_LANG = { en: 156, de: 205, es: 189, fr: 189, 'pt-BR': 189, ru: 173, 'zh-CN': 146 };
+export const SHELF_TAG_TALL = 42;   // px, the tallest tag a bill makes (four coins, two a line, and the clock); a ladder's tile keeps that much, so a deeper bill moves nothing
 export const SHELF_SLOTS = 5;       // slots a plank holds at most; a shorter plank is as wide as what is on it
 export const SHELF_SLOTS_MIN = 2;   // and never narrower than this many, so a one-row board still reads as a board
 export const SHELF_STEP = 5;        // px between the glyph, the name, the gain and the tag

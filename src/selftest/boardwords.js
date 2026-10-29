@@ -12,6 +12,7 @@
 
 import { raf, ok } from './kit.js';
 import { LANGS } from '../lang.js';
+import { SHELF_SLOT_LANG, SHELF_SLOT, SHELF_TAG_TALL } from '../config.js';
 import { YARD_BOARDS as BOARDS } from '../stations.js';
 import { UNFOLDING, overOf } from '../slotfit.js';
 
@@ -158,11 +159,11 @@ export const TESTS = [
   // box whether its words are wider than it, to the fraction of a pixel, in the house type and in the
   // readable face a size up, on every board at its fullest and on the strips
   // a row bought three times puts up.
-  ['no word on a tile is cut at its edge, in the house type and readable text', async () => {
+  ['no word on a tile is cut at its edge, in every language, in the house type and readable text', async () => {
     const checks = [];
-    for (const [mode, q] of [['house type', ''], ['readable text', '&readable']]) {
+    for (const lang of LANGS) for (const [mode, q] of [['house type', ''], ['readable text', '&readable']]) {
       const f = document.createElement('iframe');
-      f.src = `./play.html?bench&lang=en${q}`;
+      f.src = `./play.html?bench&lang=${encodeURIComponent(lang)}${q}`;
       f.style.cssText = 'position:fixed;left:0;top:0;width:800px;height:600px;border:0;opacity:0;pointer-events:none;z-index:-1';
       document.body.appendChild(f);
       try {
@@ -175,6 +176,7 @@ export const TESTS = [
         const face = w.getComputedStyle(w.document.body).fontFamily;
         const step = () => new Promise(r => { w.__fast(1 / 60); w.requestAnimationFrame(() => r()); });
         const cut = [];
+        const slot = SHELF_SLOT_LANG[lang] ?? SHELF_SLOT;
         for (const [scene, boards] of SCENES) {
           w.__scene(scene);
           w.__fast(1);
@@ -184,15 +186,81 @@ export const TESTS = [
             for (const el of w.document.querySelectorAll('.rows.shelves .tile :is(' + UNFOLDING + ')'))
               if (el.offsetParent !== null && overOf(el) > 0.01)
                 cut.push(`${scene}/${b} "${el.textContent.trim()}" over by ${overOf(el).toFixed(2)}px`);
+            // The slot is the language's one width and the tag row's one height: a board
+            // never sets either, so a card past them is read here, not fitted.
+            if (w.getComputedStyle(w.document.documentElement).getPropertyValue('--shelf-slot').trim() !== `${slot}px`)
+              cut.push(`${scene}/${b} the board's slot is not the language's ${slot}px`);
+            for (const t of w.document.querySelectorAll('.rows.shelves > .tile .tag'))
+              if (t.offsetParent !== null && t.getBoundingClientRect().height > SHELF_TAG_TALL + 0.01)
+                cut.push(`${scene}/${b} a tag is ${t.getBoundingClientRect().height}px, past the ${SHELF_TAG_TALL}px its row keeps`);
           }
           w.__board(null);
         }
         const uniq = [...new Set(cut)];
-        checks.push(ok(uniq.length === 0 && /DM Mono/.test(face) === !!q,
-                       `${mode}: no word on a tile is cut at its edge`,
+        checks.push(ok(uniq.length === 0 && (/DM Mono/.test(face) === !!q || /^(ja|ko|zh)/.test(lang)),   // the readable face is Latin; a cut face stands in
+                       `${lang}, ${mode}: no word on a tile is cut at its edge`,
                        `${face}; ` + uniq.slice(0, 6).join('; ') + (uniq.length > 6 ? ` (+${uniq.length - 6})` : '')));
       } finally { f.remove(); }
     }
     return checks;
+  }],
+
+  // A card keeps its box (the owner, 2026-10-29: "i hate that they shift content
+  // around"): a rung bought, queued, built and the next bill read -- through
+  // every band the ladder has -- moves no tile on the open board by a pixel and
+  // changes none's size, measured against the shelf so the sheet re-centering
+  // on its station does not count. A tile that appears (a card unlocked by
+  // the rung) is new content, and the planks it lands on are not asked.
+  ['buying a rung up the whole ladder moves no tile and resizes none', async () => {
+    const f = document.createElement('iframe');
+    f.src = './play.html?bench&lang=en';
+    f.style.cssText = 'position:fixed;left:0;top:0;width:1440px;height:900px;border:0;opacity:0;pointer-events:none;z-index:-1';
+    document.body.appendChild(f);
+    try {
+      const t0 = performance.now();
+      const booted = () => { const x = f.contentWindow; return !!(x?.__scene && x.__board && x.__fast && x.__buy); };
+      while (!booted() && performance.now() - t0 < 20000) await raf();
+      const w = f.contentWindow;
+      if (!booted()) return [ok(false, 'the game boots in a frame')];
+      await w.document.fonts.ready;
+      const step = n => new Promise(r => { w.__fast(n); w.requestAnimationFrame(() => w.requestAnimationFrame(() => r())); });
+      w.__scene('boards');
+      w.__fast(1);
+      w.__board('bench');
+      await step(0.5);
+      const S = w.__state();
+      Object.assign(S, { stored: 1e13, shards: 1e11, spores: 1e11, sparks: 1e9 });
+      const boxes = () => {
+        const shelf = w.document.querySelector('.sheet > .page:not([hidden]) .rows.shelves');
+        // Layout px: the sheet eases open and back by a scale, which is not a move.
+        const o = shelf.getBoundingClientRect(), k = o.width / shelf.offsetWidth, m = new Map();
+        for (const t of shelf.querySelectorAll(':scope > .tile')) {
+          const r = t.getBoundingClientRect();
+          m.set(t.dataset.key, [(r.x - o.x) / k, (r.y - o.y) / k, r.width / k, r.height / k]);
+        }
+        return m;
+      };
+      const moved = [];
+      let before = boxes(), rungs = 0;
+      for (let i = 0; i < 9; i++) {
+        w.__buy('carry');
+        await step(0.3);
+        const queued = boxes();
+        w.__finish();
+        await step(0.5);
+        const done = boxes();
+        for (const [name, was, now] of [['queued', before, queued], ['built', queued, done]])
+          for (const [key, a] of was) {
+            const b = now.get(key);
+            // a card unlocked above a plank lowers it by that plank's worth: new content
+            if (!b || now.size !== was.size) continue;
+            if (a.some((v, k) => Math.abs(v - b[k]) > 0.01))
+              moved.push(`rung ${i + 1} ${name}: ${key} ${a.map(v => v.toFixed(1))} -> ${b.map(v => v.toFixed(1))}`);
+          }
+        rungs++;
+        before = done;
+      }
+      return [ok(moved.length === 0, 'no tile moves or resizes while a ladder is bought up', moved.slice(0, 6).join('; ') + ` (${rungs} rungs)`)];
+    } finally { f.remove(); }
   }],
 ];
