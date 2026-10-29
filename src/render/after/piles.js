@@ -75,7 +75,7 @@ export function drawGround(t) {
     if (!inView(x - z, z * 3)) continue;
     const was = ctx.globalAlpha;
     ctx.globalAlpha = was * a;
-    goodBlock(Math.round(x), Math.round(y), u.kind, goodsLook() === 'c' ? u.v : seedOf(u.ai), bases && bases.get(u.ai)); // MOCK after-goods -- seed, base
+    goodBlock(Math.round(x), Math.round(y), u.kind, STORED() ? u.v : seedOf(u.ai), bases && bases.get(u.ai)); // MOCK after-goods -- seed, base
     ctx.globalAlpha = was;
   }
 }
@@ -98,6 +98,7 @@ export function drawGround(t) {
 // `globalThis.__goodsLook` picks the option; unset, the real drawing above.
 import { kindOf, toneOf } from '../../grid.js'; // MOCK after-goods
 export const goodsLook = () => globalThis.__goodsLook || null; // MOCK after-goods
+export const STORED = () => goodsLook() === 'c' || goodsLook() === 'd'; // MOCK after-goods  the options whose shade is the unit's stored tone
 // Each good's ladder, rungs of GREY light to dark; its base tones are all // MOCK after-goods
 // but the lightest, which only the lit band (e, f) and a cell off reach. The // MOCK after-goods
 // act's four are 0 paper, 3 pale, 6 mid, 10 ink; added, each with one role: // MOCK after-goods
@@ -119,6 +120,7 @@ const LOOK = { // MOCK after-goods
   b1: { flat: 'hue', apart: true }, // MOCK after-goods-b1
   b2: { flat: 'hue', apart: false }, // MOCK after-goods-b2  each block its stored shade alone, as a grain's
   b3: { flat: 'page', apart: true }, // MOCK after-goods-b3
+  d: { flat: 'hue', rand: true, fine: true }, // MOCK after-goods-d  ten close shades a family, one picked near the middle at birth
   c: { flat: 'hue', rand: true } // MOCK after-goods-c  six shades a family, one drawn at random when the unit is made, kept in its tone (grid.js `cellOf`)
 }; // MOCK after-goods
 // Each good's family, four shades light to dark, as each of act 1's coins is // MOCK after-goods
@@ -142,7 +144,14 @@ export const HUES6 = { // MOCK after-goods  option C: B1's range widened half a 
 export const SAWDUST_C = ['#f5e4c2', '#efdab4', '#e9d1a6', '#e3c898', '#ddbf8a', '#d7b57d'];
 // a unit's shade (0..5): its stored tone when its value is one (a block's, a body's load, a thrown chip), else a seed's
 export const toneIdx = (kind, seed) => (kindOf(seed) && kindOf(seed).key === kind ? toneOf(seed) : shadeOfSeed(seed) - 1);
-const familyOf = (L, kind) => (L.rand ? HUES6[kind] : L.flat === 'hue' ? HUES[kind] : PAGE[kind].map(i => GREY[i])); // MOCK after-goods
+export const HUES10 = { // MOCK after-goods  option D: ten shades a step of four apart around each family's middle
+  log:   ['#926842', '#8e643e', '#8a603a', '#865c36', '#825832', '#7e542e', '#7a502a', '#764c26', '#724822', '#6e441e'],
+  plank: ['#e4c28c', '#e0be88', '#dcba84', '#d8b680', '#d4b27c', '#d0ae78', '#ccaa74', '#c8a670', '#c4a26c', '#c09e68'],
+  sign:  ['#575e68', '#535a64', '#4f5660', '#4b525c', '#474e58', '#434a54', '#3f4650', '#3b424c', '#373e48', '#333a44']
+};
+export const SAWDUST_D = ['#f8dfb1', '#f4dbad', '#f0d7a9', '#ecd3a5', '#e8cfa1', '#e4cb9d', '#e0c799', '#dcc395', '#d8bf91', '#d4bb8d']; // MOCK after-goods
+export const famOf = kind => (goodsLook() === 'd' ? HUES10 : HUES6)[kind]; // MOCK after-goods
+const familyOf = (L, kind) => (L.fine ? HUES10[kind] : L.rand ? HUES6[kind] : L.flat === 'hue' ? HUES[kind] : PAGE[kind].map(i => GREY[i])); // MOCK after-goods
 const KIND_SEED = { log: 11.3, plank: 23.9, sign: 37.1 }; // MOCK after-goods
 // a block's base rung (1..BASES) off its own shade, when nothing asks // MOCK after-goods
 // otherwise: carried, thrown, laid, or an option that does not keep apart // MOCK after-goods

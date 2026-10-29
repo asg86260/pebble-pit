@@ -20,9 +20,9 @@ import { AFTER_TONES } from './palette.js';
 //   home     the pile a body carries it back to (none: it is no good to carry
 //            home, and a gatherer leaves it lying)
 const KIND_DEFS = [
-  { key: 'log',     size: AFTER_BLOCK.log,   palette: Array(6).fill(AFTER_TONES.mid),      home: 'grovelogs' },
-  { key: 'plank',   size: AFTER_BLOCK.plank, palette: Array(6).fill(AFTER_TONES.pale),     home: 'timber' },
-  { key: 'sign',    size: AFTER_BLOCK.sign,  palette: Array(6).fill(AFTER_TONES.ink),      home: 'signs' },
+  { key: 'log',     size: AFTER_BLOCK.log,   palette: Array(10).fill(AFTER_TONES.mid),      home: 'grovelogs' },
+  { key: 'plank',   size: AFTER_BLOCK.plank, palette: Array(10).fill(AFTER_TONES.pale),     home: 'timber' },
+  { key: 'sign',    size: AFTER_BLOCK.sign,  palette: Array(10).fill(AFTER_TONES.ink),      home: 'signs' },
   { key: 'sawdust', size: 1,                 palette: [AFTER_TONES.pale, AFTER_TONES.mid],  home: 'sawdust' },
   // a construction site's load (after/build.js): made at the shack's door,
   // laid in a band, carried by nobody home, so no pile is its home

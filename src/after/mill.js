@@ -34,7 +34,7 @@ import { heapMid, groundOf, stationX0, floorAt, AP } from './place.js';
 import { takeBlock, setBlock, pileRoom, pileCount, topBlock, dropSpot } from './piles.js';
 import { colX, rowY, runsOf, cellsOfRuns } from './ground.js';
 import { layGood } from './grove.js';
-import { addGrain, put, at, topRow, settleSome, count, colOf, recount, wakeGrid, cellOf, kindOf } from '../grid.js';
+import { addGrain, put, at, topRow, settleSome, count, colOf, recount, wakeGrid, cellOf, kindOf, mockShade } from '../grid.js';
 
 const M = AFTER_MILL, F = M.frame, LOG = AFTER_BLOCK.log, PLANK = AFTER_BLOCK.plank;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -110,7 +110,7 @@ export function takeSawdust(n) {
 }
 // A grain's value names it, a byte's worth (the grid's cells): the drawing
 // picks its tone off it (render/after/stations.js), so it keeps it as it rolls.
-const grainTone = b => (globalThis.__goodsLook === 'c' ? 1 + Math.floor(((Math.sin(((b.seq = (b.seq || 0) + 1) + 7) * 78.233) * 43758.5453) % 1 + 1) % 1 * 6) : 1 + ((b.seq = (b.seq || 0) + 1) % 255)); // MOCK after-goods  C: a random shade of six, once, per grain
+const grainTone = b => (globalThis.__goodsLook === 'c' || globalThis.__goodsLook === 'd' ? 1 + mockShade(10) : 1 + ((b.seq = (b.seq || 0) + 1) % 255)); // MOCK after-goods  C: a random shade of six, once, per grain
 function takeTop(b) {
   let col = -1, hi = -1;
   for (let c = 0; c < b.cols; c++) { const r = topRow(b, c); if (r > hi) { hi = r; col = c; } }
