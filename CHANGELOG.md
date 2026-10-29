@@ -270,6 +270,7 @@ this section; the release that switches it on moves these under Unreleased.
 - The cinema's dot-ground bands no longer fail the deep's palette read, and the afterlife's play check opens each station's board by its UPGRADES button (src/selftest/deeppalette.js, src/selftest/playcheck.js).
 - Loading a save no longer shows the last yard's income rates and air trend in the books until they age out (test/held-state.test.mjs).
 - The diggers' counter stays under the rock after the shack is bought, instead of moving to the shack (test/digger-roster.test.mjs).
+- Switching saves no longer carries dust on the cursor, scales in the water or blocks lying in act 3 from the old game into the new one (test/save-switch.test.mjs).
 
 ## v0.6.1 — 2026-10-19
 

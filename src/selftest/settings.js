@@ -334,7 +334,12 @@ export const TESTS = [
     probe.remove();
     const inverted = opens.length === 1 && cs(opens[0]).backgroundColor === ink && cs(opens[0]).color === paper
       && cs(opens[0]).opacity === '1' && opens[0].disabled;
+    // Goods on the cursor and in the deep's water in the yard being left are
+    // that yard's, and the one the press opens never held them.
+    S.held = 40; S.motes.push({ x: 300, y: 300, a: 0, r: 5, shade: 1 });
+    S.sinking.push({ x: 500, y: 100, vx: 0, vy: 1, s: 1 });
     rows()[0].click();
+    const leaked = S.held + S.motes.length + S.sinking.length;
     const backAgain = state();
     const saidBack = said();
     const frontAfterLoad = onFront();
@@ -353,6 +358,7 @@ export const TESTS = [
       ok(inverted, 'the open row is inverted (ink fill, paper text), not faded, and inert', `${opens.length} open`),
       ok(backAgain.crew === crew && saidBack === 'loaded', 'and the first yard comes back',
          `${backAgain.crew} vs ${crew}, ${saidBack}`),
+      ok(leaked === 0, 'nothing the second yard had on the cursor or in the water comes with the switch', `${leaked}`),
       ok(frontAfterNew && frontAfterLoad, 'and each pick turns back to the front',
          `${frontAfterNew}, ${frontAfterLoad}`),
     ];

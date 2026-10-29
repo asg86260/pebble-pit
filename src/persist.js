@@ -548,7 +548,15 @@ function newYardName() {
 // other load -- a boot, a slot, an import, the cloud -- is a page opened
 // fresh, and what modules keep for the yard goes first.
 export function restore({ warm = false } = {}) {
-  if (!warm) resetHeld();
+  if (!warm) {
+    resetHeld();
+    // A slot, an import or the cloud puts one yard down for another in a page
+    // that is still running: what was on the cursor, in the air over the deep
+    // or on the pegs is the old yard's, and no save brings it back to be
+    // replaced, so it would stand in the new one. A boot has nothing to put
+    // down and this is a no-op there.
+    blankEphemeral();
+  }
   yardReads++;
   // The ground was laid for the yard that was here: a save brings its own
   // noticeboard rect, from whatever layout wrote it, and the lay is cached
