@@ -23,7 +23,7 @@
 
 import { S } from '../state.js';
 // the frame's steps are handed in by the scene (game.js imports the drawing, which imports this)
-import { P, TREE_CHOPS, AFTER_WALK, GESTURE_SAW_AMP, GESTURE_STRAIN_S, AFTER_DIG_CLICKS, ACT_GATES_CELL, AFTER_SEED_BUNDLE } from '../config.js';
+import { P, TREE_CHOPS, AFTER_WALK, GESTURE_SAW_AMP, GESTURE_STRAIN_S, AFTER_DIG_CLICKS, ACT_GATES_CELL, AFTER_SEED_BUNDLE, AFTER_FALL_BOUNCE_S } from '../config.js';
 import { plotX, groundOf, floorAt, stationDoor, AP, PINE_GROWN, basketBox } from './place.js';
 import { chopTree, digStump } from './grove.js';
 import { putSomewhere, tag, fallTag, takeAt } from './ground.js';
@@ -61,6 +61,45 @@ export const CROWN_ROWS = {
   2: band([2, 2, 4, 4, 4, 6, 6, 6, 6, 8, 8, 8, 8, 8, 10, 10, 10, 10, 8, 6], 5),
   3: band([8, 12, 14, 16, 18, 18, 20, 20, 20, 20, 18, 18, 16, 14, 10], 99)   // one mass, as wide as a plot holds: only its underside in shadow
 };
+// The oaks (the owner, on CR-3: "can it look more like an oak tree?"): a
+// crown of lumpy clumps, each a disc [x, y, radius] in cells (x off the
+// trunk's middle line, y up from the trunk's top), mirrored either side so
+// the mass balances; sky showing where the clumps leave gaps; boughs in the
+// log's darkest brown from the trunk's top out to each side clump, seen only
+// through the gaps. The lowest clumps hang over the trunk's top, so the
+// trunk reads shorter, but it is still its four logs under the leaves. Never
+// wider than a big pine's foot (OAK_HALF a side), so a plot holds it.
+//   4 OAK-1 broad and spreading: wider than tall, three clumps a side
+//   5 OAK-2 a dome of clumps: a tall middle clump, two a side and one low
+//   6 OAK-3 gnarled: two great side clumps on two boughs, a notch between
+const mirror = lobes => lobes.flatMap(([x, y, r]) => (x ? [[x, y, r], [-x, y, r]] : [[x, y, r]]));
+export const OAKS = {
+  4: mirror([[0, 3.5, 4.6], [0, 8, 3], [4.4, 4.5, 3.8], [5.8, -1.5, 3.2], [2.4, -3, 3]]),
+  5: mirror([[0, 7.5, 4.4], [3.8, 3.5, 3.8], [6, -1.5, 3], [0, -2.5, 3.4]]),
+  6: mirror([[4.6, 2.5, 4.3], [0, 7.5, 3.2], [7.2, -2.5, 1.8]])
+};
+const OAK_HALF = 9;
+function oakCells(lobes) {
+  const out = [], leaf = new Set(), inLobe = (cx, cy) => lobes.some(([x, y, r]) => (cx - x) ** 2 + (cy - y) ** 2 <= r * r);
+  for (let y = 16; y >= -8; y--) for (let c = -OAK_HALF; c < OAK_HALF; c++) {
+    const cx = c + 0.5, cy = y - 0.5;
+    // each leaf the clump it sits deepest in, as its tier: the crown's shading and its breaking go by clump
+    if (inLobe(cx, cy)) { const k = lobes.reduce((b, [x, y, r], i) => (Math.hypot(cx - x, cy - y) - r < Math.hypot(cx - lobes[b][0], cy - lobes[b][1]) - lobes[b][2] ? i : b), 0); leaf.add(`${c}|${y}`); out.push([c, TRUNK_TOP - y, 'crown', k]); }
+  }
+  // the trunk carried on up into the crown as its leader, to the leaves over it
+  for (let c = MT.c0 + 1; c < MT.c0 + MT.w - 1; c++) for (let y = 1; y <= 16 && !leaf.has(`${c}|${y}`); y++) out.push([c, TRUNK_TOP - y, 'bough', 0]);
+  // boughs: from the trunk's top out to each clump off the middle, where the leaves leave them showing
+  for (const [x, y] of lobes) {
+    if (Math.abs(x) < 2) continue;
+    const x0 = Math.sign(x) * 1, steps = 24;
+    for (let k = 0; k <= steps; k++) {
+      const cx = x0 + (x - x0) * k / steps, cy = 0 + y * k / steps, c = Math.floor(cx), yy = Math.ceil(cy);
+      const key = `${c}|${yy}`;
+      if (yy > 0 && !leaf.has(key) && Math.abs(c + 0.5) > MT.w / 2 - 0.01 && !out.some(q => q[0] === c && q[1] === TRUNK_TOP - yy)) out.push([c, TRUNK_TOP - yy, 'bough', 0]);
+    }
+  }
+  return out;
+}
 // The tree's cells [c, r, part, tier], part 'stump', 'trunk' or 'crown',
 // for the crown shape the option names (M.crown), worked out once a shape.
 const CELLS = new Map();
@@ -70,8 +109,11 @@ export function treeCells() {
   const out = [];
   for (let r = -1; r >= -MT.stump; r--) for (let c = MT.c0; c < MT.c0 + MT.w; c++) out.push([c, r, 'stump']);
   for (let r = -MT.stump - 1; r >= TRUNK_TOP; r--) for (let c = MT.c0; c < MT.c0 + MT.w; c++) out.push([c, r, 'trunk']);
-  const rows = CROWN_ROWS[key];
-  rows.forEach(([wd, ti], i) => { const r = TRUNK_TOP - rows.length + i; for (let c = -wd / 2; c < wd / 2; c++) out.push([c, r, 'crown', ti]); });
+  if (OAKS[key]) out.push(...oakCells(OAKS[key]));
+  else {
+    const rows = CROWN_ROWS[key];
+    rows.forEach(([wd, ti], i) => { const r = TRUNK_TOP - rows.length + i; for (let c = -wd / 2; c < wd / 2; c++) out.push([c, r, 'crown', ti]); });
+  }
   CELLS.set(key, out);
   return out;
 }
@@ -359,7 +401,7 @@ function makeW(tool) {
       else if (M.ph === 'fell') {
         if (sawStroke(b, M.t)) { chopTree(0); M.notch = p.fall != null ? MT.w : Math.min(MT.w, Math.ceil(p.chops / TREE_CHOPS * MT.w)); }
         if (p.fall != null) { b.pose = 'carry'; b.s = 0; b.smear = null; go('watch'); }
-      } else if (M.ph === 'watch') { if (M.landed != null && S.after.t - M.landed >= 1.6) go('toend'); }
+      } else if (M.ph === 'watch') { if (M.landed != null && S.after.t - M.landed >= 3.2) go(tool === 'saw1' ? 'toend' : 'done'); }   // W-2: the trunk breaks into its logs itself
       else if (M.ph === 'toend') { b.pose = 'carry'; if (walkTo(b, sawEndStand(), dt)) { b.face = -1; b.pose = 'bucksaw'; b.k = 0; go('cut'); } }
       else if (M.ph === 'cut') {
         if (M.logs === 1) { go('lift'); return; }
@@ -377,9 +419,9 @@ function makeW(tool) {
 // Bucking with a saw from the ground: just past the trunk's far end, facing it.
 export const sawEndStand = () => Math.round(endX() + AP);
 // CR: a crown shape grown, stood and felled.
-function makeCR(shape) {
+function makeCR(shape, pal = 1) {
   return {
-    init() { takeBack(); barePlot(); M.crown = shape; M.crownPal = 1; M.cone = { state: 'in', at: S.after.t - 5 }; M.grow = { kind: 'b1', at: S.after.t + 0.4, dur: 8 }; go('grow'); },
+    init() { takeBack(); barePlot(); M.crown = shape; M.crownPal = pal; M.cone = { state: 'in', at: S.after.t - 5 }; M.grow = { kind: 'b1', at: S.after.t + 0.4, dur: 8 }; go('grow'); },
     step() {
       const p = plot();
       // grown whole: the tree it grew into, standing (the same cells, nothing redrawn)
@@ -389,6 +431,14 @@ function makeCR(shape) {
     }
   };
 }
+// The felled trunk breaks into its logs (the owner: "lets just have the
+// tree drop and break into the logs, not extra cutting"): after the fall's
+// rock back, the four logs it is made of part along their seams, each
+// hopping a cell and coming down BREAK_SPREAD px further from the middle,
+// held, then each a real log where it lies. Only the old bucking options
+// (BUCKED) still cut log by log.
+export const BREAK_S = 0.55, BREAK_SPREAD = 3;
+const BUCKED = new Set(['d1', 'd2', 'd2axe1', 'd2axe2', 'e', 'w1']);
 // F3a and its three variants: one script, `M.style` what is drawn into it.
 function makeF3a(style) {
   return { init() { M.style = style; SCRIPTS._f3a.init(); }, step(dt) { SCRIPTS._f3a.step.call(this, dt); } };
@@ -682,7 +732,7 @@ const SCRIPTS = {
         if (p.fall != null) { gestureUp(M.cursor.x, gy); M.sawAt = null; M.notch = MT.w; go('fall'); }
       } else if (M.ph === 'fall') {
         M.cursor = { x: M.cursor.x - 20 * dt, y: M.cursor.y - 30 * dt, pose: 'point' };
-        if (M.landed != null && S.after.t - M.landed >= 1.2) { M.sawAt = { buck: true, s: 0 }; M.from = { x: M.cursor.x, y: M.cursor.y }; go('hold0'); }
+        if (M.landed != null && S.after.t - M.landed >= 3.0) { M.cursor = null; go('end'); }   // the trunk breaks into its logs itself: nothing more to saw
       } else if (M.ph === 'hold0') {
         const k = Math.min(1, M.t / 0.8), to = handSaw(0);
         M.cursor = { x: lerp(M.from.x, to.x, ease(k)), y: lerp(M.from.y, to.y, ease(k)), pose: k < 1 ? 'point' : 'grab' };
@@ -823,6 +873,8 @@ const SCRIPTS = {
   // CR-1..3: the crown's shapes in the deep pine green (C-green-1): grown
   // row by row from the acorn (B1), standing a beat, felled and broken (C).
   cr1: makeCR(1), cr2: makeCR(2), cr3: makeCR(3),
+  // OAK-1..3: the oaks in the oak-leaf green (pal 4), grown, stood and felled
+  oak1: makeCR(4, 4), oak2: makeCR(5, 4), oak3: makeCR(6, 4),
   // F3a: the stump is the handle. Press and hold on it and drag up: it comes
   // up with the hand, its roots straining under it and snapping one by one
   // (the real stump gesture, a root a strain), no rope and no grip apart from
@@ -959,7 +1011,7 @@ export const SHOVEL_H = 7 * AP;
 export const shovelTop = ang => { const s = shovelAt(); return { x: s.x + Math.sin(ang) * SHOVEL_H, y: s.y - Math.cos(ang) * SHOVEL_H }; };
 
 // The options with a fall, turned to fall away from the shack.
-const FLIP = new Set(['c', 'w1', 'w2', 'cr1', 'cr2', 'cr3', 'cg1', 'cg2', 'cg3', 'd2axe1', 'd2axe2', 's1', 's3a', 's3b', 'd1', 'd2', 'e', 'esaw1', 'esaw2', 'esaw3', 'f1', 'f2']);
+const FLIP = new Set(['c', 'oak1', 'oak2', 'oak3', 'w1', 'w2', 'cr1', 'cr2', 'cr3', 'cg1', 'cg2', 'cg3', 'd2axe1', 'd2axe2', 's1', 's3a', 's3b', 'd1', 'd2', 'e', 'esaw1', 'esaw2', 'esaw3', 'f1', 'f2']);
 
 // --- the scene's door --------------------------------------------------------------------
 // Stand option `opt` on the act now standing: the global set, the state
@@ -969,7 +1021,7 @@ export function startGroveMock(opt, STEPS) {
   globalThis.__groveMock = opt;
   Object.assign(M, { opt, mine: S.after, ph: '', t: 0, T: 0, logs: 0, cut: 0, roll: null, grow: null, cone: null, bodies: [],
                      cursor: null, ghost: null, notch: 0, sawAt: null, stumpOut: null, landed: null, from: null,
-                     flip: FLIP.has(opt), stumpUp: 0, tilt: 0, shovel: null, dug: 0, basket: BASKET_FULL, taking: null, dropped: [], tip: null, bought: false, style: 0, strain: 0, snapAt: null, snapK: -1, chips: [], lastDug: 0, axe: 0, crownPal: 0, crown: 0 });
+                     flip: FLIP.has(opt), stumpUp: 0, tilt: 0, shovel: null, dug: 0, basket: BASKET_FULL, taking: null, dropped: [], tip: null, bought: false, style: 0, strain: 0, snapAt: null, snapK: -1, chips: [], lastDug: 0, axe: 0, crownPal: 1, crown: 0, breakAt: null });   // the crown in the deep pine green everywhere: the owner's pick
   M.placed.length = 0;
   const idx = STEPS.findIndex(q => q.name === 'grovemock');
   if (idx >= 0) STEPS.splice(idx, 1);
@@ -988,7 +1040,9 @@ export function startGroveMock(opt, STEPS) {
     // A tree that has just hit the ground: from here its trunk lies, all its
     // logs in it, and its crown breaks where it hit.
     const p = plot();
-    if (p && p.fell != null && M.landed !== p.fell) { M.landed = p.fell; M.logs = MT.logs; M.notch = 0; }
+    if (p && p.fell != null && M.landed !== p.fell) { M.landed = p.fell; M.logs = MT.logs; M.notch = 0; M.breakAt = BUCKED.has(M.opt) ? null : p.fell + AFTER_FALL_BOUNCE_S; }
+    // the trunk broken along its log seams: once the logs have hopped apart, each a real log where it lies
+    if (M.breakAt != null && M.logs > 0 && S.after.t >= M.breakAt + BREAK_S) { for (let j = M.logs - 1; j >= 0; j--) layLog(pivotX() + j * MT.log * AP + (j - (MT.logs - 1) / 2) * BREAK_SPREAD, M.tones[j]); M.logs = 0; M.breakAt = null; }
     SCRIPTS[M.opt].step(dt);
   } });
 }
