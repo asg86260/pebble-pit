@@ -67,7 +67,7 @@ tab on the next hot reload. The owner decides on the page itself -- "stop:
 pick this one" or "keep iterating" with what to change -- and the note lands
 in `shots/review/notes.jsonl`; wait for it with `node tools/review-wait.mjs
 <checkout>` run in the background, which exits (and so wakes you) the moment
-a note lands (`--all` prints the notes already there).
+a note lands (`--all` prints the notes already there; it never skips a note, since a cursor in `shots/review/notes.cursor` remembers what was printed, and `--reset` starts from now). When the coordinator reports a round ready it also writes a `changed` line (`node tools/review-status.mjs <checkout> changed "<review>" "<what changed>"`), which the card shows until the owner next weighs in.
 The page is a board, a column a status (waiting on you, iterating,
 building, signed off; landed folded into a row): all but building are derived
 from the notes and fingerprints, and building is written -- the coordinator
