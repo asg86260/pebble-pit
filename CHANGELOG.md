@@ -265,6 +265,8 @@ this section; the release that switches it on moves these under Unreleased.
 - On the appearance page, right from the last tile in a row of the grid stays on it instead of jumping the focus to a key at the top of the page (src/selftest/wardrobe.js, the picker by a pad, at 390x844).
 - After a load or a new game the stations' offer flags stand as the new yard has them, and heaven's ground, the serpent's bar and the fang plate start from it, instead of the last yard's raising, fading or breaking off (test/held-state.test.mjs).
 - Leaving the deep, or the serpent's bar going down, no longer leaves a status's tooltip waiting on that spot of the screen (src/selftest/deep.js).
+- The landing page's settings, the cloud section, the language tab and the feedback form work again: the title page no longer loads the board's page-only code through the UPGRADES button's drift (src/selftest/language.js, src/selftest/cloud.js).
+- The cinema's dot-ground bands no longer fail the deep's palette read, and the afterlife's play check opens each station's board by its UPGRADES button (src/selftest/deeppalette.js, src/selftest/playcheck.js).
 - Loading a save no longer shows the last yard's income rates and air trend in the books until they age out (test/held-state.test.mjs).
 
 ## v0.6.1 — 2026-10-19

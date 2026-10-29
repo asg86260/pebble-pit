@@ -26,7 +26,7 @@ import { draw, LAYERS } from '../render.js';
 import { countRect } from '../render/counter.js';
 import { DEEP_SEEN, seen, LIGHT, TONE } from '../render/deeptones.js';
 import { darkPage, inkOf } from '../ink.js';
-import { COIN_TONES, SHADES, P, CELL, GOLD } from '../config.js';
+import { COIN_TONES, SHADES, P, CELL, GOLD, SHELF_DOT_ALPHA } from '../config.js';
 
 // The comparison pages' scenes (docs/mocks/deep-palette-ingame-2026-10-14.html,
 // docs/mocks/deep-background-2026-10-14.html).
@@ -46,7 +46,10 @@ const hex = (d, k) => '#' + ((1 << 24) | (d[k] << 16) | (d[k + 1] << 8) | d[k + 
 function offPalette(hide = null) {
   // and gold, the one hue for what is earned (config/palette.js, GOLD): let
   // into the deep as the coins are, a color that is what it is
-  const allowed = new Set([...DEEP_SEEN, ...Object.values(COIN_TONES).flat(), ...SHADES.map(xor), GOLD.deep]
+  // and the cinema's black bands stand on the page's dots (render/recede.js):
+  // white at the dot alpha over black, the one grey the bands add
+  const dot = Math.round(255 * SHELF_DOT_ALPHA).toString(16).padStart(2, '0');
+  const allowed = new Set([...DEEP_SEEN, ...Object.values(COIN_TONES).flat(), ...SHADES.map(xor), GOLD.deep, `#${dot}${dot}${dot}`]
     .map(c => c.toLowerCase()));
   const off = LAYERS.filter(l => l.name === 'deep bed' || l === hide), was = off.map(l => l.when);
   off.forEach(l => { l.when = () => false; });
