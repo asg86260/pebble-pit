@@ -97,6 +97,8 @@ const FACTS = [
   ['hat', () => S.wizardHats > 0, 'first wizard hat'],
   ['spark', () => S.sparks > 0, 'first spark'],
   ['machine', () => Object.values(S.machines || {}).some(m => m.bought), 'first machine bought'],
+  ...['jaw', 'ram', 'tiller', 'belt', 'sphere'].map(k => ['m' + k, () => !!S.machines?.[k]?.bought, 'machine bought: ' + k]),
+  ['mroomba', () => (S.roombas || 0) > 0, 'machine bought: roomba'],
   ['props', () => S.shieldsDone.includes('props'), 'shield: the props fail'],
   ['net', () => S.shieldsDone.includes('net'), 'shield: the net fails'],
   ['arch', () => S.shieldsDone.includes('arch'), 'shield: the arch fails'],

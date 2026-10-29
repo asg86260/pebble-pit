@@ -14755,9 +14755,11 @@ topped.
 
 ### Open, for the balance pass
 
-- **`SPHERE_BILL`** starts above the ram, the dearest machine so far:
-  `[['spark', 720], ['dust', 14400], ['shard', 900], ['spore', 900]]`. It is
-  the last machine to open and the only one with no gap in its output.
+- **`SPHERE_BILL`** is derived: in each coin, `SPHERE_PREMIUM` (1.75) times the
+  dearest bill any other machine asks, the roomba's third included (owner,
+  2026-10-29: the sphere is the last machine affordable, but pretty early).
+  The speedrun bot buys it after the ram and after the portal, where it had
+  been bought before the drill.
 - **`SPHERE_WORK`** starts at 120 wizard-seconds, forty seconds for a full ring
   of three. It is longer than the dome because nothing is falling on anybody
   while it goes up.

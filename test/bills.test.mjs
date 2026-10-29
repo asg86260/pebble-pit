@@ -98,3 +98,16 @@ test('the ram and the belt are priced out of the pile', async () => {
       `the ${what} is ${Math.round(ratio)} dust to the spark, off the ${DUST_PER_SPARK} line the rest sit on`);
   }
 });
+
+// The sphere is the last machine affordable (the owner, 2026-10-29): in every
+// coin it asks more than any other machine does, the roomba's third included.
+test('the sphere costs more than every other machine in every coin', async () => {
+  const c = await import('../src/config.js');
+  const others = [c.JAW_BILL, c.RAM_BILL, c.TILLER_BILL, c.BELT_BILL, ...c.ROOMBA_BILLS];
+  for (const [coin, n] of c.SPHERE_BILL) {
+    for (const b of others) {
+      const o = b.find(([m]) => m === coin)?.[1] ?? 0;
+      assert.ok(n > o, `the sphere asks ${n} ${coin}, no more than a machine at ${o}`);
+    }
+  }
+});
