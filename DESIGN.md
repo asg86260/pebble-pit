@@ -134,6 +134,40 @@ dark page. That is the owner's call: the dark page is a negative of the
 light one, and dim is the same negative on charcoal for anyone who finds
 near-black too stark.
 
+## The light page's deep, drawn in its own inks (design, not built)
+
+The owner, 2026-10-29: no blend modes and no filters in the frame, plain
+colors only -- "we've taken the lazy way to do dark mode". The last pass of
+that kind is the light page's deep. It is drawn as the yard is, and then
+`drawDeepInvert` (render/deep.js) turns the whole deep window into its
+negative every frame: the frame drawn back over itself through
+`invert(1)` where the probe says the filter is exact (render/invert.js,
+two readbacks of a scrap to find out), a `difference` fill elsewhere. On
+Firefox's card the `difference` fill takes the whole canvas to the
+processor for good (PERF.md, "Firefox's canvas off the card"); the filter
+pass is a window-sized self-copy a frame.
+
+**The bargain.** The dark page already draws the deep straight in the
+deep's inks: every fill, the cell images and the abyss's field go through
+`inkOf` under the deep's map (`mapOf` in render.js, `inkMode('deep')`), and
+every cache is keyed by theme and map (`themed`). The light page's deep
+gets a map of its own the same way -- each color to its negative,
+`#rrggbb` to `255 - each` -- worked out once a color and cached, so the
+picture is the one the invert pass makes today, pixel for pixel, and
+`drawDeepInvert`, `invert.js` and its probe, `raw` and the setters'
+early-out on the light page (`hookAll(on)` hooks the setters only on a
+turned page) are gone.
+
+**What it costs.** The light page's setters are hooked, as the dark page's
+are: a fill's color is a map lookup at each set, cached, which the dark
+page already pays. Anything in the deep that reaches the canvas without a
+color passing a setter -- a `drawImage` of a canvas built outside the deep's
+map, a `putImageData` with colors typed in -- would come out unturned; the
+dark page's deep has the same rule, so each such place is already mapped,
+and a `deep` scene shot on each page beside today's is the check
+(`deep`, `deep-portal`, `deep-rest`, `abyss-intro`). `turnedOver()` keeps
+its meaning for the yard's few light-or-dark choices.
+
 ## Dark mode: black stays black (built 2026-10-18, replaced 2026-10-19)
 
 Replaced by the section above. Kept for its survey of where a turned page
