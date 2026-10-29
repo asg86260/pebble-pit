@@ -6,7 +6,7 @@
   :root { color-scheme: light; --bg: #fff; --fg: #000; --dim: #666; --soft: #eee; --line: #000; --hair: #bbb; }
   :root[data-theme=dark] { color-scheme: dark; --bg: #000; --fg: #fff; --dim: #9a9a9a; --soft: #161616; --line: #fff; --hair: #444; }
   * { box-sizing: border-box; }
-  body { margin: 0; padding: 12px 16px 32px; background: var(--bg); color: var(--fg); font: 13px/1.45 'Courier Prime', ui-monospace, Menlo, monospace;
+  body { margin: 0; padding: 12px 16px 12px; height: 100vh; display: flex; flex-direction: column; overflow: hidden; background: var(--bg); color: var(--fg); font: 13px/1.45 'Courier Prime', ui-monospace, Menlo, monospace;
     background-image: radial-gradient(var(--hair) 1px, transparent 1px); background-size: 12px 12px; }
   h1 { font-size: 14px; margin: 0; }
   button { font: inherit; border: 2px solid var(--line); background: var(--bg); color: var(--fg); padding: 1px 9px; cursor: pointer; }
@@ -74,10 +74,17 @@
   #sent { align-self: center; min-width: 12em; }
   .hist { font-size: 11px; color: var(--dim); }
   .hist b { color: var(--fg); }
+  /* the whole game at once: the detail on the left, the game on the right sized to the height left, no page scroll */
+  #board { flex: none; max-height: 45vh; overflow: auto; }
+  .work { flex: 1; min-height: 0; display: flex; gap: 10px; align-items: flex-start; }
+  .work .detail { flex: 0 0 clamp(330px, 27vw, 520px); max-height: 100%; overflow-y: auto; margin: 0; }
+  .right { flex: 1; min-width: 0; height: 100%; }
+  .strip { display: flex; gap: 14px; align-items: baseline; flex-wrap: wrap; border: 1px solid var(--hair); padding: 2px 8px; margin-bottom: 8px; background: var(--bg); font-size: 12px; }
+  .strip b { font-weight: 700; }
   .stage { border: 2px solid var(--line); overflow: hidden; }
-  iframe { border: 0; display: block; background: #fff; width: 800px; height: 600px; transform-origin: 0 0; }
+  iframe { border: 0; display: block; background: #fff; width: 800px; height: 600px; transform-origin: 0 0; image-rendering: pixelated; }
   .empty { border: 2px dashed var(--line); padding: 16px; max-width: 700px; background: var(--bg); }
-  @media (max-width: 900px) { .kan { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 900px) { body { height: auto; overflow: auto; } #board { max-height: none; } .work { flex-direction: column; } .work .detail { flex: none; width: 100%; max-height: none; } .right { height: auto; width: 100%; } .kan { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 </style></head><body>
 <!-- The review bench: the change under review, live in the real game, an
      option a button. A review is the scenes in src/scenes.js that carry a
@@ -106,8 +113,9 @@
      changed. The dev server fingerprints every option from its scene and
      its review's tagged code (tools/review-prints.mjs); what this browser
      has seen is kept here, in localStorage. -->
-<div class="topbar"><h1>Review Bench</h1><span><span class="hint" id="hint"></span> <button id="theme" title="light or dark">light / dark</button></span></div>
+<div class="topbar"><h1>Review Bench</h1><span><span class="hint" id="hint"></span> <button id="boardtoggle" title="the board of every review">board</button> <button id="theme" title="light or dark">light / dark</button></span></div>
 <div id="board"></div>
+<div class="work">
 <div class="detail" id="detail">
   <div id="head"></div>
   <p id="stage-say"></p>
@@ -116,7 +124,8 @@
   <form class="note" id="note"><textarea id="words" placeholder="what to change (or why this one)"></textarea><div class="btns"><button type="button" id="stop">stop: pick this one</button><button type="button" id="keep">keep iterating</button></div><span id="sent" aria-live="polite"></span></form>
   <div class="hist" id="hist"></div>
 </div>
-<div class="stage" id="stage"><iframe id="yard" src="./play.html?bench" title="the change under review"></iframe></div>
+<div class="right" id="right"><div class="stage" id="stage"><iframe id="yard" src="./play.html?bench" title="the change under review"></iframe></div></div>
+</div>
 <script>
 const $ = id => document.getElementById(id);
 const f = $('yard'), stage = $('stage');
@@ -124,8 +133,13 @@ const slug = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 // The game at the scene shots' 800x600, so the camera frames a scene as
 // look.mjs does, scaled to the window.
-const fit = () => { const w = Math.min(innerWidth - 36, Math.max(520, (innerHeight - 120) * 4 / 3)), k = w / 800; f.style.transform = `scale(${k})`; stage.style.width = w + 'px'; stage.style.height = 600 * k + 'px'; };
-addEventListener('resize', fit); fit();
+const fit = () => {
+  const narrow = innerWidth <= 900, r = $('right').getBoundingClientRect();
+  const w = narrow ? Math.max(300, r.width) : Math.max(240, Math.min(r.width - 4, (r.height - 4) * 4 / 3)), k = w / 800;
+  f.style.transform = `scale(${k})`; stage.style.width = w + 'px'; stage.style.height = 600 * k + 'px';
+};
+addEventListener('resize', fit);
+new ResizeObserver(fit).observe($('right'));
 
 // light or dark: the system's, until the owner picks
 const THEME = 'review-theme';
@@ -134,6 +148,12 @@ const setTheme = t => { document.documentElement.dataset.theme = t; try { localS
 $('theme').onclick = () => setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
 
 let reviews = [], rev = null, cur = null;
+// The board is one click away: shut to a strip of counts so the game and the detail keep the screen.
+const BOARD = 'review-board-open';
+let boardOpen = false;
+try { boardOpen = localStorage.getItem(BOARD) === '1'; } catch {}
+$('boardtoggle').onclick = () => { boardOpen = !boardOpen; try { localStorage.setItem(BOARD, boardOpen ? '1' : '0'); } catch {} $('boardtoggle').classList.toggle('on', boardOpen); drawBoard(); };
+$('boardtoggle').classList.toggle('on', boardOpen);
 const ready = () => f.contentWindow && f.contentWindow.__reviews && f.contentWindow.__reset;
 // An option's stage, from its scene's `stage` ("built: ..." or "mock: ..."): 'built', 'mock' or null.
 const kindOfStage = st => /^built/i.test(st || '') ? 'built' : /^mock/i.test(st || '') ? 'mock' : null;
@@ -242,6 +262,12 @@ function drawBoard() {
     return `<button class="card ${x === rev ? 'sel' : ''} ${x.phantom ? 'phantom' : ''}" data-rev="${slug(x.name)}" data-state="${s.state}"><div class="t">${esc(x.name)}${flagHtml(flag)}</div>`
       + `<div class="w">${w}${s.stale ? '<span class="stale">stale?</span>' : ''}</div>${ch}<div>${chips}</div></button>`;
   };
+  if (!boardOpen) {
+    const n = s => cs.filter(x => st.get(x).state === s).length;
+    $('board').innerHTML = `<div class="strip">${COLS.map(([s, t]) => `<span>${t} <b>${n(s)}</b></span>`).join('')}</div>`;
+    $('hint').textContent = boardOrder().length > 1 ? '[ ] between reviews, 1-9 options, r restart' : '1-9 options, r restart';
+    fit(); return;
+  }
   const open = cs.filter(x => st.get(x).state !== 'landed'), landed = cs.filter(x => st.get(x).state === 'landed');
   let html = `<div class="kan">${COLS.map(([s, t, hot]) => {
     const C = open.filter(x => st.get(x).state === s);
@@ -258,6 +284,7 @@ function drawBoard() {
   const t = $('landedtoggle');
   if (t) t.onclick = () => { showLanded = !showLanded; try { localStorage.setItem(LANDED, showLanded ? '1' : '0'); } catch {} drawBoard(); };
   $('hint').textContent = boardOrder().length > 1 ? '[ ] between reviews, 1-9 options, r restart' : '1-9 options, r restart';
+  fit();
 }
 // The open review's heading, its in-flight line and its history: redrawn on every poll
 function drawHead() {
@@ -265,7 +292,7 @@ function drawHead() {
   const s = statusOf(rev), p = printed?.reviews[slug(rev.name)], cl = changesOf(rev).slice(0, 3);
   $('head').innerHTML = `<h2>${esc(rev.name)} <span class="pill s-${s.state}">${LBL[s.state]}</span>${flagHtml(revFlag(rev))} ${p ? `<span class="dim">updated ${ago(p.since)}</span>` : ''}</h2>`
     + `<div class="flight ${live(s) ? '' : 'none'}"><span class="dim">in flight:</span> ${inFlight(s)}</div>`
-    + (cl.length ? `<div class="changes"><b>changes:</b> ${cl.map(c => `${isNewChange(rev, c) ? '<span class="flag new">new</span>' : ''}${hhmm(c.at)} ${esc(c.text)}`).join(' &nbsp;|&nbsp; ')}</div>` : '');
+    + (cl.length ? `<div class="changes"><b>changes:</b> ${cl.map(c => `<div>${isNewChange(rev, c) ? '<span class="flag new">new</span>' : ''}${hhmm(c.at)} ${esc(c.text)}</div>`).join('')}</div>` : '');
   const ns = notesOf(rev).sort((a, b) => Date.parse(a.at) - Date.parse(b.at)).slice(-3), line = n => `${hhmm(n.at)} you: ${n.verdict === 'stop' ? 'stop' : 'keep iterating'}${n.say ? ` "${esc(n.say)}"` : ''}`;
   $('hist').innerHTML = `<b>last:</b> ${ns.length ? ns.reverse().map(line).join(' &nbsp;|&nbsp; ') : 'no note yet.'}`;
 }
