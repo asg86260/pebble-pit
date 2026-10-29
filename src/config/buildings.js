@@ -69,7 +69,3 @@ export const SHACK_SCOOT = 30;
 // up before the yard has any other coin, and a bill in a currency the rock
 // does not give would gate the gang's own ladders behind somewhere else.
 export const SHACK_DUST = 150;
-// A third of `WORK_BASE.building`, because it is a third of a building, and
-// because the first build in a game should be over before you wonder whether
-// it is stuck.
-export const SHACK_WORK = 15;

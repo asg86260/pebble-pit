@@ -1,5 +1,6 @@
 // --- the machines ---------------------------------------------------------------
 import { P } from './yard.js';
+import { BUILD_CAP_S } from './build.js';
 
 // What a machine is worth, as a multiple of the complement its station could
 // hold by hand. See `handsOf` and DESIGN.md's "The machines".
@@ -118,11 +119,8 @@ export const SPHERE_BILL = [['spark', 720], ['dust', 14400], ['shard', 900], ['s
 
 // --- the sphere ---------------------------------------------------------------
 // Wizard-seconds to pour the shell, like `DOME_WORK`: one body takes this long,
-// a ring of three a third of it. Longer than the dome, since nothing is falling
-// on anybody while it goes up.
-export const SPHERE_WORK = 120;
-// And a rung of its ladder, which only the tender pours.
-export const SPHERE_TUNE_WORK = 30;
+// a ring of three a third of it. The build cap, like the dome (`BUILD_CAP_S`).
+export const SPHERE_WORK = BUILD_CAP_S;
 // How far past the star's edge the shell reaches, in cells: inside the
 // wizards' ring (`WIZ_ORBIT` is ten cells out) and over the corona's foot.
 export const SPHERE_OUT = 2;

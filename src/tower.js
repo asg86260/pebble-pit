@@ -5,7 +5,7 @@ import { deepOn } from './snatch.js';
 import { wizMs, wizBite } from './wizard.js';
 import { STEP } from './mult.js';
 import { S } from './state.js';
-import { WIZ_DUST, WIZ_SHARDS, WIZ_SPORES, WIZ_RATE, WIZ_BREW_MS,
+import { WIZ_DUST, WIZ_SHARDS, WIZ_SPORES, WIZ_RATE,
          WIZ_SPEED_COST, WIZ_POWER_COST, WIZ_LADDER_RATE, RUNGS, SPELLS,
          DOME_BILL, DOME_WORK, SPELL_DRIVE, SPELL_LUCK, SPELL_GMO, SPELL_THRIFT, SPELL_SWEEP } from './config.js';
 import { raiseShield } from './shield.js';
@@ -17,7 +17,7 @@ import { emptySky } from './meteor.js';
 import { registerRows, workOn, progressOf, ahead } from './works.js';
 import { TYPE, JOB } from './jobs.js';
 import { MACHINES, machine, buyMachine, canBuy, tuneRow } from './machines.js';
-import { KIT_MAX, SPHERE_BILL, SPHERE_WORK, SPHERE_TUNE_WORK, MACHINE_TUNE, PORTAL_BILL } from './config.js';
+import { KIT_MAX, SPHERE_BILL, SPHERE_WORK, MACHINE_TUNE, PORTAL_BILL } from './config.js';
 import { goalTitle } from './wardrobe.js';
 import { stockOf } from './kit.js';
 import { sky } from './state.js';
@@ -152,7 +152,6 @@ export const TOWER_UPGRADES = [
     // nothing rises and no tape goes round it. The first hat is made by
     // whoever the yard lends an empty station (`busyBuilderSites`).
     kind: 'rung', site: 'tower',
-    work: () => WIZ_BREW_MS / 1000,
     bill: () => { const c = wizCost(ahead(TYPE.WIZARD));
                   return [['dust', c.dust], ['shard', c.shards], ['spore', c.spores]]; },
     cost: () => wizCost(ahead(TYPE.WIZARD)).dust,
@@ -186,7 +185,6 @@ export const TOWER_UPGRADES = [
     ...tuneRow('sphere', msg('row-tunesphere'),
                () => msg('row-tunesphere-note', { n: MACHINE_TUNE }), 'sphere', 'tower'),
     at: () => sky.x,
-    work: () => SPHERE_TUNE_WORK,
     show: sphereUp
   },
   // The last shield, poured by the wizards rather than carried out and put

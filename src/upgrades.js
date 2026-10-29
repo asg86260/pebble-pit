@@ -16,14 +16,14 @@ import { S } from './state.js';
 import { maxed, rungOf, rungsOf } from './words.js';
 import { spend, spendHeld, payTo, refund } from './pit.js';
 import { SHARD_CELL, SPORE_CELL, SPARK_CELL } from './config.js';
-import { SPELL_THRIFT, HOUSE_COST0, HOUSE_RATE, HOUSE_WORK0, HOUSE_WORK_STEP, HOUSE_WORK_MAX } from './config.js';
+import { SPELL_THRIFT, HOUSE_COST0, HOUSE_RATE } from './config.js';
 
 import { spelled } from './tower.js';
 import { spendScales, refundScales } from './deep/scales.js';
 import { isHellCoin, takeHell } from './hell/coins.js';
 
 import { takesTime, workOn, workFor, leftAt, start, registerRows, siteBox, waiting, placeOf, pullOut,
-         ahead, newestWaiting, waitingCount, worksOf } from './works.js';
+         ahead, alongRepeat, newestWaiting, waitingCount, worksOf } from './works.js';
 import { nextHouseAt, housed } from './house.js';
 import { DUST_PER } from './upgrades/price.js';
 import { hire } from './staffing.js';
@@ -72,12 +72,11 @@ export const HOUSE_ROW = {
   // One more room each press, as many as you can pay for: each copy is priced
   // and timed as the room it will be, counting the ones already paid for.
   repeats: true,
-  // Its own curve off how many rooms stand, because a `building` with no
-  // `rung` would get one flat number from `workFor` for ever. Clamped at zero
+  // Its place off how many rooms stand, because a `building` with no
+  // `rung` would sit at one spot on its band for ever. Clamped at zero
   // so the body the intro hands you does not push the first bought house up
   // the curve.
-  work: () => Math.min(HOUSE_WORK_MAX,
-    HOUSE_WORK0 * Math.pow(HOUSE_WORK_STEP, Math.max(0, S.crew + ahead('house') - 1))),
+  along: () => alongRepeat(Math.max(0, S.crew + ahead('house') - 1)),
   from: () => housed() + ahead('house'),
   to: () => housed() + ahead('house') + 1,
   // Steeper than the ladders' rate on purpose: every body compounds the

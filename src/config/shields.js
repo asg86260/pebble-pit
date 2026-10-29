@@ -1,3 +1,4 @@
+import { BUILD_CAP_S } from './build.js';
 // The shields, and the shape a rock is in while it is arriving.
 //
 // DESIGN.md, "The shields" and "The shields are the spine": four tries at
@@ -15,13 +16,6 @@ export const SHIELD_LID_T = 2;       // courses thick across the lid, and the ar
 export const SHIELD_CLEAR_C = 4;     // courses of daylight kept over the rock's peak
 export const SHIELD_PIECE_DUST = 25; // cells a piece breaks back into, so most of the spend comes home
 
-// What each one costs in labor, in worker-seconds at the site (works.js).
-// They climb with the material: timber goes up in half a minute, rope is
-// quick, stone is most of the yard's afternoon. The dome has no figure here
-// because nobody works on it -- the tower pours it on its own clock.
-export const PROP_WORK = 30;
-export const NET_WORK = 20;
-export const ARCH_WORK = 70;
 
 // The props: timber, and the rock does not even slow down for it.
 export const PROP_FROM = 2;         // boulderNo starts at 1 and counts up as a rock falls clear, so 2 is the first rock done
@@ -55,9 +49,9 @@ export const DOME_BILL = [['dust', 250000], ['shard', 5000],
                           ['spore', 10000], ['spark', 5000]];
 export const DOME_RINGS = 24;       // steps in the pour, for the reveal to run through
 // Wizard-seconds of pouring, the same shape as a star's summoning: one body in
-// the ring is three quarters of a minute, two is half that. Nobody on the
+// the ring is the build cap (`BUILD_CAP_S`), three are a third of it. Nobody on the
 // ground can put a second of this in.
-export const DOME_WORK = 45;
+export const DOME_WORK = BUILD_CAP_S;
 // The dome does not hold the rock up: it bursts it. The rock sits squashed on
 // the crown for one held beat, then comes apart into its own grains, a grain a
 // sheet as a pick takes them, which skate down the curve and heap on the

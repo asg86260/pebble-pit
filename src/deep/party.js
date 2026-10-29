@@ -14,7 +14,7 @@ import { msg } from '../lang.js';
 import { S } from '../state.js';
 import { LEVELUP_S, LEVELUP_BURST_S, LEVELUP_RISE, LEVELUP_RISE_STEP } from '../config.js';
 import { P, WORKER, DEEP_GRAV, DEEP_DRAG, LADDER, DEEP_SLOTS, PARTY_IDS,
-         STATION_WORK_S, FANG_BREAKS, FANG_KICK, SERPENT_PHASES, FIGHT_STATIONS_MAX } from '../config.js';
+         ALONG, FANG_BREAKS, FANG_KICK, SERPENT_PHASES, FIGHT_STATIONS_MAX } from '../config.js';
 import { CLASSES, RECRUIT, PAIRS, FIRST_KINDS, NEEDS_COMPANY, FORK_RUNG } from '../config/classes.js';
 import { deepX0, deepX1, deepFloor, slotX, bellyAt, tossX, inHopper } from './place.js';
 import { start, registerRows, worksAt } from '../works.js';
@@ -91,7 +91,7 @@ const newId = () => PARTY_IDS.find(id => !stationById(id)) || null;
 const stationRow = id => ({
   key: `station-${id}`, kind: 'building', site: id,
   name: msg('row-raise-station'),
-  work: () => STATION_WORK_S,
+  along: () => ALONG.last,
   // Paid for in a fang, or nothing for the first, spent on the press; the
   // work itself asks no coin, which the bar over it and its tint read.
   bill: () => [],

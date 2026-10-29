@@ -1,4 +1,4 @@
-import { SHACK_DUST, SHACK_WORK } from '../config.js';
+import { SHACK_DUST, ALONG } from '../config.js';
 import { S, shack } from '../state.js';
 import { lookAt } from '../world.js';
 import { open, offered } from '../stations.js';
@@ -19,8 +19,8 @@ export const SHACK_ROWS = [
     note: () => msg('row-unlockshack-note'),
     blurb: msg('row-unlockshack-blurb'),
     cost: () => SHACK_DUST,
-    // A third of a building: the first thing most players ever put up.
-    work: () => SHACK_WORK,
+    // The foot of the building band: the first thing most players ever put up.
+    along: () => ALONG.first,
     buy: () => { S.shackOpen = true; lookAt(shack.x + shack.w / 2); },
     // `once` reveals and `show` retires: the shack is a sticky door (its row
     // in stations.js), held by `revealed` in shop.js.
