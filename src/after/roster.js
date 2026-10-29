@@ -7,18 +7,23 @@
 //
 // A station's one job stands under it, the woodcutter's under the forestry
 // shack in front of its trees, and says what it does with the cursor on it,
-// or why it is standing still.
+// or why it is standing still. It stands on the line its station's UPGRADES
+// button is placed from (after/stations.js `line`), so the button is over
+// its count.
 
 import { S } from '../state.js';
-import { AFTER_JOBS, AFTER_JOB_POST, AFTER_ROSTER_DOWN, AFTER_SIGN_TIMBER } from '../config.js';
+import { AFTER_JOBS, AFTER_JOB_POST, AFTER_ROSTER_DOWN, AFTER_ROSTER_SHOP_DROP, AFTER_SIGN_TIMBER } from '../config.js';
 import { msg } from '../lang.js';
 import { rosterPlace } from '../roster.js';
+import { drawnMid } from '../footprints.js';
 import { afterlifeOn } from '../acts.js';
 import { built, seatsOf, stumpsOn } from './levels.js';
-import { stationBox, groundOf, closed } from './place.js';
+import { groundOf, closed } from './place.js';
 import { crewAt, bodiesOf, spareMembers, putOn, walkLeft, holds } from './bodies.js';
 import { standing, stumped } from './grove.js';
 import { heapFull } from './mill.js';
+import { pileFull, pileCount } from './piles.js';
+import { lying } from './ground.js';
 import { JOB_NAMES } from './rows.js';
 
 const stationOf = card => (card === 'grove' ? 'forestry' : card);
@@ -35,14 +40,13 @@ const SRC = {
   uid: w => `after:${w.id}`
 };
 
-// Why a station's worker stands still, off the same stock its frame reads
+// Why a station's worker stands still, off the same piles its frame reads
 // (bodies.js, mill.js): a message id, or null while it can work.
-const stock = () => S.after.stock;
-const noLogs = pile => stock()[pile] <= 0 && stock().grovelogs <= 0;
+const noLogs = pile => pileCount(pile) <= 0 && pileCount('grovelogs') <= 0;
 const STALL = {
-  woodcutter: () => (!S.after.groundLogs.length && !S.after.plots.some(p => standing(p) || (stumpsOn() && stumped(p))) ? 'after-stall-trees' : null),
-  sawyer: () => (heapFull() ? 'after-stall-heap' : noLogs('logs') ? 'after-stall-logs' : null),
-  joiner: () => (stock().timber < AFTER_SIGN_TIMBER && stock().signs < holds('sign') ? 'after-stall-timber' : null)
+  woodcutter: () => (!lying().length && !S.after.plots.some(p => standing(p) || (stumpsOn() && stumped(p))) ? 'after-stall-trees' : null),
+  sawyer: () => (heapFull() ? 'after-stall-heap' : pileFull('timber') ? 'hover-pile-full' : noLogs('logs') ? 'after-stall-logs' : null),
+  joiner: () => (pileCount('timber') < AFTER_SIGN_TIMBER && pileCount('signs') < holds('sign') ? 'after-stall-timber' : null)
 };
 const DOES = {
   woodcutter: () => msg('after-job-woodcutter.says'), sawyer: () => msg('after-job-sawyer.says'),
@@ -55,8 +59,8 @@ const POSTS = AFTER_JOBS.map(job => {
   return {
     key: `after-${job}`, job, place: 'after', group: `after-${key}`, kit: false, fixed: false, src: SRC,
     show: () => live() && built(card) && !closed(card),
-    at: () => { const b = stationBox(key); return b.x + b.w / 2; },
-    y: () => groundOf(key) + AFTER_ROSTER_DOWN,
+    at: () => drawnMid(key),
+    y: () => groundOf(key) + AFTER_ROSTER_DOWN + AFTER_ROSTER_SHOP_DROP,
     deep: false,
     says: () => jobSays(job)
   };

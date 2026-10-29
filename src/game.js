@@ -56,6 +56,7 @@ setRooms(roomsAfter);
 import { makePainter } from './painter.js';
 import { updateWorkers, stepRecords, stepMachines } from './crew.js';
 import { catchAir, tossFromPile } from './hands.js';
+import { landingOf } from './acts.js';
 import { seedAir, stepAir } from './air.js';
 import { seedWeather, stepWeather } from './weather.js';
 import { stepHouse } from './house.js';
@@ -189,7 +190,7 @@ function holdToMine(now) {
 function holdToToss(now) {
   if (!S.dragging || !S.autoToss) return;
   if (now < S.nextToss) return;
-  tossFromPile(S.mouse.x);
+  tossFromPile(S.mouse.x, S.mouse.y);
   S.nextToss = now + tossMs();
 }
 
@@ -337,8 +338,131 @@ function landedOnFloor() {
 }
 // `surfaceY(floor, c)` off the reading.
 const floorSurface = c => bottomY(floor) - (floorTop(c) + 2) * floor.p;
+// --- the one landing chain ---------------------------------------------------------
+// A chip in the air comes down on the surfaces its place supplies, asked in
+// the place's order, the first to answer taking it (DESIGN.md, "One resource
+// system for every act", section 3). A surface answers 0 (not mine, ask the
+// next), LANDED (the chip is struck off) or STAYS (it is mine and stays in the
+// air, so nothing under it is asked). The yard's list is below, in the order
+// that matters: the belt before the pit, the far wall before the world's edge.
+// A place's (acts.js, `landingOf`: act 3's, the deep's) is its own list ending
+// on its ground, with its bounds (`clamp`) and its air (`air`) beside it.
+const LANDED = 1, STAYS = 2;
+let chipNow = 0, chipFrames = 1;       // cache: this frame's, for the surfaces below
+
+// The far wall of the hole is a wall at every height, not only below the
+// ground line: everything is thrown at the pit from the near lip, so a
+// grain past the far wall is a throw that sailed, and one let over lies
+// behind the hole for the rest of the run where nobody can reach it.
+//
+// Asked BEFORE the world's edge: a hauler's toss leaves the lip at over a
+// hundred pixels a frame and the ground behind the hole is eighteen
+// columns, so the edge clamp catches such a grain first, pins it on the
+// last column with its speed reversed, and a test run after would decline
+// to look at it. The hole's wall stops the throw; the world's edge is the
+// last word for anything never thrown at the hole.
+function farWall(ch) {
+  if (ch.vx > 0 && ch.x + P > pit.x + pit.w) {
+    ch.x = pit.x + pit.w - P;
+    ch.vx = 0;
+  }
+  return 0;
+}
+function worldEdge(ch) {
+  if (ch.x < 0) { ch.x = 0; ch.vx = Math.abs(ch.vx) * 0.6; }
+  if (ch.x > S.worldW - P) {
+    ch.x = S.worldW - P;
+    ch.vx = -Math.abs(ch.vx) * 0.3;
+  }
+  return 0;
+}
+// Onto the belt's band, a surface like the ground (`catchBelt` owns every
+// condition). Ahead of the hole and the cut, because the head of the belt
+// hangs over the mouth of the hole and a grain crossing the band above
+// the lip would otherwise be taken by the hole from under it.
+const beltBand = ch => (catchBelt(ch, chipNow, chipFrames) ? LANDED : 0);
+// down the shaft: the pit collects whatever falls through its mouth
+// `>=`, to match what the ground asks below: with `>` a chip that came
+// down exactly on the ground line over the mouth failed the pit's test,
+// passed the floor's, and was shoved back to the end of a pile.
+function pitMouth(ch) {
+  if (!(overPitMouth(ch.x) && ch.y + P >= S.groundY)) return 0;
+  // A torn pit takes the grain the moment it crosses the mouth, instead
+  // of landing it on a pile the rift would only lift it back off.
+  if (S.riftOpen && riftCatch(ch.x, ch.y, ch.s, ch.vx, ch.vy)) return LANDED;
+  const pc = Math.max(0, Math.min(pit.cols - 1, colOf(pit, ch.x)));
+  if (ch.vx < 0 && ch.x < pit.x) { ch.x = pit.x; ch.vx = 0; }             // pit wall
+  // And the far one, for a grain down inside the hole arriving at the
+  // back of it; let through, it is a grain climbing out of a hole.
+  if (ch.vx > 0 && ch.x + P > pit.x + pit.w) { ch.x = pit.x + pit.w - P; ch.vx = 0; }
+  if (ch.vy > 0 && ch.y >= surfaceY(pit, pc)) {
+    // Into the pile, or through the rift if the pile has no cell for it;
+    // the hole never hands a grain back.
+    bankDust(ch.x, ch.s);
+    return LANDED;
+  }
+  return STAYS;
+}
+// down the ladder's own hole: the cut collects whatever falls through its
+// mouth, as the pit does (`overCutMouth`).
+function cutMouth(ch) {
+  if (!(overCutMouth(ch.x) && ch.y + P >= S.groundY)) return 0;
+  const cc = Math.max(0, Math.min(cut.cols - 1, colOf(cut, ch.x)));
+  // The walls stop a grain coming down inside the cut. A grain still on
+  // its way UP is a shard thrown at the rim from the floor: from the
+  // columns under the far wall it meets the face before the ground line,
+  // and stopped dead there it fell back, was thrown again from the same
+  // column, and never came out. Held against the wall with its throw
+  // intact, it rides up the face and over the rim.
+  if (ch.vx < 0 && ch.x < quarry.x) { ch.x = quarry.x; if (ch.vy >= 0) ch.vx = 0; }
+  if (ch.vx > 0 && ch.x + P > quarry.x + quarry.w) { ch.x = quarry.x + quarry.w - P; if (ch.vy >= 0) ch.vx = 0; }
+  if (ch.vy > 0 && ch.y >= surfaceY(cut, cc)) {
+    // Almost always room in the cut. The one time not is a chip in flight
+    // the instant `fillQuarry` puts the ground back under it, and then it
+    // comes down as it would on any other ground.
+    if (addGrain(cut, ch.x, null, ch.s)) sfx('grain-land', { x: ch.x });
+    else if (addGrain(floor, ch.x, blocked, ch.s)) { landedOnFloor(); sfx('grain-land', { x: ch.x }); }
+    else bankDust(ch.x, ch.s);
+    return LANDED;
+  }
+  return STAYS;
+}
+// And on the rock, a surface like any other: a grain over the crest comes to
+// rest on the outline as mined (`restOnRock` in rock.js) rather than walking
+// out from under the footprint into the heap beside it. Behind `arrived`,
+// which keeps this from catching the spoil coming off the face: a thrown
+// grain is aimed past the hill and is not arrived while still over it.
+//
+// Land on the floor dust -- but an aimed chip clears the bank it is thrown
+// over first, or every chip comes down on the slope facing the rock and the
+// heap grows back up to the foot.
+function rockRest(ch) {
+  const arrived = ch.land == null || ch.y >= S.groundY - P ||
+                  (ch.vx > 0 ? ch.x >= ch.land : ch.x <= ch.land);
+  return ch.vy > 0 && arrived && restOnRockAt(ch.x, ch.y, ch.s) ? LANDED : 0;
+}
+function floorGround(ch) {
+  const c = Math.max(0, Math.min(floor.cols - 1, colOf(floor, ch.x)));
+  const arrived = ch.land == null || ch.y >= S.groundY - P ||
+                  (ch.vx > 0 ? ch.x >= ch.land : ch.x <= ch.land);
+  if (!(ch.vy > 0 && arrived && ch.y >= floorSurface(c))) return 0;
+  // One rule for everything that lands: as far as the ground is
+  // concerned a shard is a grain. The pit says its own sound when the
+  // grain goes to it instead.
+  if (addGrain(floor, ch.x, blocked, ch.s)) { landedOnFloor(); sfx('grain-land', { x: ch.x }); }
+  else bankDust(ch.x, ch.s);
+  return LANDED;
+}
+const YARD_SURFACES = [farWall, worldEdge, beltBand, pitMouth, cutMouth, rockRest, floorGround];
+// The first surface to answer, or 0 for none.
+function landOn(surfaces, ch) {
+  for (let k = 0; k < surfaces.length; k++) { const r = surfaces[k](ch); if (r) return r; }
+  return 0;
+}
+
 function stepChips(now) {
   const f = frames();
+  chipNow = now; chipFrames = f;
   // A grain that lands is struck off and the list closed up once at the end:
   // a splice apiece is the whole list moved for every grain that lands, and
   // an endgame yard has thousands in the air and hundreds landing a frame.
@@ -349,116 +473,33 @@ function stepChips(now) {
   dead.fill(0, 0, n);
   for (let i = n - 1; i >= 0; i--) {
     const ch = chips[i];
-    // however long this frame was, in the sixtieths these speeds are written in
-    // a grain the dome burst falls on its own lighter pull (`burstRock`)
-    ch.vy += (ch.g || GRAV) * f;
-    ch.x += ch.vx * f;
-    ch.y += ch.vy * f;
+    const L = ch.place ? landingOf(ch.place) : null;
+    if (L && L.air) {
+      // a place's own air (the deep's water): drag on both speeds, its pull,
+      // and its current pushing across
+      const k = Math.pow(L.air.drag, f);
+      ch.vx *= k;
+      ch.vy = ch.vy * k + L.air.g * f;
+      ch.x += (ch.vx + L.air.flow()) * f;
+      ch.y += ch.vy * f;
+    } else {
+      // however long this frame was, in the sixtieths these speeds are written in
+      // a grain the dome burst falls on its own lighter pull (`burstRock`)
+      ch.vy += (ch.g || GRAV) * f;
+      ch.x += ch.vx * f;
+      ch.y += ch.vy * f;
+    }
     if (ch.dome) slideOnDome(ch, f);
-
-    // The far wall of the hole is a wall at every height, not only below the
-    // ground line: everything is thrown at the pit from the near lip, so a
-    // grain past the far wall is a throw that sailed, and one let over lies
-    // behind the hole for the rest of the run where nobody can reach it.
-    //
-    // Asked BEFORE the world's edge: a hauler's toss leaves the lip at over a
-    // hundred pixels a frame and the ground behind the hole is eighteen
-    // columns, so the edge clamp catches such a grain first, pins it on the
-    // last column with its speed reversed, and a test run after would decline
-    // to look at it. The hole's wall stops the throw; the world's edge is the
-    // last word for anything never thrown at the hole.
-    if (ch.vx > 0 && ch.x + P > pit.x + pit.w) {
-      ch.x = pit.x + pit.w - P;
-      ch.vx = 0;
-    }
-
-    if (ch.x < 0) { ch.x = 0; ch.vx = Math.abs(ch.vx) * 0.6; }
-    if (ch.x > S.worldW - P) {
-      ch.x = S.worldW - P;
-      ch.vx = -Math.abs(ch.vx) * 0.3;
-    }
-
-    // Onto the belt's band, a surface like the ground (`catchBelt` owns every
-    // condition). Ahead of the hole and the cut, because the head of the belt
-    // hangs over the mouth of the hole and a grain crossing the band above
-    // the lip would otherwise be taken by the hole from under it.
-    if (catchBelt(ch, now, f)) { dead[i] = 1; continue; }
-
-    // down the shaft: the pit collects whatever falls through its mouth
-    // `>=`, to match what the ground asks below: with `>` a chip that came
-    // down exactly on the ground line over the mouth failed the pit's test,
-    // passed the floor's, and was shoved back to the end of a pile.
-    if (overPitMouth(ch.x) && ch.y + P >= S.groundY) {
-      // A torn pit takes the grain the moment it crosses the mouth, instead
-      // of landing it on a pile the rift would only lift it back off.
-      if (S.riftOpen && riftCatch(ch.x, ch.y, ch.s, ch.vx, ch.vy)) {
-        dead[i] = 1;
-        continue;
-      }
-      const pc = Math.max(0, Math.min(pit.cols - 1, colOf(pit, ch.x)));
-      if (ch.vx < 0 && ch.x < pit.x) { ch.x = pit.x; ch.vx = 0; }             // pit wall
-      // And the far one, for a grain down inside the hole arriving at the
-      // back of it; let through, it is a grain climbing out of a hole.
-      if (ch.vx > 0 && ch.x + P > pit.x + pit.w) { ch.x = pit.x + pit.w - P; ch.vx = 0; }
-      if (ch.vy > 0 && ch.y >= surfaceY(pit, pc)) {
-        // Into the pile, or through the rift if the pile has no cell for it;
-        // the hole never hands a grain back.
-        bankDust(ch.x, ch.s);
-        dead[i] = 1;
-        continue;
-      }
+    // A place's goods come down in that place, on its surfaces by its own
+    // rules (acts.js, `landingOf`): asked before every rule of the yard's,
+    // whose walls, edges and hole stand on the same x under it.
+    if (ch.place) {
+      if (!L) { dead[i] = 1; continue; }
+      if (L.clamp) L.clamp(ch);
+      if (landOn(L.surfaces, ch) === LANDED) dead[i] = 1;
       continue;
     }
-
-    // down the ladder's own hole: the cut collects whatever falls through its
-    // mouth, as the pit does (`overCutMouth`).
-    if (overCutMouth(ch.x) && ch.y + P >= S.groundY) {
-      const cc = Math.max(0, Math.min(cut.cols - 1, colOf(cut, ch.x)));
-      // The walls stop a grain coming down inside the cut. A grain still on
-      // its way UP is a shard thrown at the rim from the floor: from the
-      // columns under the far wall it meets the face before the ground line,
-      // and stopped dead there it fell back, was thrown again from the same
-      // column, and never came out. Held against the wall with its throw
-      // intact, it rides up the face and over the rim.
-      if (ch.vx < 0 && ch.x < quarry.x) { ch.x = quarry.x; if (ch.vy >= 0) ch.vx = 0; }
-      if (ch.vx > 0 && ch.x + P > quarry.x + quarry.w) { ch.x = quarry.x + quarry.w - P; if (ch.vy >= 0) ch.vx = 0; }
-      if (ch.vy > 0 && ch.y >= surfaceY(cut, cc)) {
-        // Almost always room in the cut. The one time not is a chip in flight
-        // the instant `fillQuarry` puts the ground back under it, and then it
-        // comes down as it would on any other ground.
-        if (addGrain(cut, ch.x, null, ch.s)) sfx('grain-land', { x: ch.x });
-        else if (addGrain(floor, ch.x, blocked, ch.s)) { landedOnFloor(); sfx('grain-land', { x: ch.x }); }
-        else bankDust(ch.x, ch.s);
-        dead[i] = 1;
-      }
-      continue;
-    }
-
-    // Land on the floor dust -- but an aimed chip clears the bank it is
-    // thrown over first, or every chip comes down on the slope facing the
-    // rock and the heap grows back up to the foot.
-    const c = Math.max(0, Math.min(floor.cols - 1, colOf(floor, ch.x)));
-    const arrived = ch.land == null || ch.y >= S.groundY - P ||
-                    (ch.vx > 0 ? ch.x >= ch.land : ch.x <= ch.land);
-
-    // And on the rock, a surface like any other: a grain over the crest
-    // comes to rest on the outline as mined (`restOnRock` in rock.js) rather
-    // than walking out from under the footprint into the heap beside it.
-    // Behind `arrived`, which keeps this from catching the spoil coming off
-    // the face: a thrown grain is aimed past the hill and is not arrived
-    // while still over it.
-    if (ch.vy > 0 && arrived && restOnRockAt(ch.x, ch.y, ch.s)) {
-      dead[i] = 1;
-      continue;
-    }
-    if (ch.vy > 0 && arrived && ch.y >= floorSurface(c)) {
-      // One rule for everything that lands: as far as the ground is
-      // concerned a shard is a grain. The pit says its own sound when the
-      // grain goes to it instead.
-      if (addGrain(floor, ch.x, blocked, ch.s)) { landedOnFloor(); sfx('grain-land', { x: ch.x }); }
-      else bankDust(ch.x, ch.s);
-      dead[i] = 1;
-    }
+    if (landOn(YARD_SURFACES, ch) === LANDED) dead[i] = 1;
   }
   // Anything thrown while the list was walked went on its end, and stays.
   let w = 0;

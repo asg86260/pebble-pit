@@ -8,7 +8,7 @@ import { P, WORKER, DEEP_POST_DOWN, SEAT_PIP, SEAT_GAP, SEAT_RING, SEAT_EMPTY_IN
          COUNTER_PLUS_DOWN, COUNTER_PLUS_ROOM, GARAGE_W, CART_W, LIFT_W, LIFT_FORK, LIFT_SEAT,
          LIFT_ANTENNA } from './config.js';
 import { deepFloor, deepTop } from './deep/place.js';
-import { STATIONS } from './stations.js';
+import { STATIONS, station } from './stations.js';
 import { S, quarry } from './state.js';
 import { groundAt, kitX } from './world.js';
 import { siteBox } from './works.js';
@@ -24,6 +24,13 @@ import { turnedOver, themed } from './ink.js';
 import { now } from './clock.js';
 import { reducedMotion } from './prefs.js';
 import { writeCount } from './render/numfont.js';
+import { msg, FACE } from './lang.js';
+import { crispText } from './render/crisptext.js';
+import { drift } from './render/bars.js';
+import { GREY } from './config/palette.js';
+import { fillDots } from './render/dots.js';
+import { SHELF_HOVER_MS, SHOP_BTN_PX, SHOP_BTN_H, SHOP_BTN_PAD, SHOP_BTN_AIR, SHOP_BTN_ADVANCE,
+         SHOP_BTN_LIFT, SHOP_BTN_PRESSED } from './config.js';
 
 
 // [ - ] badge count [ + ] -- the buttons at the ends, where they are easiest to
@@ -367,14 +374,18 @@ const widthOf = p => {
 // world units, the rows left-aligned on a strip centered under the counter.
 // The block hangs from its first row, whose middle is the post's line, so the
 // buttons stand level with that row and stay put as rows are added under it.
+// The sprite and the strip are each centered exactly on the counter's
+// middle, not snapped to a whole cell: a three-cell body over a two-cell pip
+// cannot share a middle on whole cells, and one half a cell off the other
+// reads as lopsided. Both are drawn on whole device pixels (the body's
+// `square`, the pip's mask), so a half-cell corner is still crisp.
 function placeCounters(cs, x0, line) {
   const y0 = line - COUNTER_TOP_DROP;
-  const snap = v => Math.round(v / P) * P;
   let x = x0;
   for (const c of cs) {
     c.box = { x, y: y0, w: c.w, h: c.h };
-    c.spriteAt = { x: x + snap((c.w - c.sprite.w) / 2), y: y0 - COUNTER_SPRITE_GAP - c.sprite.h };
-    const px = x + snap((c.w - c.strip) / 2);
+    c.spriteAt = { x: x + (c.w - c.sprite.w) / 2, y: y0 - COUNTER_SPRITE_GAP - c.sprite.h };
+    const px = x + (c.w - c.strip) / 2;
     c.boxes = c.pips.slice(0, c.n).map((q, i) => ({
       ...q, top: c.top, brim: KIT_NAME[c.sprite.kind],
       x: px + (i % COUNTER_ROW) * (SEAT_PIP + SEAT_GAP),
@@ -419,9 +430,13 @@ function setTo(p, want) {
 // Below the ground line, clear of the stopped-station triangle (seven cells
 // down and 2.6 tall) that hangs just under it. A post that says its own
 // height (the deep's) stands there instead.
+// Its `x` is the middle it stands centered on, not yet on the grid: the post
+// is put on the grid once, by its left edge (`boxes`), since snapping the
+// middle first and the edge again walked a post on a half-cell middle a
+// whole cell off its building.
 export function postAt(p) {
   const y = p.y?.() ?? S.groundY + P * 10;
-  return { x: Math.round((p.group ? groupAt(p) : p.at()) / P) * P, y: Math.round(y / P) * P };
+  return { x: p.group ? groupAt(p) : p.at(), y: Math.round(y / P) * P };
 }
 
 // A post of a group, side by side with the others under its building: the
@@ -453,8 +468,12 @@ function boxes(p) {
   const { x, y } = postAt(p);
   const cs = countersOf(p);
   const wide = cs ? innerOf(cs) + sideOf(p) * 2 : WIDE;
-  // Back on the grid: an even number of pips is half a cell off center.
-  let left = Math.round((x - wide / 2) / P) * P;
+  // On the half-cell grid, once: a station's drawing is whole cells, so its
+  // middle is on a whole or a half cell and the post stands exactly centered
+  // on it whatever its own width. Every mark of a post is drawn on whole
+  // device pixels (`button`, the body's square, the pip's mask), so a
+  // half-cell edge stays crisp.
+  let left = Math.round((x - wide / 2) * 2 / P) * P / 2;
   const f = held.get(p.key);
   if (f && f.anchor && pointerOn(f)) left = f.anchor.side === 'l' ? f.anchor.x : f.anchor.x - wide;
   else if (f) f.anchor = null;
@@ -479,6 +498,34 @@ function boxes(p) {
     run: runBox(p, left, y, set)
   };
 }
+
+// --- the UPGRADES buttons ------------------------------------------------------
+// A place's station with a board carries the board's one way in, the
+// UPGRADES button (the owner, 2026-10-28: a board asked for by a press, so
+// none opens by accident under a passing pointer). Every one stands at one
+// spot derived from its station: centered on the line a roster would stand
+// on under it, over where that roster's count stands -- over rather than
+// under, since the pips grow downward as seats are bought -- whether or not
+// a roster stands there. A place hands its buttons over (`rosterShops`),
+// each { board, place, show(), line() }, `line` the point a post of the
+// station would stand at (`postAt`'s, before the snap).
+export function rosterShops(place, list) { (rosterShops.places ||= new Map()).set(place, list); }
+const shopWord = () => msg('roster-upgrades').toUpperCase();
+const shopW = () => Math.ceil((shopWord().length * SHOP_BTN_PX * SHOP_BTN_ADVANCE + SHOP_BTN_PAD * 2) / P) * P;
+// Centered exactly on the station, its edges on the grid: a station whose
+// middle falls on a half cell takes a plate an odd number of cells wide, one
+// whose middle is on a whole cell an even one, a cell of padding added where
+// the word's own width has the other count.
+function shopBox(s) {
+  const at = s.line();
+  if (!at) return null;
+  const halves = Math.round(at.x * 2 / P), base = shopW() / P;
+  const w = (base + ((halves - base) % 2 + 2) % 2) * P, y = Math.round(at.y / P) * P;
+  return { x: (halves * P / 2) - w / 2, y: y - WORKER / 2 - WORKER - SHOP_BTN_AIR - SHOP_BTN_H, w, h: SHOP_BTN_H };
+}
+// The buttons standing in the view the camera is in, each with its box.
+const shops = () => [...(rosterShops.places || new Map()).values()].flatMap(f => f())
+  .filter(s => s.place === S.view && s.show()).map(s => ({ board: s.board, box: shopBox(s) })).filter(s => s.box);
 
 export const posts = () => allPosts().filter(p => p.show());
 // The posts a click or the pointer can be on: those standing in the view the
@@ -520,11 +567,23 @@ const hit = b => ({ x: b.x - HIT_X, y: b.y - HIT_Y,
 
 // The yard is one canvas, so nothing in it carries a cursor of its own;
 // somebody has to ask every time the mouse moves.
-export const overRoster = (x, y) => live().some(p => {
+export const overRoster = (x, y) => !!shopAt(x, y) || live().some(p => {
   if (p.fixed) return false;
   const b = boxes(p);
   return inside(hit(b.less), x, y) || inside(hit(b.more), x, y) || !!pipAt(p, b, x, y);
 });
+
+// The board whose UPGRADES button a point is on, or null: a press there is
+// the button's, so input.js keeps it from closing the board it is opening.
+export function shopAt(x, y) {
+  return shops().find(s => inside(hit(s.box), x, y))?.board ?? null;
+}
+// A board's button where it stands, or null where none does: a station with
+// one opens from it and not from a click on its drawing, and the board
+// stands off it (after/stations.js, `boardAnchor`).
+export function shopBoxOf(key) {
+  return shops().find(s => s.board === key)?.box ?? null;
+}
 
 // What a post says with the cursor on it, for a place that gives its posts
 // words (`says`; the yard's have none): the text and the world point under
@@ -554,8 +613,12 @@ function pipAt(p, b, x, y) {
 }
 
 // A click on a roster, in world units: true if it was one, so the yard knows
-// not to treat it as a swing at the ground.
+// not to treat it as a swing at the ground. On an UPGRADES button it is the
+// board's key instead, for the page to open or put away: the board is the
+// page's, and this file stands in the node tier too.
 export function rosterHit(x, y) {
+  const shop = shopAt(x, y);
+  if (shop) { pressedShop = shop; return shop; }
   for (const p of live()) {
     if (p.fixed) continue;
     const b = boxes(p);
@@ -607,6 +670,11 @@ export function rosterButtons(key) {
 // the top-left of its box, so the crew's drawing stays in render/crew.js.
 export function drawRoster(ctx, drawBody, drawHat, drawRun, sprites) {
   overPosts(() => drawRosterPass(ctx, drawBody, drawHat, drawRun, sprites));
+}
+// The UPGRADES buttons of the place the camera is in, painted by that place's
+// layer (render/after.js), with its rosters.
+export function drawShops(ctx) {
+  for (const s of shops()) shopButton(ctx, s.box, s.board);
 }
 // The roster is cut to the half it stands in (frame.js, `clipToHalf`), so a
 // post in the other half is never seen and is not worked out.
@@ -681,13 +749,62 @@ const THIN = 2;
 // yard is black and white.
 function button(ctx, b, kind, live) {
   ctx.fillStyle = '#000';
-  const x = b.x + b.w / 2, y = b.y + b.h / 2;
-  if (live) ctx.fillRect(x - BAR / 2, y - THIN / 2, BAR, THIN);
-  else for (let i = 0; i < BAR; i += P * 2) ctx.fillRect(x - BAR / 2 + i, y - THIN / 2, P, THIN);
+  const x = b.x + b.w / 2, y = b.y + b.h / 2, r = (rx, ry, w, h) => devRect(ctx, rx, ry, w, h);
+  if (live) r(x - BAR / 2, y - THIN / 2, BAR, THIN);
+  else for (let i = 0; i < BAR; i += P * 2) r(x - BAR / 2 + i, y - THIN / 2, P, THIN);
   if (kind === '+') {
-    if (live) ctx.fillRect(x - THIN / 2, y - BAR / 2, THIN, BAR);
-    else for (let i = 0; i < BAR; i += P * 2) ctx.fillRect(x - THIN / 2, y - BAR / 2 + i, THIN, P);
+    if (live) r(x - THIN / 2, y - BAR / 2, THIN, BAR);
+    else for (let i = 0; i < BAR; i += P * 2) r(x - THIN / 2, y - BAR / 2 + i, THIN, P);
   }
+}
+// A rect with its corners on whole device pixels, as the body's square is
+// (render/crew.js, `square`): a post may stand on a half cell, which is not a
+// whole device pixel at the yard's five-sixths, and a bar between pixels
+// comes out a grey blur.
+function devRect(ctx, x, y, w, h) {
+  const m = ctx.getTransform ? ctx.getTransform() : null;
+  if (!m) { ctx.fillRect(x, y, w, h); return; }
+  const sx = v => (Math.round(v * m.a + m.e) - m.e) / m.a, sy = v => (Math.round(v * m.d + m.f) - m.f) / m.d;
+  const x0 = sx(x), y0 = sy(y);
+  ctx.fillRect(x0, y0, Math.max(1 / m.a, sx(x + w) - x0), Math.max(1 / m.d, sy(y + h) - y0));
+}
+
+// The UPGRADES button is a shop tile on the canvas (shelf.css, `.tile`), so
+// it answers the pointer the way the tiles a player has already learned do:
+// at rest only the word on the ground; under the pointer, or while its board
+// is up, the plate lifts up and left off a hard shadow left where it stood,
+// its edge easing in over the tile's own SHELF_HOVER_MS, and drifts on the
+// tile's own loop (bars.js); pressed, it sinks halfway back.
+const lifting = new Map();       // the board's key -> { to, from, at }, the lift easing toward `to`
+let pressedShop = null;          // page: the board whose button the pointer went down on, until it comes up
+// The pointer came up, wherever it was (input.js `endDrag`, and a blur).
+export const rosterUp = () => { pressedShop = null; };
+const boardUp = key => !!S[station(key)?.board];
+function lifted(key, to) {
+  const t0 = now();
+  let r = lifting.get(key);
+  if (!r) lifting.set(key, r = { to, from: to, at: t0 });
+  const k = Math.min(1, (t0 - r.at) / SHELF_HOVER_MS), at = r.from + (r.to - r.from) * (1 - Math.pow(1 - k, 3));
+  if (r.to !== to) { r.from = at; r.to = to; r.at = t0; }
+  return reducedMotion() ? r.to : at;
+}
+function shopButton(ctx, b, key) {
+  const over = !!S.mouse && inside(hit(b), S.mouse.x, S.mouse.y);
+  const t = lifted(key, over && pressedShop === key ? SHOP_BTN_PRESSED : over || boardUp(key) ? 1 : 0);
+  const paper = GREY[0], ink = GREY[GREY.length - 1];
+  const [dx, dy] = reducedMotion() ? [0, 0] : drift(`upgrades${key}`);
+  const x = b.x + (dx - SHOP_BTN_LIFT) * t, y = b.y + (dy - SHOP_BTN_LIFT) * t;
+  if (t > 0) {
+    ctx.fillStyle = ink; ctx.fillRect(b.x, b.y, b.w, b.h);
+    ctx.fillStyle = paper; ctx.fillRect(x, y, b.w, b.h);
+    fillDots(ctx, x + THIN, y + THIN, b.w - 2 * THIN, b.h - 2 * THIN);   // the board's dots, on the plate and going with it
+    // the border is all there by the time a press has sunk the plate
+    ctx.globalAlpha = Math.min(1, t / SHOP_BTN_PRESSED); ctx.fillStyle = ink;
+    ctx.fillRect(x, y, b.w, THIN); ctx.fillRect(x, y + b.h - THIN, b.w, THIN);
+    ctx.fillRect(x, y, THIN, b.h); ctx.fillRect(x + b.w - THIN, y, THIN, b.h);
+    ctx.globalAlpha = 1;
+  }
+  crispText(ctx, shopWord(), x + b.w / 2, y + (b.h - SHOP_BTN_PX) / 2, `${SHOP_BTN_PX}px ${FACE}`, ink, 'center', paper, GREY);
 }
 
 // A pip is a pixel mask, never an arc: an arc's edge is a grey smear, and a
@@ -833,6 +950,10 @@ function postReport(p) {
              pips: set && b.seated ? all.map(mid) : null,
              block: set && b.seated ? { ...set.block } : null,
              less: [b.less.x + b.less.w / 2, b.less.y + b.less.h / 2],
-             more: [b.more.x + b.more.w / 2, b.more.y + b.more.h / 2] };
+             more: [b.more.x + b.more.w / 2, b.more.y + b.more.h / 2],
+             // Each counter's sprite and the first row of its pips, by their
+             // middles across, for the check that keeps the two over each other.
+             marks: set ? set.list.map(c => ({ sprite: c.spriteAt.x + c.sprite.w / 2,
+               pips: c.boxes.length ? (c.boxes[0].x + Math.max(...c.boxes.map(q => q.x + q.w))) / 2 : null })) : null };
   }
 }

@@ -33,6 +33,7 @@ import { coarse } from './prefs.js';
 import { sheetSeat } from './sheet.js';
 import { stepWindow } from './modal.js';
 import { boardOf, setBoardOpener } from './boardrows.js';
+import { goodCount } from './after/piles.js';
 import { pageOf, shopOf } from './pages.js';
 import { BOARDS } from './stations.js';
 import { msg } from './lang.js';
@@ -63,11 +64,11 @@ for (const [coin, rows] of Object.entries(AFTER_COIN_MARKS)) {
   document.documentElement.style.setProperty?.(`--${coin}-mark`,
     `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${rows[0].length}" height="${rows.length}" shape-rendering="crispEdges">${ink.join('')}</svg>`)}")`);
 }
-// Where you stand to open each board, and where the board goes up: the same
-// place, its sign where it has one, read off the table in stations.js. The
+// Where each board goes up: where you stand to open it, or beside it where
+// its row says (`boardAnchor`), read off the table in stations.js. The
 // house grows a room per body and the sheds move with the grounds, so a
 // rectangle is read live, never gathered.
-const anchor = which => { const s = station(which); return (s?.sign || s?.stand)?.(); };
+const anchor = which => { const s = station(which); return s?.boardAnchor?.() || s?.stand?.(); };
 const pageKeys = () => BOARDS;
 // Read inside a function, not gathered at load: the imports come round in a
 // ring, and a table built while the ring is still closing gets `undefined` for
@@ -256,9 +257,14 @@ function place(el, at) {
   const { w, h } = measured();
   // Centered over the station: the farm is a row as wide as its furrows, and a
   // board pinned to its left edge read as belonging to whatever was next along.
+  // A board anchored beside its station (`side`, stations.js `boardAnchor`)
+  // runs away from it off the anchor's near edge instead, so however wide it
+  // is it never covers the station.
   const mid = at.x + (at.w || 0) / 2;
-  const want = toScreen(mid, 0).x - w / 2;
-  const x = Math.round(Math.max(GAP, Math.min(want, S.W - w - GAP)));
+  const want = at.side === 'right' ? toScreen(at.x, 0).x
+             : at.side === 'left' ? toScreen(at.x + at.w, 0).x - w
+             : toScreen(mid, 0).x - w / 2;
+  const x0 = Math.round(Math.max(GAP, Math.min(want, S.W - w - GAP)));
 
   const stands = S.H - toScreen(0, at.y).y + P * 3;
 
@@ -276,6 +282,12 @@ function place(el, at) {
   const highest = S.H - h - (under + h + GAP <= S.H ? Math.max(GAP, under) : GAP);
   const bottom = Math.round(highest < lowest ? highest      // a window too short for both
                                              : Math.max(lowest, Math.min(stands, highest)));
+  // An anchor may name a box the board must never cover (`keep`: act 3's
+  // UPGRADES button, which puts the board away again). Where the window is
+  // too short to stand the board over it, the clamps above bring the board
+  // down across it, so the board goes beside it instead: past its far side
+  // where the window has room, else before it.
+  const x = at.keep ? clearOf(at.keep, x0, bottom, w, h) : x0;
 
   // Moved by its *bottom* edge: the height changes the instant a board swaps
   // pages, mid-glide, and a sheet moved by its top corner hangs its bottom
@@ -285,6 +297,15 @@ function place(el, at) {
   putX = x;
   putY = bottom;
   el.style.transform = `translate3d(${x}px, ${-bottom}px, 0)`;
+}
+// The board's left edge, moved off `keep` (a world box) if the board standing
+// at `x` with its foot `bottom` up from the glass's would cover it.
+function clearOf(keep, x, bottom, w, h) {
+  const a = toScreen(keep.x, keep.y), b = toScreen(keep.x + keep.w, keep.y + keep.h);
+  const top = S.H - bottom - h, foot = S.H - bottom;
+  if (!(x < b.x + GAP && a.x - GAP < x + w && top < b.y + GAP && a.y - GAP < foot)) return x;
+  const past = Math.round(b.x + GAP * 2);
+  return past + w <= S.W - GAP ? past : Math.max(GAP, Math.round(a.x - GAP * 2 - w));
 }
 
 const GAP = 4;                             // never flush against the edge
@@ -692,7 +713,7 @@ function fill(which) {
 // Up in act 3 the act's own coins head it, as its bills write them.
 const upThere = () => S.view === 'after' && !!S.after;
 const PURSE = [
-  ...AFTER_ACT_COINS.map(coin => [coin, upThere, () => (coin === 'rebel' ? S.after.rebel : S.after.stock[coin] || 0)]),
+  ...AFTER_ACT_COINS.map(coin => [coin, upThere, () => (coin === 'rebel' ? S.after.rebel : goodCount(coin))]),
   ['dust', () => true, () => S.stored],
   ['shard', () => S.seenShard, () => S.shards],
   ['spore', () => S.seenSpore, () => S.spores],

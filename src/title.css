@@ -20,7 +20,7 @@ body.title { overflow: hidden; }
 .col {
   position: fixed; left: var(--title-edge); top: var(--title-edge); max-height: calc(100vh - 2 * var(--title-edge));
   padding: 14px 16px 16px; box-sizing: border-box;
-  background: var(--paper); border: 1px solid var(--ink);
+  background: var(--paper) var(--dots) local; border: 1px solid var(--ink);
   display: flex; flex-direction: column; align-items: stretch; gap: var(--gap-m);
   letter-spacing: calc(var(--track-m) * var(--track)); text-transform: uppercase;
   /* Centered, as the held sheet is: the same pages read the same in both. */
@@ -49,7 +49,7 @@ body.title { --title-edge: 20px; }
 .col .slots { display: flex; flex-direction: column; gap: var(--gap-s); }
 /* the record's cards, one across in the column */
 .col .record { grid-template-columns: 1fr; width: var(--col-w); max-width: none; max-height: 50vh; box-sizing: border-box; }
-.col .record .card { background: var(--paper); }
+.col .record .card { background: var(--paper) var(--dots); }
 /* The slider as wide as the column, as the buttons are: at least its
    narrowest, and stretched with them when a longer line widens it. */
 .col input[type=range] { width: auto; min-width: var(--col-w); align-self: stretch; box-sizing: border-box; margin-left: 0; margin-right: 0; }

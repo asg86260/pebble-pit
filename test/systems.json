@@ -1,5 +1,5 @@
 {
- "scenes": 479,
+ "scenes": 498,
  "systems": [
   {
    "name": "plots",
@@ -38,6 +38,7 @@
     "workers"
    ],
    "writes": [
+    "noticeboard",
     "piles",
     "placed",
     "strips",
@@ -54,6 +55,7 @@
     "casino",
     "chips",
     "core",
+    "craftair",
     "crew",
     "dosemotes",
     "doses",
@@ -68,6 +70,7 @@
     "rift",
     "rock",
     "shield",
+    "smog",
     "summon",
     "works"
    ]
@@ -108,6 +111,7 @@
     "camY",
     "carryLevel",
     "carters",
+    "chips",
     "coreBuried",
     "crew",
     "critMultLevel",
@@ -161,7 +165,6 @@
     "portalOpen",
     "purifiers",
     "quarriers",
-    "quarryCells",
     "quarryOpen",
     "raining",
     "recoilT",
@@ -186,7 +189,6 @@
     "serpentStill",
     "shield",
     "shot",
-    "sinking",
     "snatch",
     "snatched",
     "speedLevel",
@@ -279,10 +281,10 @@
     "rockhands",
     "sceneHolds",
     "scholars",
+    "shield",
     "shopStale",
     "shot",
     "speedLevel",
-    "stations",
     "stirrers",
     "tossReachLevel",
     "tossSpeedLevel",
@@ -302,21 +304,25 @@
     "apothecary",
     "arms",
     "balloons",
+    "belt",
     "breaks",
     "buried",
     "camera",
     "casino",
     "chips",
     "core",
+    "craftair",
     "crew",
     "dosemotes",
     "doses",
     "finale",
     "firstmuck",
+    "gestures",
     "glimpse",
     "hell",
     "house",
     "machines",
+    "meteor",
     "notices",
     "party",
     "piles",
@@ -324,7 +330,6 @@
     "restaff",
     "rift",
     "rock",
-    "scales",
     "serpent",
     "shield",
     "smog",
@@ -403,6 +408,7 @@
     "afterlife",
     "beats",
     "camera",
+    "gestures",
     "works"
    ]
   },
@@ -461,6 +467,7 @@
     "buried",
     "camera",
     "core",
+    "craftair",
     "crew",
     "dosemotes",
     "doses",
@@ -477,6 +484,7 @@
     "rock",
     "shake",
     "shield",
+    "smog",
     "summon",
     "view",
     "works"
@@ -593,6 +601,7 @@
     "casino",
     "chips",
     "core",
+    "craftair",
     "crew",
     "dosemotes",
     "doses",
@@ -656,6 +665,7 @@
    "needs": [
     "beats",
     "camera",
+    "crew",
     "smog",
     "view",
     "works"
@@ -664,6 +674,7 @@
   {
    "name": "survey",
    "reads": [
+    "after",
     "apothecaryOpen",
     "banked",
     "beatsDone",
@@ -729,12 +740,14 @@
     "tick"
    ],
    "needs": [
+    "afterlife",
     "apothecary",
     "beats",
     "casino",
     "chips",
     "core",
     "crew",
+    "gestures",
     "machines",
     "notices",
     "piles",
@@ -760,7 +773,6 @@
     "groundY",
     "gw",
     "hush",
-    "piles",
     "quarryOpen",
     "rockFall",
     "rockFallV",
@@ -785,6 +797,7 @@
     "acts",
     "air",
     "apothecary",
+    "arms",
     "balloons",
     "beats",
     "belt",
@@ -792,6 +805,7 @@
     "buried",
     "chips",
     "core",
+    "craftair",
     "crew",
     "dosemotes",
     "doses",
@@ -808,6 +822,7 @@
     "rift",
     "shake",
     "shield",
+    "smog",
     "summon",
     "works"
    ]
@@ -868,6 +883,7 @@
     "acts",
     "air",
     "apothecary",
+    "arms",
     "balloons",
     "beats",
     "belt",
@@ -875,6 +891,7 @@
     "buried",
     "chips",
     "core",
+    "craftair",
     "crew",
     "dosemotes",
     "doses",
@@ -890,6 +907,7 @@
     "restaff",
     "rift",
     "rock",
+    "smog",
     "summon",
     "works"
    ]
@@ -907,7 +925,6 @@
     "muck",
     "muckPull",
     "muckScene",
-    "quarryCells",
     "quarryOpen",
     "raining",
     "rockTops",
@@ -929,6 +946,7 @@
     "breaks",
     "buried",
     "core",
+    "craftair",
     "crew",
     "dosemotes",
     "doses",
@@ -1091,7 +1109,6 @@
     "lifts",
     "mechSkip",
     "muck",
-    "muckScene",
     "orb",
     "orbBurst",
     "peakRow",
@@ -1106,6 +1123,7 @@
     "rockTops",
     "roombaBots",
     "roombaFlecks",
+    "seen",
     "seenFang",
     "seenMess",
     "serpentChips",
@@ -1132,6 +1150,7 @@
     "buried",
     "chips",
     "core",
+    "craftair",
     "dosemotes",
     "doses",
     "firstmuck",
@@ -1282,6 +1301,7 @@
     "breaks",
     "buried",
     "core",
+    "craftair",
     "crew",
     "dosemotes",
     "doses",
@@ -1297,6 +1317,7 @@
     "rift",
     "rock",
     "shield",
+    "smog",
     "summon",
     "survey",
     "works"
@@ -1383,6 +1404,7 @@
     "acts",
     "air",
     "apothecary",
+    "arms",
     "balloons",
     "beats",
     "belt",
@@ -1390,6 +1412,7 @@
     "buried",
     "chips",
     "core",
+    "craftair",
     "crew",
     "dosemotes",
     "doses",
@@ -1433,6 +1456,7 @@
     "breaks",
     "buried",
     "core",
+    "craftair",
     "crew",
     "dosemotes",
     "doses",
@@ -1447,6 +1471,7 @@
     "rift",
     "rock",
     "shield",
+    "smog",
     "summon",
     "works"
    ]
@@ -1484,6 +1509,7 @@
     "beats",
     "buried",
     "core",
+    "craftair",
     "crew",
     "dosemotes",
     "doses",
@@ -1499,6 +1525,7 @@
     "rift",
     "rock",
     "shield",
+    "smog",
     "smoke",
     "summon",
     "works"
@@ -1634,6 +1661,7 @@
     "buried",
     "camera",
     "core",
+    "craftair",
     "crew",
     "dosemotes",
     "doses",
@@ -1651,6 +1679,7 @@
     "rock",
     "shield",
     "shocks",
+    "smog",
     "summon",
     "survey",
     "view"
@@ -1862,12 +1891,14 @@
     "acts",
     "air",
     "apothecary",
+    "arms",
     "balloons",
     "beats",
     "belt",
     "breaks",
     "chips",
     "core",
+    "craftair",
     "crew",
     "dosemotes",
     "doses",
@@ -1884,6 +1915,7 @@
     "rift",
     "rock",
     "shield",
+    "smog",
     "summon",
     "works"
    ]
@@ -1922,6 +1954,7 @@
     "breaks",
     "buried",
     "core",
+    "craftair",
     "crew",
     "dosemotes",
     "doses",
@@ -1936,6 +1969,7 @@
     "rift",
     "rock",
     "shield",
+    "smog",
     "smoke",
     "summon",
     "works"
@@ -2012,6 +2046,7 @@
     "breaks",
     "buried",
     "camera",
+    "craftair",
     "crew",
     "dosemotes",
     "doses",
@@ -2047,6 +2082,7 @@
     "summon"
    ],
    "needs": [
+    "arms",
     "beats",
     "belt",
     "chips",
@@ -2091,6 +2127,7 @@
     "breaks",
     "buried",
     "core",
+    "craftair",
     "crew",
     "dosemotes",
     "doses",
@@ -2108,6 +2145,7 @@
     "rock",
     "shield",
     "shocks",
+    "smog",
     "works"
    ]
   },
@@ -2179,6 +2217,7 @@
     "casino",
     "chips",
     "core",
+    "craftair",
     "crew",
     "dosemotes",
     "doses",
@@ -2194,6 +2233,7 @@
     "rift",
     "rock",
     "shield",
+    "smog",
     "summon",
     "works"
    ]
@@ -2217,6 +2257,7 @@
     "breaks",
     "buried",
     "core",
+    "craftair",
     "crew",
     "dosemotes",
     "firstmuck",
@@ -2231,6 +2272,7 @@
     "rift",
     "rock",
     "shield",
+    "smog",
     "summon",
     "works"
    ]
@@ -2256,6 +2298,7 @@
     "breaks",
     "buried",
     "core",
+    "craftair",
     "crew",
     "doses",
     "firstmuck",
@@ -2270,6 +2313,7 @@
     "rift",
     "rock",
     "shield",
+    "smog",
     "smoke",
     "summon",
     "works"
@@ -2319,6 +2363,7 @@
     "casino",
     "chips",
     "core",
+    "craftair",
     "crew",
     "dosemotes",
     "doses",
@@ -2334,6 +2379,7 @@
     "restaff",
     "rock",
     "shield",
+    "smog",
     "summon",
     "works"
    ]
@@ -2444,6 +2490,7 @@
     "breaks",
     "buried",
     "core",
+    "craftair",
     "crew",
     "dosemotes",
     "doses",
@@ -2459,6 +2506,7 @@
     "rock",
     "serpent",
     "shield",
+    "smog",
     "summon",
     "works"
    ]
@@ -2468,6 +2516,7 @@
    "reads": [
     "barrierHits",
     "breakT",
+    "chips",
     "freedAt",
     "hits",
     "mechAt",
@@ -2492,19 +2541,26 @@
    ],
    "writes": [
     "barrierHits",
+    "chips",
     "hits",
+    "orb",
     "serpentChips",
     "serpentGrace",
     "serpentStun",
     "serpentWound",
-    "sinking",
     "statuses"
    ],
    "needs": [
     "beats",
+    "belt",
+    "chips",
     "crew",
+    "machines",
+    "meteor",
+    "rock",
     "scales",
-    "serpent"
+    "serpent",
+    "shield"
    ]
   },
   {
@@ -2514,8 +2570,7 @@
     "earnedTotal",
     "lifting",
     "scales",
-    "sinking",
-    "worldH"
+    "sinking"
    ],
    "writes": [
     "crushes",
@@ -2526,7 +2581,6 @@
     "sinking"
    ],
    "needs": [
-    "arms",
     "casino",
     "chips",
     "crew"
@@ -2546,6 +2600,7 @@
    "needs": [
     "acts",
     "beats",
+    "gestures",
     "restaff",
     "works"
    ]
@@ -2555,7 +2610,9 @@
    "reads": [
     "after"
    ],
-   "writes": [],
+   "writes": [
+    "after"
+   ],
    "needs": [
     "afterlife",
     "beats"
@@ -2608,11 +2665,13 @@
     "breaks",
     "buried",
     "core",
+    "craftair",
     "crew",
     "dosemotes",
     "doses",
     "finale",
     "firstmuck",
+    "gestures",
     "glimpse",
     "house",
     "machines",
@@ -2624,6 +2683,7 @@
     "rift",
     "rock",
     "shield",
+    "smog",
     "summon",
     "survey",
     "view",
@@ -2669,6 +2729,7 @@
     "casino",
     "chips",
     "core",
+    "craftair",
     "crew",
     "dosemotes",
     "doses",
@@ -2684,6 +2745,7 @@
     "rift",
     "rock",
     "shield",
+    "smog",
     "summon",
     "view",
     "works"
@@ -2729,16 +2791,19 @@
     "camY",
     "cx",
     "drowned",
+    "filterMuck",
     "gh",
     "groundY",
     "gw",
     "muck",
+    "powerLevel",
     "quarryCells",
     "quarryOpen",
     "rainDue",
     "rainFor",
     "raining",
     "rains",
+    "recycler",
     "rockFall",
     "rockTops",
     "runSeed",
@@ -2750,10 +2815,12 @@
     "view",
     "viewH",
     "viewW",
+    "workers",
     "worldW"
    ],
    "writes": [
     "bolt",
+    "filterMuck",
     "haze",
     "muck",
     "rainDue",
@@ -2764,17 +2831,36 @@
     "stormFor",
     "stormHeft",
     "stormLeft",
-    "tally"
+    "tally",
+    "workers"
    ],
    "needs": [
+    "acts",
+    "air",
+    "apothecary",
+    "balloons",
     "beats",
+    "breaks",
+    "buried",
     "camera",
     "core",
+    "craftair",
     "crew",
+    "dosemotes",
+    "doses",
+    "firstmuck",
+    "glimpse",
+    "house",
     "machines",
+    "notices",
+    "party",
+    "piles",
+    "records",
+    "restaff",
     "rift",
     "rock",
     "shield",
+    "summon",
     "view",
     "weather",
     "works"
@@ -2806,6 +2892,7 @@
     "buried",
     "camera",
     "core",
+    "craftair",
     "crew",
     "dosemotes",
     "doses",
@@ -2821,6 +2908,7 @@
     "rift",
     "rock",
     "shield",
+    "smog",
     "summon",
     "view",
     "works"
@@ -2830,12 +2918,41 @@
    "name": "craftair",
    "reads": [
     "beat",
-    "finale"
+    "finale",
+    "haze",
+    "powerLevel",
+    "workers"
    ],
-   "writes": [],
+   "writes": [
+    "workers"
+   ],
    "needs": [
+    "acts",
+    "air",
+    "apothecary",
+    "balloons",
     "beats",
-    "crew"
+    "breaks",
+    "buried",
+    "core",
+    "crew",
+    "dosemotes",
+    "doses",
+    "firstmuck",
+    "glimpse",
+    "house",
+    "machines",
+    "notices",
+    "party",
+    "piles",
+    "records",
+    "restaff",
+    "rift",
+    "rock",
+    "shield",
+    "smog",
+    "summon",
+    "works"
    ]
   },
   {
@@ -2851,9 +2968,8 @@
     "chips",
     "dragging",
     "held",
-    "heldScales",
-    "mouse",
-    "sinking"
+    "motes",
+    "mouse"
    ],
    "writes": [],
    "needs": [
@@ -2866,7 +2982,6 @@
     "meteor",
     "restaff",
     "rock",
-    "scales",
     "shield",
     "works"
    ]
@@ -2887,6 +3002,9 @@
   {
    "name": "tossing",
    "reads": [
+    "H",
+    "W",
+    "after",
     "autoToss",
     "beat",
     "carryLevel",
@@ -2900,17 +3018,21 @@
     "riftOpen",
     "tally",
     "tossReachLevel",
-    "tossSpeedLevel"
+    "tossSpeedLevel",
+    "worldH"
    ],
    "writes": [
     "nextToss"
    ],
    "needs": [
+    "afterlife",
+    "arms",
     "beats",
     "belt",
     "chips",
     "core",
     "crew",
+    "gestures",
     "machines",
     "meteor",
     "piles",
@@ -2937,6 +3059,7 @@
     "chips"
    ],
    "needs": [
+    "arms",
     "chips",
     "crew",
     "machines",
@@ -2948,6 +3071,7 @@
   {
    "name": "chips",
    "reads": [
+    "after",
     "banked",
     "chips",
     "cx",
@@ -2968,6 +3092,7 @@
     "sparks",
     "spores",
     "stored",
+    "worldH",
     "worldW"
    ],
    "writes": [
@@ -2989,12 +3114,15 @@
     "stored"
    ],
    "needs": [
+    "afterlife",
     "apothecary",
+    "arms",
     "beats",
     "belt",
     "casino",
     "core",
     "crew",
+    "gestures",
     "machines",
     "meteor",
     "paid",

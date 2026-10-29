@@ -13,6 +13,8 @@ import { JOB_OF } from '../levels.js';
 import { now, frames } from '../clock.js';
 import { settle, retask } from './commute.js';
 import { sfx } from '../audio.js';
+import { dropScale } from '../deep/scales.js';
+import { source } from '../flow.js';
 
 // One frame of a knocked-off hat falling. Runs whatever its owner is doing --
 // a hat in the air does not wait for the body that lost it to be put down.
@@ -79,7 +81,8 @@ function sink(w) {
     w.landedAt = w.x;
     // what it still held goes into the water where it lies, as scales
     for (let i = 0; i < (w.spill || 0); i++)
-      S.sinking.push({ x: w.x + WORKER / 2, y: w.y, vx: 0, vy: 0, s: 1 });
+      dropScale(w.x + WORKER / 2, w.y, 0, 0, 1);
+    source('scale', w.spill || 0, 'fall');
     w.spill = 0;
     return;
   }

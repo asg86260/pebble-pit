@@ -14,7 +14,7 @@
 // here by name. What still fails is a tone no list names, and two different
 // tones of the clouds' palette too close to tell apart on their page.
 import { group, ok, run, yard } from './helpers.mjs';
-import { GREY, AFTER_TONES, AFTER_DARK, CLOUDS_PALETTE } from '../src/config.js';
+import { GREY, AFTER_TONES, AFTER_DARK, AFTER_GOODS, AFTER_GOODS_DARK, CLOUDS_PALETTE } from '../src/config.js';
 import { setPref } from '../src/prefs.js';
 import { inkOf } from '../src/ink.js';
 import { SCENES } from '../src/scenes.js';
@@ -28,7 +28,7 @@ import { drawActsAfter } from '../src/render/portals.js';
 const S = yard.S;
 const LAYERS = [drawAfterBackdrop, drawSkyCrowd, drawAfterSky, drawAfterGrove, drawAfterCamp, drawAfterCrowd,
                 drawAfterPiles, drawAfterMembers, drawAfterCoins, drawAfterCues, drawAfterCounts, drawActsAfter];
-const SCENE_NAMES = ['after-camp-art', 'after-camp-art-2', 'after-heap-full', 'after-nails', 'after-grove', 'after-saw',
+const SCENE_NAMES = ['after-camp-art', 'after-camp-art-2', 'after-heap-full', 'after-goods', 'after-nails', 'after-grove', 'after-saw',
                      'after-dig', 'after-site-carry', 'after-coins', 'after-bubbles', 'after-pedestal',
                      'after-crowd', 'heaven-10', 'heaven-50', 'heaven-zoom', 'heaven-rally', 'heaven-roar', 'portal-heaven-up'];
 
@@ -38,7 +38,13 @@ const hex6 = c => {
   if (/^#[0-9a-f]{3}$/i.test(c)) c = '#' + [...c.slice(1)].map(h => h + h).join('');
   return c.toLowerCase();
 };
-const FOUR = new Set([...Object.values(AFTER_TONES).map(i => hex6(GREY[i])), ...Object.values(CLOUDS_PALETTE.light).map(hex6)]);
+// The goods' own families (the owner, 2026-10-29: "B2 colors, act 1 contrast"):
+// four tones a good, each family the one role named here -- the tones a
+// unit is born with, light to dark, as one of act 1's coins is a run of four.
+const GOODS_ROLES = { log: 'the felled log, bark brown', plank: 'timber, sawn pale wood',
+                      sign: 'the sign, a painted slate board', sawdust: "the heap's grains, the timber's wood a step paler" };
+const FOUR = new Set([...Object.values(AFTER_TONES).map(i => hex6(GREY[i])), ...Object.values(CLOUDS_PALETTE.light).map(hex6),
+                      ...Object.values(AFTER_GOODS).flat().map(hex6)]);
 const toHex = (r, g, b) => '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('');
 
 // A sheet that keeps every tone it is told to lay down, by the scene that
@@ -64,6 +70,8 @@ function keeper(seen, where) {
           for (let i = 0; i < d.length; i += 4) if (d[i + 3]) take(toHex(d[i], d[i + 1], d[i + 2]));
         };
         if (k === 'measureText') return () => ({ width: 0 });
+        // a sheet that keeps no pixels has no pattern, so the dot ground (render/dots.js) is skipped
+        if (k === 'createPattern') return undefined;
         // a fresh sheet's transform and pixels, blank when read back: the
         // type's own scrap (render/crisptext.js) and the sky's still clouds
         // (render/after/cloudsky.js) read them
@@ -110,7 +118,7 @@ group("act 3's layers paint only its four tones, God's raw light aside", async (
   const off = [...seen].map(([c, where]) => `${c} (${[...where].slice(0, 3).join(', ')})`);
   return [
     ok(stood.length === SCENE_NAMES.length, 'every act-3 scene stood the act up', SCENE_NAMES.filter(n => !stood.includes(n)).join(', ')),
-    ok(off.length === 0, "no tone outside paper, pale, mid and ink, and the clouds' named tones", off.join('; ')),
+    ok(off.length === 0, "no tone outside paper, pale, mid and ink, the clouds' named tones and the goods' families", off.join('; ')),
   ];
 });
 
@@ -140,6 +148,27 @@ group("act 3's four tones sit apart on the dark page, turned, and the light page
     ok(lightness(to.ink) < 1, "God's raw white is still the lightest thing in the act", said),
     ok(Object.values(AFTER_TONES).every(i => inkOf(GREY[i], 'after') === GREY[i]), 'the light page draws the four as written'),
   ];
+});
+
+// The goods' colors: every good has a named role and four tones, no two
+// alike, each a clear step off the last at act 1's coin contrast.
+group("the goods' color families each have a role, four tones, and no two alike", async () => {
+  const out = [];
+  for (const [good, tones] of Object.entries(AFTER_GOODS)) {
+    const l = tones.map(lightness), gaps = l.slice(1).map((v, i) => l[i] - v);
+    out.push(
+      ok(!!GOODS_ROLES[good] && tones.length === 4 && tones.every(c => /^#[0-9a-f]{6}$/i.test(c)), `${good}: ${GOODS_ROLES[good]}, four tones`, tones.join(' ')),
+      ok(gaps.every(g => g > 0.02), `${good}: each tone darker than the last, a clear step`, gaps.map(g => g.toFixed(3)).join(', '))
+    );
+  }
+  // and on the dark page each family has its lifted twin, drawn raw, every tone lighter than its light one
+  for (const [good, tones] of Object.entries(AFTER_GOODS_DARK)) {
+    const l = tones.map(lightness);
+    out.push(ok(tones.length === 4 && tones.every((c, i) => lightness(c) >= lightness(AFTER_GOODS[good][i])) && l.every((v, i) => !i || v < l[i - 1] - 0.02),
+      `${good}: four dark-page tones, each a step off the last and no darker than its light twin`, tones.join(' ')));
+  }
+  out.push(ok(Object.keys(AFTER_GOODS).length === Object.keys(GOODS_ROLES).length, 'every family in the config has a role listed here'));
+  return out;
 });
 
 // The clouds' palette: each tone named for its role, and on each page every

@@ -1,8 +1,10 @@
 // Act 3's hand work, cued in the place itself (after/gestures.js): each
 // station's ghost hand on its moving part acting the motion out until it has
-// been done a few times, a big bubble's held star and figure, and the heap's
-// load in the hand or flying into the notch. One layer of render.js's
-// LAYERS, over the place, drawn only with the camera up there.
+// been done a few times, and again, faint, while the pointer is over the part
+// (DESIGN.md, "Act 3's goods are blocks", rule 3: one hand, and the material
+// is the progress, so no strip, tag or path); a big bubble's held star and
+// figure, and the heap's load in the hand or flying into the notch. One layer
+// of render.js's LAYERS, over the place, drawn only with the camera up there.
 //
 // The hand is drawn at its own pixel, finer than a cell (GESTURE_CUE_DOT): it
 // is a pointer over the place, not more of its material, as the mock drew
@@ -10,21 +12,16 @@
 // Everything fades by opacity, nothing flashes and nothing shakes; the crit
 // is a held star.
 
-import { P, GREY, GESTURE_CUE_ALPHA, GESTURE_CUE_DOT, GESTURE_CUE_TAP_S, GESTURE_CUE_LOOP_S, GESTURE_STAR_HOLD_S, GESTURE_STAR_FADE_S,
-         GESTURE_MARK_HOLD_S, GESTURE_MARK_FADE_S, GESTURE_LOAD_FADE_S, GESTURE_SAW_AMP,
-         GESTURE_WHEEL_LOG,
-         HANDWORK_DOTS, HANDWORK_DOT_RUN, HANDWORK_PATH_OUT, HANDWORK_HINT_LOOP_S, HANDWORK_HINT_POINT,
-         HANDWORK_HAND_DOT, HANDWORK_STRIP_DROP, HANDWORK_STRIP_H, HANDWORK_TAG_PX, HANDWORK_TAG_PAD, HANDWORK_DONE_S } from '../config.js';
+import { P, GREY, GESTURE_CUE_ALPHA, GESTURE_CUE_HOVER, GESTURE_CUE_DOT, GESTURE_CUE_TAP_S, GESTURE_CUE_LOOP_S, GESTURE_STAR_HOLD_S, GESTURE_STAR_FADE_S,
+         GESTURE_MARK_HOLD_S, GESTURE_MARK_FADE_S, GESTURE_LOAD_FADE_S, GESTURE_SAW_AMP } from '../config.js';
 import { ctx } from './ctx.js';
 import { S } from '../state.js';
-import { msg, FACE } from '../lang.js';
-import { smoothstep, lerp } from '../motion.js';
-import { crispText } from './crisptext.js';
-import { gestureView, partsOf, lowestBubble, groveIcons, HANDWORK_KEYS } from '../after/gestures.js';
-import { stationParts, stationBox, groundOf } from '../after/place.js';
+import { gestureView, partsOf, lowestBubble, groveIcons } from '../after/gestures.js';
+import { stationParts, groundOf, AP } from '../after/place.js';
+import { bedWants } from '../after/mill.js';
+import { stripBox } from '../after/ground.js';
 import { drawGroveIcons } from './after/pine.js';
-import { grips } from './after/stations.js';
-import { K, W, PALE, MID, FOUR } from './after/kit.js';
+import { K, W, PALE, MID } from './after/kit.js';
 
 const D = GESTURE_CUE_DOT;
 const snap = v => Math.round(v / P) * P;
@@ -39,14 +36,13 @@ export const HAND = {
                              '#o#oooooo#', '#oooooooo#', '.#ooooooo#', '..#oooooo#', '...######.'] },
   grab:  { at: [5, 3.5], m: ['.##.##.##.', '#oo#oo#oo#', '#oooooooo#', '#oooooooo#', '#oooooooo#', '.#ooooooo#', '..#######.'] }
 };
-// `dot` its pixel: the cue's fine one, or the hand work's hint's a game cell.
-export function handOn(g, x, y, pose, dot = D) {
-  const h = HAND[pose], put = dot === D ? dsnap : Math.round, x0 = put(x - h.at[0] * dot), y0 = put(y - h.at[1] * dot);
+export function handOn(g, x, y, pose, z = D, line = GREY[MID]) {
+  const h = HAND[pose], x0 = Math.round((x - h.at[0] * z) / z) * z, y0 = Math.round((y - h.at[1] * z) / z) * z;
   for (let j = 0; j < h.m.length; j++) for (let i = 0; i < h.m[j].length; i++) {
     const ch = h.m[j][i];
     if (ch === '.') continue;
-    g.fillStyle = GREY[ch === '#' ? MID : W];
-    g.fillRect(x0 + i * dot, y0 + j * dot, dot, dot);
+    g.fillStyle = ch === '#' ? line : GREY[W];
+    g.fillRect(x0 + i * z, y0 + j * z, z, z);
   }
 }
 
@@ -119,7 +115,18 @@ function cueAt(key, r) {
     const b = partsOf('stump', c.i).stump;
     return { x: b.x + b.w / 2, y: b.y - Math.round(u * 3) * P, pose: 'grab' };
   }
-  if (key === 'mill') { const w = partsOf('mill').wheel; return { x: w.x + Math.cos(turn) * w.r, y: w.y + Math.sin(turn) * w.r, pose: 'grab' }; }
+  if (key === 'mill') {
+    // With the bed bare and nobody at the saw, a log first: the hand pressed
+    // on the log pile, carried over and let go on the bed (after/mill.js);
+    // then the wheel turned.
+    const bed = bedWants();
+    if (bed) {
+      const b = stripBox('logs'), k = Math.min(1, u * 1.4), half = b.size * AP / 2, x0 = b.x + half, y0 = b.bottom - half;
+      return { x: x0 + (bed.x - x0) * k, y: y0 + (bed.y - y0) * k - Math.sin(k * Math.PI) * P * 4, pose: 'grab' };
+    }
+    const w = partsOf('mill').wheel;
+    return { x: w.x + Math.cos(turn) * w.r, y: w.y + Math.sin(turn) * w.r, pose: 'grab' };
+  }
   if (key === 'workshop') {
     const nails = partsOf('workshop').nails, k = r.nails.findIndex(n => n < 2);
     const n = nails[Math.max(0, k)];
@@ -132,113 +139,31 @@ function cueAt(key, r) {
   return null;
 }
 
-// --- the hand work, shown in the world (DESIGN.md, "Act 3's hand work and
-// hand carrying", take B) ----------------------------------------------------
-// Hovered, a dotted ghost of a hand-worked part's motion loops round it, the pointing hand on where to take it and then the
-// grabbing hand playing the motion through (motion.js's curve); and a strip
-// under the station fills with the unit in the gesture's own units, a verb
-// on a tag under it. Each fades by its own share (after/gestures.js).
-
-// The motion's path, world points: `legs` the grab's way, each a list of
-// points, the dotted ghost laid along them, and where the hand points first.
-const arcPts = (c, rx, ry, a0, a1, n) => Array.from({ length: n }, (_, i) => { const a = lerp(a0, a1, i / (n - 1)); return { x: c.x + Math.cos(a) * rx, y: c.y + Math.sin(a) * ry }; });
-const TURN_SPAN = Math.PI * 5 / 3;                      // a turn's ghost: most of the way round, so its head shows
-function motionOf(key) {
-  const g = grips(key), N = HANDWORK_DOTS;
-  if (!g) return null;
-  if (key === 'mill') {
-    const a0 = Math.atan2(g.knob.y - g.hub.y, g.knob.x - g.hub.x);
-    return { point: g.knob, legs: [{ hand: arcPts(g.hub, g.reach, g.reach, a0, a0 + TURN_SPAN, N), dots: arcPts(g.hub, g.reach + HANDWORK_PATH_OUT, g.reach + HANDWORK_PATH_OUT, a0, a0 + TURN_SPAN, N) }] };
-  }
-  return null;
-}
-// Along a list of points, k of the way.
-function along(pts, k) {
-  const u = Math.min(pts.length - 1, Math.max(0, k * (pts.length - 1))), i = Math.min(pts.length - 2, Math.floor(u)), f = u - i;
-  return { x: lerp(pts[i].x, pts[i + 1].x, f), y: lerp(pts[i].y, pts[i + 1].y, f) };
-}
-// The dots, a game cell each on the cells' grid, one of ink running along
-// them, and a head of three rows at the end pointing on.
-function dotted(pts, t) {
-  const run = Math.floor(t * HANDWORK_DOT_RUN) % pts.length;
-  pts.forEach((q, i) => { if (i !== run) cell(q.x - P / 2, q.y - P / 2, MID); });
-  const q = pts[run];
-  for (const [i, j] of [[0, 0], [1, 0], [0, 1], [1, 1]]) cell(q.x - P + i * P, q.y - P + j * P, K);
-  const a = pts[pts.length - 1], b = pts[pts.length - 2];
-  const dx = Math.sign(Math.round(a.x - b.x)), dy = Math.sign(Math.round(a.y - b.y));
-  for (let k = 0; k < 3; k++) for (let j = -k; j <= k; j++)
-    cell(a.x + dx * (3 - k) * P + (dy ? j * P : 0) - P / 2, a.y + dy * (3 - k) * P + (dx ? j * P : 0) - P / 2, K);
-}
-function drawGhost(key, r, t) {
-  const m = motionOf(key);
-  if (!m) return;
-  ctx.globalAlpha = r.hintA;
-  for (const leg of m.legs) dotted(leg.dots, t);
-  // the loop: the hand pointing where to take hold, then grabbing and
-  // playing the motion through, a leg after another
-  const u = (t % HANDWORK_HINT_LOOP_S) / HANDWORK_HINT_LOOP_S;
-  if (u < HANDWORK_HINT_POINT) { ctx.globalAlpha = r.hintA; handOn(ctx, m.point.x, m.point.y, 'point', HANDWORK_HAND_DOT); return; }
-  const k = (u - HANDWORK_HINT_POINT) / (1 - HANDWORK_HINT_POINT);
-  const at = along(m.legs[0].hand, smoothstep(k));
-  ctx.globalAlpha = r.hintA;
-  handOn(ctx, at.x, at.y, 'grab', HANDWORK_HAND_DOT);
-}
-// The unit so far, in the gesture's own units: the log fed cell by cell;
-// full a moment after a unit is made.
-function unitOf(key, r, t) {
-  let n = 0, of = 1;
-  const verb = 'handwork-spin';
-  if (key === 'mill') { n = Math.floor(r.prog); of = GESTURE_WHEEL_LOG; }
-  if (r.lastUse != null && t - r.lastUse < HANDWORK_DONE_S) n = of;
-  return { n: Math.min(n, of), of, verb };
-}
-const TAG_TONES = FOUR.map(i => GREY[i]);
-function drawStrip(key, r, u) {
-  const b = stationBox(key), y = groundOf(key) + HANDWORK_STRIP_DROP, H = HANDWORK_STRIP_H;
-  ctx.globalAlpha = r.stripA;
-  ctx.fillStyle = GREY[W]; ctx.fillRect(b.x - P, y - P, b.w + P * 2, H + P * 2);
-  const sw = Math.floor((b.w - (u.of - 1) * P) / u.of / P) * P, x0 = b.x + Math.floor((b.w - (u.of * sw + (u.of - 1) * P)) / 2 / P) * P;
-  for (let i = 0; i < u.of; i++) { ctx.fillStyle = GREY[i < u.n ? K : PALE]; ctx.fillRect(x0 + i * (sw + P), y, sw, H); }
-  // the verb, paper on an ink tag under the strip's left end
-  const font = `${HANDWORK_TAG_PX}px ${FACE}`, label = msg(u.verb);
-  ctx.font = font;
-  const tw = Math.ceil(ctx.measureText ? ctx.measureText(label).width || 0 : 0), ty = y + H + P;
-  const tagW = snap(tw + HANDWORK_TAG_PAD * 2 + P / 2), tagH = snap(HANDWORK_TAG_PX + HANDWORK_TAG_PAD * 2 + P / 2);
-  ctx.fillStyle = GREY[W]; ctx.fillRect(b.x - P * 2, ty - P, tagW + P * 2, tagH + P * 2);   // a paper rim, as the strip's, off the cloud under it
-  ctx.fillStyle = GREY[K]; ctx.fillRect(b.x - P, ty, tagW, tagH);
-  crispText(ctx, label, b.x - P + HANDWORK_TAG_PAD, ty + HANDWORK_TAG_PAD, font, GREY[W], 'left', GREY[K], TAG_TONES);
-}
-// What the hand work showed last frame, by station: read by the browser
-// check (src/selftest/aftergestures.js) so it is a fact about the drawing.
+// The hand's ink each station drew last frame, by key (0 where none): read by
+// the browser check (src/selftest/aftergestures.js), so it is a fact about
+// the drawing.
 let shown = {};   // cache: what the last frame drew, rewritten whole each draw
-export const handworkShown = () => shown;
-function drawHandwork(view, t) {
-  shown = {};
-  for (const r of view) {
-    if (!HANDWORK_KEYS.includes(r.key) || !r.open) continue;
-    const u = unitOf(r.key, r, t);
-    shown[r.key] = { hintA: r.hintA, stripA: r.stripA, n: u.n, of: u.of, verb: u.verb };
-    if (r.stripA > 0.001) drawStrip(r.key, r, u);
-    if (r.hintA > 0.001) drawGhost(r.key, r, t);
-  }
-  ctx.globalAlpha = 1;
-}
+export const cueShown = () => shown;
+// A scripted cursor (a scene playing the hand: scenes.js, 'after-mill-hand'):
+// drawn over the place as the ghost hand is, and the ghost kept off while it is.
+export const demoHand = { x: 0, y: 0, pose: null };
 
 export function drawAfterCues() {
   const view = gestureView();
   if (!view) return;
   const t = now();
   drawGroveIcons();
-  drawHandwork(view, t);
+  shown = {};
   for (const r of view) {
-    // the first-uses ghost hand gives way to the hover's
-    const over = r.hintA || 0;
-    if (r.open && r.cueA > 0.01 && !r.held && over < 1) {
-      const at = cueAt(r.key, r);
-      if (at && at.x >= S.camX - P * 4 && at.x <= S.camX + S.viewW + P * 4) { ctx.globalAlpha = r.cueA * GESTURE_CUE_ALPHA * (1 - over); handOn(ctx, at.x, at.y, at.pose); }
-    }
+    // One hand: the first uses' cue, or the same hand faint while the
+    // pointer is over the part, the stronger of the two; never while held.
+    const ink = r.open && !r.held && !demoHand.pose ? Math.max(r.cueA, (r.hintA || 0) * GESTURE_CUE_HOVER) * GESTURE_CUE_ALPHA : 0;
+    const at = ink > 0.01 && cueAt(r.key, r);
+    shown[r.key] = at ? ink : 0;
+    if (at && at.x >= S.camX - P * 4 && at.x <= S.camX + S.viewW + P * 4) { ctx.globalAlpha = ink; handOn(ctx, at.x, at.y, at.pose); }
     for (const m of r.marks) markOn(ctx, m, t, P);
     if (r.key === 'heap' && r.load) drawLoad(r.load, t);
   }
   ctx.globalAlpha = 1;
+  if (demoHand.pose) handOn(ctx, demoHand.x, demoHand.y, demoHand.pose, P / 2, '#000');
 }

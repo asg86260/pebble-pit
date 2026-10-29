@@ -181,9 +181,10 @@ export function take(money, n, to = null) {
   else if (money === 'shard') { S.shards -= n; spendHeld(n, SHARD_CELL); }
   else if (money === 'spore') { S.spores -= n; spendHeld(n, SPORE_CELL); }
   else if (money === 'spark') { S.sparks -= n; spendHeld(n, SPARK_CELL); }
-  // Act 3's: rebel on the act, timber the chain's stock.
+  // Act 3's rebel, on the act. Its timber is not taken here: the row's own
+  // buy makes it an order whose blocks bodies carry off the mound
+  // (after/rows.js, after/build.js).
   else if (money === 'rebel') S.after.rebel -= n;
-  else if (money === 'timber') S.after.stock.timber -= n;
 }
 
 // What a row costs, as [currency, amount] pairs. A row says `cost` and

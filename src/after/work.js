@@ -7,12 +7,15 @@
 
 import { S } from '../state.js';
 import { built } from './levels.js';
-import { sawLog } from './mill.js';
+import { millWorked } from './mill.js';
 import { joinSign } from './press.js';
 import { shout } from './rebel.js';
 
-// Each station's one unit of work: true if it made something.
-const WORK = { mill: sawLog, workshop: joinSign };
+// Each station's one unit of work: true if it made something. The saw
+// mill's work is its machine's (mill.js): the wheel, walked by the sawyer or
+// dragged by the hand, is the one door that cuts, so a member at its post
+// asked here only answers whether the sawyer is at it.
+const WORK = { mill: millWorked, workshop: joinSign };
 export const WORKED = Object.keys(WORK);
 // The pedestal is worked by the hand alone (a bubble popped, gestures.js), a
 // line of the pair's speech a unit, its rebel let go from the bubble: not a

@@ -58,6 +58,7 @@ const { S } = yard;
 const { playAct3, mm } = await import('./act3-player.mjs');
 const { union } = await import('../../src/after/union.js');
 const { haulCap } = await import('../../src/levels.js');
+const { goodsRead } = await import('../../src/after/piles.js');
 
 
 const wall0 = Date.now();
@@ -75,7 +76,7 @@ console.log(`longest stretch with nothing bought: ${mm(longest.s)} (from ${mm(lo
 console.log(`the plan's next row waited ${mm(blocked.act)} short of the act's coins, ${mm(blocked.yard)} short of the yard's alone`);
 console.log(`the yard paid up: ${YARD_COINS.map(c => `${c} ${Math.round(yardPaid[c])} (${(yardPaid[c] / (LATE_YARD[c] * YARD) / 60).toFixed(1)} min of it)`).join(', ')}`);
 console.log(`the hand: ${Object.entries(handDid).map(([k, n]) => `${k} ${n}`).join(', ')}`);
-console.log(`at the end: rebel ${Math.round(a.rebel)}, stock ${JSON.stringify(a.stock)}, camp ${a.camp}, union ${union()}, ` +
+console.log(`at the end: rebel ${Math.round(a.rebel)}, stock ${JSON.stringify(goodsRead())}, camp ${a.camp}, union ${union()}, ` +
             `signs ${a.signs.length}`);
 console.log(`rosters: ${JSON.stringify(a.crew)}, seats bought: ${JSON.stringify(Object.fromEntries(Object.entries(a.ups).filter(([k]) => k.startsWith('after-seat-'))))}, the yard's carry ${haulCap()} a load`);
 console.log(`bought ${bought.length}: ` + bought.map(b => `${mm(b.t)} ${b.key.replace('after-', '')}`).join(', '));

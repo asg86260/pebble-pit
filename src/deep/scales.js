@@ -6,11 +6,13 @@
 // Anything that piles up is a cell in a plot, so the floor of the deep is a
 // sand grid like the pit (`deepBed` in state.js): the scales lying loose,
 // waiting for a gatherer or the hand. `S.scales` is the crushed account, kept
-// here and set nowhere else (`crush`, `spendScales`). What is in the water on
-// its way down, into the hopper, or up to a station that paid with it, is this
-// session's, and a reload finds it landed or gone.
+// here and set nowhere else (`crush`, `spendScales`). A scale falling through
+// the water is a chip of the air (dust.js saves it); what is tossed to the
+// hopper or rising to a station that paid with it is this session's, and a
+// reload finds it landed or gone.
 
 import { held } from '../reset.js';
+import { source, sink as unmade } from '../flow.js';
 import { S, deepBed } from '../state.js';
 import { P, SHADES, DEEP_W, DEEP_BED_ROWS, DEEP_GRAV, DEEP_DRAG, DEEP_CURRENT,
          DEEP_CURRENT_MS, SCALE_KICK, SCALE_SHADE, SCALE_SPREAD, LIFT_PACE, LIFT_FLECKS,
@@ -53,8 +55,16 @@ export function crush(n, income = true) {
 // No more are let go than the bed has room for, counting those already in
 // the water: past that a scale has nowhere to lie and is lost to the dark
 // (`stepScales`), so it would be a fall drawn for nothing.
+// A scale in the water is a chip of the one air (S.chips), the deep its place:
+// the water's drag and current are the place's data (`DEEP_LANDING`, below),
+// and the hopper and the bed its surfaces. `afloat` is every scale not yet on
+// the bed or in the purse, whether sinking or riding a toss's arc.
+export const dropScale = (x, y, vx, vy, s) => { S.chips.push({ x, y, vx, vy, s, land: null, place: 'deep' }); };
+export const inWater = () => { let n = 0; for (const ch of S.chips) if (ch.place === 'deep') n++; return n; };
+export const afloat = () => inWater() + S.sinking.length;
+
 export const shed = (x, y, n, spray = null) => {
-  if (deepBed.grid) n = Math.min(n, deepBed.cols * deepBed.rows - deepBed.n - S.sinking.length);
+  if (deepBed.grid) n = Math.min(n, deepBed.cols * deepBed.rows - deepBed.n - afloat());
   for (let i = 0; i < n; i++) {
     let vx, vy;
     if (spray) {
@@ -64,8 +74,9 @@ export const shed = (x, y, n, spray = null) => {
     } else {
       vx = (rand() * 2 - 1) * SCALE_KICK; vy = -rand() * SCALE_KICK;
     }
-    S.sinking.push({ x, y, vx, vy, s: shadeNear(SCALE_SHADE, SCALE_SPREAD) });
+    dropScale(x, y, vx, vy, shadeNear(SCALE_SHADE, SCALE_SPREAD));
   }
+  source('scale', Math.max(0, n), 'blow');
 };
 
 // `n` scales laid loose on the bed, for a setup that is not about the fall.
@@ -79,6 +90,7 @@ export function looseScales(n) {
     if (!addGrain(deepBed, x, null, shadeNear(SCALE_SHADE, SCALE_SPREAD), true)) break;
     laid++;
   }
+  source('scale', laid, 'loose');
   return laid;
 }
 
@@ -241,41 +253,46 @@ export const wireBed = () => {
   wakeGrid(deepBed);
 };
 
-// One frame of the water: the sinking fall on the deep's gravity and drift
-// on its current until they reach the bed; the paid rise to their station
-// and are gone there; the bed settles.
+// The deep as the one landing chain reads a place (game.js, `stepChips`; the
+// place's data, as act 3's is): the water its air -- a drag, a gravity and a
+// slow current -- and, in order, the hopper (crushed on entry, whoever let it
+// go) and the bed. A bed full to its brim has nowhere to put one more, and a
+// scale with nowhere to lie is lost to the dark. No restitution, no walls: a
+// scale is only kept inside the deep's width.
+export const DEEP_LANDING = {
+  air: { g: DEEP_GRAV, drag: DEEP_DRAG, flow: () => current(now()) },
+  clamp(ch) { ch.x = Math.max(deepX0(), Math.min(deepX1() - P, ch.x)); },
+  surfaces: [
+    ch => (inHopper(ch.x, ch.y) ? (crush(1), unmade('scale', 1, 'crusher'), 1) : 0),
+    ch => {
+      if (!deepBed.grid) return 0;
+      const col = Math.max(0, Math.min(deepBed.cols - 1, colOf(deepBed, ch.x)));
+      if (ch.y < surfaceY(deepBed, col)) return 0;
+      if (!addGrain(deepBed, ch.x, null, ch.s, true)) unmade('scale', 1, 'dark');
+      return 1;
+    }
+  ]
+};
+
+// One frame of the water: scales let go by anyone still pushing into
+// `S.sinking` (TEMP: the crew's falls and muster, the hand's let-go; they
+// become chips with `dropScale`) enter the air; the tossed ride their arcs
+// over the lip and are crushed; the paid rise to their station and are gone
+// there; the bed settles. The free fall itself is `stepChips`'s.
 export const stepScales = c => {
   if (!deepBed.grid) return;
   const f = frames();
-  const push = current(now());
-  const lo = deepX0(), hi = deepX1() - P;
   const sink = S.sinking;
   let keep = 0;
   for (let i = 0; i < sink.length; i++) {
     const g = sink[i];
+    if (g.arc == null) { dropScale(g.x, g.y, g.vx, g.vy, g.s); continue; }
     // A tossed scale rides its arc over the lip and is crushed at its end.
-    if (g.arc != null) {
-      if (g.wait > 0) { g.wait -= f; sink[keep++] = g; continue; }
-      g.arc = Math.min(1, g.arc + f / GATHER_TOSS_FRAMES);
-      g.x = g.x0 + (g.tx - g.x0) * g.arc;
-      g.y = g.y0 + (g.ty - g.y0) * g.arc - Math.sin(Math.PI * g.arc) * (GATHER_TOSS_RISE + Math.max(0, g.y0 - g.ty));
-      if (g.arc >= 1) { crush(g.v || 1, !g.back); continue; }
-      sink[keep++] = g;
-      continue;
-    }
-    g.vx *= Math.pow(DEEP_DRAG, f);
-    g.vy = g.vy * Math.pow(DEEP_DRAG, f) + DEEP_GRAV * f;
-    g.x = Math.max(lo, Math.min(hi, g.x + (g.vx + push) * f));
-    g.y += g.vy * f;
-    // Anything that falls into the hopper is crushed, whoever let it go.
-    if (inHopper(g.x, g.y)) { crush(1); continue; }
-    const col = Math.max(0, Math.min(deepBed.cols - 1, colOf(deepBed, g.x)));
-    if (g.y >= surfaceY(deepBed, col)) {
-      // A bed full to its brim has nowhere to put one more, and a scale with
-      // nowhere to lie is lost to the dark.
-      addGrain(deepBed, g.x, null, g.s, true);
-      continue;
-    }
+    if (g.wait > 0) { g.wait -= f; sink[keep++] = g; continue; }
+    g.arc = Math.min(1, g.arc + f / GATHER_TOSS_FRAMES);
+    g.x = g.x0 + (g.tx - g.x0) * g.arc;
+    g.y = g.y0 + (g.ty - g.y0) * g.arc - Math.sin(Math.PI * g.arc) * (GATHER_TOSS_RISE + Math.max(0, g.y0 - g.ty));
+    if (g.arc >= 1) { crush(g.v || 1, !g.back); if (!g.back) unmade('scale', 1, 'crusher'); continue; }
     sink[keep++] = g;
   }
   sink.length = keep;

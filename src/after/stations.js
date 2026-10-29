@@ -4,23 +4,36 @@
 // the hover, the cursor and a board's close on scroll serve them as they
 // serve the yard's. `place: 'after'` keeps them to the afterlife's view.
 //
-// Every station sells from its sign (the owner, 2026-10-21): the drawing is
-// the hand's, worked where it stands (after/gestures.js), and opens no board.
-// The grove's sign is the forestry shack's; God's crowd sells nothing and
-// has no sign, its `hit` his camp on its stage. Their boards' rows are
-// after/rows.js's (`registerBoard`).
+// Every station is its own shop (DESIGN.md, "Act 3's goods are blocks",
+// rule 4): its board opens from the UPGRADES button under it (roster.js
+// `rosterShops`), and from nothing else, so no board comes up under a
+// passing pointer. The board hangs off the button (`boardAnchor`). The
+// grove's board is the forestry shack's; God's crowd's button stands under
+// his camp on its stage. Their boards' rows are after/rows.js's
+// (`registerBoard`).
 
 import { held } from '../reset.js';
 import { S } from '../state.js';
-import { P } from '../config.js';
+import { P, AFTER_ROSTER_DOWN, AFTER_ROSTER_SHOP_DROP, AFTER_HEAP_MARK_OFF } from '../config.js';
 import { msg } from '../lang.js';
 import { afterlifeOn } from '../acts.js';
 import { built } from './levels.js';
-import { stationBox, signBoard, closed } from './place.js';
+import { stationBox, groundOf, afterFloor, closed, pilePlace, pileOwner } from './place.js';
+import { PILED, pileFull } from './piles.js';
 import { godCampAt, godMid, faceY } from './sky.js';
 import { heapFull, heapMarkBox, HEAP_PILE } from './mill.js';
+import { shopBoxOf, rosterShops } from '../roster.js';
+import { drawnMid } from '../footprints.js';
 
 const live = () => afterlifeOn() && !!S.after;
+// A counted pile's name, and the box its mark hangs from: `pileMarkAt` hangs
+// a pile row's mark five cells over its box's top, so the box's top is the
+// plot's at its fullest.
+const PILE_NAMES = { logs: 'hover-pile-logs', grovelogs: 'hover-pile-logs', timber: 'hover-pile-planks', benchtimber: 'hover-pile-planks', signs: 'hover-pile-signs' };
+function pileTop(what) {
+  const g = pilePlace(what);
+  return { x: g.x, y: g.y, w: g.cols * g.p, h: g.rows * g.p };
+}
 // The window's middle, which God's camp is drawn against (after/sky.js).
 const mid = () => S.camX + S.viewW / 2;
 
@@ -45,11 +58,9 @@ const flag = key => {
   return name;
 };
 
-// The station a card's sign and ground are: the grove's are the forestry
-// shack's, in front of its trees (the owner, 2026-10-20).
+// The station a card's ground is: the grove's is the forestry shack's, in
+// front of its trees (the owner, 2026-10-20).
 const ground = card => (card === 'grove' ? 'forestry' : card);
-// Whether the board sold from station `key`'s sign is up: the sign shows it.
-export const signUp = key => !!openKey && ground(openKey.slice('after-'.length)) === key;
 
 // The point God's crowd's board was asked over (after/rows.js
 // `openAfterBoard`), or null: over God as drawn.
@@ -74,7 +85,20 @@ const row = (card, more) => {
     // its hit box is its ground, never padded past it
     reach: { left: 0, right: 0, up: 0, down: 0 },
     stand: () => stationBox(ground(card)),
-    sign: () => signBoard(ground(card)),
+    // Where a roster under the station stands, so its UPGRADES button stands
+    // there whether or not one does (roster.js `rosterShops`): the middle of
+    // its drawing (footprints.js `drawnMid`),
+    // as far under its ground as the act's rosters stand.
+    line: () => { const x = drawnMid(ground(card)); return x != null && { x, y: groundOf(ground(card)) + AFTER_ROSTER_DOWN + AFTER_ROSTER_SHOP_DROP }; },
+    // Off the button that asked for it, over the button's top, near enough
+    // to read as the button's. Asked for by a press, it may stand over the
+    // station and its neighbors (the owner, 2026-10-28), but never over the
+    // button, which puts it away again (`keep`: a window too short to stand
+    // it over the button sets it beside it, board.js).
+    boardAnchor: () => {
+      const k = shopBoxOf(key);
+      return k && { x: k.x - P * 4, y: k.y, w: k.w + P * 8, h: k.h, side: 'right', keep: k };
+    },
     ...more
   };
 };
@@ -91,18 +115,40 @@ export const AFTER_STATION_ROWS = [
   // The sawdust heap at its brim is a pile that can fill: the shared mark
   // hangs under it and its hover says why the saw stopped. It is no place to
   // press (`hit` answers nothing); its name is the one its hover gives it.
+  // The heap is under the bed and the saw mill's UPGRADES button is centered
+  // on the mill's drawing, both in the strip under the floor: where they
+  // would meet, the mark stands past the button's right edge instead.
   {
     key: HEAP_PILE, place: 'after', glyph: 'crate', after: [], needs: () => false,
     get name() { return msg('hover-heap'); },
-    open: live, stand: heapMarkBox, hit: () => false,
+    open: live, hit: () => false,
+    stand: () => {
+      const b = heapMarkBox(), k = shopBoxOf('after-mill'), x = k ? Math.max(b.x + b.w / 2, k.x + k.w + AFTER_HEAP_MARK_OFF) : b.x + b.w / 2;
+      return { ...b, x: x - b.w / 2 };
+    },
     pile: heapFull,
     get full() { return msg('after-stall-heap'); }
   },
+  // The counted piles at their brims (after/piles.js): each wears the same
+  // mark over its plot, and its hover is the yard's own "pile is full".
+  ...PILED.map(what => ({
+    key: `after-pile-${what}`, place: 'after', glyph: 'crate', after: [], needs: () => false,
+    get name() { return msg(PILE_NAMES[what]); },
+    open: () => live() && built(pileOwner(what)), stand: () => pileTop(what), hit: () => false,
+    pile: () => pileFull(what)
+  })),
   row('crowd', {
-    sign: null,
     open: live,
+    // God's camp: his middle, sliding at his layer's rate, and the main
+    // plane's line, which his stage's front stands on
+    line: () => ({ x: godMid(mid()), y: afterFloor() + AFTER_ROSTER_DOWN + AFTER_ROSTER_SHOP_DROP }),
     stand: () => (crowdAt ? { x: crowdAt.x - P, y: crowdAt.y - P, w: P * 2, h: P * 2 }
                           : { x: godMid(mid()) - P, y: faceY() - P, w: P * 2, h: P * 2 }),
     hit: (x, y) => godCampAt(x, y, mid())
   })
 ];
+// Every station with a board hands its button to the roster, shown while the
+// station's board can be asked for (a station closed for its rebuild too).
+const SHOP_ROWS = AFTER_STATION_ROWS.filter(r => r.board && r.line)
+  .map(r => ({ board: r.key, place: 'after', show: () => r.open(), line: r.line }));
+rosterShops('after', () => SHOP_ROWS);

@@ -8,6 +8,7 @@ import { group, ok, yard, run, runUntil, state } from './helpers.mjs';
 import { WORKER } from '../src/config.js';
 import { deepTop, podAt } from '../src/deep/place.js';
 import { pressBuild } from './party-press.mjs';
+import { afloat } from '../src/deep/scales.js';
 
 const S = yard.S;
 const residents = () => S.workers.filter(w => w.deepHome);
@@ -78,7 +79,7 @@ group('a gatherer stood down with a load drops it in the deep', async () => {
   for (let f = 0; f < 60 * 60 && !lastLoaded(); f++) run(1 / 60);
   const loads = gathering().reduce((n, w) => n + (w.carry || 0), 0);
   const was = gathering().length;
-  const dust = S.chips.length, water = S.sinking.length;
+  const yardChips = () => S.chips.filter(c => !c.place).length, dust = yardChips(), water = afloat();
   // A station to build: a gatherer is stood down where it is, load and all,
   // and goes to put it up empty-handed.
   pressBuild();
@@ -86,7 +87,7 @@ group('a gatherer stood down with a load drops it in the deep', async () => {
   return [
     ok(loads > 1, 'the gatherers had loads', `${loads}`),
     ok(stood >= 1, 'one was stood down to build', `${stood}`),
-    ok(S.chips.length === dust, "none of it came up as the yard's dust", `${S.chips.length - dust} chips`),
-    ok(S.sinking.length > water, 'it went into the water where it stood', `${S.sinking.length - water} scales`)
+    ok(yardChips() === dust, "none of it came up as the yard's dust", `${yardChips() - dust} chips`),
+    ok(afloat() > water, 'it went into the water where it stood', `${afloat() - water} scales`)
   ];
 }, { reload: false });

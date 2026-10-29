@@ -37,3 +37,9 @@ export const AFTER_BUBBLE_MID = 1.5;
 // cell out, a third of a body, every other row, and a stroke of one cell
 // shows in the teeth.
 export const AFTER_SAW_TEETH = [0, 1];
+
+// --- track C: one carry (DESIGN.md, "One resource system for every act", section 4) ---
+// What a save of 2026-10-28 (v32) kept in a builder's arms for a site's load: a
+// grain. Since v33 a load is a unit of its own kind (config/blocks.js, `load`);
+// the migration that turns one into the other reads this.
+export const AFTER_SITE_LOAD = 1;

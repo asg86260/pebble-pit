@@ -18,16 +18,17 @@
 // tree the saw icon, over a stump the shovel, each a pointer's mark drawn in
 // its own finer dots, no plate under it.
 
-import { P, AFTER_ART_SCALE as A, AFTER_FALL_S, AFTER_CROWN_FADE_S, AFTER_BUILD_FADE_S,
+import { P, AFTER_ART_SCALE as A, AFTER_BLOCK, AFTER_FALL_S, AFTER_CROWN_FADE_S, AFTER_BUILD_FADE_S,
          TREE_CHOPS, AFTER_ART_WORK_S, AFTER_PILE_FADE_S, AFTER_FALL_BOUNCE_S, AFTER_FALL_BOUNCE, AFTER_LOG_ROLL_S,
          GESTURE_STRAIN_LIFT, GESTURE_STRAIN_S, GESTURE_STUMP_DRAG,
          STUMP_ROPE_W, STUMP_ROPE_SLACK, STUMP_ROPE_POSES, STUMP_ROPE_FADE_S, STUMP_ROCK_DEG, STUMP_GIVE, STUMP_RISE_S,
          STUMP_RIP_UP, STUMP_RIP_S, STUMP_THROW_DEG, STUMP_HANG_S, STUMP_GONE_FADE_S,
          STUMP_CLODS, STUMP_CLOD_V, STUMP_CLOD_SPREAD, STUMP_CLOD_GRAV, STUMP_CLOD_S, STUMP_HOLE_S, STUMP_SAPLING_WAIT_S } from '../../config.js';
 import { plotX, afterFloor, floorAt, pineOf, inPine, PINE_GROWN, STUMP, SAW_ROWS, ICON_DOT, AP } from '../../after/place.js';
-import { trees, groundLogs } from '../../after/grove.js';
+import { trees } from '../../after/grove.js';
 import { frame, K, W, PALE, MID, SOIL, DUST, toneOf, now, inView, clamp01, hash } from './kit.js';
 import { gestureView, groveIcons } from '../../after/gestures.js';
+import { goodBlock } from './piles.js';
 import { ctx } from '../ctx.js';
 import { themed } from '../../ink.js';
 import { GREY } from '../../config.js';
@@ -108,66 +109,9 @@ function fallPose(p, t) {
   const v = clamp01((t - p.fell) / AFTER_FALL_BOUNCE_S);
   return { th: Math.PI / 2 - AFTER_FALL_BOUNCE * Math.sin(Math.PI * v) * (1 - v), drop: sh };
 }
-// A log on the ground, end on: a round of bark, its pale cut face and a
-// grey heart off its middle, so its turn shows as it rolls. Cached.
-const LOG = themed(new Map());
-function logSprite() {
-  const id = `${GREY[K]}|${GREY[PALE]}|${GREY[MID]}`;
-  if (LOG.has(id)) return LOG.get(id);
-  const s = 2 * AP, r = A * 2, cv = paper();
-  if (!cv) return null;
-  cv.width = cv.height = s;
-  const g = cv.getContext('2d');
-  if (!g) return null;
-  g.fillStyle = GREY[K]; g.fillRect(r, 0, s - 2 * r, s); g.fillRect(0, r, s, s - 2 * r);
-  g.fillStyle = GREY[PALE]; g.fillRect(r * 2, r, s - 4 * r, s - 2 * r); g.fillRect(r, r * 2, s - 2 * r, s - 4 * r);
-  g.fillStyle = GREY[MID]; g.fillRect(s / 2, r * 2, r * 2, r * 2);
-  LOG.set(id, cv);
-  return cv;
-}
-// Each log lying, or rolling to where it lies: faded in over the trunk as
-// it splits, then off along the ground, slowing to rest over
-// AFTER_LOG_ROLL_S, turned by how far it has rolled.
-const SPLIT_S = 0.15;
-function drawGroundLogs(t) {
-  const fl = afterFloor(), cv = logSprite(), R0 = AP;
-  if (!cv) return;
-  for (const q of groundLogs()) {
-    const since = t - q.at;
-    if (q.fall != null) continue;            // the hand's, drawn over the camp (`drawLaidGoods`)
-    if (since < -SPLIT_S || !inView(q.x0 - AP * 2, q.x - q.x0 + AP * 6)) continue;
-    const r = clamp01(since / AFTER_LOG_ROLL_S), e = 1 - (1 - r) * (1 - r);
-    const x = q.x0 + (q.x - q.x0) * e;
-    ctx.save();
-    ctx.globalAlpha *= clamp01((since + SPLIT_S) / SPLIT_S);
-    ctx.imageSmoothingEnabled = false;
-    ctx.translate(x + R0, fl - R0);
-    ctx.rotate((x - q.x0) / R0);
-    ctx.drawImage(cv, -R0, -R0);
-    ctx.restore();
-  }
-}
-// The goods the hand let go of off any pile (after/hand.js), each falling
-// straight down under the yard's gravity from where it was let go and lying
-// where it lands, drawn over the camp's stations so one let go in front of a
-// station is seen: a log end on, a plank flat, a sign on its back.
-// The whole good moves as one piece by its true height; its cells are the
-// piles' own (render/after/piles.js), at the art's scale.
-export function drawLaidGoods(t) {
-  const cv = logSprite();
-  for (const q of groundLogs()) {
-    if (q.fall == null) continue;
-    const kind = q.kind || 'log', u = q.fall > 0 ? clamp01((t - q.at) / q.fall) : 1;
-    if (!inView(q.x - AP * 2, AP * 10)) continue;
-    // the floor rises and falls (after/place.js, `floorAt`): it lands where
-    // it stands, as layGood reckoned its fall
-    const fl = floorAt(q.x + AP), y = Math.round((q.y0 ?? fl) + (fl - (q.y0 ?? fl)) * u * u);
-    if (kind === 'log') { if (cv) { ctx.save(); ctx.imageSmoothingEnabled = false; ctx.drawImage(cv, Math.round(q.x), y - 2 * AP); ctx.restore(); } continue; }
-    const d = frame(Math.round(q.x), y, 0, null, A);
-    if (kind === 'plank') { d.px(0, -P, 6 * P, P, K); d.px(2, -P + 2, 6 * P - 4, P - 4, PALE); }
-    else if (kind === 'sign') { d.px(0, -P, 4 * P, P, K); d.px(2, -P + 2, 4 * P - 4, P - 4, W); d.px(4 * P, -P / 2 - 1, 2 * P, 2, K); }
-  }
-}
+// A felled log fades in over the trunk as it splits off, this long, before
+// it rolls (render/after/piles.js, `drawGround`, draws it on the ground).
+export const SPLIT_S = 0.15;
 function pine(d, stage, a = 1) {
   if (!stage || a <= 0) return;
   d.fade(a, () => { const [w, h] = stage.trunk; d.r(-(w - 1) / 2, -h, w, h, K); tiers(d, stage); });
@@ -426,6 +370,5 @@ export function drawGrove() {
       }
     }
   });
-  drawGroundLogs(t);
 }
 const DUST_S = 0.8;

@@ -57,6 +57,7 @@ export * from './config/glimpse.js';
 export * from './config/riftlife.js';
 // Acts 3 and 4, the scaffold (DESIGN.md, "Acts 3 and 4").
 export * from './config/after.js';
+export * from './config/afterpiles.js';
 // act 3's crowds, God and the camera's zoom up there (track C)
 export * from './config/aftercrowd.js';
 export * from './config/hell.js';
@@ -177,3 +178,6 @@ export * from './config/aftercamp.js';
 
 // the clouds: the one way a cloud is drawn, its tones, field, clock and kinds
 export * from './config/clouds.js';
+
+// the kinds of unit on a ground plot: size, weight, palette, home, and the cell values each takes
+export * from './config/blocks.js';

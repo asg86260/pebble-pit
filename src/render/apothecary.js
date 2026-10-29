@@ -13,6 +13,7 @@ import { potBoiling, brewFracOf, potTonicOf, brewKeyOf, doseStock, potBox, TONIC
 import { screenAt } from './frame.js';
 import { bar } from './bars.js';
 import { ctx } from './ctx.js';
+import { fillDots } from './dots.js';
 import { rising as risingAt, withRise } from './rise.js';
 import { shown } from '../tween.js';
 import { drawable, widthOf, writeCount } from './numfont.js';
@@ -321,6 +322,7 @@ export function drawStockCount(screenAt) {
     // A white ground under it, so the number reads whatever is drawn behind it.
     ctx.fillStyle = '#fff';
     ctx.fillRect(at.x, at.y, w, h);
+    fillDots(ctx, at.x, at.y, w, h);
     // In the number font, as every count on the canvas is: at its own size
     // (NUM_FONT_PX) where it fits the well, a font pixel a screen pixel where
     // it does not; the clip guarantees containment.

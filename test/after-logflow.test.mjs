@@ -14,10 +14,13 @@
 // played, members walked out of God's yard (`__afterCrowd`), coins and the
 // forestry shack's logs granted.
 import { group, ok, run, runUntil, yard } from './helpers.mjs';
-import { RIM_PIECES, AFTER_SAW_S } from '../src/config.js';
+import { goodCount } from '../src/after/piles.js';
+import { loadKind } from '../src/carry.js';
+import { RIM_PIECES, AFTER_SAW_S, AFTER_PILES } from '../src/config.js';
 import { AFTER_JOB } from '../src/jobs.js';
 import { stationBox, pileAt } from '../src/after/place.js';
-import { sawDrops, heapFull } from '../src/after/mill.js';
+import { millLanded, heapFull } from '../src/after/mill.js';
+import { pileFull } from '../src/after/piles.js';
 
 const S = yard.S;
 const read = () => window.__afterRead();
@@ -43,21 +46,32 @@ function chain(n) {
 
 group('idle members haul logs to the saw, which stays worked, its cuts piling on its right', async () => {
   const staffed = chain(16);
-  // Out to their posts, and the first loads carried over.
-  run(60);
+  // Out to their posts, and the first loads carried over. The forestry pile
+  // is kept at its brim, as the grove's woodcutters would keep it (their
+  // checks are their own).
+  const felled = () => window.__afterGrant({ grovelogs: AFTER_PILES.grovelogs.brim });
+  for (let k = 0; k < 60; k++) { felled(); run(1); }
   const working = k => { const w = S.after.bodies.find(b => b.at === k); return !!w && w.t < AFTER_SAW_S; };
   const sawyer = () => S.after.bodies.find(b => b.job === AFTER_JOB.SAW);
-  const t0 = Math.floor(S.after.stock.timber);
-  let n = 0, saw = 0, brim = 0, swept = false, hauled = false, fetched = false, drops = 0, last = sawDrops().at(-1);
+  const t0 = Math.floor(goodCount('timber'));
+  let n = 0, saw = 0, brim = 0, swept = false, hauled = false, fetched = false, drops = 0, last = millLanded();
+  let made = 0, was = goodCount('timber');
   for (let f = 0; f < 90 * 4; f++) {
+    felled();
     run(0.25);
+    made += Math.max(0, goodCount('timber') - was);
+    // The timber spent as it is made, as the workshop would: a full pile
+    // stops the saw (after/piles.js; test/after-pile-plots.test.mjs).
+    if (pileFull('timber')) window.__afterGrant({ timber: -goodCount('timber') });
+    was = goodCount('timber');
     n++;
     if (working('mill')) saw++;
     if (heapFull()) brim++;
     swept = swept || S.after.bodies.some(b => b.job == null && b.errand === AFTER_JOB.SWEEP);
-    hauled = hauled || S.after.bodies.some(b => b.job == null && b.errand === AFTER_JOB.HAUL && b.load === 'log' && b.target === 'mill');
-    fetched = fetched || !!(sawyer() && sawyer().load === 'log');
-    if (sawDrops().at(-1) !== last) { drops++; last = sawDrops().at(-1); }
+    hauled = hauled || S.after.bodies.some(b => b.job == null && b.errand === AFTER_JOB.HAUL && loadKind(b) === 'log' && b.target === 'mill');
+    fetched = fetched || !!(sawyer() && loadKind(sawyer()) === 'log');
+    // a block off the saw's chute onto the mound on its right (after/mill.js)
+    if (millLanded() !== last) { drops += millLanded() - last; last = millLanded(); }
   }
   const b = stationBox('mill'), out = pileAt('mill', 'timber');
   window.__actsOn(null);
@@ -67,8 +81,8 @@ group('idle members haul logs to the saw, which stays worked, its cuts piling on
     ok(!fetched, 'the sawyer never leaves the saw to fetch its own'),
     ok(saw / n >= 0.85, 'the saw is worked nearly all the time', `${(saw / n * 100).toFixed(0)}%`),
 
-    ok(drops > 10 && Math.floor(S.after.stock.timber) > t0 && out >= b.x + b.w, 'each cut drops onto the timber pile on the saw\'s right',
-       `${drops} cuts, timber ${t0} -> ${Math.floor(S.after.stock.timber)}, pile at ${out} past ${b.x + b.w}`),
+    ok(drops > 10 && made > 0 && out >= b.x + b.w, 'each cut drops onto the timber pile on the saw\'s right',
+       `${drops} cuts, ${made} timber made from ${t0}, pile at ${out} past ${b.x + b.w}`),
     ok(swept && brim / n < 0.05, 'an idle hand tips the heap, so the saw never stops on its sawdust', `swept ${swept}, at the brim ${(brim / n * 100).toFixed(0)}%`)
   ];
 });

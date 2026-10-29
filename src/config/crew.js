@@ -30,6 +30,14 @@ export const BRUSH = 3;          // sweep radius, in cells
 export const MINE_DELAY = 260;   // pause before a held click starts auto-mining
 export const TOSS_DELAY = 260;   // and before a held hand starts throwing (hold to toss)
 export const TOSS_NEAR = P * 20;  // how far either side a held hand reaches for a grain, and how far off a pile's end it still works the pile
+// A held unit weighs its kind's `weight` (config/blocks.js, KINDS) and the hand
+// holds capacity() grains of weight, never fewer than one unit (the owner,
+// 2026-10-28), so a log is sixteen grains and a plank four, in every place.
+// How far a held thing drifts, swings round and bobs about the pointer, and
+// so how far out it is flung as it is picked up: a share of a grain's, by
+// size. A log hangs nearly still under the pointer, a plank swings less than
+// dust. A size between two rows takes the smaller one's share.
+export const HAND_SWAY = { 1: 1, 2: 0.5, 4: 0.25 };
 // How many rungs there are on every ladder in the game: one number, so "how
 // far along is this" has one answer wherever it is asked. What changes between
 // ladders is what a rung costs and is bought with (config/rungs.js; "The
@@ -233,3 +241,22 @@ export const COUNTER_TOP_DROP = SEAT_PIP / 2;
 export const COUNTER_PLUS_DOWN = P + 3;
 export const COUNTER_PLUS_ROOM = P * 3;
 export const COUNTER_GAP = P * 4;
+// A post whose station has a board (act 3's) carries the board's way in over
+// its count: the word UPGRADES, behaving as a shop tile does (shelf.css,
+// `.tile`). Its type is the boards' body size (12px on the glass) in the
+// world's pixels at the yard's five-sixths; two cells of padding each side of
+// the word, so it reads as a control and not a label, and two cells of air
+// between it and the count's sprite.
+export const SHOP_BTN_PX = 14;
+export const SHOP_BTN_H = P * 4;
+export const SHOP_BTN_PAD = P * 2;
+export const SHOP_BTN_AIR = P * 2;
+// The face's advance a pixel of type (Courier's is 0.6 of an em): the
+// button's width is worked out without measuring, so the node tier, which
+// has no canvas to measure with, hit-tests the same box the page draws.
+export const SHOP_BTN_ADVANCE = 0.62;
+// The tile's 2px lift at the yard's five-sixths, and how much of it a press
+// keeps: pressed, the plate sinks halfway back toward its shadow, as the
+// tile does under `:active`.
+export const SHOP_BTN_LIFT = P * 0.4;
+export const SHOP_BTN_PRESSED = 0.5;

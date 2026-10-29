@@ -13,7 +13,7 @@ import { group, ok, yard, run, runUntil } from './helpers.mjs';
 import { SERPENT_WINDOW, SERPENT_PHASES, SERPENT_WOUND, CLICK_DMG, CLASSES, DAMAGE_KIND, RESISTS, RESIST_K } from '../src/config.js';
 import { clickDeep, clickDmg, strike, woundK, onBreak, scalesOf } from '../src/deep/serpent.js';
 import { breaking, guardOf } from '../src/deep/phases.js';
-import { spendScales } from '../src/deep/scales.js';
+import { spendScales, afloat } from '../src/deep/scales.js';
 import { coilAt, bellySeg, bellyAt, deepFloor, spotX, deepTop } from '../src/deep/place.js';
 import { now } from '../src/clock.js';
 import { climb } from './party-press.mjs';
@@ -172,8 +172,8 @@ group('a hit sheds scales, and they lie on the floor until they are crushed', as
   const before = S.scales, bed = deepBed.n;
   const p = belly();
   const done = strike('punch', 500, p.x, p.y);
-  const inWater = S.sinking.length, countedAtOnce = S.scales - before;
-  const landed = runUntil(() => S.sinking.length === 0, 30);
+  const inWater = afloat(), countedAtOnce = S.scales - before;
+  const landed = runUntil(() => afloat() === 0, 30);
   const nothing = strike('punch', 0, p.x, p.y);
   return [
     ok(done === 500 && inWater === scalesOf(500) && inWater > scalesOf(5) && inWater < 10,
@@ -181,7 +181,7 @@ group('a hit sheds scales, and they lie on the floor until they are crushed', as
     ok(countedAtOnce === 0, 'and none counted in the water', `${countedAtOnce}`),
     ok(landed && deepBed.n - bed === inWater, 'all of them lying on the bed once they land', `${deepBed.n - bed}`),
     ok(S.scales === before, 'and none of them is money until it is crushed', `${S.scales - before}`),
-    ok(nothing === 0 && S.sinking.length === 0, 'a blow that did nothing sheds nothing', `${S.sinking.length}`)
+    ok(nothing === 0 && afloat() === 0, 'a blow that did nothing sheds nothing', `${afloat()}`)
   ];
 }, { reload: false });
 

@@ -7,11 +7,11 @@ import { msg } from './lang.js';
 import { held as heldState } from './reset.js';
 import { closeWindow } from './modal.js';
 import { P, MINE_DELAY, WORKER, AFTER_PILE_REACH, SHARD_CELL, SPORE_CELL, SPARK_CELL, findKind,
-         FARM_H, TOSS_DELAY, THUMB, BRUSH } from './config.js';
+         FARM_H, THUMB, BRUSH } from './config.js';
 import { S, bench, floor, pit, outhouse, rift, shack } from './state.js';
 import { clampCam, unfollow, bindScroller, lookAt, lockScroller, toWorld, toScreen } from './world.js';
 import { overBoulder, knockOff, topOfRock } from './rock.js';
-import { sweep, release, track, dustUnder } from './hands.js';
+import { sweep, release, track, handTakes, handDown } from './hands.js';
 import { startle, overBird } from './weather.js';
 import { stirAir } from './air.js';
 import { stirSmoke, airReadout } from './smog.js';
@@ -28,13 +28,13 @@ const CHOOSE_SAYS = msg('hover-choose');
 import { shownPiles, fullSays } from './render/pilemarks.js';
 import { doneName } from './works.js';
 import { fadeIn, fadeOut } from './fade.js';
-import { rosterHit, overRoster, rosterSays } from './roster.js';
+import { rosterHit, overRoster, rosterSays, shopAt, shopBoxOf, rosterUp } from './roster.js';
 import { overCount, countRect } from './render/counter.js';
 import { potPick, potHover } from './potpick.js';
 import { shutOpts } from './shop.js';
 import { workerAt, lift, lifted, drop, shakeHeld } from './crew.js';
 import { holdAt, dragArm, releaseArm, tapAt, leverUnder, signUnder } from './levers.js';
-import { hoverAt, grabAt, inHand, holdBody, goodsUnder } from './crew/pointer.js';
+import { hoverAt, grabAt, inHand, holdBody } from './crew/pointer.js';
 import './upgrades.js';
 import { card } from './crewboard.js';
 import { houseRect } from './house.js';
@@ -58,6 +58,7 @@ import * as AFTER_PLACE from './after/index.js';
 import { gestureDown, gestureMove, gestureUp, gestureHeld, gestureUnder, gestureHover, pressTaken } from './after/gestures.js';
 import { stationParts, pileOwner, pileBox } from './after/place.js';
 import { built } from './after/levels.js';
+import { lyingAt, kindOf } from './after/grove.js';
 import { JOB_NAMES } from './after/rows.js';
 import { AFTER_JOB } from './jobs.js';
 import * as HELL_PLACE from './hell/index.js';
@@ -125,12 +126,27 @@ canvas.addEventListener('auxclick', e => { if (e.button === 1) e.preventDefault(
 // The constrict's orb hangs inside its fighter's station ground, and is the
 // thing to press there: a board opened under it would cover it and its bar.
 const overOrb = (x, y) => S.view === 'deep' && !!onOrb(x, y);
+// Up there a station's moving parts stand inside its ground, and are the hand
+// work's: what a press would take hold of is never the station's, for its
+// hover label or its cursor (DESIGN.md, "Act 3's goods are blocks", rule 4).
+const overWork = (x, y) => S.view === 'after' && gestureUnder(x, y);
 // The station whose board the pointer asks for: the hover, the click and the
 // tap all ask this one.
-const boardAt = (x, y) => (overOrb(x, y) ? null : stationAt(x, y));
+const boardAt = (x, y) => (overOrb(x, y) || overWork(x, y) ? null : stationAt(x, y));
 // Standing at any station at all; the click and move handlers ask the same
 // table.
 const atStation = (x, y) => boardAt(x, y) !== null;
+// The board a click on a station opens: none where the board has its UPGRADES
+// button standing (every act 3 station's), which is then the one way in (the
+// owner, 2026-10-28: a board is asked for, never come upon).
+const clickBoard = (x, y) => { const k = boardAt(x, y); return k && !shopBoxOf(k) ? k : null; };
+// A press on a roster; on an UPGRADES button it opens that board or, up
+// already, puts it away.
+const rosterPress = (x, y) => {
+  const r = rosterHit(x, y);
+  if (typeof r === 'string') showPanel(S[station(r).board] ? null : r, true);
+  return !!r;
+};
 
 const onCoil = (x, y) => {
   if (S.view !== 'deep') return false;
@@ -185,7 +201,8 @@ canvas.addEventListener('pointerdown', e => {
   // happens whether or not the click lands on anything. A finger is judged
   // at the release instead (`endDrag`): a press that turns into a scroll is
   // not a decision to stop reading.
-  if (!atStation(p.x, p.y) && e.pointerType !== 'touch') showPanel(null, true);
+  // A press on a board's own button is the button's to answer.
+  if (!atStation(p.x, p.y) && !shopAt(p.x, p.y) && e.pointerType !== 'touch') showPanel(null, true);
   // The camera between the halves answers nothing until it is in one. Then
   // the way through the surface, the arrow at the shaft (the corner's square
   // is the other way; the surface and the sky themselves take no click);
@@ -204,22 +221,42 @@ canvas.addEventListener('pointerdown', e => {
   if (isActView(S.view)) {
     // Up there a press on a station's moving part works it where it stands
     // (after/gestures.js) and is held until the release, wherever that is;
-    // a plain click on a station opens its board, as the yard's do. A finger
-    // opens a board at its tap's release (`endDrag`), since a press may be
-    // the start of a swipe. Anything else is the place's click.
+    // a station's shop opens from the UPGRADES button under it, and a plain
+    // click on the station opens nothing. Anything else is the place's click.
     // The rosters under the stations first: the yard's own (roster.js), a
     // press on a button never a swing at what stands behind it.
-    if (rosterHit(p.x, p.y)) return;
+    if (rosterPress(p.x, p.y)) return;
     if (S.view === 'after' && gestureDown(p.x, p.y)) {
+      // taking hold of the work shuts the shop, pointer or finger alike, and
+      // nothing is said while it is worked (the moves go to the work)
+      showPanel(null, true);
+      showTipAt(null);
       if (gestureHeld()) try { canvas.setPointerCapture(e.pointerId); } catch {}
+      return;
+    }
+    // A press and hold on a pile is the yard's sweep, on its blocks as on
+    // the yard's dust (hands.js): what it takes floats on the cursor and
+    // the release throws it, the move and the release the yard's own below.
+    // A press on a block still in the air is the hand's too, to catch it.
+    if (S.view === 'after' && handTakes(p.x, p.y, e.pointerType === 'touch' ? fingerReach() : undefined)) {
+      handDown(p.x, p.y);
+      try { canvas.setPointerCapture(e.pointerId); } catch {}
       return;
     }
     // Down there the pick's blow on a face or a barrier is the hand's, asked
     // before the station's board, which a walk-up has opened already.
     if (S.view === 'hell' && HELL_PLACE.clickHell(p.x, p.y)) return;
-    const at = boardAt(p.x, p.y);
+    const at = clickBoard(p.x, p.y);
     if (at) { if (e.pointerType !== 'touch') showPanel(at, true); return; }
-    if (S.view === 'after' && typeof AFTER_PLACE.clickAfter === 'function') AFTER_PLACE.clickAfter(p.x, p.y);
+    if (S.view === 'after' && typeof AFTER_PLACE.clickAfter === 'function' && AFTER_PLACE.clickAfter(p.x, p.y)) return;
+    // A mouse press that nothing up there answered takes the hand down on
+    // bare ground, as one does anywhere in the yard: dragged onto a pile or
+    // the goods lying about, it sweeps them up. A finger there is the
+    // platform's scroll, as off the yard's dust.
+    if (S.view === 'after' && e.pointerType !== 'touch') {
+      handDown(p.x, p.y);
+      try { canvas.setPointerCapture(e.pointerId); } catch {}
+    }
     return;
   }
   if (onShaftArrow(p.x, p.y)) { if (S.view === 'deep') goUp(); else goDeep(); return; }
@@ -233,7 +270,7 @@ canvas.addEventListener('pointerdown', e => {
   if (startle(p.x, p.y)) return;
   // then the controls that stand in the yard, before the ground behind them:
   // the rosters and the machine levers, then the cauldrons' pickers
-  if (rosterHit(p.x, p.y)) return;
+  if (rosterPress(p.x, p.y)) return;
   // The casino's arm: a press on it, pointer or finger, grabs it, the drag
   // works it and the release lets it go, wherever that is. The sign: a click drops
   // the stake at once; a finger is judged at the release, through the
@@ -257,13 +294,9 @@ canvas.addEventListener('pointerdown', e => {
   // moves, and a tap is read at the release. A mouse keeps its left button
   // for the sweep everywhere. The same reach as the touchstart gate, so
   // the two never disagree about one finger.
-  if (e.pointerType === 'touch' && !dustUnder(p.x, p.y, fingerReach())) return;
-  S.dragging = true;
-  S.nextToss = now() + TOSS_DELAY;         // a held sweep throws by itself once unlocked
-  S.trail = [];
-  track(p.x, p.y);
+  if (e.pointerType === 'touch' && !handTakes(p.x, p.y, fingerReach())) return;
+  handDown(p.x, p.y);
   try { canvas.setPointerCapture(e.pointerId); } catch {}
-  sweep(p.x, p.y);
 });
 
 canvas.addEventListener('pointermove', e => {
@@ -320,8 +353,12 @@ canvas.addEventListener('pointermove', e => {
     hoverAt(S.mouse.x, S.mouse.y);
     potHover(S.mouse.x, S.mouse.y);
     gestureHover(S.mouse.x, S.mouse.y);
-    // The table's order settles which wins where two patches overlap.
-    const want = boardAt(S.mouse.x, S.mouse.y);
+    // The table's order settles which wins where two patches overlap. Up in
+    // act 3 the pointer passing over a station neither opens nor shuts a
+    // board: they are asked for there (a button or a click) and put away
+    // the same way, so a board stays while its station is being worked.
+    const asked = S.view === 'after';
+    const want = asked ? null : boardAt(S.mouse.x, S.mouse.y);
     // Standing at a station outranks being on the way to the open board: a
     // station under the pointer is an arrival, and the wedge is for the ground
     // *between* things, so it only has a say when the answer would otherwise
@@ -332,7 +369,7 @@ canvas.addEventListener('pointermove', e => {
     // The orb is reached across its station's ground, which opened the board
     // over it: it goes at once, not after the linger or the wedge.
     else if (overOrb(S.mouse.x, S.mouse.y)) showPanel(null, true);
-    else if (!inSafeZone(e.clientX, e.clientY)) showPanel(null);
+    else if (!asked && !inSafeZone(e.clientX, e.clientY)) showPanel(null);
     // a board opens because you walked up to a station, a tooltip because you
     // went and looked at a mark
     askedAbout(S.mouse.x, S.mouse.y, e.clientX, e.clientY);
@@ -353,6 +390,7 @@ canvas.addEventListener('pointermove', e => {
 });
 
 export function endDrag(e) {
+  rosterUp();
   if (wheelPan !== null && (e.button === 1 || e.type !== 'pointerup')) wheelPan = null;
   if (!(e.buttons & 2) && S.crewSight != null) {  // the right button let go
     S.crewSight = null;
@@ -377,8 +415,11 @@ export function endDrag(e) {
     if (tapAt(p.x, p.y)) { S.mining = false; return; }
     // Up there a tap the hand work took is no tap on a station.
     const which = S.view === 'after' && pressTaken() ? null : boardAt(p.x, p.y);
-    // A second tap on the station whose board is up puts it away.
-    showPanel(which && !S[station(which).board] ? which : null, true);
+    // An UPGRADES button answered at the press (`rosterPress`), and a station
+    // whose board has one answers a tap on its drawing as a click: nothing
+    // opens and nothing shuts. A second tap on the station whose board is up
+    // puts it away.
+    if (!shopAt(p.x, p.y) && !(which && shopBoxOf(which))) showPanel(which && !S[station(which).board] ? which : null, true);
   }
 
   S.mining = false;
@@ -398,6 +439,7 @@ for (const type of ['pointerdown', 'pointerup'])
 addEventListener('blur', () => {
   S.crewSight = null;
   down.clear();
+  rosterUp();
   panning = null;
   wheelPan = null;
   S.mining = false;
@@ -440,10 +482,6 @@ function buildingAt(x, y) {
   // Every standing place by its own row's name (`STATIONS`).
   for (const r of STATIONS) {
     if (!r.name || !r.stand || !here(r) || !r.open()) continue;
-    // A station that sells from a sign is worked by hand where it stands, and
-    // a label over it there is in the way of the work (the owner,
-    // 2026-10-21); its board says its name.
-    if (r.sign) continue;
     // a row that says its hit is named over what is drawn there
     if (r.hit) { if (nearStation(r.key, x, y)) return r.name; continue; }
     const rect = standRect(r.key);
@@ -524,19 +562,20 @@ const TYPE_SAID = {
   delver: msg('hover-delver'),
 };
 
-// Act 3's counted piles and what each is called: the goods the hand takes
-// off them (after/hand.js).
+// Act 3's counted piles and what each is called, and the goods lying on its
+// floor.
 const AFTER_PILE_SAYS = {
   grovelogs: 'hover-pile-logs', logs: 'hover-pile-logs', timber: 'hover-pile-planks', signs: 'hover-pile-signs'
 };
 const AFTER_GOOD_SAYS = { log: 'hover-log', plank: 'hover-plank', sign: 'hover-sign' };
 
 // What is at a spot up in act 3, in a word, asked in the yard's order: a body,
-// or a good lying on the floor or on a pile, before the pile and the heap,
-// before the station they stand beside.
+// or a good lying on the floor, before the pile and the heap, before the
+// station they stand beside.
 function afterAt(x, y) {
   const o = S.after && grabAt(x, y);
-  if (o && o.goods) return msg(AFTER_GOOD_SAYS[o.kind] || 'hover-log');
+  const q = S.after && !o ? lyingAt(x, y, P) : null;
+  if (q) return msg(AFTER_GOOD_SAYS[kindOf(q)] || 'hover-log');
   if (o) return o.job && JOB_NAMES[o.job] ? JOB_NAMES[o.job]() : o.job === AFTER_JOB.BUILD ? msg('hover-builder') : msg('hover-member');
   for (const [what, key] of Object.entries(AFTER_PILE_SAYS)) {
     const owner = pileOwner(what);
@@ -612,6 +651,9 @@ function overOpenBoard(cx, cy) {
 // The tooltip: what the cursor went and looked at. Not the board, which opens
 // because you walked up to a station; two questions, asked separately.
 function askedAbout(x, y, cx, cy) {
+  // Up there nothing is said over a part the hand works, or while it works
+  // one: a label there is in the way of the work.
+  if (S.view === 'after' && (gestureHeld() || gestureUnder(x, y))) { showTipAt(null); return false; }
   // Somebody first: they are the only thing that moves, so a mark they are
   // over can still be read a moment later. In your hand before under the
   // cursor: a body being carried is the one you are asking about.
@@ -699,9 +741,8 @@ const CURSORS = [
   // up in act 3, a part the hand works: open on it, closed while it is held
   [() => gestureHeld(), 'grabbing'],
   [(x, y) => S.view === 'after' && gestureUnder(x, y), 'grab'],
-  // a pile or the floor with goods the hand can take up (after/hand.js)
-  [(x, y) => goodsUnder(x, y), 'grab'],
-  [(x, y) => atStation(x, y), 'pointer'],
+  // a station a click opens: one whose board has its button promises nothing
+  [(x, y) => !!clickBoard(x, y), 'pointer'],
   // a mark that will tell you why something has stopped
   [(x, y) => overAnyMark(x, y), 'help'],
   [(x, y) => inRect(dialRect(), x, y), 'help'],
@@ -789,7 +830,7 @@ addEventListener('touchstart', e => {
     const p = pos(t);
     // ...and a finger on the casino's arm, or on its sign while it is a
     // button: a hold on the arm must never scroll the page
-    if (dustUnder(p.x, p.y, fingerReach()) || leverUnder(p.x, p.y) || signUnder(p.x, p.y)) { claim(e); return; }
+    if (handTakes(p.x, p.y, fingerReach()) || leverUnder(p.x, p.y) || signUnder(p.x, p.y)) { claim(e); return; }
     // ...and on a station up there worked by its motion: a drag on it is the motion
     if (S.view === 'after' && gestureUnder(p.x, p.y)) { claim(e); return; }
   }

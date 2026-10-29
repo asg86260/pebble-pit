@@ -2,6 +2,7 @@
 // purse"): the stretch that banks the most for the swim, so a load lying
 // near the crusher is taken before a taller heap across the deep.
 
+import { source } from '../src/flow.js';
 import { group, ok, yard, runUntil } from './helpers.mjs';
 import { P, WORKER } from '../src/config.js';
 import { deepBed } from '../src/state.js';
@@ -10,7 +11,7 @@ import { tossX } from '../src/deep/place.js';
 
 const S = yard.S;
 const gatherers = () => S.workers.filter(w => w.type === 'gatherer');
-const lay = (x, n) => { for (let i = 0; i < n; i++) addGrain(deepBed, x, null, 3, true); };
+const lay = (x, n) => { for (let i = 0; i < n; i++) if (addGrain(deepBed, x, null, 3, true)) source('scale', 1, 'test setup'); };
 
 group('a gatherer takes the load lying near the crusher before the tall heap across the deep', async () => {
   // The snatch's facts with no station: played, it stands the first one,

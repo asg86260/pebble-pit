@@ -1123,7 +1123,7 @@ HANDLES.__motion = v => { forceMotion(v); return reducedMotion(); };
 // the deep read back in one object. The fight is set outright only for a check
 // that is not about getting there, and the rule that the stage never goes
 // back is told the setup is a new starting point.
-import { layScales, looseScales } from './deep/scales.js';
+import { layScales, looseScales, afloat } from './deep/scales.js';
 import { faunaReport } from './deep/fauna.js';
 import { woundK } from './deep/serpent.js';
 import { shots } from './deep/arms.js';
@@ -1191,7 +1191,7 @@ HANDLES.__setScales = n => { S.scales = Math.max(0, Math.floor(n || 0)); return 
 HANDLES.__deepState = () => ({
   stage: S.serpentStage, wound: S.serpentWound, woundK: woundK(),
   meal: { n: S.meal, t: S.mealT, go: S.mealGo && { ...S.mealGo } },
-  freed: S.serpentFreed, scales: S.scales, sinking: S.sinking.length, lifting: S.lifting.length,
+  freed: S.serpentFreed, scales: S.scales, sinking: afloat(), lifting: S.lifting.length,
   mech: { at: S.mechAt, skip: S.mechSkip, ...phasePart() },
   statuses: JSON.parse(JSON.stringify(S.statuses)),
   stations: S.stations.map(st => ({ ...st, paid: (st.paid || []).map(p => p.slice()) })),
@@ -1501,10 +1501,16 @@ import { afterRow, AFTER_ROWS, afterBill, afterMaxed, openAfterBoard } from './a
 import { setCrowd, hireAll, support as afterSupport, union as afterUnion, ready as afterReady, crowdSize } from './after/union.js';
 import { pairBox } from './after/rebel.js';
 import { campCount, walkingOut, idleBodies } from './after/bodies.js';
-import { rosterReport, rosterHit } from './roster.js';
-import { plotX, afterFloor, pileBox } from './after/place.js';
-import { grabAt, inHand, holdBody } from './crew/pointer.js';
-import { AFTER_PILE_REACH } from './config.js';
+import { rosterReport, rosterHit, shopBoxOf } from './roster.js';
+import { plotX, afterFloor, stationBox as afterStationBox } from './after/place.js';
+import { drawnSpan } from './footprints.js';
+import { isPiled, setBlock, takeBlock, goodsRead } from './after/piles.js';
+import { pourSawdust, takeSawdust } from './after/mill.js';
+import { stripBox, lying } from './after/ground.js';
+import { source, sink } from './flow.js';
+import { AFTER_PILES } from './config.js';
+import { track, heldGoods } from './hands.js';
+import { bottomY } from './grid.js';
 import { afterGate, strikeDue } from './after/strike.js';
 import { gestureDown, gestureMove, gestureUp, partsOf as gestureParts, gestureView, groveIcons } from './after/gestures.js';
 // A click up there as input.js makes it: the hand work's first (a part, a
@@ -1517,10 +1523,21 @@ HANDLES.__afterClick = (x, y) => { if (gestureDown(x, y)) { gestureUp(x, y); ret
 HANDLES.__afterGrant = (coins = {}) => {
   const a = S.after;
   if (!a) return null;
+  // A counted pile's blocks are set down on it, or taken off it for a
+  // negative grant, through its one door (after/piles.js): never past its
+  // brim, so a grant over it lands what fits and the rest is not made.
   for (const [c, n] of Object.entries(coins)) {
-    if (c === 'rebel') a.rebel += n; else a.stock[c] = (a.stock[c] || 0) + n;
+    if (c === 'rebel') a.rebel += n;
+    else if (isPiled(c)) {
+      let made = 0, gone = 0;
+      for (let k = 0; k < n && setBlock(c); k++) made++;
+      for (let k = 0; k < -n && takeBlock(c); k++) gone++;
+      source(AFTER_PILES[c].good, made, 'grant'); sink(AFTER_PILES[c].good, gone, 'grant');
+    } else if (c === 'sawdust') {
+      source('sawdust', pourSawdust(n), 'grant'); sink('sawdust', takeSawdust(-n), 'grant');
+    }
   }
-  return { rebel: a.rebel, ...a.stock };
+  return { rebel: a.rebel, ...goodsRead() };
 };
 // Every soul's rim by `fn(i, v)`, or with a number, that share of the crowd
 // made members from the front back: every soul won walks out to work, as if
@@ -1534,17 +1551,24 @@ HANDLES.__afterCrowd = (fn, waiting = false) => {
 };
 // Where to click: the pair on the pedestal, each plot's trunk and stump.
 HANDLES.__afterPair = () => { const b = pairBox(); return { x: b.x + b.w / 2, y: b.y + b.h / 2 }; };
-HANDLES.__afterTrees = () => (S.after ? S.after.plots.map((p, i) => ({ i, stage: p.stage, logs: S.after.groundLogs.filter(q => q.i === i).length, falling: p.fall != null,
+HANDLES.__afterTrees = () => (S.after ? S.after.plots.map((p, i) => ({ i, stage: p.stage, logs: lying().filter(q => q.i === i).length, falling: p.fall != null,
   stump: p.stump, x: plotX(i) + AP / 2, y: afterFloor() - AP * 5, sx: plotX(i) + AP / 2, sy: afterFloor() - AP / 2 })) : []);
 HANDLES.__afterRows = () => AFTER_ROWS.map(u => ({ key: u.key, card: u.card, shown: !!S.after && u.show(),
   bill: afterBill(u), rung: u.rung ? u.rung() : u.from ? u.from() : 0, done: afterMaxed(u) }));
-HANDLES.__afterRead = () => (S.after ? { rebel: S.after.rebel, ...S.after.stock, gate: S.after.gate,
+HANDLES.__afterRead = () => (S.after ? { rebel: S.after.rebel, ...goodsRead(), gate: S.after.gate,
   axe: S.after.axe, support: afterSupport(), union: afterUnion(), ready: afterReady(), camp: campCount() + idleBodies().length, walking: walkingOut(),
   size: crowdSize(), signs: S.after.signs.length, bodies: S.after.bodies.length,
   posted: S.after.bodies.filter(b => b.job && b.job !== AFTER_JOB.BUILD).length, motes: S.after.motes.length,
   built: [...S.after.built], camped: S.after.camp,
   due: afterGate(), strike: strikeDue() } : null);
 // The axe in hand without buying it: a scene's setup.
+// The hand emptied for a setup that is not about it: whatever blocks it held
+// are unmade at a named door, so the conservation rule (verify.js, rule 23)
+// is not told they walked off.
+HANDLES.__emptyHand = () => {
+  for (const m of S.motes) if (m.kind) sink(m.kind, 1, 'emptied hand');
+  S.held = 0; S.motes = [];
+};
 HANDLES.__afterAxe = () => { if (S.after) S.after.axe = true; return !!S.after?.axe; };
 // The rosters under act 3's stations (after/roster.js, on the yard's
 // roster.js) as the checks read them; and a press on one's + (`d` 1) or -
@@ -1552,21 +1576,20 @@ HANDLES.__afterAxe = () => { if (S.after) S.after.axe = true; return !!S.after?.
 // with the camera up there while it lands (a click is only ever the view's).
 // True when the count moved.
 HANDLES.__afterRoster = () => rosterReport('after');
-// Goods by hand (after/hand.js) at a world point, through the shared hand's
-// own calls (crew/pointer.js), with the camera up there as a press is:
-// 'press' the grab there, 'move' the held load to it, 'drop' let go there.
-// What the hand holds after, or null. The world points of a pile's middle
-// are `__afterPile(key, what)`.
+// Goods by hand at a world point, through the yard's own hand (hands.js), as
+// a held left button drives it: 'press' and 'move' sweep there, 'drop' lets
+// go there with the flick the moves made. What the hand holds after, as
+// { kind, n }, or null.
 HANDLES.__afterHand = (x, y, act = 'move') => {
-  const was = S.view;
-  S.view = 'after';
-  try {
-    if (act === 'press') liftHeld(grabAt(x, y));
-    else if (inHand()) { holdBody(inHand(), x, y); if (act === 'drop') dropHeld(inHand()); }
-  } finally { S.view = was; }
-  return S.after?.hand ? { ...S.after.hand } : null;
+  track(x, y);
+  if (act === 'drop') release(x, y); else sweep(x, y);
+  const g = heldGoods();
+  return g ? { kind: g.kind, n: S.held } : null;
 };
-HANDLES.__afterPile = (key, what) => { const b = pileBox(key, what, AFTER_PILE_REACH); return { x: b.x + b.w / 2, y: b.y + b.h * 0.6 }; };
+// A pile's sweep point: the middle of its plot's bottom row, which holds a
+// block whenever the pile holds any. `key` is the pile's station, kept for
+// the callers that name it.
+HANDLES.__afterPile = (key, what) => { const b = stripBox(what); return { x: b.x + b.w / 2, y: b.bottom - AP / 2 }; };
 HANDLES.__afterPress = (job, d = 1) => {
   const was = S.view;
   S.view = 'after';
@@ -1581,6 +1604,15 @@ HANDLES.__afterPress = (job, d = 1) => {
 // `openAfterBoard`): `key` a card or 'crowd', `at` the world point the
 // crowd's board stands over.
 HANDLES.__openAfterBoard = (key, at = null) => openAfterBoard(key, at);
+// A board's UPGRADES button where it stands (roster.js), in world units, or
+// null: for a check or a shot to press it where a player would.
+HANDLES.__shopBox = key => shopBoxOf(key);
+// An act 3 station's drawn footprint (after/place.js `stationBox`), in world
+// units, for a check or a shot to measure what stands centered on it.
+HANDLES.__afterStationBox = key => afterStationBox(key);
+// ...and the span its drawing inks across at its fullest (footprints.js
+// `drawnSpan`), what its button and roster are centered on.
+HANDLES.__afterDrawnSpan = key => drawnSpan(key);
 // The hand's motions up there (after/gestures.js), made as input.js makes
 // them: 'down', 'move' and 'up' at a world point; where a station's parts
 // stand; each station's record; the icons over the grove.

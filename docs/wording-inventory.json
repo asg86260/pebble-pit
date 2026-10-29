@@ -4188,7 +4188,7 @@
  {
   "id": "card-building",
   "group": "Boards",
-  "where": "src/shop.js",
+  "where": "src/after/rows.js",
   "context": "a card the yard is at: somebody is building it (the strip's word with nothing to hand back; the gain line's word)",
   "text": "building"
  },
@@ -5854,21 +5854,21 @@
  {
   "id": "hover-pile-logs",
   "group": "Hover",
-  "where": "src/input.js",
+  "where": "src/after/stations.js",
   "context": "the hover over a counted pile in act 3 (the logs of the saw mill and grove)",
   "text": "log pile"
  },
  {
   "id": "hover-pile-planks",
   "group": "Hover",
-  "where": "src/input.js",
+  "where": "src/after/stations.js",
   "context": "the hover over a counted pile in act 3 (the timber at the saw mill)",
   "text": "plank pile"
  },
  {
   "id": "hover-pile-signs",
   "group": "Hover",
-  "where": "src/input.js",
+  "where": "src/after/stations.js",
   "context": "the hover over a counted pile in act 3 (the workshop's signs)",
   "text": "sign pile"
  },
@@ -8414,10 +8414,10 @@
   "text": "none due"
  },
  {
-  "id": "handwork-spin",
+  "id": "roster-upgrades",
   "group": "Act 3 boards (track C, placeholder)",
-  "where": "src/render/aftercues.js",
-  "context": "act 3 hand work (placeholder): the tag under the saw mill while its wheel is worked",
-  "text": "spin"
+  "where": "src/roster.js",
+  "context": "The button above a station's worker count that opens its upgrades (act 3).",
+  "text": "upgrades"
  }
 ]

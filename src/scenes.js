@@ -15,7 +15,8 @@
 //
 // The comments over the scenes say why each is set up as it is.
 
-import { S } from './state.js';
+import { S, floor } from './state.js';
+import { addGrain, bottomY } from './grid.js';
 import { JOB, TYPE, AFTER_JOB } from './jobs.js';
 import { P, PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, DOME_WORK, DOME_RINGS, DOME_FADE_MS, LADDER, TIER_OWN, MACHINE_TUNE_RUNGS, LAND_HOP_MS, INTRO_CHAT_MS } from './config.js';
 import { dropMs, ramX } from './rock.js';
@@ -39,13 +40,20 @@ import { lay } from './deep/statuses.js';
 import { worksAt, progressOf, markDoneSeen } from './works.js';
 import { SAVE as CREW_SAVE } from './crew/records.js';
 import { goDeep, goUp, poseGlide } from './view.js';
-import { stationX0, stationBox, signBox, soulX, heapMid, afterFloor, plotX, groveX1, afterOpenX, workshopsX1, unionJoinAt, campEdges, AP } from './after/place.js';
+import { floorAt, stationX0, stationBox, signBox, soulX, heapMid, afterFloor, afterOpenX, workshopsX1, unionJoinAt, campEdges, AP } from './after/place.js';
 import { godFront } from './after/sky.js';
 // The window's middle at the camera's last window over act 3: God in it,
 // his stage square under him.
 const godView = () => godFront();
-import { CROWD_X0, CROWD_FILES, AFTER_COIN_UNDER_S, STRIKE_SHARE, AFTER_PODIUM_CLIMB, AFTER_PLANT_S, AFTER_PUT_S, AFTER_DROP } from './config.js';
-import { sawDrops } from './after/mill.js';
+import { CROWD_X0, CROWD_FILES, AFTER_COIN_UNDER_S, STRIKE_SHARE, AFTER_PODIUM_CLIMB, AFTER_PLANT_S, AFTER_PILES } from './config.js';
+import { millView, bedWants } from './after/mill.js';
+import { gestureDown, gestureMove, gestureUp, partsOf } from './after/gestures.js';
+import { STEPS } from './game.js';
+import { demoHand } from './render/aftercues.js';
+import { siteLoads } from './after/build.js';
+import { dropSpot, goodsRead } from './after/piles.js';
+import { stripOf as groundStrip, units as groundUnits, counted as groundCounted } from './after/ground.js';
+import { afterGround } from './state.js';
 import { FINALE_HOUSE_W, APOTH_POTS_MAX } from './config.js';
 import { houseX } from './home.js';
 import { goOnAlpha } from './actbeats.js';
@@ -61,6 +69,7 @@ import { lockForCheck } from './wardrobepage.js';
 import { freedBody } from './snatch.js';
 import { fillControls } from './controls.js';
 import { setFeedbackUrl } from './feedback.js';
+import { loadKind } from './carry.js';
 
 // The held sheet up on settings, turned to a tab by its button.
 const settingsTab = t => {
@@ -479,7 +488,7 @@ const yardPurse = () => window.__grant({ dust: 2e6, spores: 5e5, shards: 5e5, sc
 // job's roster, a seat bought on the station's board first where the job's
 // seats are full. A job named twice is two members.
 const staffAfter = jobs => {
-  for (const j of jobs) if (!window.__afterPress(j, 1)) { window.__buy(`after-seat-${j}`); window.__afterPress(j, 1); }
+  for (const j of jobs) if (!window.__afterPress(j, 1)) { buyAfter(`after-seat-${j}`); window.__afterPress(j, 1); }
 };
 // Station `key`'s round part (`ring`, the saw mill's wheel) taken hold of
 // where it stands and turned at `rev` turns a second for `frames` frames,
@@ -504,6 +513,13 @@ function handSaw(strokes, per = 0.5) {
   for (let f = 1; f <= frames; f++) { window.__gesture('move', x0 + Math.sin(f / 60 / per * Math.PI) * P * 6, y); window.__fast(1 / 60); }
   window.__look(0); window.__holdShot();
 }
+// The timber pile topped up to its brim, before each act 3 bill that names
+// timber: it holds no more (after/piles.js), so a setup buying several rows
+// grants it again between them.
+const timberUp = () => window.__afterGrant({ timber: AFTER_PILES.timber.brim });
+// An act 3 row bought with the timber for it, and its timber carried to its
+// station, so the row has landed.
+const buyAfter = key => { timberUp(); const bought = window.__buy(key); carried(); return bought; };
 function afterChain(slow) {
   window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
   // Won in blocks of files rather than from the front back, so the shot
@@ -522,7 +538,7 @@ function afterChain(slow) {
   }
   const A = AFTER_JOB;
   staffAfter([A.CUT, A.CUT, A.CUT, A.SAW, A.JOIN, A.JOIN]);
-  for (const u of ['after-plot', 'after-plot', 'after-stumps', 'after-blade', 'after-bench']) window.__buy(u);
+  for (const u of ['after-plot', 'after-plot', 'after-stumps', 'after-blade', 'after-bench']) buyAfter(u);
 }
 
 // Track A: the workshop standing with timber for its blanks, `taps` nails
@@ -530,7 +546,7 @@ function afterChain(slow) {
 function handNails(taps, after) {
   window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
   for (const k of ['mill', 'workshop']) if (!S.after.built.includes(k)) S.after.built.push(k);
-  window.__afterGrant({ timber: 30, signs: 2 });
+  window.__afterGrant({ timber: 30, benchtimber: 8, signs: 2 });
   const b = stationBox('workshop');
   window.__look(b.x + b.w / 2 + P * 10 - S.viewW / 2); window.__fast(0.5);
   const nails = window.__gestureParts('workshop').nails;
@@ -2850,7 +2866,7 @@ export const SCENES = {
   // Act 3's loop on its placeholder drawings (after/; track A): the chain
   // bought row by row and run, framed on the camp; the crowd half won, framed
   // on God's yard; the grove with a tree coming down.
-  'after-chain': { about: 'the acts', say: "the afterlife's chain running: logs to the saw mill, timber and sawdust, signs going out",
+  'after-chain': { about: 'the acts', review: 'act 3: shops and block piles', stage: 'built: the real build on branches a3-station-shop and a3-pile-plots -- not on main yet; lands when you sign it off', option: 'the camp, nothing open: try it', say: "the afterlife's chain running: logs to the saw mill, timber and sawdust, signs going out",
     run: () => { afterChain(false); window.__fast(90); window.__look(stationX0('mill') - P * 4); window.__holdShot(); } },
   'after-crowd': { about: 'the acts', say: "the afterlife's crowd half walked out: signs out, the rims inking round them",
     run: () => { afterChain(true); window.__fast(120); window.__look(soulX(0) - P * 20); window.__holdShot(); } },
@@ -2858,8 +2874,8 @@ export const SCENES = {
     run: () => {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
       window.__afterGrant({ rebel: 2000, timber: 300 }); yardPurse();
-      for (let k = 0; k < 3; k++) window.__buy('after-plot');
-      window.__buy('after-tree');
+      for (let k = 0; k < 3; k++) buyAfter('after-plot');
+      buyAfter('after-tree');
       window.__afterAxe();
       // The plots stood at their stages, the setup the shot is not about:
       // a grown tree, a big one, a pole, and a stump with its logs.
@@ -2940,14 +2956,14 @@ export const SCENES = {
     run: () => SCENES['after-roster'].run('forestry') },
   // The carry: the yard's carry bought well up, so the woodcutters and the
   // sawyer fetching walk under stacks of logs, a log taking two of its slots.
-  'after-carry': { about: 'the acts', say: "act 3's goods carried the yard's way: logs carried in a stack, as many as the yard's carry holds",
+  'after-carry': { about: 'the acts', review: 'act 3: shops and block piles', stage: 'built: the real build on branches a3-station-shop and a3-pile-plots -- not on main yet; lands when you sign it off', option: 'logs carried as blocks', say: "act 3's goods carried the yard's way: logs carried in a stack, as many as the yard's carry holds",
     run: () => {
       act3Mid();
       S.haulCarryLevel = 6;           // after the yard is stood up, which sets its own
       window.__afterGrant({ grovelogs: 40 });
       window.__fast(90);              // the walk from the podium
       // Held on a body walking a stack of logs.
-      const under = () => S.after.bodies.find(w => w.load === 'log' && w.carry >= 2);
+      const under = () => S.after.bodies.find(w => loadKind(w) === 'log' && w.carry >= 1);
       for (let k = 0; k < 600 && !under(); k++) window.__fast(0.1);
       window.__fast(1);
       const h = under(), mid = h ? h.x : stationBox('forestry').x;
@@ -2956,37 +2972,94 @@ export const SCENES = {
       window.__fast(1 / 60);
       window.__holdShot();
     } },
-  // Goods by hand (after/hand.js): the act-3-mid camp framed on the forestry
-  // shack and the saw mill, logs on the shack's pile and the yard's carry
-  // holding two; with `at` (0 over the shack's pile, 1 over the mill's; null
-  // for nothing in the hand) two logs taken by the shared grab
-  // (`__afterHand`) and carried that far along, up over the shack's roof as
-  // a cursor carries them (`handPath`), and with `letGo` let go there, a
-  // moment into setting them down.
-  'after-hand-carry': { about: 'the acts', say: "act 3's goods by hand: two logs taken off the forestry shack's pile, carried over the shack toward the saw mill's",
+  // Goods by hand (hands.js, the yard's sweep): the act-3-mid camp framed on
+  // the forestry shack and the saw mill, logs on the shack's pile and the
+  // yard's carry bought a rung; with `at` (0 over the shack's pile, 1 over
+  // the mill's; null for nothing in the hand) logs swept off the shack's
+  // pile (`__afterHand`) and carried that far along, up over the shack's
+  // roof as a cursor carries them (`handPath`), and with `letGo` let go
+  // there, caught a moment into their fall.
+  'after-hand-carry': { about: 'the acts', say: "act 3's goods by hand: logs swept off the forestry shack's pile, carried over the shack toward the saw mill's",
     run: (at = 0.5, letGo = false) => {
       act3Mid();
-      S.haulCarryLevel = 1;
+      S.carryLevel = Math.max(S.carryLevel, 2);
       window.__afterGrant({ grovelogs: 6 });
+      // let go over the saw mill's pile, it is bare, so they have room on it
+      if (letGo) window.__afterGrant({ logs: -window.__afterRead().logs });
       const from = window.__afterPile('forestry', 'grovelogs'), to = window.__afterPile('mill', 'logs');
+      to.y -= P * 12;
       pinCamera((from.x + to.x) / 2 - S.viewW / 2);
       window.__look((from.x + to.x) / 2 - S.viewW / 2);
       if (at != null) {
+        S.mouse = { ...from };
         window.__afterHand(from.x, from.y, 'press');
-        for (let f = 0; f < AFTER_PUT_S * 60 * 3; f++) { window.__afterHand(from.x, from.y); window.__fast(1 / 60); }
         const p = handPath(from, to, at);
+        S.mouse = { ...p };
+        // held still there before the let-go: a drop, not a flick
+        if (letGo) S.trail = [];
         window.__afterHand(p.x, p.y, letGo ? 'drop' : 'move');
-        if (letGo) window.__fast(AFTER_PUT_S * 1.5);
+        if (letGo) window.__fast(0.25);
       }
       window.__fast(1 / 60);
       window.__holdShot();
     } },
-  'after-hand-piles': { about: 'the acts', say: "act 3's goods by hand: the forestry shack's and the saw mill's log piles, nothing in the hand yet",
+  'after-hand-drag': { about: 'the acts', review: 'act 3: one resource system', supersedes: ['act 3: workers carry every block', 'act 3: picking up goods', 'act 3: shops and block piles'],stage: 'built: the real build on branch res-step4 -- not on main yet; lands when you sign it off', branch: 'res-step4', option: 'D one hand, dragged and caught', say: "the one hand dragging logs off the forestry shack's pile, carried over the shack, held by weight as dust is",
+    run: () => SCENES['after-hand-carry'].run(0.5) },
+  'after-hand-piles': { about: 'the acts', review: 'act 3: picking up goods', stage: 'built: the real build on branches a3-goods-sweep and a3-hand-weight -- not on main yet; lands when you sign it off', option: 'A try it: press and hold on a pile', say: "act 3's goods by hand: the forestry shack's and the saw mill's log piles, nothing in the hand yet",
     run: () => SCENES['after-hand-carry'].run(null) },
-  'after-hand-take': { about: 'the acts', say: "act 3's goods by hand: two logs held over the forestry shack's pile they came off",
+  'after-hand-take': { about: 'the acts', review: 'act 3: picking up goods', stage: 'built: the real build on branches a3-goods-sweep and a3-hand-weight -- not on main yet; lands when you sign it off', option: 'B held over the shack', say: "act 3's goods by hand: logs swept off the forestry shack's pile, held over it",
     run: () => SCENES['after-hand-carry'].run(0) },
-  'after-hand-set': { about: 'the acts', say: "act 3's goods by hand: let go over the saw mill's pile, the logs set down on it one at a time",
+  'after-hand-set': { about: 'the acts', review: 'act 3: picking up goods', stage: 'built: the real build on branches a3-goods-sweep and a3-hand-weight -- not on main yet; lands when you sign it off', option: 'C let go over the mill pile', say: "act 3's goods by hand: let go over the saw mill's pile, the logs falling onto it",
     run: () => SCENES['after-hand-carry'].run(1, true) },
+  // Act 3's one ground (DESIGN.md, "One resource system for every act"):
+  // eight logs taken off the forestry shack's pile one at a time and let go
+  // on one spot of open floor past the camp, each landing on the
+  // heap the last ones made and rolling off it by the heap rule -- a mound a
+  // log a step, never a tower, and no log drawn through another.
+  'after-ground-heap': { about: 'the acts', review: 'act 3: one resource system', supersedes: ['act 3: workers carry every block', 'act 3: picking up goods', 'act 3: shops and block piles'],stage: 'built: the real build on branch res-step4 -- not on main yet; lands when you sign it off', branch: 'res-step4', option: 'A one ground, one heap rule', say: 'eight logs let go on one spot of open floor past the pedestal, heaped as a mound by the one rule a pile heaps by',
+    run: () => {
+      act3Mid();
+      S.carryLevel = Math.max(S.carryLevel, 2);
+      S.after.crew = {};
+      window.__afterGrant({ grovelogs: 8 });
+      // nobody idle to carry them home while they are watched
+      S.after.bodies = S.after.bodies.filter(w => w.job); S.after.camp = 0;
+      // the first flat stretch of open floor past the camp's far edge
+      const flat = x => [-1, 1].every(k => Math.abs(floorAt(x + k * AP * 16) - floorAt(x)) < 1);
+      let x = campEdges()[1] + AP * 48;
+      while (!flat(x) && x < afterGround.x + afterGround.cols * AP) x += AP;
+      const spot = { x, y: floorAt(x) - P * 30 };
+      for (let k = 0; k < 8; k++) {
+        const from = topBlock('grovelogs');
+        S.trail = []; S.mouse = { ...from };
+        window.__afterHand(from.x, from.y, 'press');
+        S.trail = []; S.mouse = { ...spot };
+        window.__afterHand(spot.x, spot.y, 'drop');
+        window.__fast(1.2);
+      }
+      window.__fast(2);
+      pinCamera(x - S.viewW / 2);
+      window.__look(x - S.viewW / 2);
+      window.__still(true); window.__holdShot();
+    } },
+  // A held hand's weight by size (hands.js, `handHolds`, HAND_SWAY): a full
+  // carry swept off each pile and held still over it, so the drift is all
+  // there is to see.
+  'after-hand-log': { about: 'the acts', review: 'act 3: picking up goods', stage: 'built: the real build on branches a3-goods-sweep and a3-hand-weight -- not on main yet; lands when you sign it off', option: 'D a log: one, heavy', say: "a hand on the forestry shack's logs at a full carry: one log, hanging nearly still under the pointer",
+    run: () => handWeight('grovelogs') },
+  'after-hand-timber': { about: 'the acts', review: 'act 3: picking up goods', stage: 'built: the real build on branches a3-goods-sweep and a3-hand-weight -- not on main yet; lands when you sign it off', option: 'E timber: a quarter of the hand', say: "a hand on the saw mill's timber at a full carry: a quarter-hand of planks, swinging less than dust",
+    run: () => handWeight('timber') },
+  'hand-dust': { about: 'the bench', say: 'a full hand of dust swept off the floor, drifting round the pointer',
+    run: () => {
+      window.__reset(); window.__fast(1);
+      S.carryLevel = LADDER;
+      const x = floor.x + floor.cols * P / 2, y = bottomY(floor) - P / 2;
+      for (let i = 0; i < 80; i++) addGrain(floor, x);
+      S.mouse = { x, y: y - P * 10 };
+      for (let k = 0; k < 6 && S.held < 20; k++) sweep(x, y);
+      window.__look(x - S.viewW / 2);
+      window.__holdShot();
+    } },
   'after-pedestal': { about: 'the acts', say: 'the pair on the pedestal mid-speech, rebel falling to the pile, idle members behind them agitating',
     run: () => {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
@@ -3038,6 +3111,29 @@ export const SCENES = {
       window.__look(stationX0('pedestal') - S.viewW / 2); window.__holdShot();
     } },
 
+  // A log swept off the forestry shack's pile and let go over the saw mill's
+  // timber mound: it lies on the mound among the planks as a log, counted for
+  // no pile, until a member carries it home (DESIGN.md, "One resource system
+  // for every act", section 1).
+  'after-offkind': { about: 'the acts', review: 'act 3: one resource system', supersedes: ['act 3: workers carry every block', 'act 3: picking up goods', 'act 3: shops and block piles'],stage: 'built: the real build on branch res-step4 -- not on main yet; lands when you sign it off', branch: 'res-step4', option: 'B a log over the wrong pile', say: 'a log let go over the timber mound lies on the mound among the planks, not beside it',
+    run: () => {
+      act3Mid();
+      S.carryLevel = Math.max(S.carryLevel, 2);
+      window.__afterGrant({ grovelogs: 6, timber: 8 });
+      const from = window.__afterPile('forestry', 'grovelogs'), to = window.__afterPile('mill', 'timber');
+      to.x = dropSpot('timber').at;                  // over the mound's peak, where its blocks are set down
+      to.y -= P * 12;
+      pinCamera((from.x + to.x) / 2 - S.viewW / 2);
+      window.__look((from.x + to.x) / 2 - S.viewW / 2);
+      S.mouse = { ...from };
+      window.__afterHand(from.x, from.y, 'press');
+      S.mouse = { ...to };
+      S.trail = [];
+      window.__afterHand(to.x, to.y, 'drop');
+      window.__fast(1.5);
+      window.__holdShot();
+    } },
+
   // --- track A of the act-3 build: the camp (docs/wave-act3-build.md) ---------------
   // A station ordered on the shack (docs/mocks/act3-unbuilt-2026-10-18, pile
   // a): the empty spot between its neighbors, members carrying its loads
@@ -3045,8 +3141,8 @@ export const SCENES = {
   'after-site-empty': { about: 'the acts', say: "an unbuilt station's spot: open floor between its neighbors, nothing drawn",
     run: () => afterSite(null) },
   'after-site-carry': { about: 'the acts', say: 'the workshop ordered: members carrying its planks and blocks onto its spot',
-    run: () => afterSite(r => r.brought >= 3) },
-  'after-site-pile': { about: 'the acts', say: "the workshop's pile whole on its spot, the two builders beside it",
+    run: () => afterSite(() => siteLoads('workshop') >= 3) },
+  'after-site-pile': { about: 'the acts', review: 'act 3: one resource system', supersedes: ['act 3: workers carry every block', 'act 3: picking up goods', 'act 3: shops and block piles'],stage: 'built: the real build on branch res-step4 -- not on main yet; lands when you sign it off', branch: 'res-step4', option: 'C a station going up is a strip', say: "the workshop's pile whole on its spot, the two builders beside it",
     run: () => afterSite(r => r.whole != null) },
   'after-site-band': { about: 'the acts', say: 'the workshop going up a band at a time, the pile shrinking',
     run: () => afterSite(r => r.n >= 2) },
@@ -3058,27 +3154,54 @@ export const SCENES = {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
       if (!S.after.built.includes('mill')) S.after.built.push('mill');
       window.__afterGrant({ logs: 4 });
-      S.after.stock.sawdust = 1e6;
+      window.__afterGrant({ sawdust: 1e6 });
       window.__look(heapMid() - S.viewW / 2); window.__fast(0.5); window.__holdShot();
+    } },
+  // The UPGRADES buttons over the camp's rosters (roster.js), framed as the
+  // review that chose them was: the chain bought, the saw mill four-fifths
+  // across the window, the workshop's and the forestry shack's buttons in
+  // view beside its own.
+  'after-shopbtn': { about: 'the acts', branch: 'a3-shop-button', review: 'act 3: a shop button by the worker count', stage: 'built: the real build on branch a3-shop-button -- not on main yet; lands when you sign it off', option: 'the built button', say: "The real UPGRADES button: press it to open the station's shop, again to put it away; clicking or hovering the station opens nothing.",
+    run: () => {
+      afterChain(false);
+      window.__fast(20);
+      const b = stationBox('mill'), mid = b.x + b.w * 0.8;
+      pinCamera(mid - S.viewW / 2); window.__look(mid - S.viewW / 2);
     } },
   // Track a3-logs: the chain staffed, the forestry shack's pile stocked, run
   // until an idle member is carrying logs to the saw mill and a cut is
   // falling out of the saw's right side onto its timber pile; framed on the
   // mill from its log pile to its timber pile.
-  'after-log-flow': { about: 'the acts', say: "the saw mill kept fed: an idle member carrying logs to its pile, a cut falling out of the saw's right side onto the timber",
+  'after-log-flow': { about: 'the acts', review: 'act 3: shops and block piles', stage: 'built: the real build on branches a3-station-shop and a3-pile-plots -- not on main yet; lands when you sign it off', option: 'saw mill piles', say: "the saw mill kept fed: an idle member carrying logs to its pile, a cut falling out of the saw's right side onto the timber",
     run: () => {
       afterChain(false);
       window.__afterGrant({ grovelogs: 60 });
       const b = stationBox('mill');
-      const near = w => w.errand === AFTER_JOB.HAUL && w.load === 'log' && w.target === 'mill' && w.x > b.x - P * 40 && w.x < b.x;
-      const falling = () => sawDrops().length > 0 && S.after.t - sawDrops().at(-1) > AFTER_DROP.s * 0.15 && S.after.t - sawDrops().at(-1) < AFTER_DROP.s * 0.3;
+      const near = w => w.errand === AFTER_JOB.HAUL && loadKind(w) === 'log' && w.target === 'mill' && w.x > b.x - P * 40 && w.x < b.x;
+      const falling = () => millView().out.length > 0;
       for (let k = 0; k < 6000 && !(S.after.bodies.some(near) && falling()); k++) window.__fast(1 / 30);
       const mid = b.x + b.w / 2 - P * 10;
       pinCamera(mid - S.viewW / 2);
       window.__look(mid - S.viewW / 2);
       window.__still(true); window.__holdShot();
     } },
-
+  // The chain run and every pile topped up, framed from the forestry shack's
+  // log pile to the workshop's signs, a member carrying while it holds: every
+  // good in the four tones its units were born with.
+  'after-goods': { about: 'the acts', say: "every good in its own colors: logs, timber, signs and sawdust, each unit one of its good's four tones",
+    run: () => {
+      afterChain(false);
+      window.__fast(20);
+      window.__afterGrant({ grovelogs: 20, logs: -20 });     // the mill's pile bare, so a member hauls
+      window.__fast(2);
+      const lo = window.__afterPile('forestry', 'grovelogs').x, hi = window.__afterPile('mill', 'timber').x;
+      const carrying = () => S.after.bodies.some(w => loadKind(w) === 'log' && w.x > lo + P * 12 && w.x < hi - P * 30);
+      for (let k = 0; k < 1800 && !carrying(); k++) window.__fast(1 / 30);
+      window.__afterGrant({ grovelogs: 20, logs: 4, timber: 40, sawdust: 30, signs: 4, benchtimber: 8 });   // room left for the load on its way
+      window.__fast(1 / 60);
+      const x = lo - P * 30;
+      pinCamera(x); window.__look(x);
+    } },
 
   // The workshop (docs/mocks/act3-workshop-2026-10-18, roof A): nails tapped
   // by hand, two driven flush, one half in; and a sign just done, standing
@@ -3175,7 +3298,7 @@ export const SCENES = {
   'level-carry': { about: 'the acts', say: "the chain running: a carrier with a sign over the cloud, climbing the stage's plinth or out on its top",
     run: () => {
       afterChain(true);
-      const a = campEdges()[1], on = w => w.load === 'sign' && w.x > a + (CROWD_X0 - a) * 0.5;
+      const a = campEdges()[1], on = w => loadKind(w) === 'sign' && w.x > a + (CROWD_X0 - a) * 0.5;
       for (let k = 0; k < 2400 && !S.after.bodies.some(on); k++) window.__fast(0.25);
       window.__look((afterOpenX() + godView()) / 2 - S.viewW / 2); window.__fast(1 / 30); window.__holdShot();
     } },
@@ -3184,7 +3307,7 @@ export const SCENES = {
       afterChain(true);
       // a carrier at its spot, a moment short of planting; the shot comes a
       // second on, the planting drawn as it happens
-      const at = w => w.load === 'sign' && w.target && typeof w.target === 'object' && w.t >= AFTER_PLANT_S - 0.7;
+      const at = w => loadKind(w) === 'sign' && w.target && typeof w.target === 'object' && w.t >= AFTER_PLANT_S - 0.7;
       for (let k = 0; k < 24000 && !S.after.bodies.some(at); k++) window.__fast(0.05);
       window.__look(godView() - S.viewW / 2); window.__fast(1 / 30);
     } },
@@ -3281,14 +3404,14 @@ export const SCENES = {
   'act3-mid': { about: 'the acts', say: 'act 3 mid: the camp built (saw mill, workshop, posts filled), a fifth of God\'s yard walked out, the axe in hand',
     run: act3Mid },
   // Track C: each of act 3's boards open in the yard's sheet over the act-3-mid
-  // camp, as a plain click on its station's sign opens it, the camera on the
-  // sign the board stands by (after/rows.js `openAfterBoard`).
+  // camp, as a plain click on its station opens it, the station framed so
+  // the board stands beside it (after/rows.js `openAfterBoard`).
   // The pedestal's recruit row live: souls won in God's yard waiting to be
   // hired (DESIGN.md, "Act 3's workers are bought with rebel").
   'act3-recruit': { about: 'the acts', say: "act 3's pedestal board with souls won and waiting: the recruit row's count of ready and idle",
     run: () => { act3Board('pedestal'); window.__afterCrowd((i, v) => (i >= CROWD_FILES * 2 && i < CROWD_FILES * 2 + 12 ? 8 : v), true); window.__holdShot(); } },
   ...Object.fromEntries(['shack', 'grove', 'pedestal', 'mill', 'workshop', 'crowd'].map(key =>
-    [`act3-board-${key}`, { about: 'the acts', say: `act 3's ${key} board open in the yard's sheet, its shelves, bills in the act's marks`,
+    [`act3-board-${key}`, { about: 'the acts', ...(key === 'crowd' ? {} : { review: 'act 3: shops and block piles', stage: 'built: the real build on branches a3-station-shop and a3-pile-plots -- not on main yet; lands when you sign it off', option: `${key} board open` }), say: `act 3's ${key} board open in the yard's sheet, its shelves, bills in the act's marks`,
       run: () => act3Board(key) }])),
   // God's pushback as drawn (render/aftercrowd.js): the throne's speech
   // warned, his gaze settled on a sign with the corner marks closing in; then
@@ -3307,7 +3430,8 @@ export const SCENES = {
       S.acts.mansion.done = true;
       S.acts.mansion.G = 9;
       window.__fast(1); pinCamera(0); window.__holdShot();
-    } }
+    } },
+  ...carriedScenes()
 };
 
 // A yard for the acts' scenes: rich, past the snatch with the wizards'
@@ -3344,6 +3468,29 @@ function actsYard(point, pieces = 0) {
 // wherever the pointer does.
 const HAND_ARC = 16;
 const handPath = (a, b, t) => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t - Math.sin(Math.PI * t) * HAND_ARC * AP });
+// A full carry swept off act 3's pile `what` and lifted a little over it.
+function handWeight(what) {
+  act3Mid();
+  S.carryLevel = LADDER;
+  window.__afterGrant(what === 'timber' ? { timber: 12 } : { grovelogs: 6 });
+  const p = window.__afterPile(null, what);
+  pinCamera(p.x - S.viewW / 2);
+  window.__look(p.x - S.viewW / 2);
+  S.mouse = { ...p };
+  for (let k = 0; k < 4; k++) window.__afterHand(p.x, p.y, 'press');
+  // off to the side, clear of the pile-full mark over a pile at its brim
+  S.mouse = { x: p.x + AP * 18, y: p.y - AP * 10 };
+  window.__afterHand(S.mouse.x, S.mouse.y, 'move');
+  window.__fast(1 / 60);
+  window.__holdShot();
+}
+// The middle of pile `what`'s highest block on act 3's ground: where a
+// player presses to take one off it.
+function topBlock(what) {
+  const s = groundStrip(what), us = groundUnits().filter(u => u.c0 >= s.c0 && u.c0 < s.c1 && groundCounted(u));
+  const u = us.reduce((b, q) => (q.r0 > b.r0 ? q : b));
+  return { x: afterGround.x + (u.c0 + u.z / 2) * AP, y: afterGround.y + (afterGround.rows - u.r0 - u.z / 2) * AP };
+}
 function act3Mid() {
   actsYard('fallen');
   if (!S.beatsDone.includes('axe')) S.beatsDone.push('axe');
@@ -3357,7 +3504,7 @@ function act3Mid() {
   }
   const A = AFTER_JOB;
   staffAfter([A.CUT, A.CUT, A.CUT, A.SAW, A.JOIN, A.JOIN]);
-  for (const u of ['after-plot', 'after-plot']) window.__buy(u);
+  for (const u of ['after-plot', 'after-plot']) buyAfter(u);
   window.__goPlace('after');
   window.__fast(20);
   // between the workshop and the pedestal, the camp's middle
@@ -3371,8 +3518,12 @@ function act3Board(key) {
   act3Mid();
   window.__afterGrant({ rebel: 200, timber: 40 });
   window.__fast(1);
-  const b = key === 'crowd' ? null : key === 'grove' ? { x: plotX(0), w: groveX1() - plotX(0) } : signBox(key);
-  const mid = key === 'crowd' ? soulX(6) : b.x + b.w / 2;
+  // A station's board runs out beside it toward its board's spot (after/
+  // stations.js `boardAnchor`): the station framed at the window's far side
+  // from that spot, so the board has the room.
+  const g = key === 'grove' ? 'forestry' : key, b = key === 'crowd' ? null : stationBox(g);
+  const right = b && signBox(g).x >= b.x + b.w / 2;
+  const mid = key === 'crowd' ? soulX(6) : right ? b.x - P * 4 + S.viewW / 2 : b.x + b.w + P * 4 - S.viewW / 2;
   pinCamera(mid - S.viewW / 2);
   window.__look(mid - S.viewW / 2);
   window.__fast(1 / 60);
@@ -3426,3 +3577,154 @@ function padTo(id) {
 // The names under each part, in ABOUT's order.
 export const byPart = () =>
   ABOUT.map(about => [about, Object.keys(SCENES).filter(k => SCENES[k].about === about)]);
+
+// track B: carried goods
+// Act 3's goods carried by bodies (DESIGN.md, "Act 3's goods are blocks, and
+// bodies carry every one"): the workshop's timber walked to it off the
+// mound, a sign carried out of its rack, a bought row's timber carried to
+// its station.
+// Every bought row's timber carried to its station, the clock turned until
+// none is still on its way (after/build.js, the orders).
+function carried() {
+  for (let k = 0; k < 2400 && S.after && S.after.orders.length; k++) window.__fast(0.25);
+}
+// The clock turned a frame at a time until a body is as `see` says, then
+// framed on it and held still, so the shot is that frame.
+function carryShot(see) {
+  for (let k = 0; k < 9000 && !S.after.bodies.some(see); k++) window.__fast(1 / 30);
+  const w = S.after.bodies.find(see), x = (w ? w.x : stationBox('workshop').x) - S.viewW / 2;
+  pinCamera(x); window.__look(x);
+  window.__still(true); window.__holdShot();
+}
+const pastMill = w => { const m = stationBox('mill'); return w.x > m.x + m.w + P * 6; };
+function carriedScenes() {
+  return {
+    'after-bench-walk': { about: 'the acts', branch: 'a3-bodies-carry', review: 'act 3: workers carry every block', stage: 'built: the real build on branch a3-bodies-carry -- not on main yet; lands when you sign it off', option: 'A timber to the bench', say: "the workshop's timber walked to it off the timber mound, a load of blocks overhead, its rack beside the shed",
+      run: () => {
+        afterChain(false);
+        window.__afterGrant({ benchtimber: -window.__afterRead().benchtimber, signs: -window.__afterRead().signs }); timberUp();
+        carryShot(w => loadKind(w) === 'plank' && !w.pick && (w.target === 'workshop' || w.job === AFTER_JOB.JOIN) && pastMill(w));
+      } },
+    'after-sign-out': { about: 'the acts', branch: 'a3-bodies-carry', review: 'act 3: workers carry every block', stage: 'built: the real build on branch a3-bodies-carry -- not on main yet; lands when you sign it off', option: 'B a sign carried out', say: 'a sign carried out of the workshop\'s rack toward the crowd, the rack a block short',
+      run: () => {
+        afterChain(false);
+        window.__afterGrant({ signs: 3 });
+        const ws = stationBox('workshop');
+        carryShot(w => loadKind(w) === 'sign' && w.x > ws.x + ws.w + P * 12 && w.x < ws.x + ws.w + P * 40);
+      } },
+    'after-order-carry': { about: 'the acts', branch: 'a3-bodies-carry', review: 'act 3: workers carry every block', stage: 'built: the real build on branch a3-bodies-carry -- not on main yet; lands when you sign it off', option: 'C a bill carried', say: "a timber bill bought: its blocks carried off the timber mound to the workshop, the row waiting on them",
+      run: () => {
+        afterChain(false);
+        yardPurse(); timberUp(); window.__buy('after-signreach');
+        carryShot(w => w.errand === AFTER_JOB.ORDER && loadKind(w) === 'plank' && !w.pick && pastMill(w));
+      } },
+    'after-order-board': { about: 'the acts', branch: 'a3-bodies-carry', review: 'act 3: workers carry every block', stage: 'built: the real build on branch a3-bodies-carry -- not on main yet; lands when you sign it off', option: 'D the board waiting', say: "the workshop's board with a timber row ordered: the row waiting on its blocks, saying it is going up",
+      run: () => {
+        act3Board('workshop');
+        yardPurse(); timberUp(); window.__buy('after-signreach');
+        window.__fast(0.2); window.__openAfterBoard('workshop'); window.__holdShot();
+      } }
+  };
+}
+// track A: saw mill
+// The saw mill's machine, a stage a scene (after/mill.js): a sawyer put on
+// through the roster, logs on its pile, run until `done`, then held there
+// and framed on the mill from its log pile to its timber mound.
+import { saw as millSaw, blockAt as millBlockAt } from './after/mill.js';
+import { AFTER_MILL } from './config.js';
+function millStage(done, grant = {}) {
+  window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+  window.__afterCrowd((i, v) => (i < 2 ? 8 : v));
+  for (let k = 0; k < 90 && window.__afterRead().walking > 0; k++) window.__fast(1);
+  if (!S.after.built.includes('mill')) S.after.built.push('mill');
+  window.__afterGrant({ logs: 4, timber: 6, sawdust: 9, ...grant });
+  window.__afterPress(AFTER_JOB.SAW);
+  for (let k = 0; k < 60 * 90 && !done(); k++) window.__fast(1 / 60);
+  const b = stationBox('mill'), x = b.x + b.w / 2 + P * 4 - S.viewW / 2;
+  pinCamera(x); window.__look(x);
+  window.__still(true); window.__holdShot();
+}
+// The hand at the saw mill, played by the real hand a player has (hands.js's
+// sweep and release, the wheel's gesture in after/gestures.js) on the game's
+// own clock, so the bench and the shot tool see the same loop: press on the
+// log pile, carry the log to the bed, let go, take the wheel and turn it
+// until the log is cut and its blocks are out, rest, and stand it again.
+// A cursor is drawn where the hand is (render/aftercues.js, `demoHand`).
+const MILL_HAND = { look: 0.5, carry: 1.3, set: 0.7, reach: 0.6, spinMax: 14, tail: 1.2, rest: 1.2, turnsPerS: 2 };
+function millHandDemo() {
+  const mine = S.after;
+  let ph = 'look', t = 0, from = null, to = null, ang = 0;
+  const wheel = () => partsOf('mill').wheel;
+  const rim = a => ({ x: wheel().x + Math.cos(a) * wheel().r, y: wheel().y + Math.sin(a) * wheel().r });
+  const goTo = (p, pose) => { demoHand.x = p.x; demoHand.y = p.y; demoHand.pose = pose; S.mouse = { x: p.x, y: p.y }; };
+  const lerp = (a, b, k) => ({ x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k });
+  const go = next => { ph = next; t = 0; };
+  const pile = () => window.__afterPile('mill', 'logs');
+  const idx = STEPS.findIndex(q => q.name === 'millhand');
+  if (idx >= 0) STEPS.splice(idx, 1);
+  STEPS.push({ name: 'millhand', step: c => {
+    if (!S.after || S.after !== mine) { demoHand.pose = null; STEPS.splice(STEPS.findIndex(q => q.name === 'millhand'), 1); return; }
+    const dt = c.dt / 1000, M = MILL_HAND;
+    t += dt;
+    if (ph === 'look') {
+      const p = pile(); goTo({ x: p.x, y: p.y - P * 4 }, 'point');
+      if (t >= M.look) { goTo(p, 'grab'); S.trail = []; window.__afterHand(p.x, p.y, 'press'); from = p; to = bedWants() || { x: from.x + P * 14, y: from.y - P * 2 }; go('carry'); }
+    } else if (ph === 'carry') {
+      const k = Math.min(1, t / M.carry), e = k * k * (3 - 2 * k), p = lerp(from, to, e);
+      p.y -= Math.sin(e * Math.PI) * P * 5;
+      goTo(p, 'grab'); window.__afterHand(p.x, p.y, 'move');
+      if (k >= 1) { go('set'); S.trail = []; }
+    } else if (ph === 'set') {
+      if (t < M.set * 0.4) goTo(to, 'grab');
+      else if (S.held) { S.trail = []; window.__afterHand(to.x, to.y, 'drop'); goTo(to, 'point'); }
+      if (t >= M.set) { from = to; to = rim(0); go('reach'); }
+    } else if (ph === 'reach') {
+      const k = Math.min(1, t / M.reach), e = k * k * (3 - 2 * k);
+      goTo(lerp(from, to, e), k < 1 ? 'point' : 'grab');
+      if (k >= 1) { ang = 0; gestureDown(to.x, to.y); go('spin'); }
+    } else if (ph === 'spin') {
+      ang += dt * M.turnsPerS * 2 * Math.PI;
+      const p = rim(ang); goTo(p, 'grab'); gestureMove(p.x, p.y);
+      if ((t > 1 && !millSaw().bed) || t >= M.spinMax) { gestureUp(p.x, p.y); go('tail'); }
+    } else if (ph === 'tail') {
+      const sw = millSaw(), p = rim(ang);
+      goTo({ x: p.x + P * 6, y: p.y + P * 8 }, 'point');
+      if (t >= M.tail && !sw.out.length && !sw.dust.length) go('rest');
+    } else if (ph === 'rest') {
+      if (t >= M.rest) {
+        // stood again: the pile and the mounds as they began
+        S.after.saw = null;
+        const r = window.__afterRead();
+        window.__afterGrant({ logs: 4 - r.logs, timber: 6 - r.timber, sawdust: 9 - r.sawdust });
+        go('look');
+      }
+    }
+  } });
+}
+const millTrip = (ph, k) => () => { const tr = millSaw().trip; return !!tr && tr.ph === ph && tr.t >= k; };
+Object.assign(SCENES, {
+  'after-mill-carry': { about: 'the acts', branch: 'a3-mill-machine', review: 'act 3: the saw mill machine', stage: 'built: the real build on branch a3-mill-machine -- not on main yet; lands when you sign it off', option: 'A carry', say: "the sawyer out of the treadwheel, carrying the top log off the saw mill's pile round to the bed",
+    run: () => millStage(millTrip('carry', 0.4)) },
+  'after-mill-set': { about: 'the acts', branch: 'a3-mill-machine', review: 'act 3: the saw mill machine', stage: 'built: the real build on branch a3-mill-machine -- not on main yet; lands when you sign it off', option: 'B set', say: "the log swung over and set down on the saw mill's bed, a puff off both ends",
+    run: () => millStage(() => { const tr = millSaw().trip; return !!tr && tr.ph === 'set' && tr.down && tr.t >= AFTER_MILL.set_s - AFTER_MILL.held + 0.05; }) },
+  'after-mill-cut': { about: 'the acts', branch: 'a3-mill-machine', review: 'act 3: the saw mill machine', stage: 'built: the real build on branch a3-mill-machine -- not on main yet; lands when you sign it off', option: 'C cut', say: "the saw mid-cut: the blade at its foot, chips thrown, the log shortened into it and a timber block growing past it",
+    run: () => millStage(() => { const s = millSaw(); return !!s.bed && s.bed.cut === 1 && s.hitAt != null && S.after.t - s.hitAt > 0.08 && S.after.t - s.hitAt < 0.12; }) },
+  'after-mill-kerf': { about: 'the acts', say: "the kerf: the last column of the log falling a grain a stroke onto the heap under the bed",
+    run: () => millStage(() => { const s = millSaw(); return s.dust.length > 0 && s.dust[0].a > 0.1; }) },
+  'after-mill-chute': { about: 'the acts', branch: 'a3-mill-machine', review: 'act 3: the saw mill machine', stage: 'built: the real build on branch a3-mill-machine -- not on main yet; lands when you sign it off', option: 'D chute', say: "cut blocks riding the bed out and down the chute onto the timber mound",
+    run: () => millStage(() => millSaw().out.some(o => { const p = millBlockAt(o.a); return p.x > AFTER_MILL.chute.x0 + 2 && p.x < AFTER_MILL.chute.x1; })) },
+  'after-mill-full': { about: 'the acts', branch: 'a3-mill-machine', review: 'act 3: the saw mill machine', stage: 'built: the real build on branch a3-mill-machine -- not on main yet; lands when you sign it off', option: 'E full', say: "the saw mill's heap at its brim: the saw stopped with a log on its bed, the pile-full mark up",
+    run: () => millStage(() => !!millSaw().bed && window.__afterRead().sawdust >= 24 && !millSaw().out.length && !millSaw().dust.length, { sawdust: 15, timber: 14 }) },
+  'after-mill-hand': { about: 'the acts', branch: 'a3-mill-machine', review: 'act 3: the saw mill machine', stage: 'built: the real build on branch a3-mill-machine -- not on main yet; lands when you sign it off', option: 'F by hand', say: "With nobody at the saw, you do it yourself: pick a log off the pile, drop it on the bed, then turn the wheel to cut it.",
+    run: () => {
+      window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+      if (!S.after.built.includes('mill')) S.after.built.push('mill');
+      window.__afterGrant({ logs: 4, timber: 6, sawdust: 9 });
+      window.__fast(0.5);
+      const b = stationBox('mill'), x = b.x + b.w / 2 + P * 4 - S.viewW / 2;
+      pinCamera(x); window.__look(x);
+      millHandDemo();
+    } },
+  'after-mill-brim': { about: 'the acts', say: "a cut block tossed off the chute's foot onto a timber mound nearly at its brim",
+    run: () => millStage(() => millSaw().out.some(o => { const p = millBlockAt(o.a); return p.x > AFTER_MILL.chute.x1 - 0.5; }), { timber: 15 }) }
+});

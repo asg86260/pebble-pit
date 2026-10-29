@@ -112,8 +112,12 @@ function seatToast() {
   if (at === seat) return;
   seat = at;
   // As an offset on the transform, not a `left`: a fixed box given a left and
-  // no right shrinks to the room past it, and the words folded.
-  el.style.setProperty('--toast-dx', `${Math.round(x + w / 2 - S.W / 2)}px`);
+  // no right shrinks to the room past it, and the words folded. Worked from
+  // the card's true width so its left edge lands on a whole pixel: the
+  // stylesheet centers it by half that width, and half an odd or fractional
+  // width put the edge and every one of its dots across two pixels.
+  const wide = el.getBoundingClientRect().width;
+  el.style.setProperty('--toast-dx', `${Math.round(x) + wide / 2 - S.W / 2}px`);
   el.style.setProperty('--toast-dy', `${dy}px`);
 }
 

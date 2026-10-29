@@ -24,6 +24,7 @@ import { ARM_LENGTH, ARM_BOSS, ARM_PIVOT, ARM_KNOB, ARM_DEAD, MARK_CELLS, DIGIT_
 import { fmt } from '../words.js';
 import { at } from '../grid.js';
 import { ctx } from './ctx.js';
+import { fillDots } from './dots.js';
 import { drawCoin, rule } from './marks.js';
 import { drawGrid } from './ground.js';
 import { rising as risingAt, withRise } from './rise.js';
@@ -131,6 +132,7 @@ function drawSign() {
   // the board itself: white paper with a black edge, like everything else here
   ctx.fillStyle = '#fff';
   ctx.fillRect(x, y, w * P, h * P);
+  fillDots(ctx, x + P / 3, y + P / 3, w * P - 2 * P / 3, h * P - 2 * P / 3);   // inside the rule
   rule(x, y, w * P, h * P);
 
   // the word, along the board, centered; the mid gap is the word's, and
@@ -301,6 +303,7 @@ function drawLabels(fx, fy) {
     if (b === paying) {
       ctx.fillStyle = '#000';
       ctx.fillRect(fx + binLeft(b) * P, top + P, slotW(b) * P, (LABEL_H - 2) * P);
+      fillDots(ctx, fx + binLeft(b) * P, top + P, slotW(b) * P, (LABEL_H - 2) * P, 'fill');
       ctx.fillStyle = '#fff';
     } else ctx.fillStyle = '#000';
     // a converting bin's foot wears its coin's own color -- the tone the

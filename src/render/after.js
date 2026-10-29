@@ -11,39 +11,41 @@
 // black for the masses and the rims, the pale and the mid grey only for
 // material, every material tone picked a cell at a time off a fixed hash of
 // where the cell stands (no flat fills, no random draw, so it holds still
-// frame to frame). Everything that comes or goes fades.
+// frame to frame). Everything that comes or goes fades, but the goods: every
+// block is brought and taken by a body or the hand, so none ever fades.
 
-import { P, GREY, AFTER_CARRY_SHOWN, AFTER_SIGN_BOARD, AFTER_SIGN_MARK, AFTER_STATIONS, AFTER_START_BUILT, AFTER_SIGN_FLAG_U, SKY_FLAG, GESTURE_NAIL_TAPS, AFTER_ART_SCALE, AFTER_BUILD_DROP_S, AFTER_SIGN_TIMBER, AFTER_CARDS, AFTER_BUILD_FADE_S, AFTER_BUILD_PIECES,
-         AFTER_TIP_HOLD_S, AFTER_SPILL_S, AFTER_HEAP_R, AFTER_ART_WORK_S, AFTER_PILE_FADE_S,
+import { P, GREY, AFTER_BLOCK, AFTER_CARRY_SHOWN, AFTER_STATIONS, AFTER_START_BUILT, AFTER_SIGN_FLAG_U, AFTER_ART_SCALE, AFTER_CARDS, AFTER_BUILD_FADE_S, AFTER_BUILD_PIECES,
+         AFTER_TIP_HOLD_S, AFTER_SPILL_S, AFTER_ART_WORK_S,
          AFTER_SAW_S, AFTER_SIGN_S, SHELF_GLYPH_CELLS,
          NUM_FONT_PX, AFTER_COUNT_PAD } from '../config.js';
 import { S } from '../state.js';
 import { ctx } from './ctx.js';
+import { fillDots } from './dots.js';
 import { buildingGlyph } from './bars.js';
 import { writeCount, widthOf, drawable, GH } from './numfont.js';
 import { screenAt } from './frame.js';
-import { buildPileAt, stationBox, signBox, stationX0, heapMid, notchX, fileAt, rankAtY, groundOf, ART, AP } from '../after/place.js';
+import { stationBox, stationX0, heapMid, notchX, fileAt, rankAtY, groundOf, ART, AP } from '../after/place.js';
 import { airMotes } from '../after/rebel.js';
 import { built, heapBrim } from '../after/levels.js';
 import { airSpills } from '../after/mill.js';
 import { atStation, bodyInk, carried as carryOf } from '../after/bodies.js';
 import { gestureView } from '../after/gestures.js';
-import { signUp } from '../after/stations.js';
-import { frame, now, inView, clamp01, pileState, pileAlpha, clearCounts, pendingCounts, backing, K, W, PALE, MID } from './after/kit.js';
+import { loadKind } from '../carry.js';
+import { frame, now, inView, clamp01, pileState, clearCounts, pendingCounts, backing, K, W, PALE, MID } from './after/kit.js';
 import { drawFloor } from './after/floor.js';
 import { deepAt } from '../after/sky.js';
 import { drawCloudSky } from './after/cloudsky.js';
-import { drawGrove, drawLaidGoods } from './after/pine.js';
-import { DRAW, workerPose, GLYPHS, backOf } from './after/stations.js';
+import { drawGrove } from './after/pine.js';
+import { DRAW, workerPose, GLYPHS, backOf, drawMillHeap } from './after/stations.js';
 import { drawFistFlag } from './aftercrowd.js';
-import { heap, heapCells, logPile, plankPile, signPile, buildPile, BUILD_SLOTS, plankAt, blockAt, countOver } from './after/piles.js';
+import { heap, heapCells, drawGround, goodBlock } from './after/piles.js';
 import { drawBody } from './crew.js';
-import { drawSawDrops } from './after/drop.js';
 import { onDevice } from './wardrobe.js';
-import { siteOf } from '../after/build.js';
 import { drawPillar, drawPair, drawBubbles, drawRebelPile } from './after/pedestal.js';
 import { drawUnionCrowd } from './after/unioncrowd.js';
-import { drawRoster } from '../roster.js';
+import { drawRoster, drawShops } from '../roster.js';
+import { now as wallNow } from '../clock.js';
+import { motePos } from './cursor.js';
 
 const A = () => S.after;
 const snap = v => Math.round(v / P) * P;
@@ -90,81 +92,38 @@ export function drawAfterSky() {
 export function drawAfterGrove() { if (A()) drawGrove(); }
 
 // --- the camp ------------------------------------------------------------------------
-// Whether a station is working now, and how far through its unit: a member at
-// its door with the work coming (its clock held full means its input is
-// short), or the hand's last unit within AFTER_ART_WORK_S.
+// Whether a station is working now: a member at its door with the work
+// coming (its clock held full means its input is short), or the hand's last
+// unit within AFTER_ART_WORK_S. The material shows how far along it is
+// (DESIGN.md, "Act 3's goods are blocks", rule 3), so nothing hangs over it.
 const PERIOD = { mill: AFTER_SAW_S, workshop: AFTER_SIGN_S };
 function working(key) {
   const a = A();
   const w = atStation(key)[0];
-  if (w && PERIOD[key] && w.t < PERIOD[key]) return { work: true, at: w.t / PERIOD[key], ink: 1 };
-  const h = a.workAt[key], since = h == null ? Infinity : a.t - h;
-  if (since < AFTER_ART_WORK_S) return { work: true, at: since / AFTER_ART_WORK_S, ink: clamp01(Math.min(since, AFTER_ART_WORK_S - since) / AFTER_PILE_FADE_S) };
-  return { work: false, at: 0, ink: 0 };
+  if (w && PERIOD[key] && w.t < PERIOD[key]) return { work: true };
+  const h = a.workAt[key];
+  return { work: h != null && a.t - h < AFTER_ART_WORK_S };
 }
 const frameOf = key => frame(stationX0(key), groundOf(key), ART[key].flip || 0, null, AFTER_ART_SCALE);
 // The hand's motion at each station this frame (after/gestures.js), by key.
 let hands = {};   // cache: this frame's gestures, read afresh at the top of each draw
 const readHands = () => { hands = {}; for (const r of gestureView() || []) hands[r.key] = r; };
 
-// What a station's drawing reads besides its pose: the workshop's blanks,
-// as many as there is timber for.
-function extras(key) {
-  if (key === 'workshop') return { blanks: Math.floor(A().stock.timber / AFTER_SIGN_TIMBER) };
-  return {};
-}
-// A station's loads on its spot while it is raised (after/build.js): each
-// fading on as it is set down and off as a builder takes it.
-const ramp = (t, t0, dur) => (t0 == null ? 0 : clamp01((t - t0) / dur));
-function drawSite(key) {
-  const r = siteOf(key);
-  if (!r) return;
-  const t = now(), d = frame(0, groundOf(key), 0, null, AFTER_ART_SCALE);
-  buildPile(d, buildPileAt(key) / AP, i => ramp(t, r.drop[i], AFTER_BUILD_DROP_S) * (1 - ramp(t, r.pick[i], AFTER_PILE_FADE_S)));
-}
-// The glyph over a station, `at` of it built, faded in and out at the ends
-// of its window: hung where the yard hangs one, seven cells over the top.
-function glyphOver(b, rows, at, alpha = 1) {
-  if (!rows || alpha <= 0) return;
-  const was = ctx.globalAlpha;
-  ctx.globalAlpha = was * alpha;
+// What a station's drawing reads besides its pose. The workshop's blanks are
+// none: its timber is the plot of blocks carried to its rack (after/piles.js,
+// `benchtimber`), drawn with the other piles, never a count of the mound.
+const extras = () => ({});
+// The glyph over a station, `at` of it built: hung where the yard hangs one,
+// seven cells over the top.
+function glyphOver(b, rows, at) {
+  if (!rows) return;
   buildingGlyph(snap(b.x + b.w / 2), b.y - P * 7 - (SHELF_GLYPH_CELLS / 2 - 1.5) * P, rows, clamp01(at));
-  ctx.globalAlpha = was;
 }
 // How far a station's build has taken its closed look down, 0 to 1: each
 // piece landed, faded in over AFTER_BUILD_FADE_S, its share.
 const openedBy = r => (r ? r.at.slice(0, r.n).reduce((s, at) => s + fadeIn(at), 0) / AFTER_BUILD_PIECES : 0);
 const openedOf = key => { const r = A().raising[key]; return built(key) ? (r ? openedBy(r) : 1) : openedBy(r); };
 const alphaDo = (a, fn) => { if (a <= 0) return; const was = ctx.globalAlpha; ctx.globalAlpha = was * Math.min(1, a); fn(); ctx.globalAlpha = was; };
-// A station's shop sign (place.js, `signBox`), its foot on the floor: a board
-// on a post, symbols only, drawn on the act's art cell (AP) with its rim the
-// art's stroke and everything on it laid on the rim's grid. Closed, crossed
-// through corner to corner, the cross fading off as its build lands and the
-// shop's mark (config, AFTER_SIGN_MARK) on; with its board up, in ink, the
-// mark cut out of it.
-function shopSign(key) {
-  const C = AFTER_SIGN_BOARD, b = signBox(key), r = 2 * AFTER_ART_SCALE, opened = openedOf(key);
-  if (!inView(b.x, b.w)) return;
-  const w = b.w, h = C.h * AP, x0 = b.x, top = b.y, up = signUp(key);
-  ctx.fillStyle = GREY[K];
-  ctx.fillRect(x0 + w / 2 - r, top + h, 2 * r, C.post * AP);
-  ctx.fillRect(x0, top, w, h);
-  ctx.fillStyle = GREY[up ? K : W];
-  ctx.fillRect(x0 + r, top + r, w - 2 * r, h - 2 * r);
-  ctx.fillStyle = GREY[up ? W : K];
-  // the cross, a stroke two rims thick laid in steps of a rim
-  alphaDo(1 - opened, () => {
-    const cx = x0 + 2 * r, cy = top + 2 * r, cw = w - 4 * r, ch = h - 4 * r, s = 2 * r, n = Math.round((cw - s) / r) + 1;
-    for (let i = 0; i < n; i++) {
-      const y = cy + Math.round((ch - s) * i / (n - 1) / r) * r;
-      ctx.fillRect(cx + i * r, y, s, s); ctx.fillRect(cx + cw - s - i * r, y, s, s);
-    }
-  });
-  alphaDo(opened, () => {
-    const M = AFTER_SIGN_MARK, mx = x0 + Math.round((w - M[0].length * r) / 2 / r) * r, my = top + Math.round((h - M.length * r) / 2 / r) * r;
-    M.forEach((row, j) => [...row].forEach((c, i) => { if (c === '#') ctx.fillRect(mx + i * r, my + j * r, r, r); }));
-  });
-}
 // Its outline: the drawing's own cells (its silhouette) at its edge, every
 // other one, in the mid grey: a plan of what will stand.
 const OUTLINES = {};
@@ -207,12 +166,9 @@ function drawStation(key) {
   const opened = openedOf(key);
   if (opened < 1 && key !== 'pedestal' && !AFTER_START_BUILT.includes(key)) {
     closedStation(key, draw, opened);
-    if (!built(key)) { if (r) drawSite(key); return; }
     return;
   }
-  const s = working(key);
-  draw(frameOf(key), s.work, a.t);
-  if (s.work) glyphOver(b, GLYPHS[key], s.at, s.ink);
+  draw(frameOf(key), working(key).work, a.t);
 }
 // The shack, ordering: the glyph of the station going up filling over it a
 // piece at a time, each fading in as it lands.
@@ -224,50 +180,17 @@ function drawShackOrder() {
   const last = r.at.length ? fadeIn(r.at[r.at.length - 1]) : 1;
   glyphOver(b, GLYPHS[key], (r.n - 1 + last) / AFTER_BUILD_PIECES);
 }
-// The saw mill's sawdust heap on its ground: its grains a cell each, its
-// share of the brim, held tipped toward the notch a moment after a tip; a
-// tip's grains falling through the notch and fading.
-function drawSawdust() {
-  const a = A(), fl = groundOf('mill'), d = frame(heapMid(), fl, 0, null, AFTER_ART_SCALE);
-  const cells = heapCells(AFTER_HEAP_R).length;
-  const n = Math.round(Math.min(1, a.stock.sawdust / heapBrim()) * cells);
-  const tipped = a.tipAt != null && a.t - a.tipAt < AFTER_TIP_HOLD_S;
-  heap(d, 0, AFTER_HEAP_R, pileState('sawdust', n), a.stock.sawdust, tipped);
-  const nx = notchX();
-  for (const sp of airSpills()) {
-    const k = sp.age / AFTER_SPILL_S;
-    ctx.globalAlpha = Math.max(0, 1 - k);
-    onPixel(nx, fl - P * 2 + k * P * 5, () => { for (let g = 0; g < Math.min(6, sp.n); g++) cell((g % 2) * P, g * P, g % 2 ? PALE : MID); });
-    ctx.globalAlpha = 1;
-  }
-}
-// The finished signs as the fist flags they will be planted as (config,
-// AFTER_SIGN_FLAG_U), stood in a rack on a low rail outside the workshop, each
-// fading in as it is laid; and while the joiner works, the next one standing
-// in the rack's next slot, its fist lettered on as the work goes.
-function signRack(d, x, st) {
-  const FU = AFTER_SIGN_FLAG_U, at = d.world(x, 0), U = FU.rack, step = FU.apart * P, n = Math.min(Math.max(st.n, st.prev), 3);
-  ctx.fillStyle = GREY[K]; ctx.fillRect(at.x - P, at.y - P, step * 3 + P, P);
-  for (let i = 0; i < n; i++) d.fade(pileAlpha(i, st), () => drawFistFlag(at.x + i * step, at.y - P, U));
-  // The sign on the bench, lettered in the next slot a row of the fist a
-  // blow: as far along as its nails are driven, by the hand or the joiner.
-  const h = hands.workshop, done = h && h.nails ? h.nails.reduce((a, k) => a + k, 0) / (h.nails.length * GESTURE_NAIL_TAPS) : 0;
-  if (done > 0 && st.n < 3) drawFistFlag(at.x + st.n * step, at.y - P, U, done);
-  countOver(at.x + step * 1.5, at.y - P - (SKY_FLAG.h + SKY_FLAG.up) * U, st.n, st.key);
-}
-// Each station's counted pile, on its own ground: drawn over the lip of
-// billows along the path's front (render.js), so a pile stands on the floor
-// as a body does, its bottom row and the sign rack's low rail whole rather
-// than cut into dashes between the puffs.
-const pile = (key, what, fn, n) => { if (built(key)) fn(frameOf(key), ART[key].pile[what], pileState(what, n)); };
+// The saw mill's sawdust heap is its machine's, drawn with it under its bed
+// (render/after/stations.js), a grain a cell.
+// Each station's counted piles, on its own ground, the workshop's signs and
+// timber among them: drawn over the lip of billows along the path's front
+// (render.js), so a pile stands on the floor as a body does, its bottom row
+// whole rather than cut into dashes between the puffs.
 export function drawAfterPiles() {
-  if (!A()) return;
-  const st = A().stock;
-  pile('workshop', 'signs', signRack, Math.floor(st.signs));
-  pile('forestry', 'grovelogs', logPile, st.grovelogs);
-  pile('mill', 'logs', logPile, st.logs);
-  pile('mill', 'timber', plankPile, Math.floor(st.timber));
-  drawSawDrops();
+  const a = A();
+  if (!a) return;
+  drawGround(a.t);
+  if (built('mill')) drawMillHeap(frameOf('mill'));
 }
 export function drawAfterCamp() {
   const a = A();
@@ -280,10 +203,8 @@ export function drawAfterCamp() {
   drawFloor();
   drawUnionCrowd();
   // the forestry shack, the grove's, then the cards' stations
-  for (const key of Object.keys(AFTER_STATIONS)) { drawStation(key); shopSign(key); }
+  for (const key of Object.keys(AFTER_STATIONS)) drawStation(key);
   drawShackOrder();
-  if (built('mill')) drawSawdust();
-  drawLaidGoods(a.t);
   drawRebelPile();
   drawPair();
   drawBubbles();
@@ -296,24 +217,24 @@ export function drawAfterCamp() {
 // overhead, an arm out held on the blow and the shout mark while it gives a
 // line are drawn off the same origin, so the whole of it moves as one piece.
 function shoutMark(x, y) { ctx.fillStyle = GREY[K]; ctx.fillRect(x + 8, y - 12, 2, 6); ctx.fillRect(x + 1, y - 9, 2, 2); ctx.fillRect(x + 3, y - 7, 2, 2); ctx.fillRect(x + 15, y - 9, 2, 2); ctx.fillRect(x + 13, y - 7, 2, 2); }
-// A station's load on a head, a paper rim round it so it stands clear of
-// the black station rising behind it: a plank across, or a block.
-function carried(x, y, s) {
-  const plank = s.k === 'plank', lx = plank ? x - P * 1.5 : x + P / 2, ly = plank ? y - P : y - P * 2;
-  const w = plank ? P * 6 : P * 2, h = plank ? P : P * 2;
-  ctx.fillStyle = GREY[W]; ctx.fillRect(lx - 2, ly - 2, w + 4, h + 4);
-  const d = frame(lx, ly);
-  if (plank) plankAt(d, 0, 0); else blockAt(d, 0, 0);
-}
 // A load of `n` of a good stacked the yard's way (render/crew.js), a thing a
 // row, as many rows as it carries, up to AFTER_CARRY_SHOWN: over a head whose
-// top left is (x, y), or in the hand at the cursor (`drawHand`).
-function drawLoad(x, y, kind, n) {
+// top left is (x, y).
+// `load` is the body's carried cells: each block shows its unit's own tone.
+function drawLoad(x, y, kind, n, load = null) {
   n = Math.min(AFTER_CARRY_SHOWN, n);
-  if (kind === 'log') for (let k = 0; k < n; k++) { const ly = y - P - k * 2 * P; ctx.fillStyle = GREY[K]; ctx.fillRect(x - P, ly, 5 * P, P); cell(x + P, ly, PALE); }
-  else if (kind === 'plank') for (let k = 0; k < n; k++) {
-    const ly = y - P - k * 2 * P;
-    ctx.fillStyle = GREY[K]; ctx.fillRect(x - P * 2, ly, 7 * P, P); ctx.fillStyle = GREY[PALE]; ctx.fillRect(x - P * 2 + 2, ly + 2, 7 * P - 4, P - 4);
+  // Logs and timber as the blocks they lie on their piles as
+  // (render/after/piles.js, `goodBlock`), stacked a block on a block over the
+  // body's middle column.
+  if (kind === 'load') {
+    // A station's load on a head, a paper rim round it so it stands clear of
+    // the black station rising behind it.
+    const z = AFTER_BLOCK.load * AP, lx = x + 1.5 * P - z / 2, ly = y - z;
+    ctx.fillStyle = GREY[W]; ctx.fillRect(lx - 2, ly - 2, z + 4, z + 4);
+    goodBlock(lx, ly, kind);
+  } else if (kind === 'log' || kind === 'plank') {
+    const z = AFTER_BLOCK[kind] * AP, lx = x + 1.5 * P - z / 2;
+    for (let k = 0; k < n; k++) goodBlock(lx, y - (k + 1) * z, kind, load && load[k]);
   } else if (kind === 'sign') {
     // The one in front held up on its post; the rest boards on the shoulder.
     drawFistFlag(x + P, y + P * 2, AFTER_SIGN_FLAG_U.held, 1, AFTER_SIGN_FLAG_U.up * P);
@@ -321,17 +242,27 @@ function drawLoad(x, y, kind, n) {
     for (let k = 1; k < n; k++) ctx.fillRect(x - P, y - k * 2 * P, 3 * P, P);
   }
 }
-// The goods in the player's hand (after/hand.js): the load a member would
-// carry over its head, its foot on the cursor's point, moved by the hand's
-// true position as one piece; let go over a pile, the same load standing
-// there and shrinking a good at a time as it is set down.
-function drawHand() {
-  const h = A().hand;
-  if (!h || !h.n) return;
-  ctx.save();
-  ctx.translate(Math.round(h.x - 1.5 * P), Math.round(h.y) + P);
-  drawLoad(0, 0, h.kind, h.n);
-  ctx.restore();
+// The goods the yard's hand holds and throws up here (hands.js): each block
+// swept off a pile drifting round the cursor where a grain of dust would
+// (render/cursor.js, `motePos`), and each one thrown still in the air
+// (S.chips, whose `x, y` is a block's middle), drawn as the block it is on
+// its pile, whole cells across and laid at its true position. Here, in the
+// act's own layer and tones, not the yard's cursor or chips.
+function drawHandGoods() {
+  const t = wallNow() / 1000;
+  if (S.held && S.mouse) {
+    for (const m of S.motes) {
+      if (m.place !== 'after' || !AFTER_BLOCK[m.kind]) continue;
+      const z = AFTER_BLOCK[m.kind] * AP, at = motePos(m, t);
+      onPixel(at.x - z / 2, at.y - z / 2, () => goodBlock(0, 0, m.kind, m.s));
+    }
+  }
+  for (const ch of S.chips) {
+    if (ch.place !== 'after' || !AFTER_BLOCK[ch.kind]) continue;
+    const z = AFTER_BLOCK[ch.kind] * AP;
+    if (!inView(ch.x - z, z * 2)) continue;
+    goodBlock(Math.round(ch.x - z / 2), Math.round(ch.y - z / 2), ch.kind, ch.s);
+  }
 }
 function drawMember(w) {
   // The first worker through a working station's door stands in its pose.
@@ -343,9 +274,8 @@ function drawMember(w) {
     const x = 0, y = 0;
     drawBody(x, y);
     ctx.fillStyle = GREY[K];
-    drawLoad(x, y, w.load, carryOf(w));
-    if (w.load === 'carry' || w.load === 'lay') carried(x, y, BUILD_SLOTS[w.slot] || BUILD_SLOTS[0]);
-    else if (w.load === 'tip') { ctx.fillRect(x + 2, y - 10, 14, 10); ctx.fillStyle = GREY[PALE]; ctx.fillRect(x + 4, y - 8, 10, 6); }
+    drawLoad(x, y, loadKind(w), carryOf(w), w.load);
+    if (w.tipping) { ctx.fillRect(x + 2, y - 10, 14, 10); ctx.fillStyle = GREY[PALE]; ctx.fillRect(x + 4, y - 8, 10, 6); }
     if (w.swing != null) {
       if (w.job == null) shoutMark(x, y);
       else for (let k = 1; k <= 2; k++) cell(x + (w.face > 0 ? 2 + k : -k) * P, y - k * P, K);
@@ -366,8 +296,9 @@ export function drawAfterMembers() {
     drawMember(w);
     ctx.globalAlpha = 1;
   }
-  // and the goods in the hand, over every body, as a lifted one is
-  drawHand();
+  // and the goods in the hand and in the air, over every body, as a lifted
+  // one is
+  drawHandGoods();
 }
 
 // --- the counts ----------------------------------------------------------------------
@@ -394,6 +325,7 @@ export function drawAfterCounts() {
     if (c.foot) at.y -= h / 2 + pad;
     ctx.fillStyle = GREY[W];
     ctx.fillRect(Math.round(at.x - w / 2) - pad, Math.round(at.y - h / 2) - pad, w + pad * 2, h + pad * 2);
+    fillDots(ctx, Math.round(at.x - w / 2) - pad, Math.round(at.y - h / 2) - pad, w + pad * 2, h + pad * 2);
     writeCount(ctx, str, at.x, at.y);
     ctx.globalAlpha = was;
   }
@@ -407,4 +339,5 @@ export function drawAfterCounts() {
 export function drawAfterRoster() {
   if (!A()) return;
   drawRoster(ctx, drawBody, () => {}, null, null);
+  drawShops(ctx);
 }

@@ -13,18 +13,27 @@
 // The signs planted are `S.after.signs` ({ id, f, r, askew, pull, big }).
 
 import { S } from '../state.js';
+import { source, sink } from '../flow.js';
 import { CROWD_FILES, AFTER_SIGN_TIMBER, AFTER_SIGN_GAP } from '../config.js';
 import { arand, nextId } from './util.js';
 import { benchSigns, bigSigns } from './levels.js';
 import { crowdRanks, inkAround } from './union.js';
+import { takeBlock, setBlock, pileCount, pileRoom } from './piles.js';
 
-// A joining at the workshop, a sign a bench: false while timber is short of one.
+// A joining at the workshop, a sign a bench: false while its own timber is
+// short of one or its rack is full. Its four blocks come off the timber
+// walked to it (`benchtimber`, bodies.js) and the sign stands in its rack,
+// a block of its own, until a body carries it out (piles.js): the bench is
+// the tool the blocks change shape at.
 export function joinSign() {
-  const st = S.after.stock;
-  const n = Math.min(benchSigns(), Math.floor(st.timber / AFTER_SIGN_TIMBER));
+  const n = Math.min(benchSigns(), Math.floor(pileCount('benchtimber') / AFTER_SIGN_TIMBER), pileRoom('signs'));
   if (n < 1) return false;
-  st.timber -= AFTER_SIGN_TIMBER * n;
-  st.signs += n;
+  for (let k = 0; k < n; k++) {
+    let took = 0;
+    for (let j = 0; j < AFTER_SIGN_TIMBER; j++) if (takeBlock('benchtimber')) took++;
+    sink('plank', took, 'sign');
+    if (setBlock('signs')) source('sign', 1, 'workshop');
+  }
   return true;
 }
 

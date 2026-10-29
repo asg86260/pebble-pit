@@ -26,6 +26,7 @@ import { takeMess } from './shovel.js';
 import { strollTo, elbowIdle, amble, stepable, ROAM_PACE } from './idle.js';
 import { park } from './lifts.js';
 import { sfx } from '../audio.js';
+import { push, dump } from '../carry.js';
 
 // Everybody who hauls: the haulers, and the forklifts, which are not crew but
 // share the haulers' books (crew/lifts.js).
@@ -141,9 +142,8 @@ function underfoot(w, ahead = 0) {
 function scoop(w, c, now) {
   const r = topGrain(c);
   if (r < 0) return false;
-  (w.load ||= []).push(at(floor, c, r));
+  push(w, at(floor, c, r));
   put(floor, c, r, 0);
-  w.carry++;
   tookOne(w);
   w.next = now + scoopMs();
   return true;
@@ -465,7 +465,7 @@ export function haulerWork(w, c) {
       // starts inside the hill.
       const from = w.x + WORKER / 2, up = (tip.belt ? w.y : S.groundY - WORKER) - P;
       const above = S.groundY - WORKER - P - up;         // how far over the ground line the hands are
-      for (let i = 0; i < w.carry; i++) {
+      const thrown = dump(w, cell => {
         // Onto the band, or onto the pile or into the drain (`holeLanding`
         // in pit.js).
         const land = tip.belt ? bandLanding(from) : holeLanding();
@@ -479,12 +479,10 @@ export function haulerWork(w, c) {
         const rise = Math.max(above + TOSS_RISE * (1 + bell() * TOSS_RISE_VARY),
                               tip.belt ? S.groundY - bandY() + P * 2 : 0);
         const v = aim(fx, fy, land, P, rise);
-        spawnChip(fx, fy, v.vx, v.vy, w.load?.[i] || 1);
-      }
+        spawnChip(fx, fy, v.vx, v.vy, cell || 1);
+      });
       sfx('cart-tip', { x: from });
-      w.stored = (w.stored || 0) + w.carry;
-      w.carry = 0;
-      w.load = [];
+      w.stored = (w.stored || 0) + thrown;
       unbook(w);                             // the room it booked is spent
       w.goal = 'seek';
     }

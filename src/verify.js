@@ -46,6 +46,13 @@ import { deepTop, deepFloor, deepX1, coilLine, coilThick, standOfStation } from 
 import { yardReads } from './persist.js';
 import { afterlifeOn, hellOn } from './acts.js';
 import { AFTER_STORY } from './after/story.js';
+import { units } from './after/ground.js';   // one ground
+import { census, CENSUS_KINDS } from './conserve.js';
+import { flowNet, flowBy } from './flow.js';
+import { afterGround } from './state.js';                // one ground
+import { blockProblems } from './grid.js';              // one ground
+import { millView } from './after/mill.js';   // track A: saw mill
+import { AFTER_BLOCK } from './config.js';   // track A: saw mill
 import { HELL_STORY } from './hell/story.js';
 import { allOverlaps, offGround } from './footprints.js';
 
@@ -440,7 +447,7 @@ export function verifyWorld() {
   // copy drifts; this line is what makes the copy safe, not care taken at the
   // places that write the cells wholesale.
   if (S.tick % LEDGER_EVERY === 0) {
-    for (const [name, b] of [['the hole', pit], ['the yard', floor], ['the cut', cut]]) {
+    for (const [name, b] of [['the hole', pit], ['the yard', floor], ['the cut', cut], ["act 3's ground", afterGround]]) {
       if (!b.grid || b.n == null) continue;
       // One walk of the cells answers every ledger the grid keeps: the
       // grains, the dust the rift swallows against, and a column at a time
@@ -703,6 +710,70 @@ export function verifyWorld() {
     if (off.length) fail('an act 3 station stands off its own ground', off.join('; '));
   }
 
+  // --- rule 23: a unit appears or vanishes only at a named door -------------
+  // The units of act 3 -- on its ground, in the hand, in the air, in its
+  // bodies' arms, inside the saw mill -- and the deep's scales -- on its bed,
+  // in its water, on the cursor, in the gatherers' arms -- change in number
+  // only where a door says so (src/flow.js): a tree felled, a cut at the saw,
+  // a sign joined, a tip through the hatch, a sign planted, an order laid, a
+  // band laid, a blow that sheds scales, the crusher. A
+  // pile's count is no number but its cells, so there is nothing for it to
+  // disagree with; what can go wrong is a unit written or erased round the
+  // doors, and that is the frame this fails on. Read against the frame
+  // before, and started over whenever the act's state is replaced (a save
+  // read, the act begun), which sets the units from the save and not by a door.
+  conserved();
+
+  // one ground
+  // --- rule 26: act 3's ground holds every unit whole, apart, and held up ----
+  // Every good lying in act 3 is a unit of its one ground (DESIGN.md, "One
+  // resource system for every act"): no two blocks share a cell (the block
+  // layer names every cell of a block and no other), none stands in the
+  // terrain laid under it, and none is left in the air -- a block with
+  // nothing under any of its columns while those columns sleep is one the
+  // heap rule will never move again.
+  if (afterlifeOn() && S.after && afterGround.grid && S.tick % LEDGER_EVERY === 0) {
+    const g = afterGround, bad = blockProblems(g);
+    const awake = g.awakeOf === g.grid ? g.awake : null;
+    for (const u of units()) {
+      let under = u.r0 === 0, stirring = false;
+      for (let c = u.c0; c < u.c0 + u.z; c++) {
+        if (u.r0 > 0 && g.grid[(u.r0 - 1) * g.cols + c]) under = true;
+        if (awake && awake[c]) stirring = true;
+        for (let r = u.r0; r < u.r0 + u.z; r++) if (g.fixed && g.fixed(c, r)) { bad.push(`the ${u.kind} at ${u.c0},${u.r0} stands in the ground`); r = 1e9; c = 1e9; }
+      }
+      if (!under && !stirring) bad.push(`the ${u.kind} at ${u.c0},${u.r0} hangs in the air`);
+    }
+    if (bad.length) fail("act 3's ground holds a unit wrong", bad.slice(0, 6).join('; '));
+  }
+
+  // track C: one carry
+  // --- rule 27: an act 3 body's arms hold cells, counted ---------------------
+  // A member's load is an array of cell values and its count their number
+  // (src/carry.js), as a yard hauler's is: a name or a number standing in for
+  // goods is a unit that is not anywhere, and an empty cell is a phantom.
+  if (afterlifeOn() && S.after) {
+    for (const w of S.after.bodies) {
+      if (w.load == null) continue;
+      if (!Array.isArray(w.load)) fail('an act 3 body\'s load is not cells', `body ${w.id} holds ${JSON.stringify(w.load)}`);
+      else if ((w.carry || 0) !== w.load.length) fail('an act 3 body\'s load and its count disagree', `body ${w.id} carries ${w.carry} with ${w.load.length} in the load`);
+      else if (w.load.some(v => !(v > 0))) fail('an act 3 body holds a unit that is not there', `body ${w.id}: ${JSON.stringify(w.load)}`);
+    }
+  }
+
+  // track A: saw mill
+  // --- rule 25: the log on the saw's bed adds up -------------------------------
+  // A log only changes shape at the blade, into pieces that add up (DESIGN.md,
+  // "Act 3's goods are blocks", rule 2): what is left of it, the block growing
+  // past the blade, the kerf in the teeth, and the blocks and grains its
+  // strokes counted out as they made them are its sixteen cells, every frame.
+  if (afterlifeOn() && S.after && S.after.saw && S.after.saw.bed) {
+    const v = millView(), bed = S.after.saw.bed, Z = AFTER_BLOCK.log, z = AFTER_BLOCK.plank;
+    const cells = v.log.left * Z + v.grow * z * z + v.teeth + bed.cut * z * z + bed.dust;
+    if (Math.abs(cells - Z * Z) > 1e-6 || v.log.eaten < 0 || v.log.eaten > Z)
+      fail("the log on the saw mill's bed does not add up", `${cells} cells of ${Z * Z}: ${JSON.stringify(bed)}`);
+  }
+
   verifyParty();
 }
 
@@ -810,3 +881,18 @@ let serpentWas = -1, woundWas = 0, stunWas = false, mealWas = 0;  // page: the r
 let playedWas = 0, playedReads = -1;  // cache: keyed by yardReads
 let levelWas = -1, levelReads = -1;  // cache: keyed by yardReads
 export function forgetSerpent() { serpentWas = -1; levelWas = -1; stunWas = false; mealWas = S.meal; forgetFangs(); }
+
+let unitsWas = null;   // cache: the act, the reading of the yard, its census and the doors' net on the frame before
+function conserved() {
+  const now = { a: S.after, reads: yardReads, n: census(), net: { ...flowNet() } };
+  const was = unitsWas;
+  unitsWas = now;
+  if (!was || was.a !== now.a || was.reads !== now.reads) return;
+  for (const kind of CENSUS_KINDS) {
+    const moved = now.n[kind] - was.n[kind], made = (now.net[kind] || 0) - (was.net[kind] || 0);
+    if (moved !== made) {
+      const doors = Object.entries(flowBy()).filter(([k]) => k.startsWith(kind + ':')).map(([k, v]) => `${k} ${v}`).join(', ');
+      fail('a unit appeared or vanished away from a source or a sink', `${kind}: ${was.n[kind]} -> ${now.n[kind]}, the doors made ${made} (${doors || 'none yet'})`);
+    }
+  }
+}

@@ -17,7 +17,8 @@ group('a mid-act act 3 and hell yard read back equal', async () => {
   window.__goPlace('hell');
   run(6);
   S.hell.brimstone = 11; S.hell.blows[1] = 5; S.hell.ore.cinder = 2; S.hell.chamber = 1;
-  S.after.rebel = 9; S.after.stock.logs = 3; S.after.crew = { woodcutter: 1 };
+  S.after.rebel = 9; window.__afterGrant({ logs: 3 }); S.after.crew = { woodcutter: 1 };
+  run(2);                                  // the logs just set down come to rest: a read settles them, so a save mid-roll would not read back the same
   yard.persist();
   const want = JSON.stringify([S.after, S.hell]);
   const blob = saved();
@@ -40,8 +41,7 @@ group('an old-shaped act blob is filled from the blank', async () => {
   window.__goPlace('hell');
   yard.persist();
   const blob = saved();
-  const stockKeys = Object.keys(blob.after.stock);
-  delete blob.after.signs; delete blob.after.stock[stockKeys[0]]; delete blob.after.begun;
+  delete blob.after.signs; delete blob.after.rebel; delete blob.after.begun;
   blob.after.wardens = [1];
   blob.after.gone = 'retired';
   delete blob.hell.flights; delete blob.hell.faces[0].crust; delete blob.hell.furnaces[1].hopper;
@@ -51,7 +51,7 @@ group('an old-shaped act blob is filled from the blank', async () => {
   const a = S.after, h = S.hell;
   const out = [
     ok(Array.isArray(a.signs) && a.begun !== undefined, 'a top-level field the act 3 save lacks comes back'),
-    ok(a.stock[stockKeys[0]] === 0, 'and a missing stock count comes back zero'),
+    ok(a.rebel === 0, 'and a missing count comes back zero'),
     ok(!('wardens' in a) && !('gone' in a), 'and a key the blank lacks is dropped'),
     ok(h.flights === 0, 'a top-level field hell\'s save lacks comes back'),
     ok(h.faces[0].crust === 0 && h.furnaces[1].hopper && typeof h.furnaces[1].hopper === 'object',

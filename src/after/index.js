@@ -12,16 +12,18 @@
 // else (DESIGN.md, "Rules and consequences to check", the save shape).
 
 import { S } from '../state.js';
-import { AFTER_STOCK, AFTER_START_BUILT } from '../config.js';
+import { AFTER_START_BUILT } from '../config.js';
 import { afterlifeOn } from '../acts.js';
 import { stepRebel, clickPlace } from './rebel.js';
 import { stepGrove, blankPlots } from './grove.js';
-import { stepMill, forgetSpills } from './mill.js';
+import { stepMill, forgetSpills, heapRecord } from './mill.js';
+import { stepPiles, standPiles } from './piles.js';
+import { groundRecord } from './ground.js';
 
 import { stepUnion, seedCrowd, syncRims } from './union.js';
 import { stepStrike } from './strike.js';
 import { stepBodies } from './bodies.js';
-import { stepHand, settleHand } from './hand.js';
+import { handRecord, settleHand } from './hand.js';
 import './roster.js';                   // the act's posts, stood on the yard's roster
 import { stepBubbles, forgetBubbles } from './bubbles.js';
 import { secs } from './util.js';
@@ -29,14 +31,14 @@ import { settleHeld } from '../placebodies.js';
 import { readOver } from '../placesave.js';
 
 // The act's facts, as the spec's save shape names them and the owner's
-// settled calls (2026-10-18) reshaped them: rebel, the act's coin; the
-// chain's stock; each soul's inked rim pieces, a character a soul
+// settled calls (2026-10-18) reshaped them: rebel, the act's coin; each soul's inked rim pieces, a character a soul
 // (union.js); the idle members waiting in the crowd past the podium's spots
 // (`camp`, a count), the share of their next line owed (`lines`) and the
 // spot it was last said at (`said`), and how many of each job the rosters
 // want (`crew`); the grove's plots and each tree's growth; the signs
 // planted; the camp's stations built and those going up a piece
-// at a time (`raising`), and how many times each named upgrade and each
+// at a time (`raising`), the rows bought in timber whose blocks are still
+// being carried (`orders`, build.js), and how many times each named upgrade and each
 // job's seat is bought (`ups`); the gate reached. When each upgrade was
 // bought (`upAt`), so what it puts on screen fades in. And what the loop
 // added to stand it up: the act's clock (`t`) and its chance (`seed`) and
@@ -45,12 +47,14 @@ import { readOver } from '../placesave.js';
 // axe bought and in hand, the pair's last line (`shout`), the heap last
 // tipped and each station last worked by hand (`tipAt`, `workAt`), the
 // motes coming down, the bodies -- members walking out, at
-// the podium, at their jobs and building -- the throne's speech, the logs lying where
-// their trees fell (grove.js, `groundLogs`), the goods in the player's hand
-// (hand.js, `hand`), and the last id handed out.
+// the podium, at their jobs and building -- the throne's speech, the act's
+// ground with every good lying on it (ground.js, `ground`: written by the
+// saver, null between), the sawdust heap's grains (`heap`, the saw mill's
+// own plot, written by the saver), what an older save handed over to lay on
+// it (`lay`, the one-ground migration), the goods in the player's hand (hand.js,
+// `hand`), and the last id handed out.
 export const blankAfter = () => ({
   rebel: 0,
-  stock: Object.fromEntries(AFTER_STOCK.map(k => [k, 0])),
   rims: '',
   camp: 0,
   crew: {},
@@ -60,6 +64,7 @@ export const blankAfter = () => ({
   signs: [],
   built: [],
   raising: {},
+  orders: [],
   ups: {},
   upAt: {},
   gate: 0,
@@ -77,7 +82,12 @@ export const blankAfter = () => ({
   speech: null,
   gateAt: null,
   brimAt: null,
-  groundLogs: [],
+  // the saw mill's machine (mill.js): its wheel, the log on its bed, the
+  // blocks and grains on their way out, the sawyer's trip; null until it turns
+  saw: null,
+  ground: null,
+  heap: null,
+  lay: [],
   hand: null,
   ids: 0
 });
@@ -93,6 +103,7 @@ export function beginAfter() {
   S.after.begun = S.after.seed;
   S.after.plots = blankPlots();
   S.after.built = [...AFTER_START_BUILT];
+  standPiles();
   seedCrowd();
   return S.after;
 }
@@ -119,8 +130,8 @@ export function stepAfter(c) {
   stepRebel(c);
   stepGrove(c);
   stepBodies(c);
-  stepHand(c);
   stepMill(c);
+  stepPiles(c);
   stepUnion(c);
   stepStrike(c);
   stepBubbles(c);
@@ -140,14 +151,24 @@ export function clickAfter(wx, wy) {
 // brought up to the field first (union.js keeps them as bytes between).
 export const SAVE = {
   fields: ['after'],
-  write(out) { if (S.after) syncRims(); out.after = S.after ? JSON.parse(JSON.stringify(S.after)) : null; },
+  write(out) {
+    if (S.after) syncRims();
+    out.after = S.after ? JSON.parse(JSON.stringify(S.after)) : null;
+    // the ground's cells, run-length, as the yard's floor is written (ground.js)
+    if (out.after) { out.after.ground = groundRecord(); out.after.heap = heapRecord(); }
+    // goods in the hand are off their pile's stock and in no save of the
+    // yard's: written out here, to be laid on the floor when read (hand.js)
+    if (out.after) out.after.hand = handRecord();
+  },
   read(s) {
     const a = s.after;
     // An older save's wardens, which nothing reads, fall away with every key
     // the blank lacks (placesave.js); its older job shapes were brought to
     // today's before this, on the raw save (src/migrations/).
     S.after = a && typeof a === 'object' ? readOver(blankAfter(), a) : null;
-    if (S.after) { settleHeld(S.after.bodies); settleHand(); }
+    // The ground stood up from its cells, the terrain laid under them again
+    // (ground.js), and anything an older save handed over laid on it.
+    if (S.after) { standPiles(); settleHeld(S.after.bodies); settleHand(); }
   },
   blank() { S.after = null; }
 };

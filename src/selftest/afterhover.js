@@ -5,6 +5,7 @@
 import { S } from '../state.js';
 import { newRun, settle, until, ok, point, canvas } from './kit.js';
 import { msg } from '../lang.js';
+import { P } from '../config.js';
 import { stationBox, stationParts } from '../after/place.js';
 import { toScreen } from '../world.js';
 
@@ -26,23 +27,46 @@ const hoverAt = async (wx, wy) => {
 const tipText = () => { const t = document.getElementById('tip'); return t && !t.hidden ? t.textContent.trim() : ''; };
 
 export const TESTS = [
-  ['act 3: the hover names a station by its drawing and the sawdust heap by its heap', async () => {
+  // No tooltip over a working part or while one is worked (DESIGN.md, "Act
+  // 3's goods are blocks", rule 4): the flywheel and the heap are the hand's.
+  ['act 3: the hover names a station by its drawing, and says nothing over a working part or while one is worked', async () => {
     newRun();
     await settle();
     await upThere();
-    const m = stationBox('mill'), h = stationParts('heap').heap;
-    window.__look((m.x + h.x) / 2 - S.viewW / 2);
+    // Sawdust on the heap, so it is a part the hand works: an empty heap is
+    // only named. (This held only while the pointer over the mill opened
+    // its board, which up here it no longer does.)
+    window.__afterGrant({ sawdust: 8 });
+    await settle(0.1);
+    const m = stationBox('mill'), h = stationParts('heap').heap, w = stationParts('mill').wheel;
+    // the mill at the window's left, the heap under its bed, its board's room on its right
+    window.__look(m.x - P * 2);
     await settle(0.2);
     await hoverAt(m.x + m.w / 2, m.y + m.h / 2);
     await until(() => tipText());
     const station = tipText();
+    await hoverAt(w.x, w.y);
+    for (let k = 0; k < 20 && tipText(); k++) await settle(0.05);
+    const wheel = tipText();
     await hoverAt(h.x + h.w / 2, h.y + h.h - 4);
-    await until(() => tipText() === msg('hover-heap'));
+    for (let k = 0; k < 20 && tipText(); k++) await settle(0.05);
     const heap = tipText();
+    // Named over the frame, then taken hold of at its rim and dragged back
+    // out over the frame: still worked, so nothing said.
+    await hoverAt(m.x + m.w / 2, m.y + m.h / 2);
+    await until(() => tipText());
+    const r = canvas().getBoundingClientRect(), rim = toScreen(w.x + w.r, w.y), frame = toScreen(m.x + m.w / 2, m.y + m.h / 2);
+    point('pointerdown', r.left + rim.x, r.top + rim.y);
+    point('pointermove', r.left + frame.x, r.top + frame.y);
+    await settle(0.3);
+    const working = tipText();
+    point('pointerup', r.left + frame.x, r.top + frame.y);
     window.__actsOn(null);
     return [
       ok(station === msg('after-build-mill'), 'over the saw mill the label is its name', station),
-      ok(heap === msg('hover-heap'), 'over the heap it says sawdust heap', heap)
+      ok(wheel === '', 'over its flywheel nothing is said', wheel),
+      ok(heap === '', 'nor over the sawdust heap, worked by hand', heap),
+      ok(working === '', 'nor while the flywheel is held, wherever the pointer goes', working)
     ];
   }],
   ['act 3: the full sawdust heap\'s mark says why, and the cursor on it is the help hand', async () => {
@@ -51,14 +75,14 @@ export const TESTS = [
     await upThere();
     const h = stationParts('heap').heap;
     window.__look(h.x - S.viewW / 2);
-    S.after.stock.sawdust = 1e6;
+    window.__afterGrant({ sawdust: 1e6 });
     await settle(0.3);
     const full = !!S.pileFull['after-sawdust'];
     const at = window.__pileMarkAt('after-sawdust');
     await hoverAt(at.x, at.y);
     await until(() => tipText() === msg('after-stall-heap'));
     const tip = tipText(), cursor = canvas().style.cursor;
-    S.after.stock.sawdust = 0;
+    window.__afterGrant({ sawdust: -1e6 });
     await settle(0.3);
     const cleared = !S.pileFull['after-sawdust'];
     window.__actsOn(null);

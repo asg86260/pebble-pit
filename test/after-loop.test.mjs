@@ -7,18 +7,22 @@
 // (`__afterCrowd`), the dev travel up (`__goPlace`) with the act's opening
 // beats marked played, since the story before the loop is not what is checked.
 import { bestMs, group, ok, run, runUntil, yard, P } from './helpers.mjs';
+import { goodCount } from '../src/after/piles.js';
+import { siteLoads } from '../src/after/build.js';
+import { lying } from '../src/after/ground.js';
 import { TREE_CHOPS, AFTER_LOGS_A_TREE, AFTER_SAWDUST_BRIM, CROWD_FILES, RIM_PIECES, MEET_MEMBERS, AFTER_GATES,
          ACT_CAPTION_S, AFTER_DIG_CLICKS, AFTER_PODIUM_REBEL, AFTER_PODIUM_CLIMB, AFTER_PODIUM_TOPS, AFTER_PODIUM_U, AFTER_PLOTS0, AFTER_PLOT_MAX,
          AFTER_UPGRADES, AFTER_CARDS, AFTER_YARD_COINS, AFTER_FIRST_MEMBERS, STRIKE_SHARE, AFTER_AGITATE_REBEL, AFTER_AGITATE_S,
-         AFTER_BUILD_PIECES, AFTER_LOG_TIMBER, AFTER_LOG_SAWDUST, AFTER_SAW_S, AFTER_TIP_LOAD,
+         AFTER_BUILD_PIECES, AFTER_LOG_TIMBER, AFTER_KERF_GRAINS, AFTER_MILL, AFTER_SAW_S, AFTER_TIP_LOAD,
          AFTER_BUILDS, AFTER_SEAT_BILLS, AFTER_WALK, AFTER_SIGN_INK_S, AFTER_BURN_S,
-         GESTURE_STRAIN_S } from '../src/config.js';
+         GESTURE_STRAIN_S, AFTER_PILES } from '../src/config.js';
 import { speechTarget } from '../src/after/union.js';
 import { stepAfter } from '../src/after/index.js';
 import { crowdSpan } from '../src/render/after.js';
 import { pileAt, stationBox, plotX, speakerAt, afterFloor, idleSpots, AP } from '../src/after/place.js';
 import { groveIcons } from '../src/after/gestures.js';
-import { sawOn, saw, lift, spin, tipHeap } from './after-hands.mjs';
+import { sawOn, saw, lift, spin, tipHeap, loadBed } from './after-hands.mjs';
+import { millView, grainsLanded } from '../src/after/mill.js';
 
 const S = yard.S;
 const read = () => window.__afterRead();
@@ -50,7 +54,14 @@ const inked = (n = Infinity) => rims().slice(0, n).split('').reduce((t, c) => t 
 const settle = () => runUntil(() => read().walking === 0, 120);
 // A member put on `job` as a player puts one: the + on its roster, and with
 // its seats full a seat bought on its station's board first.
-const putOn = job => window.__afterPress(job) || (!!window.__buy(`after-seat-${job}`) && window.__afterPress(job));
+// The timber pile topped up to its brim before a bill that names timber: a
+// pile holds no more than its brim (after/piles.js), so a check buying
+// several rows grants it again between them.
+const topUp = () => window.__afterGrant({ timber: AFTER_PILES.timber.brim });
+// A bill paid in timber is an order (after/build.js): its row lands when idle
+// members have carried its last block to its station.
+const landed = () => runUntil(() => !S.after.orders.length, 240);
+const putOn = job => window.__afterPress(job) || (topUp(), !!window.__buy(`after-seat-${job}`) && (landed(), window.__afterPress(job)));
 const line = () => { const at = window.__afterPair(); return window.__afterClick(at.x, at.y); };
 // The camp given members, as the signs would send them: the front of the crowd
 // made members, and the clock turned until they have walked out and stand on
@@ -88,10 +99,13 @@ group("the podium is a ladder bought on the pedestal's card, a rung at each supp
   window.__afterGrant({ rebel: 5000, timber: 500 });
   const short = window.__buy('after-podium');
   const { marks } = AFTER_UPGRADES['after-podium'];
-  const n = rims().length, toMark = k => window.__afterCrowd((i, v) => (i < Math.ceil(n * marks[k] * STRIKE_SHARE) + 2 ? 9 : v));
+  // Read against the crowd as it stands: souls keep rising into its back while
+  // a rung's timber is carried.
+  const toMark = k => { const n = rims().length; return window.__afterCrowd((i, v) => (i < Math.ceil(n * marks[k] * STRIKE_SHARE) + 2 ? 9 : v)); };
   toMark(0); run(0.1);
   const y0 = speakerAt(0).y;
   const bought = window.__buy('after-podium'), early = window.__buy('after-podium');
+  landed();
   run(AFTER_PODIUM_CLIMB.s * AFTER_PODIUM_CLIMB.rise[1]);
   const yMid = speakerAt(0).y;
   run(AFTER_PODIUM_CLIMB.s);
@@ -103,7 +117,7 @@ group("the podium is a ladder bought on the pedestal's card, a rung at each supp
   const paid = S.after.motes.slice(m0).reduce((s, m) => s + m.v, 0);
   run(10);
   const rungs = [];
-  for (let k = 1; k < marks.length; k++) { toMark(k); run(0.1); rungs.push(window.__buy('after-podium')); run(AFTER_PODIUM_CLIMB.s); }
+  for (let k = 1; k < marks.length; k++) { toMark(k); run(0.1); topUp(); rungs.push(window.__buy('after-podium')); landed(); run(AFTER_PODIUM_CLIMB.s); }
   const done = window.__buy('after-podium');
   const top = afterFloor() - speakerAt(0).y;
   yard.persist(); window.__reload(); run(0.1);
@@ -197,7 +211,7 @@ group('a felled tree leaves a stump that blocks the plot until it is dug, and di
   // Read fresh each time: the harness reads the save back every five seconds.
   const plot = () => S.after.plots[0];
   const p0 = { ...plot() };
-  const down = S.after.groundLogs.filter(q => q.i === 0).length === AFTER_LOGS_A_TREE && p0.stump && p0.stage === 0;
+  const down = lying().filter(q => q.i === 0).length === AFTER_LOGS_A_TREE && p0.stump && p0.stage === 0;
   run(200);
   const blocked = plot().stump && plot().stage === 0;
   const r0 = read().rebel;
@@ -238,15 +252,18 @@ group('the grove\'s card clears plots, each with its sapling, to its most', asyn
   up();
   window.__afterGrant({ rebel: 3000, timber: 400 });
   const bought = [];
-  for (let k = 0; k < AFTER_PLOT_MAX; k++) bought.push(window.__buy('after-plot'));
+  for (let k = 0; k < AFTER_PLOT_MAX; k++) { topUp(); bought.push(window.__buy('after-plot')); landed(); }
   const plots = S.after.plots;
-  const grow = window.__buy('after-grow'), big = window.__buy('after-tree');
+  topUp();
+  const grow = window.__buy('after-grow');
+  landed(); topUp();
+  const big = window.__buy('after-tree');
   window.__actsOn(null);
   return [
     ok(bought.filter(Boolean).length === AFTER_PLOT_MAX - AFTER_PLOTS0 && !bought.at(-1), 'a plot a press, to the most it clears',
        bought.join(' ')),
-    ok(plots.length === AFTER_PLOT_MAX && plots.slice(AFTER_PLOTS0).every(p => p.stage === 1),
-       'each new plot has its sapling set', plots.map(p => p.stage).join(' ')),
+    ok(plots.length === AFTER_PLOT_MAX && plots.slice(AFTER_PLOTS0).every(p => p.stage >= 1 && p.at != null),
+       'each new plot has its sapling set (growing since, while the next timber is carried)', plots.map(p => p.stage).join(' ')),
     ok(grow && big, 'faster growth and bigger trees are on the same card')
   ];
 });
@@ -295,9 +312,9 @@ group('a station bought on the shack is carried in as a pile and raised off it a
     run(0.1);
     const r = S.after.raising.mill;
     if (bands.at(-1) !== r.n) bands.push(r.n);
-    const on = r.brought - r.taken;
+    const on = siteLoads('mill');
     if (piles.at(-1) !== on) piles.push(on);
-    carried ||= S.after.bodies.some(b => b.load === 'carry');
+    carried ||= S.after.bodies.some(b => b.phase === 'carry');
   }
   const n = S.after.raising.mill.at.length;
   run(60);
@@ -344,12 +361,17 @@ group('a station is worked by hand before any member, and a post works it slower
   up();
   window.__afterGrant({ rebel: 500, logs: 20 });
   raise('mill');
+  // the mound emptied, so five logs' timber has room on it
+  window.__afterGrant({ timber: -read().timber });
   const t0 = read().timber;
-  spin('mill', 2, () => read().timber - t0 >= 5 * AFTER_LOG_TIMBER);
+  // each log swept onto the bed by hand, then the wheel spun through it
+  for (let k = 1; k <= 5; k++) { loadBed(); spin('mill', 2, () => read().timber - t0 >= k * AFTER_LOG_TIMBER, 20); }
   const byHand = read().timber - t0;
   settle();
   putOn('sawyer');
   runUntil(() => S.after.bodies.some(b => b.job === 'sawyer' && b.at === 'mill'), 120);
+  // the pile stood up again for the post, and the mound the hand filled emptied
+  window.__afterGrant({ logs: 6, timber: -read().timber });
   const l0 = read().logs;
   run(12);
   const byPost = l0 - read().logs;
@@ -362,17 +384,18 @@ group('a station is worked by hand before any member, and a post works it slower
 
 group('the heap at its brim stops the saw, and a load dragged off it tips through the notch', async () => {
   up();
-  window.__afterGrant({ rebel: 2000, logs: 4, timber: 40 });
+  window.__afterGrant({ rebel: 2000, logs: 4 });
   raise('mill');
   window.__afterGrant({ sawdust: AFTER_SAWDUST_BRIM });
+  loadBed();
   spin('mill', 2, () => false, 4);
   run(12);                                   // the wheel let go coasts to a stop
-  const stopped = read().logs === 4;
+  const stopped = !!millView().log && millView().log.eaten === 0;
   const d0 = read().sawdust;
   const tipped = tipHeap();
   const d1 = read().sawdust;
-  spin('mill', 2, () => read().logs === 3, 10);
-  const sawn = read().logs === 3;
+  spin('mill', 2, () => millView().log == null || millView().log.eaten > 0, 10);
+  const sawn = millView().log == null || millView().log.eaten > 0;
   window.__actsOn(null);
   return [
     ok(stopped, 'the heap at its brim stops the saw'),
@@ -404,10 +427,10 @@ group('the chain makes timber and sawdust, then signs, and the heap is tipped', 
     run(0.25);
     // A sweeper tips a load short of the brim (bodies.js `tipReady`), so the
     // heap only has to come within a load of it.
-    if (S.after.stock.sawdust >= AFTER_SAWDUST_BRIM - AFTER_TIP_LOAD) brim = true;
+    if (goodCount('sawdust') >= AFTER_SAWDUST_BRIM - AFTER_TIP_LOAD) brim = true;
     // A sawyer carrying a load to the notch, or an idle member standing at
     // it tipping (bodies.js, the sweep): nobody clicks here.
-    if (S.after.bodies.some(b => b.load === 'tip') || (S.after.tipAt != null && S.after.bodies.some(b => b.errand === 'sweeper'))) tipped = true;
+    if (S.after.bodies.some(b => b.tipping) || (S.after.tipAt != null && S.after.bodies.some(b => b.errand === 'sweeper'))) tipped = true;
   }
   const mid = read();
   window.__actsOn(null);
@@ -493,24 +516,35 @@ group('a big crowd costs the frame little, and only its files in view are drawn'
   ];
 });
 
-group('the mill\'s second blade saws two logs a cut, at the fixed split', async () => {
+group('the mill\'s second blade cuts a log in half the strokes, at the fixed split', async () => {
   up();
   members(2);
   window.__afterGrant({ rebel: 2000, timber: 60 });
   raise('mill');
   putOn('sawyer');
   const blade = window.__buy('after-blade');
-  window.__afterGrant({ logs: 6 });
+  landed();
+  // The pile emptied, so all six logs' timber has room on it.
+  window.__afterGrant({ logs: 6, timber: -goodCount('timber') });
   const t0 = read().timber, d0 = read().sawdust;
   runUntil(() => S.after.bodies.some(b => b.at === 'mill'), 90);
-  const cuts = [];
-  let last = read().logs;
-  runUntil(() => { const l = read().logs; if (l !== last) { cuts.push(last - l); last = l; } return l === 0; }, 90);
+  // the strokes each log takes on the bed, from set down to its last column
+  const strokes = [];
+  let on = null;
+  const g0 = grainsLanded();
+  runUntil(() => {
+    const s = S.after.saw, bed = !!(s && s.bed);
+    if (bed && on == null) on = s.n;
+    if (!bed && on != null) { strokes.push(s.n - on); on = null; }
+    return read().logs === 0 && !bed && s && !s.out.length && !s.dust.length && !s.trip;
+  }, 180);
+  // a log's strokes with one blade: carried up to the blade, then each column's
+  const one = 1 + AFTER_MILL.strokes.reduce((n, k) => n + k, 0);
   window.__actsOn(null);
   return [
-    ok(blade && cuts.every(c => c === 2), 'with the second blade every cut takes two logs', cuts.join(' ')),
-    ok(read().timber - t0 === 6 * AFTER_LOG_TIMBER && read().sawdust - d0 === 6 * AFTER_LOG_SAWDUST,
-       'a log saws into the fixed timber and sawdust', `${read().timber - t0} timber, ${read().sawdust - d0} sawdust`)
+    ok(blade && strokes.length === 6 && strokes.every(n => n <= Math.ceil(one / 2) + 1), 'with the second blade every log is cut in about half the strokes', `${strokes.join(' ')} of ${one}`),
+    ok(read().timber - t0 === 6 * AFTER_LOG_TIMBER && grainsLanded() - g0 === 6 * AFTER_KERF_GRAINS,
+       'a log saws into the fixed timber and sawdust', `${read().timber - t0} timber, ${grainsLanded() - g0} grains onto the heap (an idle hand tips it meanwhile)`)
   ];
 });
 
