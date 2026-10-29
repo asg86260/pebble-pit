@@ -179,6 +179,7 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
+- The chips off a builder's hammer are the paper over buildings and ground and the ink over the sky, on either page (src/selftest/work.js, "a builder's grit is plain paper or ink").
 - A disk in the corner fades up for a moment as the game saves (src/selftest/savemark.js).
 - A log at the saw mill saws into four timber blocks and nothing else: the sawdust heap, its hatch, its tip and its upgrade row are gone (test/after-mill-machine.test.mjs, test/no-sawdust.test.mjs).
 - Act 3's goods have their own colors: each log, timber block and sign is one of four tones of its good -- bark brown, pale wood, slate -- picked when it is made and kept wherever it goes, so a pile reads as separate pieces (test/after-palette.test.mjs).

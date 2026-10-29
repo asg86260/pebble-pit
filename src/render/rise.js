@@ -26,6 +26,14 @@ export function risingPlaces() {
 // Whether this one place is going up right now.
 export const rising = place => risingPlaces().some(r => r.place === place);
 
+// The courses each rising place last drew, as world rects: what stands of a
+// building that is going up, for whatever is painted in front of it and has
+// to know what is behind (the builder's grit, buildsites.js). Kept by place
+// and written over on every draw, and read only for the places still
+// rising, so a build finished or cancelled leaves nothing standing here.
+const laidAt = new Map();   // page: place -> the rects its last draw let through
+export const laidCourses = () => risingPlaces().flatMap(r => laidAt.get(r.place) || []);
+
 // Clip a building's own draw to the cells that have gone up, laid the way the
 // shop tile lays its glyph (`drawGlyph` in glyphs.js, DESIGN.md "A tile being
 // built shows the building"): bottom course first, left to right, a cell at a
@@ -51,11 +59,14 @@ export function withRise(place, x, bottom, w, h, fn) {
   const laid = Math.floor(p * cols * rows);
   const full = Math.floor(laid / cols), part = laid % cols;
 
+  const rects = [];
+  if (full) rects.push({ x: left, y: foot - full * P, w: cols * P, h: full * P });
+  if (part) rects.push({ x: left, y: foot - (full + 1) * P, w: part * P, h: P });
+  laidAt.set(place, rects);
   if (!laid) return;
   ctx.save();
   ctx.beginPath();
-  if (full) ctx.rect(left, foot - full * P, cols * P, full * P);
-  if (part) ctx.rect(left, foot - (full + 1) * P, part * P, P);
+  for (const q of rects) ctx.rect(q.x, q.y, q.w, q.h);
   ctx.clip();
   fn();
   ctx.restore();

@@ -2,11 +2,11 @@
 
 import { until, state, ok, point, onScreen, hoverBench, run, haveRock, put } from './kit.js';
 import { S } from '../state.js';
-import { spawnGrit } from '../grit.js';
+import { P } from '../config.js';
 import { draw } from '../render.js';
 import { ctx } from '../render/ctx.js';
-import { setTheme } from '../ink.js';
-import { pinInvert } from '../render/invert.js';
+import { screenAt } from '../render/frame.js';
+import { setTheme, ink, paper } from '../ink.js';
 
 export const TESTS = [
   ['a worker put on the rock works it', async () => {
@@ -104,47 +104,58 @@ export const TESTS = [
     ];
   }],
 
-  // A `difference` fill on the frame's canvas is the one thing Firefox's card
-  // cannot do, and a page that did it on its first frames after a load was
-  // drawn on the processor from then on: on the dark page, with a builder at
-  // work, the yard ran at twenty frames (PERF.md, "Firefox's canvas off the
-  // card"). Wherever the invert filter is exact the grit goes through it, on
-  // either page. The control pins the filter inexact, which must still fill,
-  // so the spy is known to see a fill when there is one.
-  ['the dark page draws a builder\'s grit with no difference fill where the filter is exact', async () => {
+  // A blend or a filter on the frame's canvas is what Firefox's card cannot
+  // do, and a page that did one was drawn on the processor from then on: on
+  // the dark page, with a builder at work, the yard ran at twenty frames
+  // (PERF.md, "Firefox's canvas off the card"). A chip is a plain fill: the
+  // ink over open sky, the paper over what stands (here the ground under the
+  // line), on either page, read back off the frame.
+  ['a builder\'s grit is plain paper or ink, with no blend or filter on the frame', async () => {
     const root = document.documentElement;
     const was = root.classList.contains('dim') ? 'dim' : root.classList.contains('dark') ? 'dark' : 'light';
-    const ops = [];
-    const proto = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'globalCompositeOperation');
-    Object.defineProperty(ctx, 'globalCompositeOperation', {
-      configurable: true,
-      get() { return proto.get.call(this); },
-      set(v) { ops.push(v); proto.set.call(this, v); }
-    });
-    const unpin = pinInvert(true);
-    const fills = exact => {
-      pinInvert(exact);
-      S.grit.length = 0;
-      spawnGrit(S.camX + S.viewW / 2, S.camY + S.viewH / 2, { n: 20 });
-      ops.length = 0;
-      draw();
-      return ops.filter(o => o === 'difference').length;
+    const sets = [];
+    const spy = key => {
+      const proto = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, key);
+      Object.defineProperty(ctx, key, { configurable: true, get() { return proto.get.call(this); },
+        set(v) { sets.push(`${key}=${v}`); proto.set.call(this, v); } });
     };
-    let byFilter, byFill;
+    spy('globalCompositeOperation');
+    spy('filter');
+    const rgb = h => [1, 3, 5].map(i => parseInt(String(h).slice(i, i + 2), 16));
+    // the scanlines (press.js) dim every other row a little after the grit
+    const near = (a, b) => a.every((v, i) => Math.abs(v - b[i]) <= 24);
+    const sky = { x: S.camX + S.viewW / 2, y: S.camY + 3 * P }, under = { x: S.camX + S.viewW / 2, y: S.groundY + 2 * P };
+    const read = c => {
+      const s = screenAt(Math.round(c.x / P) * P + P / 2, Math.round(c.y / P) * P + P / 2);
+      return [...ctx.getImageData(Math.round(s.x * S.dpr), Math.round(s.y * S.dpr), 1, 1).data.slice(0, 3)];
+    };
+    const page = look => {
+      setTheme(look);
+      S.grit.length = 0;
+      for (const c of [sky, under]) S.grit.push({ x: c.x, y: c.y, vx: 0, vy: 0, t: 0, life: 10 });
+      sets.length = 0;
+      draw();
+      const off = sets.filter(s => s !== 'globalCompositeOperation=source-over' && s !== 'filter=none');
+      return { off, sky: read(sky), under: read(under), ink: rgb(ink), paper: rgb(paper) };
+    };
+    let light, dark;
     try {
-      setTheme('dark');
-      byFilter = fills(true);
-      byFill = fills(false);
+      light = page('light');
+      dark = page('dark');
     } finally {
       delete ctx.globalCompositeOperation;
-      unpin();
+      delete ctx.filter;
       S.grit.length = 0;
       setTheme(was);
     }
-    return [
-      ok(byFilter === 0, 'dark page, exact filter: no difference fill on the frame', `${byFilter}`),
-      ok(byFill > 0, 'control: an inexact filter still fills, so the spy sees fills', `${byFill}`)
-    ];
+    return [light, dark].flatMap((r, i) => {
+      const name = i ? 'dark' : 'light';
+      return [
+        ok(!r.off.length, `${name} page: no blend or filter set on the frame`, r.off.join(', ')),
+        ok(near(r.sky, r.ink), `${name} page: a chip in open sky is the ink`, `${r.sky} vs ${r.ink}`),
+        ok(near(r.under, r.paper), `${name} page: a chip on the ground is the paper`, `${r.under} vs ${r.paper}`)
+      ];
+    });
   }],
 
 ];

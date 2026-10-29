@@ -329,7 +329,11 @@ takes a restored sky nearly to nothing, and carries its own measurements.
   first and dropped: the `difference` fill moved onto the scratch patch
   instead -- the main canvas stayed on the card, but the patch went to the
   processor and copying the frame into it was a readback every frame (the
-  grit layer alone 6 ms).
+  grit layer alone 6 ms). Then the owner's rule (2026-10-29): no blend and no
+  filter in the frame, plain colors only. The grit is now a fill of the paper
+  over what stands and of the ink over open sky, what stands asked of the yard
+  (the ground line, the footprints, a rising building's laid courses) rather
+  than of the frame, so the filter's readback of the frame is gone with it.
 
   Still open: the lamp hats' light (render/lamplight.js) is laid with
   `darken` (`lighten` on the dark page) straight onto the frame, and Firefox's

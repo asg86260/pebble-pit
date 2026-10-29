@@ -52,7 +52,8 @@ export let paper = LIGHT_PAPER;
 export let ink = LIGHT_INK;
 
 // A color that must reach the canvas as written: for a `difference` fill,
-// where the mapped ink would be the wrong answer (buildsites.js, drawGrit).
+// where the mapped ink would be the wrong answer (render/deep.js,
+// drawDeepInvert).
 export const raw = c => new String(c);
 
 const hex = h => {
@@ -205,15 +206,6 @@ export function inkOf(c, m = mode) {
   return out;
 }
 
-// The color a `difference` fill wants in a turned map, to come out as the ink
-// over the paper and as the paper over the ink: their sum. In act 3's map,
-// as on the light page, the fill is white.
-const sum = (p, i) => { const [a, b, c] = hex(p), [d, e, f] = hex(i);
-  return raw('#' + [a + d, b + e, c + f].map(v => Math.min(255, v).toString(16).padStart(2, '0')).join('')); };
-const xorOf = d => (d ? { yard: sum(DEEP_PAPER, DEEP_INK), line: sum(DEEP_PAPER, DEEP_INK), deep: sum(DEEP_PAPER, DEEP_INK), after: sum(DEEP_PAPER, DEEP_INK) }
-  : { yard: sum(DARK_PAPER, DARK_INK), line: sum(DARK_PAPER, DARK_INK), deep: sum(DEEP_PAPER, DEEP_INK), after: raw('#ffffff') });
-let XOR = xorOf(false);   // page: the look's difference inks, set by setTheme
-export const xorInk = () => (on ? XOR[mode] : raw('#ffffff'));
 
 // The setters, on the prototype, so every context is covered. Only on a
 // dark page: on the light one the map is the identity and costs a lookup a
@@ -273,7 +265,6 @@ export function setTheme(to) {
   paper = dim ? DEEP_PAPER : on ? DARK_PAPER : LIGHT_PAPER;
   ink = dim ? DEEP_INK : on ? DARK_INK : LIGHT_INK;
   ENDS = endsOf(dim);
-  XOR = xorOf(dim);
   for (const c of Object.values(caches)) c.clear();
   hookAll(on);
   // The node yard's document has no stylesheet to turn.
