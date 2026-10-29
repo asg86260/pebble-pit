@@ -4,7 +4,7 @@
 // white *are*.
 //
 // On the light page the paper is white and the ink black, and the map is the
-// identity, so it is not installed at all. The dim page (prefs.js, `theme`)
+// identity but in the deep, which is its negative. The dim page (prefs.js, `theme`)
 // is one map, light gray on charcoal turned by lightness, everywhere, and the
 // tags below are that map too. The dark page is the same turn on near-black
 // (the owner, 2026-10-19: white where the game was black), and render.js says
@@ -15,7 +15,14 @@
 //   landing on the same step between them, hue kept.
 // - 'deep', for the deep's whole half: the same turn between dim's charcoal
 //   and light gray. The deep was drawn for that, as a dark field on either
-//   page, and it is left as it was.
+//   page, and it is left as it was. On the light page it is the negative,
+//   each channel turned over (`255 - v`), which is what the deep has always
+//   been there: drawn in the yard's inks and seen turned over. It was a pass
+//   over the finished deep, an invert filter or a `difference` fill, until
+//   the owner's rule (2026-10-29): plain colors, never a blend or a filter.
+// - 'deep-over', for what is drawn over the finished deep (render.js, after
+//   `recede`): the deep's map on a turned page, as written on the light one,
+//   since it was never under the negative there.
 // - 'after', for act 3's layers (render.js, AFTER): the act is drawn in four
 //   tones and no others (config, AFTER_TONES), and the yard's map would put
 //   all four inside the paper's quarter of the range, a murk at 1x. Here
@@ -51,9 +58,7 @@ export let darkPage = false;
 export let paper = LIGHT_PAPER;
 export let ink = LIGHT_INK;
 
-// A color that must reach the canvas as written: for a `difference` fill,
-// where the mapped ink would be the wrong answer (render/deep.js,
-// drawDeepInvert).
+// A color that must reach the canvas as written, past the map in force.
 export const raw = c => new String(c);
 
 const hex = h => {
@@ -88,11 +93,12 @@ function fromHsl(h, s, l) {
 
 // The ends of each map: where white lands and where black lands.
 const DEEP_ENDS = [lightOf(DEEP_PAPER), lightOf(DEEP_INK)];
-const endsOf = d => (d ? { yard: DEEP_ENDS, line: DEEP_ENDS, deep: DEEP_ENDS, after: DEEP_ENDS } : {
+const endsOf = d => (d ? { yard: DEEP_ENDS, line: DEEP_ENDS, deep: DEEP_ENDS, 'deep-over': DEEP_ENDS, after: DEEP_ENDS } : {
   yard: [lightOf(DARK_PAPER), lightOf(DARK_INK)],
   after: [lightOf(AFTER_DARK.paper), lightOf(AFTER_DARK.ink)],
   line: [lightOf(DARK_PAPER), lightOf(DARK_INK)],
   deep: DEEP_ENDS,
+  'deep-over': DEEP_ENDS,
 });
 let ENDS = endsOf(false);   // page: the look's ends, set by setTheme
 // How far a color has to be from gray for act 3 to keep it as written:
@@ -180,14 +186,17 @@ export function line(c) {
 
 const NAMED = { black: [0, 0, 0], white: [255, 255, 255] };
 const RGB = /^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*(?:,\s*([\d.]+)\s*)?\)$/;
-const caches = { yard: new Map(), line: new Map(), deep: new Map(), after: new Map() };
+const caches = { yard: new Map(), line: new Map(), deep: new Map(), 'deep-over': new Map(), after: new Map(), negative: new Map() };
+const negative = (r, g, b) => [255 - r, 255 - g, 255 - b];
 
 // The color the page draws for a color the code wrote, in the map in force.
 // Anything it cannot read -- a gradient, a pattern, a name it does not know --
-// goes through as it is.
+// goes through as it is. On the light page every map is the identity but the
+// deep's, which is the negative.
 export function inkOf(c, m = mode) {
-  if (!on || typeof c !== 'string') return c;
-  const cache = caches[m];
+  if (typeof c !== 'string') return c;
+  if (!on && m !== 'deep') return c;
+  const cache = caches[on ? m : 'negative'];
   let out = cache.get(c);
   if (out !== undefined) return out;
   out = c;
@@ -199,7 +208,7 @@ export function inkOf(c, m = mode) {
     if (m2) { rgb = [+m2[1], +m2[2], +m2[3]]; a = m2[4]; }
   }
   if (rgb) {
-    const [r, g, b] = mapRgb(...rgb, m);
+    const [r, g, b] = on ? mapRgb(...rgb, m) : negative(...rgb);
     out = a != null ? `rgba(${r},${g},${b},${a})` : toHex([r, g, b]);
   }
   cache.set(c, out);
@@ -207,9 +216,8 @@ export function inkOf(c, m = mode) {
 }
 
 
-// The setters, on the prototype, so every context is covered. Only on a
-// dark page: on the light one the map is the identity and costs a lookup a
-// fill for nothing, so turning back to it puts the plain setters back.
+// The setters, on the prototype, so every context is covered, on every
+// page: the light one's deep is drawn through its negative.
 const PROTOS = () => [typeof CanvasRenderingContext2D !== 'undefined' ? CanvasRenderingContext2D.prototype : null,
                       typeof OffscreenCanvasRenderingContext2D !== 'undefined' ? OffscreenCanvasRenderingContext2D.prototype : null]
   .filter(Boolean);
@@ -266,7 +274,7 @@ export function setTheme(to) {
   ink = dim ? DEEP_INK : on ? DARK_INK : LIGHT_INK;
   ENDS = endsOf(dim);
   for (const c of Object.values(caches)) c.clear();
-  hookAll(on);
+  hookAll(true);
   // The node yard's document has no stylesheet to turn.
   const root = typeof document !== 'undefined' ? document.documentElement : null;
   if (root && root.classList) {

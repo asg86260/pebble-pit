@@ -274,14 +274,6 @@ export const STUN_RING_STEP_MS = 70; // the bright cell moves on a cell this oft
 export const STUN_RING_TONES = [0, 1, 2];
 export const STUN_RING_DIM = 4;
 
-// The scrap the invert filter is tried on before the frame is turned over
-// with it (render/invert.js): big enough that Firefox puts it on the graphics
-// card as it does the window (smaller, it is drawn in software, where the
-// filter is a step off), and a side of cells for every channel value. The
-// grit's turned-over patch (render/buildsites.js) is sized in the same steps,
-// to stay on the card.
-export const INVERT_PROBE = 256;
-export const INVERT_PROBE_SIDE = 16;
 
 
 // --- the snatch, from the yard -----------------------------------------------------

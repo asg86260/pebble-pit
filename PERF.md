@@ -265,6 +265,16 @@ takes a restored sky nearly to nothing, and carries its own measurements.
   percentile 12.1 -> 18.2, worst 36.4 -> 30.3, no frame over 33 ms. A
   second pass of the layers for the 1.3 s of the glide, at about 80 fps.
 
+  The light page's deep without its negative pass (2026-10-29). The deep is
+  drawn through the negative at each fill (ink.js, 'deep') instead of turned
+  over at the end through an invert filter, so the frame has no filter left
+  and the probe's readbacks are gone. The color setters are hooked on the
+  light page now too. Headless Firefox, GPU prefs, `layout.frame_rate` 0,
+  2560x1440, the light page, a frame's gap uncapped (median of eight
+  seconds, two runs): `deep` 6.6-7.4 -> 6.4-6.6 ms, `yard` 8.56 -> 8.68
+  (noise). The `deep` scenes against main differ only where the scene moved
+  and by one step on a few faded star pixels.
+
 - **The thirty-hour yard (2026-10-16).** The owner saw ~30 fps in the yard
   and 50-60 in the deep at rock 31621 with 170 crew. Measured on the `late`
   scene (everything bought, seven stations in the deep, the serpent up, rock

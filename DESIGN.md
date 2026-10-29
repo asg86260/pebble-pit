@@ -134,7 +134,7 @@ dark page. That is the owner's call: the dark page is a negative of the
 light one, and dim is the same negative on charcoal for anyone who finds
 near-black too stark.
 
-## The light page's deep, drawn in its own inks (design, not built)
+## The light page's deep, drawn in its own inks (built 2026-10-29)
 
 The owner, 2026-10-29: no blend modes and no filters in the frame, plain
 colors only -- "we've taken the lazy way to do dark mode". The last pass of

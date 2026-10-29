@@ -87,7 +87,7 @@ function offPalette(hide = null) {
 }
 
 // The layers whose absence takes the most of `off` away, for the report.
-const ALWAYS = new Set(['page', 'world', 'world:done', 'screen', 'deep zones', 'deep invert', 'press']);
+const ALWAYS = new Set(['page', 'world', 'world:done', 'screen', 'deep zones', 'press']);
 function whose(off) {
   const total = off.reduce((n, [, k]) => n + k, 0), by = [];
   for (const l of LAYERS) {

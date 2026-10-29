@@ -49,7 +49,7 @@ import { drawOuthouse, drawTower, drawTowerWaves } from './render/tower.js';
 import { drawRoombaDock, drawRoombas } from './render/roomba.js';
 import { drawShack } from './render/shack.js';
 import { drawDeepWater, drawDeepFloor, drawDeepBed, drawDeepStations, drawDeepMotes,
-         drawSwimmers, drawDeepInvert } from './render/deep.js';
+         drawSwimmers } from './render/deep.js';
 import { ripple, deepCamera, canGoDown, gliding, glidingBy } from './view.js';
 import { drawThrough, warmRipple } from './render/ripple.js';
 import { drawSerpent, drawSerpentDiving, drawSnatch, drawFreed, drawOrb, drawBarrier, drawFocusLines, drawMeal, drawMealUnder } from './render/serpent.js';
@@ -333,8 +333,8 @@ const LAYERS = [
   // (render/recede.js). Before the deep is turned over, so its background
   // settles toward the liquid as the yard's does toward the page.
   { name: 'recede', in: ALL, draw: wash },
-  // Last in the world, over everything the deep drew: the negative of it.
-  { name: 'deep invert', in: 'deep', draw: drawDeepInvert },
+  // Everything of the deep up to here is drawn in its negative on the light
+  // page (ink.js, 'deep'); what follows stands over it as written.
   // What the blows did and what the heal took back, over the finished deep
   // and not turned over with it: their tones are written as seen, so each
   // fades against the picture actually behind it, whichever way the deep was
@@ -455,11 +455,14 @@ function drawHalf(place, from = 0, to = LAYERS.length, skip = null) {
   }
 }
 
-// The dark page's map a layer is drawn in (ink.js): the deep's whole half in
-// the deep's own, act 3's own layers in its own spread, and the rest turned
-// over between the dark page's paper and ink. On the light page every map is
-// the identity.
-const mapOf = (layer, place) => place === 'deep' ? 'deep' : READING.has(layer.name) ? 'line' : layer.in === 'after' ? 'after' : 'yard';
+// The map a layer is drawn in (ink.js): the deep's half in the deep's own --
+// the negative on the light page -- up to and with the scene's wash, and what
+// stands over the finished deep (the fight numbers, the posts, the glass) in
+// 'deep-over'; act 3's own layers in its own spread; the rest turned over
+// between the dark page's paper and ink, and as written on the light page.
+const DEEP_DONE = LAYERS.findIndex(l => l.name === 'recede');
+const mapOf = (layer, i, place) => place === 'deep' ? (i > DEEP_DONE ? 'deep-over' : 'deep')
+  : READING.has(layer.name) ? 'line' : layer.in === 'after' ? 'after' : 'yard';
 
 function drawLayer(layer, i, place) {
   // A `dim` layer is the crew's own plane, and the corner's crew switch
@@ -469,7 +472,7 @@ function drawLayer(layer, i, place) {
   // The alpha is put back the same frame: nothing else is ever drawn faint.
   const view = layer.dim ? crewView() : 'show';
   if (view === 'hide') return;
-  inkMode(mapOf(layer, place));
+  inkMode(mapOf(layer, i, place));
   const faint = view === 'fade';
   // Cut at the shaft's middle in the yard and the deep; an act's place draws
   // none of the layers the cut is for (`inHalf`).

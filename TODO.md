@@ -4,15 +4,6 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
-## The light page's deep in its own inks -- DESIGNED, AWAITING APPROVAL (2026-10-29)
-
-The light page's deep is drawn as the yard and turned into its negative
-every frame (`drawDeepInvert`, an invert filter or a `difference` fill),
-the last blend-or-filter pass in the frame after the grit and the lamps.
-DESIGN.md, "The light page's deep, drawn in its own inks": a negative map
-through the same `inkOf` plumbing the dark page's deep uses, and the pass,
-the probe and `invert.js` deleted. Blocker: the owner's approval.
-
 ## The yard joins the conservation rule (2026-10-28)
 
 "One resource system for every act" is built (DESIGN.md, `(built)`). Its one
