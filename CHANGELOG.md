@@ -215,6 +215,7 @@ this section; the release that switches it on moves these under Unreleased.
 - The recruit row, greyed while nobody is won, says so and how to win one instead of reading like a price you cannot pay (test/after-recruit.test.mjs).
 - Signs and posters no longer pile up unused in act 3 when nobody is on the carrier or the paster: idle workers take them out (test/after-roster.test.mjs).
 - Every build takes 10 to 20 seconds at one pair of hands, the biggest (a new station, a machine, the last shield) 30 at most, by one rule off a row's place in its ladder instead of a figure a row (test/build-times.test.mjs).
+- The sphere costs 1.75 times the dearest other machine in every coin, so it is the last machine you can afford (test/sphere.test.mjs).
 
 - A worker's hat in a roster counter sits flush on its head instead of a pixel to one side with ragged seams (src/selftest/rosterhats.js).
 - Saving on the very frame the star's sphere closes no longer leaves the ring uncut after a reload (test/sphere.test.mjs).

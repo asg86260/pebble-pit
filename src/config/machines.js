@@ -1,6 +1,7 @@
 // --- the machines ---------------------------------------------------------------
 import { P } from './yard.js';
 import { BUILD_CAP_S } from './build.js';
+import { ROOMBA_BILLS } from './roomba.js';
 
 // What a machine is worth, as a multiple of the complement its station could
 // hold by hand. See `handsOf` and DESIGN.md's "The machines".
@@ -113,9 +114,19 @@ export const TILLER_BILL = [['spark', 240], ['dust', 4800], ['shard', 360]];
 // because carrying does not *have* a coin: a hauler moves what everybody else
 // made. So it is priced in all three grounds.
 export const BELT_BILL = [['spark', 480], ['dust', 9600], ['shard', 600], ['spore', 600]];
-// The sphere is the last machine to open and the one with no gap in its
-// output, so it is dearer than the ram; the tower makes neither ground coin.
-export const SPHERE_BILL = [['spark', 720], ['dust', 14400], ['shard', 900], ['spore', 900]];
+// The sphere is the last machine the player can afford (the owner, 2026-10-29:
+// "the sphere upgrade is too cheap, it should be the last machine affordable,
+// but its pretty early"). So its bill is derived, not written: in each coin,
+// the dearest bill any other machine asks (the roomba's third included) times
+// SPHERE_PREMIUM, so it stays last when those prices move. The factor is the
+// dial, found with `tools/node/speedrun.mjs`: at 1.5 the bot still bought the
+// sphere ahead of the drill, the tiller and the ram, because the sparks come in
+// a flood once the tower is up; at 1.75 it comes after all of them.
+export const SPHERE_PREMIUM = 1.75;
+const OTHER_BILLS = [JAW_BILL, RAM_BILL, TILLER_BILL, BELT_BILL, ...ROOMBA_BILLS];
+const dearest = coin => Math.max(...OTHER_BILLS.map(b => b.find(([m]) => m === coin)?.[1] ?? 0));
+export const SPHERE_BILL = ['spark', 'dust', 'shard', 'spore']
+  .map(coin => [coin, Math.round(dearest(coin) * SPHERE_PREMIUM / 10) * 10]);
 
 // --- the sphere ---------------------------------------------------------------
 // Wizard-seconds to pour the shell, like `DOME_WORK`: one body takes this long,
