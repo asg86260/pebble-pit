@@ -625,8 +625,18 @@ export const AFTER_HEAP_SETTLE_S = 0.04;
 import { AFTER_LOG_TIMBER as LOG_TIMBER } from './afterpiles.js';
 export const AFTER_KERF_GRAINS = AFTER_BLOCK.log * AFTER_BLOCK.log - LOG_TIMBER * AFTER_BLOCK.plank * AFTER_BLOCK.plank;
 
-// MOCK grove: the seed row (after/rows.js): a bundle of acorns a press, its
-// bills the first in the earlier acts' coins only, each deeper by a band --
-// dust, then dust and crops, then dust, crops and ore.
-export const AFTER_SEED_BILLS = [[['dust', 12000]], [['dust', 30000], ['spore', 8000]], [['dust', 60000], ['spore', 15000], ['shard', 15000]]]; // MOCK grove
-export const AFTER_SEED_BUNDLE = 3; // MOCK grove  acorns a bundle
+// MOCK grove: the seed row (after/rows.js; the owner: "players buy each
+// seed to start"): one acorn a press, its bills in the earlier acts' coins
+// only, deeper each purchase and by a band every two -- dust, then dust and
+// crops, then dust, crops and ore -- the last repeating.
+export const AFTER_SEED_BILLS = [[['dust', 4000]], [['dust', 8000]], [['dust', 15000], ['spore', 3000]], [['dust', 25000], ['spore', 6000]],
+                                 [['dust', 40000], ['spore', 10000], ['shard', 8000]], [['dust', 60000], ['spore', 15000], ['shard', 15000]]]; // MOCK grove
+export const AFTER_SEED_BUNDLE = 1; // MOCK grove  acorns a purchase
+// MOCK grove: trees seed themselves (the owner: "an upgrade to allow trees a
+// chance to grow their own seed. which can be upgraded"): a ladder of four,
+// each rung the chance a felled tree's crown drops an acorn as it breaks;
+// its bills the act's coins with the yard's, a band deeper a rung.
+export const AFTER_SELFSEED_CHANCE = [0.25, 0.5, 0.75, 1]; // MOCK grove
+export const AFTER_SELFSEED_BILLS = [[['rebel', 150], ['dust', 30000]], [['rebel', 300], ['timber', 6], ['dust', 60000], ['spore', 15000]],
+                                     [['rebel', 600], ['timber', 12], ['dust', 100000], ['spore', 30000], ['shard', 30000]],
+                                     [['rebel', 1000], ['timber', 18], ['dust', 150000], ['spore', 45000], ['shard', 45000], ['spark', 6000]]]; // MOCK grove

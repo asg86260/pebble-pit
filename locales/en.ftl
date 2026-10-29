@@ -3532,6 +3532,9 @@ after-row-plot = plot
 # act 3 card row (MOCK grove, placeholder): a bundle of acorns carried in to the seed basket
 after-row-seed = seeds
 
+# act 3 card row (MOCK grove, placeholder): a felled tree's crown may drop an acorn, the chance a rung
+after-row-selfseed = self-seeding
+
 # act 3 card row (placeholder): the grove's faster growth
 after-row-grow = faster growth
 

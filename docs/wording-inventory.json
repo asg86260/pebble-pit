@@ -8120,6 +8120,13 @@
   "text": "seeds"
  },
  {
+  "id": "after-row-selfseed",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/rows.js",
+  "context": "act 3 card row (MOCK grove, placeholder): a felled tree's crown may drop an acorn, the chance a rung",
+  "text": "self-seeding"
+ },
+ {
   "id": "after-row-grow",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",

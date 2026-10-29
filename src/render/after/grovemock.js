@@ -168,7 +168,16 @@ function fellCut(n) { if (n > 0) fill(K, bx() + MT.c0 * AP, fl() - MT.stump * AP
 // hand, its roots under it, those not yet snapped strained to the ground and
 // the snapped ones stubs. F3b: tilted `tilt` up off the shovel's side about
 // its far foot.
-const ROOTS = [-2, 0, 1];
+// Three roots (the owner: "a little more root like and thicker"), each cells
+// [column off the block's left, depth under its foot]: two thick where they
+// leave the stump, tapering and branching as they go down, in the log's
+// darkest shade. Pulled, each shows as far as the stump is up; snapped, only
+// its stub where it leaves the block.
+const ROOTS = [
+  [[0, 0], [1, 0], [-1, 1], [0, 1], [-1, 2], [0, 2], [-2, 3], [0, 3]],
+  [[2, 0], [1, 1], [2, 1], [2, 2], [1, 3], [3, 3]],
+  [[3, 0], [4, 0], [3, 1], [4, 1], [4, 2], [3, 2], [5, 3]]
+];
 function stump(up = 0, tilt = 0, roots = 0) {
   const x = bx() + MT.c0 * AP, y = fl() - MT.stump * AP - up, z = MT.w * AP;
   if (tilt) {
@@ -177,9 +186,14 @@ function stump(up = 0, tilt = 0, roots = 0) {
     ctx.restore();
     return;
   }
-  ROOTS.forEach((c, k) => {
-    const live = k >= ROOTS.length - roots, len = live ? up : Math.min(up, AP);
-    if (len > 0) fill(K, bx() + c * AP + AP / 3, fl() - up, AP / 3, len);
+  const foot = fl() - up, wood = LOG(3);
+  ROOTS.forEach((cells, k) => {
+    const live = k >= ROOTS.length - roots;
+    for (const [c, d] of cells) {
+      if (!live && d > 0) continue;
+      const cy = foot + d * AP, h = Math.min(AP, fl() - cy);
+      if (h > 0) fill(wood, x + c * AP, cy, AP, h);
+    }
   });
   fill(stumpTone(), x, y, z, z);
 }

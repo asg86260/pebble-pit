@@ -318,6 +318,7 @@ export function basketSlot(k) {
   return k < 3 ? { x: b.x + 0.5 * AP + k * aw, y: top } : { x: b.x + 0.5 * AP + aw / 2 + (k - 3) * aw, y: top - 2 * AP };
 }
 
+const seedFall = dt => SCRIPTS._seed.step(dt);
 // The acorns hanging in the pine's crown for S1, their top lefts in cells off
 // the fall's pivot (the trunk's right edge on the stump's top), on its lowest
 // shelf either side of the trunk; an acorn AW_C by AH_C cells.
@@ -387,13 +388,39 @@ const SCRIPTS = {
   // out of the forestry shack, picks each up onto its head and tips them into
   // the seed basket. Held at the end.
   s1: {
-    init() { takeBack(); standTree(); M.basket = 2; M.dropped = []; M.bodies = []; M.tip = null; go('stand'); },
+    init() { takeBack(); standTree(); M.basket = 2; M.dropped = []; M.bodies = []; M.tip = null; M.drops = TREE_ACORNS; go('stand'); },
+    step(dt) { seedFall(dt); }
+  },
+  // S3a: self-seeding bought, and a felled crown drops an acorn: the grove's
+  // board up, the row's first rung bought (a chance in four); the pine goes
+  // over and as its crown breaks an acorn falls out of it and stays (the
+  // roll came up); a worker carries it to the basket.
+  s3a: {
+    init() { takeBack(); standTree(); M.basket = 1; M.dropped = []; M.bodies = []; M.tip = null; M.drops = [TREE_ACORNS[0]];
+             globalThis.__openAfterBoard?.('grove'); go('board'); },
+    step(dt) {
+      if (M.ph === 'board' && M.t >= 2.2) { globalThis.__buy?.('after-selfseed'); go('paid'); }
+      else if (M.ph === 'paid' && M.t >= 1.4) { globalThis.__groveCloseBoard?.(); go('stand'); M.t = 0.4; }
+      else seedFall(dt);
+    }
+  },
+  // S3b: the same tree with self-seeding owned, and the roll not coming up:
+  // the crown breaks and fades and nothing stays; the basket as it was.
+  s3b: {
+    init() { takeBack(); standTree(); S.after.ups['after-selfseed'] = 1; M.basket = 1; M.dropped = []; M.bodies = []; M.tip = null; M.drops = []; go('stand'); },
+    step(dt) { seedFall(dt); }
+  },
+  // S1's and S3's fall: the pine over, and the acorns M.drops (none, one,
+  // or the two hanging in S1's crown) out of the crown where it breaks,
+  // carried to the basket by a worker out of the forestry shack.
+  _seed: {
     step(dt) {
       const p = plot();
       if (M.ph === 'stand' && M.t >= 1.2) { p.fall = S.after.t; go('fall'); }
       else if (M.ph === 'fall' && M.landed != null) {
+        if (!M.drops.length) { go('end'); return; }
         // out of the crown where it lies: each from where it hung, turned with the tree
-        M.dropped = TREE_ACORNS.map(([x, y], k) => {
+        M.dropped = M.drops.map(([x, y], k) => {
           const cx = (x + AW_C / 2) * AP, cy = (y + AH_C / 2) * AP, sx = pivotX() - cy + k * 3 * AP, sy = fl() + cx;
           return { x: sx - AW_C * AP / 2, y0: Math.min(sy - AH_C * AP / 2, fl() - AH_C * AP), at: S.after.t, lying: false };
         });
@@ -705,7 +732,7 @@ const SCRIPTS = {
   f3a: {
     init() { takeBack(); felledPlot(); M.stumpOut = null; M.cursor = null; M.stumpUp = 0; go('teach'); },
     step(dt) {
-      const p = plot(), x = bx(), mid = fl() - MT.stump * AP / 2;
+      const p = plot(), x = bx(), mid = fl() - MT.stump * AP + AP / 2;   // the stump taken by its top, so the fist leaves the block and its roots in view
       if (M.ph === 'teach') {
         const u = (M.t % 1.4) / 1.4;
         M.ghost = { x, y: mid - Math.round(u * 3) * P, pose: u < 0.1 ? 'point' : 'grab' };
@@ -807,7 +834,7 @@ export const SHOVEL_H = 7 * AP;
 export const shovelTop = ang => { const s = shovelAt(); return { x: s.x + Math.sin(ang) * SHOVEL_H, y: s.y - Math.cos(ang) * SHOVEL_H }; };
 
 // The options with a fall, turned to fall away from the shack.
-const FLIP = new Set(['c', 's1', 'd1', 'd2', 'e', 'esaw1', 'esaw2', 'esaw3', 'f1', 'f2']);
+const FLIP = new Set(['c', 's1', 's3a', 's3b', 'd1', 'd2', 'e', 'esaw1', 'esaw2', 'esaw3', 'f1', 'f2']);
 
 // --- the scene's door --------------------------------------------------------------------
 // Stand option `opt` on the act now standing: the global set, the state

@@ -3741,7 +3741,9 @@ const GROVE_MOCK = [ // MOCK grove
   ['a1', 'A1 a worker plants it', 300, "A worker takes an acorn out of the seed basket by the forestry shack, carries it to the bare plot, kneels and plants it, and a shoot comes up row by row."], // MOCK grove
   ['a2', 'A2 you plant it', 300, "You plant it yourself: pick an acorn out of the seed basket by the forestry shack, carry it over the bare plot and let go, and it sinks in and a shoot comes up row by row."], // MOCK grove
   ['s1', 'S1 seeds from a felled tree', 420, "Two acorns hang in the pine; it goes over and its crown breaks, but the acorns drop out and stay, and a worker carries them to the seed basket."], // MOCK grove
-  ['s2', 'S2 seeds bought', 300, "The seeds row on the grove's board, paid in dust: bought, a worker walks in from heaven's gates with a bundle of acorns and tips them into the seed basket."], // MOCK grove
+  ['s2', 'S2 a seed bought', 300, "The seeds row on the grove's board, paid in dust: bought, a worker walks in from heaven's gates with one acorn and puts it in the seed basket; the next costs more."], // MOCK grove
+  ['s3a', 'S3a self-seeding: an acorn', 420, "The self-seeding upgrade bought (a chance in four a fall); the pine goes over, an acorn falls out of the breaking crown and stays, and a worker carries it to the seed basket."], // MOCK grove
+  ['s3b', 'S3b self-seeding: none this time', 420, "Self-seeding owned, but the roll does not come up: the crown breaks and fades and nothing stays."], // MOCK grove
   ['b1', 'B1 grows row by row', 420, "The planted acorn grows into the pine a row at a time from the ground up, the trunk first and then the crown, sped up to ten seconds."], // MOCK grove
   ['b2', 'B2 grows all over', 420, "The planted acorn grows into the pine all over at once, taller and wider a cell at a time, sped up to ten seconds."], // MOCK grove
   ['c', 'C the fall: the crown breaks', 520, "The sawn pine goes over whole, away from the shack, and its crown breaks into pieces where it hits, which scatter and fade; the trunk lies as its four logs."], // MOCK grove
@@ -3764,7 +3766,7 @@ Object.assign(SCENES, Object.fromEntries(GROVE_MOCK.map(([opt, option, at, say])
   run: () => { // MOCK grove
     window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1); // MOCK grove
     if (opt === 'f1' || opt === 'f2') window.__afterAxe(); // MOCK grove
-    if (opt === 's2') { yardPurse(); globalThis.__groveCloseBoard = () => showPanel(null); } // MOCK grove  the earlier acts' coins to pay the seed row with
+    if (opt === 's2' || opt === 's3a') { yardPurse(); window.__afterGrant({ rebel: 2000 }); globalThis.__groveCloseBoard = () => showPanel(null); } // MOCK grove  the earlier acts' coins to pay the seed row with
     globalThis.__groveMock = opt; // MOCK grove  first, so the plot stands where the mock lays it
     const x = plotX(0) - at; // MOCK grove
     pinCamera(x); window.__look(x); // MOCK grove

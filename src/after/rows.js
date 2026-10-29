@@ -32,7 +32,7 @@ import { msg } from '../lang.js';
 import { P, AFTER_UPGRADES, AFTER_JOBS, AFTER_JOB_POST, AFTER_SEAT_BILLS, AFTER_BUILDS,
          AFTER_CARDS, AFTER_YARD_COINS, AFTER_TAG_ORDER, AFTER_PATCH_AT,
          AFTER_COIN_MOTES, AFTER_COIN_UNDER_S, AFTER_COIN_STAGGER_S, AFTER_COIN_SPREAD, AFTER_COIN_LIFE_S,
-         AFTER_SEED_BILLS, /* MOCK grove */ AFTER_RECRUIT_COST0, AFTER_RECRUIT_RATE, MEET_MEMBERS, SLOW_SHARE, STRIKE_SHARE, AFTER_BOARD_SLOTS, SHADES, SHARD_CELL, SPORE_CELL, SPARK_CELL, FIND_TONES, SCALE_SHADE, SCALE_SPREAD } from '../config.js';
+         AFTER_SEED_BILLS, AFTER_SELFSEED_BILLS, /* MOCK grove */ AFTER_RECRUIT_COST0, AFTER_RECRUIT_RATE, MEET_MEMBERS, SLOW_SHARE, STRIKE_SHARE, AFTER_BOARD_SLOTS, SHADES, SHARD_CELL, SPORE_CELL, SPARK_CELL, FIND_TONES, SCALE_SHADE, SCALE_SPREAD } from '../config.js';
 import { registerBoard, openBoardByKey } from '../boardrows.js';
 import { purse, leftText } from '../words.js';
 import { payTo } from '../pit.js';
@@ -229,6 +229,19 @@ AFTER_ROWS.push({ key: SEED, name: msg('after-row-seed'), get card() { return gl
   bill: () => AFTER_SEED_BILLS[Math.min(seedsBought(), AFTER_SEED_BILLS.length - 1)].map(([c, n]) => [c, n]), // MOCK grove
   show: () => !!S.after && !!globalThis.__groveMock && cardOpen('grove'), // MOCK grove
   buy: () => { S.after.ups[SEED] = seedsBought() + 1; S.after.upAt[SEED] = S.after.t; globalThis.__groveSeedBought?.(); } }); // MOCK grove
+// MOCK grove: trees grow their own seed, a ladder of four rungs, each the
+// chance a felled tree's crown drops an acorn (AFTER_SELFSEED_CHANCE), bought
+// as the grove's named upgrades are (`upRow`: a bill with timber an order
+// carried, `orderOr`).
+const SELF = 'after-selfseed'; // MOCK grove
+export const selfRungs = () => Math.min(AFTER_SELFSEED_BILLS.length, (S.after && S.after.ups[SELF]) || 0); // MOCK grove  rungs bought
+LAND[SELF] = () => { S.after.ups[SELF] = selfRungs() + 1; S.after.upAt[SELF] = S.after.t; }; // MOCK grove
+AFTER_ROWS.push({ key: SELF, name: msg('after-row-selfseed'), get card() { return globalThis.__groveMock ? 'grove' : null; }, ...ACT_ROW, // MOCK grove
+  rung: () => selfRungs(), rungs: () => AFTER_SELFSEED_BILLS.length, // MOCK grove
+  bill: () => AFTER_SELFSEED_BILLS[Math.min(selfRungs(), AFTER_SELFSEED_BILLS.length - 1)].map(([c, n]) => [c, n]), // MOCK grove
+  show: () => !!S.after && !!globalThis.__groveMock && cardOpen('grove'), // MOCK grove
+  dead: () => carrying(SELF), waits: () => (carrying(SELF) ? msg('card-building') : null), // MOCK grove
+  buy: () => orderOr(SELF, 'grove', AFTER_SELFSEED_BILLS[Math.min(selfRungs(), AFTER_SELFSEED_BILLS.length - 1)]) }); // MOCK grove
 export const afterRow = key => AFTER_ROWS.find(u => u.key === key) || null;
 
 // --- buying ------------------------------------------------------------------------------
