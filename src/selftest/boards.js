@@ -929,6 +929,7 @@ export const TESTS = [
     const again = document.getElementById('panel').getBoundingClientRect();
 
     const r = b.getBoundingClientRect();
+    const sheet = (b.closest('.sheet') || b).getBoundingClientRect();
     const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
     const rows = [...shop().children];
     // Read by class, never by position: a tile stands its cells under a
@@ -941,8 +942,10 @@ export const TESTS = [
     return [
       ok(!b.hidden, 'board opens when the cursor nears the bench'),
       ok(r.width > 40 && r.height > 40, 'board has a size', `${r.width}x${r.height}`),
-      ok(r.left >= 0 && r.top >= 0 && r.right <= innerWidth && r.bottom <= innerHeight,
-         'board is inside the window', JSON.stringify(r)),
+      // The sheet is what stands in the window: a board taller than the glass
+      // scrolls inside it, so its page may run past the sheet's foot.
+      ok(sheet.left >= 0 && sheet.top >= 0 && sheet.right <= innerWidth && sheet.bottom <= innerHeight,
+         'board is inside the window', JSON.stringify(sheet)),
       ok(hit !== canvas(), 'board is above the canvas, not behind it',
          `topmost is ${hit && (hit.id || hit.tagName)}`),
       ok(rows.some(el => el.dataset.sect), 'board has section headings'),
