@@ -4,6 +4,11 @@
 //   node tools/review-status.mjs <checkout> set "<review>" building|iterating "<what>"
 //   node tools/review-status.mjs <checkout> clear "<review>"
 //   node tools/review-status.mjs <checkout> list
+//   node tools/review-status.mjs <checkout> changed "<review>" "<what changed this round>"
+//   node tools/review-status.mjs <checkout> changes "<review>"
+//
+// `changed` appends one line to shots/review/changes.json, `[{ review, at,
+// text }]`, which the board shows on the card until the owner next weighs in.
 //
 // The coordinator sets an entry when it dispatches an agent and clears it when
 // the agent reports. Everything else on the board (waiting on you, signed off,
@@ -21,8 +26,16 @@ const slug = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^
 export function readStatus(root) {
   try { const a = JSON.parse(readFileSync(statusPath(root), 'utf8')); return Array.isArray(a) ? a : []; } catch { return []; }
 }
-function write(root, list) {
-  const file = statusPath(root), tmp = file + '.tmp';
+export const changesPath = root => join(root, 'shots', 'review', 'changes.json');
+export function readChanges(root) {
+  try { const a = JSON.parse(readFileSync(changesPath(root), 'utf8')); return Array.isArray(a) ? a : []; } catch { return []; }
+}
+export function addChange(root, review, text) {
+  const list = readChanges(root); list.push({ review, at: new Date().toISOString(), text: String(text) });
+  write(root, list.slice(-300), changesPath(root));
+}
+function write(root, list, file = statusPath(root)) {
+  const tmp = file + '.tmp';
   mkdirSync(dirname(file), { recursive: true });
   writeFileSync(tmp, JSON.stringify(list, null, 1));
   renameSync(tmp, file);
@@ -39,6 +52,12 @@ export function clearStatus(root, review) {
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const [root, cmd, review, state, what] = process.argv.slice(2);
+  if (root && (cmd === 'changed' || cmd === 'changes')) {
+    if (!review || (cmd === 'changed' && !state)) { console.error('usage: review-status.mjs <checkout> changed "<review>" "<text>" | changes "<review>"'); process.exit(2); }
+    if (cmd === 'changed') addChange(root, review, state);
+    console.log(JSON.stringify(readChanges(root).filter(c => slug(c.review) === slug(review)), null, 1));
+    process.exit(0);
+  }
   const usage = () => { console.error('usage: review-status.mjs <checkout> set "<review>" building|iterating "<what>" | clear "<review>" | list'); process.exit(2); };
   if (!root || !cmd) usage();
   try {

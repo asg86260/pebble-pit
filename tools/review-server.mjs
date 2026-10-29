@@ -11,7 +11,7 @@
 import { appendFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { prints } from './review-prints.mjs';
-import { readStatus } from './review-status.mjs';
+import { readStatus, readChanges } from './review-status.mjs';
 
 export const notesPath = root => join(root, 'shots', 'review', 'notes.jsonl');
 
@@ -68,7 +68,7 @@ export function reviewPlugin(root) {
         } catch {}
         res.setHeader('content-type', 'application/json');
         res.setHeader('cache-control', 'no-store');
-        res.end(JSON.stringify({ entries: readStatus(root), notes }));
+        res.end(JSON.stringify({ entries: readStatus(root), notes, changes: readChanges(root) }));
       });
       server.middlewares.use('/__review', (req, res) => {
         if (req.method !== 'POST') { res.statusCode = 405; res.end(); return; }
