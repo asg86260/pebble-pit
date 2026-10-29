@@ -3740,29 +3740,26 @@ const GROVE_MOCK = [ // MOCK grove
   ['r', 'R the grove at rest', 300, "The grove at rest: the pine beside the forestry shack, and the seed basket on the shack's far side with five acorns sat in it."], // MOCK grove
   ['a1', 'A1 a worker plants it', 300, "A worker takes an acorn out of the seed basket by the forestry shack, carries it to the bare plot, kneels and plants it, and a shoot comes up row by row."], // MOCK grove
   ['a2', 'A2 you plant it', 300, "You plant it yourself: pick an acorn out of the seed basket by the forestry shack, carry it over the bare plot and let go, and it sinks in and a shoot comes up row by row."], // MOCK grove
-  ['s1', 'S1 seeds from a felled tree', 420, "Two acorns hang in the pine; it goes over and its crown breaks, but the acorns drop out and stay, and a worker carries them to the seed basket."], // MOCK grove
   ['s2', 'S2 a seed bought', 300, "The seeds row on the grove's board, paid in dust: bought, a worker walks in from heaven's gates with one acorn and puts it in the seed basket; the next costs more."], // MOCK grove
   ['s3a', 'S3a self-seeding: an acorn', 420, "The self-seeding upgrade bought (a chance in four a fall); the pine goes over, an acorn falls out of the breaking crown and stays, and a worker carries it to the seed basket."], // MOCK grove
   ['s3b', 'S3b self-seeding: none this time', 420, "Self-seeding owned, but the roll does not come up: the crown breaks and fades and nothing stays."], // MOCK grove
   ['b1', 'B1 grows row by row', 420, "The planted acorn grows into the pine a row at a time from the ground up, the trunk first and then the crown, sped up to ten seconds."], // MOCK grove
-  ['b2', 'B2 grows all over', 420, "The planted acorn grows into the pine all over at once, taller and wider a cell at a time, sped up to ten seconds."], // MOCK grove
   ['c', 'C the fall: the crown breaks', 520, "The sawn pine goes over whole, away from the shack, and its crown breaks into pieces where it hits, which scatter and fade; the trunk lies as its four logs."], // MOCK grove
-  ['d1', 'D1 bucked with a saw', 520, "The woodcutter stands on the felled trunk and saws one log off the far end at a time; each rolls off, and the trunk is a log shorter until all four are cut."], // MOCK grove
   ['d2', 'D2 bucked with an axe', 520, "The same with the axe: three blows a log, each log rolling off the end in the shade it had in the trunk, until all four are cut."], // MOCK grove
-  ['e', "E the woodcutter's own axe", 520, "The woodcutter walks up from the shack with its axe, fells the pine a blow at a time, hops up on the trunk and bucks it into its four logs with the same axe."], // MOCK grove
   ['esaw1', 'E-saw-1 a two-man crosscut', 520, "The woodcutter fells the pine with a two-man crosscut, a long blade between two pegs, held up at the cut and stroked in and out."], // MOCK grove
-  ['esaw2', 'E-saw-2 a bow saw', 520, "The woodcutter fells the pine with a bow saw, its blade strung under a bow, held up at the cut and stroked in and out."], // MOCK grove
-  ['esaw3', 'E-saw-3 a pruning saw', 520, "The woodcutter fells the pine with a short one-hand pruning saw, held up at the cut and stroked in and out."], // MOCK grove
   ['f1', 'F1 you saw', 520, "You saw: the faint hand shows the stroke, then you drag the saw a log's height up the trunk until the pine goes over, and saw the trunk into its four logs one at a time."], // MOCK grove
-  ['f3', 'F3 you dig the stump', 300, "You dig the stump: the faint hand shows the lift, then you pull it up root by root until it comes out whole as a log's block, carry it off and let go."], // MOCK grove
-  ['f3a', 'F3a the stump is the handle', 300, "Press and hold on the stump itself and drag up: it comes up with your hand, its roots straining and snapping one by one, then you carry it off as a log."], // MOCK grove
   ['f3a1', 'F3a-1 the earth gives', 300, "The stump pulled as in F3a, and the earth gives: the soil cracks wider as you strain, the root about to go pulls taut, and each snap jerks the stump up a cell and holds it while dirt flies."], // MOCK grove
   ['f3a2', 'F3a-2 tug of war', 300, "Pulled in heaves: the stump settles back a little each time the hand eases, the straining root stretches, the fist leans back harder, and the last, biggest root holds two beats before the stump comes free."], // MOCK grove
   ['f3a3', 'F3a-3 root count', 300, "The roots show from the start as three cords over the soil; each snap breaks one with a held burst, so what is left to pull is the cords still whole."], // MOCK grove
-  ['f3b', 'F3b dig it with the shovel', 300, "Press on the shovel standing beside the stump and lever it a stroke at a time; each stroke loosens the stump until it tips out as a block, which you carry off."] // MOCK grove
 ]; // MOCK grove
+const GROVE_REVIEW = { // MOCK grove  one card per question the owner is choosing between
+  r: 'grove: layout, growth, the fall', b1: 'grove: layout, growth, the fall', c: 'grove: layout, growth, the fall', // MOCK grove
+  a1: 'grove: planting and seeds', a2: 'grove: planting and seeds', s2: 'grove: planting and seeds', s3a: 'grove: planting and seeds', s3b: 'grove: planting and seeds', // MOCK grove
+  esaw1: 'grove: the woodcutter', d2: 'grove: the woodcutter', // MOCK grove
+  f1: 'grove: by hand', f3a1: 'grove: by hand', f3a2: 'grove: by hand', f3a3: 'grove: by hand', // MOCK grove
+}; // MOCK grove
 Object.assign(SCENES, Object.fromEntries(GROVE_MOCK.map(([opt, option, at, say]) => [`after-grove-mock-${opt}`, { // MOCK grove
-  about: 'the acts', review: 'act 3: the grove', // MOCK grove
+  about: 'the acts', review: GROVE_REVIEW[opt], // MOCK grove
   stage: 'mock: throwaway review code, never merged -- shows how it would look; the real build comes after you pick', option, say, // MOCK grove
   swap: () => { globalThis.__groveMock = opt; window.__scene(`after-grove-mock-${opt}`); }, // MOCK grove
   run: () => { // MOCK grove
