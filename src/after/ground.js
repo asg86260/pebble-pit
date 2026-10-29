@@ -326,7 +326,7 @@ export function putBeside(v, x) {
 // mound a block a step, settled, the moment it lands. Their bottom-left
 // cells, in the order laid.
 export function heapAt(v, x, n) {
-  const mk = typeof v === 'function' ? v : () => v; // MOCK after-goods  a block's own value each
+  const mk = typeof v === 'function' ? v : () => v;
   const z = sizeOfCell(mk()), mid = slotNear(colOf(G, x), z), out = [];
   if (mid < 0) return out;
   const near = [];
@@ -344,7 +344,7 @@ export function heapAt(v, x, n) {
       const sc = t / z + Math.abs(s - mid) / z - (s > mid ? 0.01 : 0);
       if (sc < score) { score = sc; best = s; }
     }
-    const t = best >= 0 ? slotTop(best, z) : -1, vv = mk(); // MOCK after-goods
+    const t = best >= 0 ? slotTop(best, z) : -1, vv = mk();
     out.push(best >= 0 && putBlock(G, best, t, vv) ? t * G.cols + best : putSomewhere(vv, x));
   }
   return out;

@@ -179,12 +179,12 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
+- Act 3's goods have their own colors: each log, timber block, sign and grain of sawdust is one of four tones of its good -- bark brown, pale wood, slate, pale sawdust -- picked when it is made and kept wherever it goes, so a pile reads as separate pieces (test/after-palette.test.mjs).
 - A scale falling through the deep's water is a chip of the one air, and one still in it when the page reloads is where it was; act 3's thrown goods and the deep's scales come down on the same landing chain the yard's dust does (test/one-landing.test.mjs).
 - Every box stands on the boards' dot ground: the cards, notices, buttons, signs, tabs and fields, the counter and the canvas's own cards, the black ones in the paper's dots (test/ui-tokens.test.mjs).
 - Act 3's UPGRADES button lifts and sways under the pointer as a shop tile does, and pressed again puts its shop away; every station has one, God's crowd too, and clicking or hovering a station opens nothing; a shop tile pressed now sinks halfway (test/after-gestures.test.mjs).
 - Act 3's stations are their own shops: open one from the UPGRADES button under it, take hold of its work to close it; the $ signs, the strip under a worked station and the glyph over a working one are gone, and one ghost hand shows how (test/after-gestures.test.mjs).
 - Act 3's saw mill is a machine you can follow a log through: the sawyer walks the treadwheel, carries each log to the bed, and the blade cuts it a column a stroke into timber that rides down a chute onto the mound and sawdust that falls on the heap under the saw (test/after-mill-machine.test.mjs).
-- In act 3 you pick up logs and timber as you do dust, a left press and hold on a pile, and flick them onto another pile or the floor, where a worker carries them home (test/after-goods-sweep.test.mjs).
 - One hand in the yard, the deep and act 3: a drag takes dust, scales, planks or logs up to what the hand can carry by weight (a plank four grains, a log sixteen, never fewer than one), and what you throw can be caught and swept up again anywhere (test/one-hand.test.mjs).
 - Act 3's log and timber piles are heaps of blocks you can see, a log a 4x4 and three 2x2 timber blocks a log; each pile holds only so many, shows the pile-full mark at its brim and stops what fills it, and timber bills and a save's timber are halved to match (test/after-pile-plots.test.mjs).
 - In act 3 nothing fades onto or off a pile: workers carry every block, the workshop's timber walked to it four blocks a sign, its signs standing in its rack as blocks until carried out, and a row billed in timber lands when its blocks have been carried to its station (test/after-carried-goods.test.mjs).
@@ -208,7 +208,6 @@ this section; the release that switches it on moves these under Unreleased.
 - On a short window, down to a laptop's 1280x800, only the appearance page's grid scrolls, so the close-up, its slots and the buttons stay in view, and the arrows walk every row of the grid before leaving it (src/selftest/wardrobe.js, "short window").
 - Settings, on the pause sheet and the title page, is one page in four tabs -- graphics, audio, controls and language -- with the controls table and the languages right under their tabs, LB and RB to turn them on a pad, and the title page's volume slider drawn like the pause sheet's (src/selftest/settings.js, "four tabs"; src/selftest/language.js).
 - Every zoom glides instead of stepping, the picture scaled sharp on the way, and the pointer stays on what it points at through it (test/zoom-glide.test.mjs).
-- Act 3's stations sell from a small $ sign beside each one, inverted while its board is up; hovering a station no longer grows its part or opens its shop, and a closed station's sign is crossed through (test/after-gestures.test.mjs; src/selftest/aftergestures.js).
 - Everyone in act 3 walks three times as fast; the throne's speech keeps its pace (test/after-roster.test.mjs).
 - Act 3's workers are bought with rebel: a soul a sign or poster wins pays rebel and waits in God's yard, and the pedestal's recruit row hires one, its line saying how many are ready and how many idle (test/after-recruit.test.mjs).
 - Act 3's stations stand further apart, and a station worked by hand no longer puts its name up over the work (src/selftest/playcheck.js).
@@ -217,10 +216,8 @@ this section; the release that switches it on moves these under Unreleased.
 
 - In act 3 logs and timber stack, roll and settle the same way wherever they land, on a pile or on open floor, never one drawn through another, heap into a mound rather than a tower, and a press on a pile takes the block on top (test/after-ground.test.mjs).
 - In act 3 every member carries cells the way the yard's haulers do, by the hand's weights (a log sixteen grains, timber four), a station's loads come out of the shack's door, and a unit is held only if it was really taken (test/one-carry.test.mjs).
-- In act 3 a log or timber you throw can be caught in the air again with a press on it, as dust can (test/after-goods-sweep.test.mjs, src/selftest/afterboards.js).
 - Dust, scales and act 3's logs and timber held on the cursor drift round it smoothly again instead of hopping a cell at a time (scenes hand-dust, after-hand-timber).
 - In act 3 a press and hold dragged across piles and the logs or timber lying about picks them up the whole way, begun on bare ground or on goods, as dragging across dust does (src/selftest/afterboards.js).
-- In act 3 a log or timber you throw onto the floor, or a felled tree's log, can be picked up again with a press and hold on it, as dust can (test/after-goods-sweep.test.mjs).
 - Going back up by the corner square after looking along the deep, or down from heaven, no longer jumps to the portal before the ring closes: the ring closes on what you were looking at (src/selftest/deep.js, "going up from anywhere in the deep").
 - Going between the surface and the deep plays its ripple again after a reduced-motion scene was looked at, instead of cutting straight across for good (src/selftest/deep.js, "a reduced-motion scene leaves the player's full motion").
 - Act 3 keeps no stock numbers: a pile is what lies on its strip and the sawdust heap is its grains, saved as cells, and a unit appears or vanishes only at a tree felled, a cut at the saw, a sign joined, a tip through the hatch, a sign planted, an order laid, a band laid or a blow in the deep -- every frame of every check asks it (test/no-stock.test.mjs; test/conservation.test.mjs).
@@ -269,7 +266,6 @@ this section; the release that switches it on moves these under Unreleased.
 - After a load or a new game the stations' offer flags stand as the new yard has them, and heaven's ground, the serpent's bar and the fang plate start from it, instead of the last yard's raising, fading or breaking off (test/held-state.test.mjs).
 - Leaving the deep, or the serpent's bar going down, no longer leaves a status's tooltip waiting on that spot of the screen (src/selftest/deep.js).
 - Loading a save no longer shows the last yard's income rates and air trend in the books until they age out (test/held-state.test.mjs).
-- Dust and scales held on the cursor drift round it smoothly again instead of hopping a cell at a time (drawing; the shot is the check).
 
 ## v0.6.1 — 2026-10-19
 

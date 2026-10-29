@@ -29,7 +29,6 @@ import { trees } from '../../after/grove.js';
 import { frame, K, W, PALE, MID, SOIL, DUST, toneOf, now, inView, clamp01, hash } from './kit.js';
 import { gestureView, groveIcons } from '../../after/gestures.js';
 import { goodBlock } from './piles.js';
-import { seedOf } from './piles.js'; // MOCK after-goods
 import { ctx } from '../ctx.js';
 import { themed } from '../../ink.js';
 import { GREY } from '../../config.js';

@@ -20804,7 +20804,8 @@ act3-seat, act3-dais, act3-arrive, act3-bless, act3-gaze cards):
 
 - **Everything is squares, one flat tone a shape.** No flecks, no dither,
   no per-cell variation: act 3 is the exception to the house rule. The
-  only outline in the sky is God's.
+  only outline in the sky is God's. The goods alone carry their own color
+  families, four tones each at act 1's coin contrast (the owner, 2026-10-29).
 - **The crowd is the mass.** Each band is souls as flat squares packed
   with no gaps, so a band is solid and only its top edge steps square by
   square (heights off by up to two cells). No heads, no faces. Far: pale,
@@ -23299,7 +23300,9 @@ the press are already cut (PR #24); this is the rest.
 **The rules, for every station.**
 
 1. **Goods are blocks.** A log is 4x4 cells, timber 2x2, a sign 4x4, each one
-   flat tone; sawdust stays 1x1 grains, the one loose material, as act 1's
+   flat tone, one of the good's four colors (`AFTER_GOODS`, picked once at
+   birth, kept in the unit's cell: the owner, 2026-10-29, "B2 colors, act 1
+   contrast"); sawdust stays 1x1 grains, the one loose material, as act 1's
    dust. A pile is a `grid.js` plot whose cell is one block (the casino's
    bins the precedent): blocks fall, roll down the heap's side at the dust's
    slope and slump into a gap by the shared sand rules, and the pile's shape
@@ -23678,7 +23681,8 @@ ground plot's extent and terrain, its surfaces in order, its air, its
 stations and their strips, and its named sources and sinks: a tree's fall,
 the saw's cut and the shack's door make units; the pit, the crusher, a sign
 walked into the crowd and a band laid unmake them. Act 3's kinds keep one
-flat tone a block (act 3 is the exception to per-cell variation).
+flat square a block, of the unit's own color among its good's four (act 3
+is the exception to per-cell variation, the goods' families to its four tones).
 
 #### 8. The staged plan
 
