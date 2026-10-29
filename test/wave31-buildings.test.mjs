@@ -17,7 +17,7 @@
 
 import { readFileSync } from 'node:fs';
 import { group, ok, state, run, runUntil, openSites, yard } from './helpers.mjs';
-import { WORK_BASE } from '../src/config.js';
+import { BUILD_MIN_S, BUILD_CAP_S } from '../src/config.js';
 import { nearQuarry, nearFarm, standRect } from '../src/board.js';
 
 const works = () => state().works || {};
@@ -224,8 +224,8 @@ group('a rockhand lent off the rock walks down it, rather than dropping', async 
 });
 
 // #8, amendment -- the first houses are quick, and they climb from there.
-// `HOUSE_ROW.work` overrides `workFor`'s flat WORK_BASE.building number with a
-// curve off how many rooms already stand (`S.crew`, clamped at zero). Bought
+// `HOUSE_ROW.along` places the house on its band (`workFor`) off how many
+// rooms already stand (`S.crew`, clamped at zero). Bought
 // for real through the row each time -- `window.__buy` -- rather than read
 // off the row directly, because what changed is what a purchase actually
 // costs in time.
@@ -249,15 +249,15 @@ group('the first houses are quick, and the ladder climbs from there', async () =
     // Cut again from twenty. With one pair of hands these are wall-clock
     // seconds for your first hire standing alone with nothing else built, and
     // the opening is the one stretch of the game with nothing to cut away to.
-    ok(seconds[0] === 8, 'the first is eight seconds, not twenty and not ninety',
+    ok(seconds[0] === BUILD_MIN_S, 'the first is the floor of the band, not twenty and not ninety',
        `house 1: ${seconds[0]}s`),
-    ok(seconds[2] <= 12, 'and the first few are all quick',
+    ok(seconds[2] <= BUILD_MIN_S + 4,'and the first few are all quick',
        `houses 1-3: ${seconds.slice(0, 3).join('/')}s`),
     ok(seconds[4] > seconds[0] && seconds[9] > seconds[4] && seconds[14] > seconds[9],
        'and each one after climbs past the last',
        `1:${seconds[0]} 5:${seconds[4]} 10:${seconds[9]} 15:${seconds[14]}`),
-    ok(Math.max(...seconds) <= WORK_BASE.machine + 30,
-       'never much worse than putting up a machine', JSON.stringify(seconds)),
+    ok(Math.max(...seconds) <= BUILD_CAP_S,
+       'and never past the cap', JSON.stringify(seconds)),
     ok(seconds[19] >= seconds[14], 'and it is still climbing by the twentieth',
        `house 15: ${seconds[14]}s, house 20: ${seconds[19]}s`)
   ];

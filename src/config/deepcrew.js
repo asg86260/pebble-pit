@@ -15,9 +15,6 @@ export let SHAFT_PACE = 0.6;
 // A station holds one fighter, so the fighters' cap is the stations standing
 // (`capOfBare` in levels.js); the most there can be is FIGHT_STATIONS_MAX.
 //
-// Worker-seconds a delver puts into a station before it stands: a building's
-// worth, like the doors of the deep it replaces.
-export const STATION_WORK_S = 45;
 // A fang drops at each of the serpent's first this-many phase breaks: the
 // first station is free, and each fang buys one more.
 export const FANG_BREAKS = 3;

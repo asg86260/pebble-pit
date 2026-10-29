@@ -5914,20 +5914,31 @@ down at all -- and `brewLeft` in persist.js was already the pattern.
 
 ### How long
 
-Time is a price, so it scales the way a price scales -- off the kind of thing and
-the rung, from one table (`WORK_BASE`), not hand-tuned per row:
+Time is a price, so it is set by one rule off where a row sits in its own
+progression, never a figure a row (the owner, 2026-10-29: "30 seconds should be
+the absolute max... most things should just cost 10-20 seconds"). A row's
+`along` is 0 at the foot of its ladder and 1 at the top; its time is a line
+across the band its kind sells in (`BUILD_BANDS`, `workFor` in works.js):
 
-| kind | what it is | with one pair of hands |
-|---|---|---|
-| rung | one step up a ladder, and a hat off the school's stand | 8s |
-| place | a bench in the cut, a furrow, the recycler | 30s |
-| building | the lab, the school, the outhouse, the casino, the tower, the two sites | 90s |
-| machine | the ram, the belt, the jaw, the tiller | 180s |
+| kind | what it is | foot | top |
+|---|---|---|---|
+| rung | one step up a ladder, and a hat off the stand | 10s | 20s |
+| place | a bench in the cut, a furrow, the recycler | 10s | 25s |
+| building | the shack, a station, a house, a shield | 10s | 30s |
+| machine | the ram, the belt, the jaw, the tiller | 20s | 30s |
 
-A rung climbs with the ladder the way its price does (`WORK_STEP`, a third again
-a rung). A place, a building and a machine are flat: a bench is a bench whether it
-is the second or the fifth. Read every figure as "with one pair of hands on it":
-five quarriers take a bench out in a fifth of that, which is what a gang is for.
+Nothing is shorter than `BUILD_MIN_S` and nothing longer than `BUILD_CAP_S`,
+with one pair of hands on it; five quarriers take a bench out in a fifth of
+that, which is what a gang is for. A ladder's place is its rung out of its
+rungs (a card carrying only the top of a ladder counts from its `first`), so a
+dearer rung never builds faster than a cheaper one. A row with no ladder is
+at the top of its band if it opens something (a station, a machine), the foot
+if it is a bare rung. A row sold again and again with no end (a house, a pod)
+climbs toward the top of its band and never past it (`BUILD_REPEAT_HALF`); the
+shields name their order (`ALONG`). The dome and the sphere are poured by
+the ring at the cap (`DOME_WORK`, `SPHERE_WORK`). Act 3's stations are not on
+this table: they are carried in and laid, so their time is the walk, and it
+comes to about half a minute (`act3-pace.mjs`).
 
 **The school's rows are rungs, not places.** A hat is a thing somebody is shown
 how to wear rather than a building, and the carts have no ceiling -- a set of six

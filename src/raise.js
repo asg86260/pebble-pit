@@ -7,7 +7,7 @@
 // so the node tier can press it without a document.
 
 import { msg } from './lang.js';
-import { WORK_BASE } from './config.js';
+import { ALONG } from './config.js';
 import { S, bench } from './state.js';
 import { canAfford } from './upgrades.js';
 import { registerRows, start, workOn } from './works.js';
@@ -24,7 +24,7 @@ const RAISE_BENCH = {
   kind: 'building',
   // A bench's worth of work rather than a building's: it runs while there is
   // one body in the yard and nothing else to watch.
-  work: () => WORK_BASE.place,
+  along: () => ALONG.first,
   // Read live because the layout moves with the window.
   box: () => ({ x: bench.x, w: bench.w, y: bench.y, h: bench.h }),
   // and which place is coming out of the ground, for the clip

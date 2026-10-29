@@ -1,5 +1,4 @@
-import { PROP_COST, NET_COST, ARCH_COST,
-         PROP_WORK, NET_WORK, ARCH_WORK } from '../config.js';
+import { PROP_COST, NET_COST, ARCH_COST, ALONG } from '../config.js';
 import { S, tower } from '../state.js';
 import { lookAt } from '../world.js';
 import { raiseShield, shieldDone, shieldGround } from '../shield.js';
@@ -21,7 +20,7 @@ export const SHIELD_ROWS = [
   {
     key: 'props',
     kind: 'building', site: 'yard', at: () => S.cx, box: () => shieldGround(),
-    work: () => PROP_WORK,
+    along: () => ALONG.middle,
     name: msg('row-props'),
     note: () => storyLine('row-props-note-who', 'row-props-note', 'sqouse'),
     cost: () => PROP_COST,
@@ -31,7 +30,7 @@ export const SHIELD_ROWS = [
   {
     key: 'net',
     kind: 'building', site: 'yard', at: () => S.cx, box: () => shieldGround(),
-    work: () => NET_WORK,
+    along: () => ALONG.first,
     name: msg('row-net'),
     note: () => msg('row-net-note'),
     cost: () => NET_COST,
@@ -42,7 +41,7 @@ export const SHIELD_ROWS = [
   {
     key: 'arch',
     kind: 'building', site: 'yard', at: () => S.cx, box: () => shieldGround(),
-    work: () => ARCH_WORK,
+    along: () => ALONG.last,
     name: msg('row-arch'),
     note: () => msg('row-arch-note'),
     cost: () => ARCH_COST,

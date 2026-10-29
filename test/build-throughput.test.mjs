@@ -85,6 +85,11 @@ group('a backlog over every site clears at one body a site, nobody pulled off a 
     if (!queued().length) { cleared = frames / 60; break; }
   }
   const share = hammering / Math.max(1, bodyFrames);
+  // The walk to a site is the yard's, the same however short the work is, so
+  // the check is on the seconds it costs, not on a share of a backlog that
+  // shrinks when builds do (the owner, 2026-10-29: 30 s at most).
+  const WALK_TO_SITE_S = 10;
+  const idle = (bodyFrames - hammering) / 60;
   const worstGap = Object.entries(gap).sort((a, b) => b[1].worst - a[1].worst)[0] || ['-', { worst: 0 }];
 
   return [
@@ -100,7 +105,7 @@ group('a backlog over every site clears at one body a site, nobody pulled off a 
     // what the deepest site's first builder can be owed (measured up to 18 s).
     ok(cleared != null && cleared <= floor + 20, 'the backlog clears within one walk of its deepest line',
        `${cleared?.toFixed(0) ?? 'not cleared'}s against a floor of ${floor.toFixed(0)}s`),
-    // Measured 96-97% with the fix; the rest is the first walk to each site.
-    ok(share >= 0.95, 'and the builders are hammering nearly all the time', `${(100 * share).toFixed(1)}%`)
+    // Measured 47 body-seconds with the fix, nearly all of it the first walk to each site.
+    ok(idle <= sites * WALK_TO_SITE_S, 'and the builders are hammering but for the first walk to each site', `${idle.toFixed(0)} body-s not hammering, ${(100 * share).toFixed(1)}% hammering, ${sites} sites`)
   ];
 }, { reload: false });

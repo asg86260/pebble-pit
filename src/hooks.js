@@ -8,7 +8,7 @@ import { routeReport, rockTop, ways, links } from './route.js';
 import { SHAKE_TURNS, P, SHARD_CELL, SPORE_CELL, someFind, QUARRY_BENCH0, FARM_PLOTS0 , tune,
          QUARRY_BENCH_MAX, FARM_PLOTS_MAX, LADDER, FORK_RUNG, ABYSS_AT } from './config.js';
 import { S, BLANK, floor, pit, cut } from './state.js';
-import { workOn, worksAt, abandonAt, start, stepWorks, SITES, ahead } from './works.js';
+import { workOn, worksAt, abandonAt, start, stepWorks, SITES, ahead, workFor, takesTime } from './works.js';
 import { at, put, addGrain, recount } from './grid.js';
 import { quarryCells, quarryTarget, digCell, dugShare } from './quarry.js';
 import { blocked, resite, clampCam, benches, plotCount, rockLeft, resize, settleShack } from './world.js';
@@ -19,7 +19,7 @@ import { forceCrit } from './crit.js';
 import { SKY, DROPS, fillSky, forceStrike, pinHeft, poopCols, moteX, moteY, clearSky , retally } from './smog.js';
 import { overPitMouth } from './world.js';
 import { makeMeteor } from './meteor.js';
-import { WIZ_BREW_MS, WORKER } from './config.js';
+import { WORKER } from './config.js';
 import { seatRift, anyoneInTheHole } from './rift.js';
 import { now as clockNow } from './clock.js';
 import { syncWorkers, drop as dropHeld, lift as liftHeld, shakeHeld } from './crew.js';
@@ -239,7 +239,7 @@ export const brewWizard = () => {
   S.towerOpen = true;
   const u = everyRow().find(r => r.key === TYPE.WIZARD);
   if (u && !workOn(TYPE.WIZARD)) start(u.site, u, null);
-  return Math.round(WIZ_BREW_MS / 1000);
+  return u ? workFor(u) : 0;
 };
 
 export const wizardHat = (n = 1) => {
@@ -673,10 +673,10 @@ export const climbRow = (u, read, limit = 40) => {
   }
 };
 export const climbedBills = () => everyRow().map(u => {
-  const bills = [];
-  try { climbRow(u, () => bills.push(billOf(u).filter(([money]) => money !== 'time'))); }
+  const bills = [], works = [];
+  try { climbRow(u, () => { bills.push(billOf(u).filter(([money]) => money !== 'time')); works.push(takesTime(u) ? workFor(u) : 0); }); }
   catch (e) { bills.push([['error', String(e.message || e)]]); }
-  return { key: u.key, bills };
+  return { key: u.key, bills, works };
 });
 
 // The refund at the foot of a row's card (and its line on the queue card), by
