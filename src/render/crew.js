@@ -154,7 +154,27 @@ export function drawHat(x, y, kind = 'helmet', tight = false) {
   const left = x + (WORKER - spriteW(rows) * P) / 2;
   // No white around it: it takes the hat off the head where hat, outline and
   // rock are one black.
-  drawSprite(ctx, rows, left, y - spriteH(rows) * P);
+  hatCells(rows, left, y - spriteH(rows) * P);
+}
+
+// A hat's cells laid on whole device pixels by the same rule as the body's
+// `square`, each cell's edges snapped and shared with its neighbors. A hat
+// laid at its own fractional place (a counter on a half cell, a zoom that is
+// not whole) blends its edges and slides a pixel off the head it sits on.
+function hatCells(rows, x, y) {
+  const m = ctx.getTransform ? ctx.getTransform() : null;
+  const sx = v => (m ? onDevice(v, m.a, m.e) : Math.round(v));
+  const sy = v => (m ? onDevice(v, m.d, m.f) : Math.round(v));
+  for (let r = 0; r < rows.length; r++) {
+    for (let c = 0; c < rows[r].length; c++) {
+      const ch = rows[r][c];
+      if (ch === '.' || ch === ' ') continue;
+      ctx.fillStyle = ch === 'o' ? '#fff' : '#000';
+      const x0 = sx(x + c * P), y0 = sy(y + r * P);
+      ctx.fillRect(x0, y0, sx(x + (c + 1) * P) - x0, sy(y + (r + 1) * P) - y0);
+    }
+  }
+  ctx.fillStyle = '#000';
 }
 
 // What a body has on is asked of kit.js, the one place that knows.

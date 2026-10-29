@@ -18,6 +18,7 @@ import { TESTS as boardwords } from './selftest/boardwords.js';
 import { TESTS as contrast } from './selftest/contrast.js';
 import { TESTS as wind } from './selftest/wind.js';
 import { TESTS as crew } from './selftest/crew.js';
+import { TESTS as rosterhats } from './selftest/rosterhats.js';
 import { TESTS as stations } from './selftest/stations.js';
 import { TESTS as view } from './selftest/view.js';
 import { TESTS as dust } from './selftest/dust.js';
@@ -58,6 +59,7 @@ const TESTS = [
   ...contrast,
   ...wind,
   ...crew,
+  ...rosterhats,
   ...stations,
   ...view,
   ...dust,
