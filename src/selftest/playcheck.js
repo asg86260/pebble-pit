@@ -20,7 +20,7 @@ import { goodsRead } from '../after/piles.js';
 import { newRun, settle, raf, ok, point, canvas, panel, run, runUntil, haveBench, pressRaise, haveRock,
          boulderWorld } from './kit.js';
 import { STATIONS, here, stationAt, hitRect, standRect } from '../stations.js';
-import { openBoard, inSafeZone } from '../board.js';
+import { openBoard, inSafeZone, showPanel } from '../board.js';
 import { toScreen } from '../world.js';
 import { portalEnd } from '../portals.js';
 import { pairBox } from '../after/rebel.js';
@@ -158,8 +158,10 @@ async function visit(row, shop = false) {
   // for a cursor heading toward it, which is the board's, not the walk's --
   // so a corner of the window off the way to that board, wherever it sits
   // (under a notice card or at the top of the glass).
-  const [bx, by] = [[4, 4], [S.W - 4, 4], [4, S.H - 4], [S.W - 4, S.H - 4]].find(([x, y]) => !inSafeZone(x, y)) || [4, 4];
-  point('pointermove', bx, by, 0);
+  // A board that fills the glass (a phone's bottom sheet, its planks as tall as
+  // they keep) leaves no corner off its way: it is put away outright.
+  const corner = [[4, 4], [S.W - 4, 4], [4, S.H - 4], [S.W - 4, S.H - 4]].find(([x, y]) => !inSafeZone(x, y));
+  if (corner) point('pointermove', corner[0], corner[1], 0); else showPanel(null, true);
   await until(() => openBoard() === null, 90);
   const [sx, sy] = glass(at.x, at.y);
   await walkTo(sx, sy);

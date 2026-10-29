@@ -232,12 +232,11 @@ export const TESTS = [
       Object.assign(S, { stored: 1e13, shards: 1e11, spores: 1e11, sparks: 1e9 });
       const boxes = () => {
         const shelf = w.document.querySelector('.sheet > .page:not([hidden]) .rows.shelves');
-        // Layout px: the sheet eases open and back by a scale, which is not a move.
-        const o = shelf.getBoundingClientRect(), k = o.width / shelf.offsetWidth, m = new Map();
-        for (const t of shelf.querySelectorAll(':scope > .tile')) {
-          const r = t.getBoundingClientRect();
-          m.set(t.dataset.key, [(r.x - o.x) / k, (r.y - o.y) / k, r.width / k, r.height / k]);
-        }
+        // Layout px, not the painted box: the sheet eases open by a scale and a
+        // tile lifts and sways under the pointer, and neither is a move.
+        const m = new Map();
+        for (const t of shelf.querySelectorAll(':scope > .tile'))
+          m.set(t.dataset.key, [t.offsetLeft, t.offsetTop, t.offsetWidth, t.offsetHeight]);
         return m;
       };
       const moved = [];
@@ -261,6 +260,43 @@ export const TESTS = [
         before = done;
       }
       return [ok(moved.length === 0, 'no tile moves or resizes while a ladder is bought up', moved.slice(0, 6).join('; ') + ` (${rungs} rungs)`)];
+    } finally { f.remove(); }
+  }],
+
+  // A tile being built draws the bodies at its site and no more (DESIGN.md,
+  // "A hand on the tile"): the bench builds one copy at a time, so a rung
+  // queued three times still shows one worker on the tile, frame after frame,
+  // through every copy's start and finish.
+  ['a building tile draws one worker animation, not several', async () => {
+    const f = document.createElement('iframe');
+    f.src = './play.html?bench&lang=en';
+    f.style.cssText = 'position:fixed;left:0;top:0;width:1440px;height:900px;border:0;opacity:0;pointer-events:none;z-index:-1';
+    document.body.appendChild(f);
+    try {
+      const t0 = performance.now();
+      const booted = () => { const x = f.contentWindow; return !!(x?.__scene && x.__board && x.__fast && x.__buy); };
+      while (!booted() && performance.now() - t0 < 20000) await raf();
+      const w = f.contentWindow;
+      if (!booted()) return [ok(false, 'the game boots in a frame')];
+      await w.document.fonts.ready;
+      const step = n => new Promise(r => { w.__fast(n); w.requestAnimationFrame(() => w.requestAnimationFrame(() => r())); });
+      w.__scene('boards');
+      w.__fast(1);
+      w.__board('bench');
+      await step(0.5);
+      Object.assign(w.__state(), { stored: 1e13 });
+      for (let k = 0; k < 3; k++) w.__buy('carry');
+      let building = 0, most = 0;
+      for (let i = 0; i < 120; i++) {
+        await step(0.1);
+        const tile = w.document.querySelector('.sheet > .page:not([hidden]) .rows.shelves > button[data-key="carry"]');
+        if (!tile?.classList.contains('building')) continue;
+        // The poses a drawn tile is keyed by: one entry a hand, `|` between them.
+        const pose = (tile.querySelector('.pic')?.dataset.tint || '').split('/')[3] || '';
+        building++;
+        most = Math.max(most, pose ? pose.split('|').length : 0);
+      }
+      return [ok(building > 20 && most === 1, 'a tile being built draws one worker', `${building} frames building, most hands at once ${most}`)];
     } finally { f.remove(); }
   }],
 ];
