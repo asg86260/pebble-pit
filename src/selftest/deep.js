@@ -14,6 +14,7 @@ import { abyssLine } from '../pit.js';
 import { arrowBox } from '../render/shaftway.js';
 import { refreshCorner } from '../corner.js';
 import { draw } from '../render.js';
+import { ctx } from '../render/ctx.js';
 import { now } from '../clock.js';
 import { pref, setPref } from '../prefs.js';
 import { ripple, gliding } from '../view.js';
@@ -76,6 +77,31 @@ function trip(id, to, label) {
 }
 
 export const TESTS = [
+  // The deep through the ring is the deep going on, not a picture of it held
+  // from the click (the owner, 2026-10-29: "make it live"): the same patch
+  // inside the ring, a third of a second apart, is not the same pixels.
+  ['deep: the ring going down shows the deep live, not a held picture', async () => {
+    deepYard();
+    window.__look(portalX() - S.viewW / 2);
+    run(2);
+    window.__motion(false);
+    const patch = () => {
+      const rip = ripple(), d = S.dpr, h = 40;
+      draw();
+      return rip && rip.r > h * 2 ? [...ctx.getImageData(Math.round((rip.cx - h) * d), Math.round((rip.cy - h) * d), Math.round(2 * h * d), Math.round(2 * h * d)).data] : null;
+    };
+    let a = null, b = null;
+    try {
+      click(portalCircle().x, portalCircle().y);
+      for (let i = 0; i < 60 * (VIEW_GLIDE_S + 1) && !a; i++) { run(1 / 60); if (S.viewFade > 0.35) a = patch(); }
+      for (let i = 0; i < 20; i++) run(1 / 60);
+      b = patch();
+    } finally { window.__motion(null); }
+    const moved = a && b ? a.reduce((n, v, i) => n + (v !== b[i] ? 1 : 0), 0) : -1;
+    run(VIEW_GLIDE_S + 0.5);
+    return [ok(a && b, 'the ring opens wide enough to look into, twice', `${!!a} ${!!b}`),
+            ok(moved > 0, 'and what shows through it moves between the two', `${moved} channel values changed`)];
+  }],
   ['deep: the arrow at the shaft goes down and up; the surface and the roof take no click', async () => {
     deepYard();
     // The liquid well clear of the portal, which is a way down of its own.

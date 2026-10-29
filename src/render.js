@@ -9,10 +9,9 @@
 import { CREW_FADE, P, MAGIC_TONES, RIPPLE_RINGS, RIPPLE_GAP, GREY, AFTER_TONES } from './config.js';
 import { crewView } from './prefs.js';
 import { ctx, canvas, paintOn } from './render/ctx.js';
-import { inkMode, onTheme } from './ink.js';
+import { inkMode } from './ink.js';
 import { drawAir, drawAirNear } from './air.js';
 import { drawBirds, drawClouds } from './weather.js';
-import { held as heldState } from './reset.js';
 
 import { drawApothecary, drawBrewSteam, drawPotLabels } from './render/apothecary.js';
 import { drawBalloonPosts } from './render/balloon.js';
@@ -491,11 +490,10 @@ function drawLayer(layer, i, place) {
 // both. With no glide, the ripple is readied while the page is idle -- not on
 // the landing page's picture, which never goes down.
 //
-// The far place is not drawn a frame at a time: it is painted once, on the
-// glide's first frame, with its own camera onto a sheet the window's size,
-// and the ring shows that frozen picture (the owner's portals review,
-// 2026-10-17): one pass of the layers a frame, whichever two places the
-// ripple joins (view.js, `ripple`: the deep or an act's place).
+// The far place is painted every frame of the glide with its own camera onto
+// a sheet the window's size, and the ring shows it live (`farPicture`),
+// whichever two places the ripple joins (view.js, `ripple`: the deep or an
+// act's place).
 //
 // The frame is drawn in two stretches of the list. The world, at the drawn
 // zoom (`S.zoom`, always a whole cell): straight onto the glass when that is
@@ -596,16 +594,18 @@ function scaledWorld(fn) {
   ctx.restore();
 }
 
-// The far place's picture for glide `rip.no`, painted once. The yard's knock
-// is the yard's (world.js, `stepShake`): the far place is drawn still.
-let frozen = null;              // held: the far place painted for glide `no`; the glide count is no key across yards
-heldState('render-frozen', () => { frozen = null; });
-onTheme(() => { frozen = null; });   // and painted in the page's inks
+// The far place's picture, painted every frame of the glide, live (the owner,
+// 2026-10-29: "make it live"; it was painted once and held, when a second pass
+// of the layers cost the frame in Firefox, PERF.md "The ripple in Firefox").
+// The yard's knock is the yard's (world.js, `stepShake`): the far place is
+// drawn still.
+let far = null;                 // cache: the sheet the far place is painted on, sized to the window on use
 function farPicture(rip) {
-  const c = frozen ? frozen.c : document.createElement('canvas');
-  if (frozen && frozen.no === rip.no && c.width === canvas.width && c.height === canvas.height) return c;
-  c.width = canvas.width;
-  c.height = canvas.height;
+  const c = far || (far = document.createElement('canvas'));
+  if (c.width !== canvas.width || c.height !== canvas.height) {
+    c.width = canvas.width;
+    c.height = canvas.height;
+  }
   paintOn(c, () => {
     ctx.save();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -614,7 +614,6 @@ function farPicture(rip) {
     asPlace(rip.inner, rip.cam, () => drawHalf(rip.inner, 0, LAYERS.length, GLASS));
     ctx.restore();
   });
-  frozen = { no: rip.no, c };
   return c;
 }
 

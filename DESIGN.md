@@ -21873,8 +21873,9 @@ a plain label in locales/en.ftl for the owner to rewrite.
   floor (L-A) straight over hell's road, its other end over the landing. A
   click (or the pad, or the hand) on either end takes the view through on
   the same ripple the wizards' portal uses, generalized: the nearer place
-  stands while the farther shows through the ring, painted once on the
-  click and frozen, never a second pass of the layers. Each has the yard
+  stands while the farther shows through the ring, live, a second pass of
+  the layers each frame of the glide (the owner, 2026-10-29: "make it live";
+  it was painted once on the click and frozen until then). Each has the yard
   portal's pointing hand until the player's own round trip. Heaven's gates
   are the player's from the arrival on, a way down to the yard and back up
   at any time in act 3 (the owner, 2026-10-19: "it should take you back

@@ -257,6 +257,14 @@ takes a restored sky nearly to nothing, and carries its own measurements.
   Firefox has let the coil's compiled code go, so the first frames of the
   next ripple draw in 17-23 ms (worst frame 27).
 
+  Live through the ring (2026-10-29). The far place had been painted once on
+  the glide's first frame and held; the owner asked for it live. Painted every
+  frame of the glide, measured in headless Firefox with the GPU prefs, the
+  `portal` scene at 2560x1440, light page, six glides down and up by the
+  corner square, frame gaps in the page: median 6.1 -> 12.1 ms, 95th
+  percentile 12.1 -> 18.2, worst 36.4 -> 30.3, no frame over 33 ms. A
+  second pass of the layers for the 1.3 s of the glide, at about 80 fps.
+
 - **The thirty-hour yard (2026-10-16).** The owner saw ~30 fps in the yard
   and 50-60 in the deep at rock 31621 with 170 crew. Measured on the `late`
   scene (everything bought, seven stations in the deep, the serpent up, rock
