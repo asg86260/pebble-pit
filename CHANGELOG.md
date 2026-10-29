@@ -179,7 +179,8 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
-- Act 3's goods have their own colors: each log, timber block, sign and grain of sawdust is one of four tones of its good -- bark brown, pale wood, slate, pale sawdust -- picked when it is made and kept wherever it goes, so a pile reads as separate pieces (test/after-palette.test.mjs).
+- A log at the saw mill saws into four timber blocks and nothing else: the sawdust heap, its hatch, its tip and its upgrade row are gone (test/after-mill-machine.test.mjs, test/no-sawdust.test.mjs).
+- Act 3's goods have their own colors: each log, timber block and sign is one of four tones of its good -- bark brown, pale wood, slate -- picked when it is made and kept wherever it goes, so a pile reads as separate pieces (test/after-palette.test.mjs).
 - A scale falling through the deep's water is a chip of the one air, and one still in it when the page reloads is where it was; act 3's thrown goods and the deep's scales come down on the same landing chain the yard's dust does (test/one-landing.test.mjs).
 - Every box stands on the boards' dot ground: the cards, notices, buttons, signs, tabs and fields, the counter and the canvas's own cards, the black ones in the paper's dots (test/ui-tokens.test.mjs).
 - Act 3's UPGRADES button lifts and sways under the pointer as a shop tile does, and pressed again puts its shop away; every station has one, God's crowd too, and clicking or hovering a station opens nothing; a shop tile pressed now sinks halfway (test/after-gestures.test.mjs).

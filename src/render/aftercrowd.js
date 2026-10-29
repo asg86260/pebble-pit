@@ -950,7 +950,6 @@ function body(w) {
     const kind = loadKind(w);
     if (kind === 'log') rect(x - u, y - u, u * 5, u, PALE);
     else if (kind === 'sign') carriedSign(x, y, u);
-    else if (w.tipping) rect(x, y - u, u * 2, u, PALE);
     if (w.swing != null) {
       if (w.job == null) { rect(x + u, y - u * 5, u, u * 2, INK); rect(x + u, y - u * 2, u, u, INK); }
       else for (let k = 1; k <= 2; k++) rect(x + (w.face > 0 ? 2 + k : -k) * u, y - k * u, u, u, INK);

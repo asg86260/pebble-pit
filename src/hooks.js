@@ -1505,7 +1505,6 @@ import { rosterReport, rosterHit, shopBoxOf } from './roster.js';
 import { plotX, afterFloor, stationBox as afterStationBox } from './after/place.js';
 import { drawnSpan } from './footprints.js';
 import { isPiled, setBlock, takeBlock, goodsRead } from './after/piles.js';
-import { pourSawdust, takeSawdust } from './after/mill.js';
 import { stripBox, lying } from './after/ground.js';
 import { source, sink } from './flow.js';
 import { AFTER_PILES } from './config.js';
@@ -1533,8 +1532,6 @@ HANDLES.__afterGrant = (coins = {}) => {
       for (let k = 0; k < n && setBlock(c); k++) made++;
       for (let k = 0; k < -n && takeBlock(c); k++) gone++;
       source(AFTER_PILES[c].good, made, 'grant'); sink(AFTER_PILES[c].good, gone, 'grant');
-    } else if (c === 'sawdust') {
-      source('sawdust', pourSawdust(n), 'grant'); sink('sawdust', takeSawdust(-n), 'grant');
     }
   }
   return { rebel: a.rebel, ...goodsRead() };

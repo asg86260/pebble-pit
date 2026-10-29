@@ -14,8 +14,7 @@
 // cells, as the column of its edge toward the drawing (it grows away from
 // the drawing, as wide as `pileGrid` makes it; or none, laid off the
 // drawing by `layPiles`); `ground` how far its ground runs, piles and all, pressed flat under it once it is ordered. A drawing may be turned about its own ground
-// (`flip`, its width), its box, door and piles turned with it. The saw
-// mill keeps its sawdust heap under its bed, inside its own drawing.
+// (`flip`, its width), its box, door and piles turned with it.
 
 import { AFTER_PILES, AFTER_BLOCK, AFTER_PILE_GAP } from '../config/afterpiles.js';
 
@@ -29,8 +28,7 @@ const DRAWN = {
   // The saw mill's chute reaches past its box to column 60 (AFTER_MILL.chute's
   // foot, x1 + 2, and the block on it), and its timber mound is laid past
   // that, so the mound the chute drops onto never stands under the chute;
-  // test/after-mill-machine.test.mjs holds the two to that one rule. Its
-  // sawdust heap stands under its bed, inside its drawing (after/mill.js).
+  // test/after-mill-machine.test.mjs holds the two to that one rule.
   mill:      { box: [11, 39, 26], door: 8, reach: 60, pile: { logs: 6, timber: null } },
   // The workshop's signs in its rack, and past them the timber walked to it
   // off the timber mound: laid off the shed and each other (`layPiles`).

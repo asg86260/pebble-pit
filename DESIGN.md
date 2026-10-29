@@ -23348,11 +23348,14 @@ the press are already cut (PR #24); this is the rest.
    number of cells; anything that moves or sits at an angle is drawn at its
    true position, never snapped.
 
-**The numbers.** A log (16 cells) saws into three timber blocks (12) and four
-grains (the kerf); a sign (16) takes four timber blocks. A log made 6 timber
-and a sign took 8; now 3 and 4, the same ratio, so only the timber unit
-changes: every timber bill and `AFTER_SIGN_TIMBER` halve, and a save's timber
-is halved when read.
+**The numbers.** A log (16 cells) saws into four timber blocks (16: nothing
+left over, no sawdust -- the owner, 2026-10-29, "lets get rid of the sawdust
+by product if we have no use for it now" and "4 timber is fine"); a sign (16)
+takes four timber blocks. A log made 6 timber and a sign took 8; the unit
+went to 3 and 4 (every timber bill and `AFTER_SIGN_TIMBER` halved, a save's
+timber halved when read) and a log now gives 4. The timber mound's brim is 21
+so that a pile the saw alone fills (it stops when a cut of four no longer
+fits) still stands at the 18 the dearest bill asks.
 
 **The saw mill.**
 
@@ -23377,13 +23380,16 @@ is halved when read.
   log is still while the blade rises, then the blade is slammed down, held a
   beat at the bottom, and a burst of chips is thrown. The log shortens into
   the blade; each column it eats comes out the far side as one 2x2 timber
-  block; the fourth column is the kerf, four grains, one a down-stroke.
+  block, four columns, four blocks, three down-strokes a column (the second
+  blade's double bite unchanged).
 - **Out**: each block rides the plain black bed out the moment its column is
   cut, slides down a chute a cell thick off the bed's end, and drops onto
   the timber mound standing clear of the frame.
-- **The sawdust** falls under the blade onto the saw's own heap at its foot,
-  tipped through the floor by a click or by the sawyer once it has stood
-  full a while.
+- **No sawdust** (2026-10-29). The kerf grains, the saw's heap under the bed,
+  its floor hatch, the click and the sawyer's tip, the heap's pile-full mark
+  and the "bigger heap" row are removed, and a save's heap is dropped by
+  `2026-10-29-no-sawdust.js`. The chipper and paper mill in the later plans
+  would need it back as a good of its own.
 - **Gone**: the hover's strip and "spin" tag, the dotted path, the speed lines
   and the knob's smear, the work glyph, the sign.
 

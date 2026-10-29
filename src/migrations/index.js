@@ -59,8 +59,9 @@ import timberBlocks from './2026-10-27-timber-blocks.js';
 import oneGround from './2026-10-28-one-ground.js';
 import oneCarry from './2026-10-28-one-carry.js';
 import noStock from './2026-10-28-no-stock.js';
+import noSawdust from './2026-10-29-no-sawdust.js';
 
-export const MIGRATIONS = [sparkRung, school, beats, threeBrews, handful, pour, doneList, weather, airFilter, crusher, cloud, wholeHeal, fifthPhase, noCores, noPin, firstMuckSeen, filterBalloon, dropFourthPot, abyssIntro, smallerPit, finale, noTimes, endlessSerpent, endlessLevels, mealOrb, orbTimer, thePair, whoYouAre, wardrobeCuts, auraSlot, gatesLeft, afterJobs, cutPaper, timberBlocks, oneGround, oneCarry, noStock];
+export const MIGRATIONS = [sparkRung, school, beats, threeBrews, handful, pour, doneList, weather, airFilter, crusher, cloud, wholeHeal, fifthPhase, noCores, noPin, firstMuckSeen, filterBalloon, dropFourthPot, abyssIntro, smallerPit, finale, noTimes, endlessSerpent, endlessLevels, mealOrb, orbTimer, thePair, whoYouAre, wardrobeCuts, auraSlot, gatesLeft, afterJobs, cutPaper, timberBlocks, oneGround, oneCarry, noStock, noSawdust];
 
 // The raw save, brought up to today's shape in place. Answers with the
 // migrations it ran, for a check.

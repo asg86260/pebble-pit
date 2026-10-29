@@ -29,20 +29,20 @@ import { sink } from '../flow.js';
 import { AFTER_JOB } from '../jobs.js';
 import { P, AFTER_SLOT_GAP, AFTER_JOBS, AFTER_JOB_POST, AFTER_AGITATE_S, AFTER_FELL_S, AFTER_DIG_S, AFTER_PLANT_S,
          AFTER_PUT_S, AFTER_SAW_S, AFTER_CHOP_HOLD_S,
-         AFTER_JOIN_FADE_S, AFTER_GOODS_HOME, AFTER_GOODS_FOOT, AFTER_WALK, AFTER_TIP_LOAD,
+         AFTER_JOIN_FADE_S, AFTER_GOODS_HOME, AFTER_GOODS_FOOT, AFTER_WALK,
          AFTER_PILES, AFTER_SIGN_TIMBER, AFTER_SIGN_S, KINDS } from '../config.js';
 import { secs, walk, nextId } from './util.js';
 import { stepCrew } from '../placebodies.js';
 import { kindOf as cellKind } from '../grid.js';
 import { count, push, isEmpty, loadKind, holds, clear, pop, pickUp as takeUp, putDown as setUp, dump } from '../carry.js';
 import { deepAt } from './sky.js';
-import { built, stumpsOn, seatsOf, bladeLogs, heapBrim, benchSigns } from './levels.js';
-import { afterX0, afterX1, afterFloor, floorAt, stationDoor, stationBox, signFetchX, pileMid, pileOwner, plotX, notchX, soulX, soulY, groveX1, campSpot, idleX, idleSpots, podiumMid, overCrowd, crowdEdge, AP } from './place.js';
+import { built, stumpsOn, seatsOf, bladeLogs, benchSigns } from './levels.js';
+import { afterX0, afterX1, afterFloor, floorAt, stationDoor, stationBox, signFetchX, pileMid, pileOwner, plotX, soulX, soulY, groveX1, campSpot, idleX, idleSpots, podiumMid, overCrowd, crowdEdge, AP } from './place.js';
 import { agitate } from './rebel.js';
 import { standing, stumped, chopTree, digStump, settled, layGood } from './grove.js';
 import { isPiled, setBlock, pileCount, pileRoom, pileBrim } from './piles.js';
 import { stripOf, units, counted, uncovered, takeAt, colX, lying } from './ground.js';
-import { sweepDue, tipSawdust, sawyerHolds, sawdustCount } from './mill.js';
+import { sawyerHolds } from './mill.js';
 import { signSpot, plantSign } from './press.js';
 import { workAfter } from './work.js';
 import { fillBuilders, stepBuilder, isIdle, handsFree, timberReserved, nextOrder, orderOf, orderAt, orderBrought } from './build.js';
@@ -116,7 +116,7 @@ export const idleBodies = () => (S.after ? S.after.bodies.filter(isIdle) : []);
 export const campCount = () => (S.after ? S.after.camp : 0);
 export const walkingOut = () => (S.after ? S.after.bodies.filter(b => b.state === 'out').length : 0);
 // The bodies through a station's door now: standing at it, and not off on a
-// trip (a sawyer sweeping, a carrier out in the crowd).
+// trip (a sawyer fetching a log, a carrier out in the crowd).
 export const atStation = key => (S.after ? S.after.bodies.filter(b => b.at === key) : []);
 
 // Who could be put on a job: every idle member, at the podium or in the
@@ -208,7 +208,7 @@ function toPile(w, dt, what) {
 // A body put on a job, from where it stands: it forgets what it was doing
 // and walks to the job (the job's own frame takes it there).
 function takeJob(w, job) {
-  Object.assign(w, { job, errand: null, order: null, on: false, at: null, target: null, to: null, log: null, out: false, t: 0, n: 0, swing: null, dig: false, tipping: false, pick: false });
+  Object.assign(w, { job, errand: null, order: null, on: false, at: null, target: null, to: null, log: null, out: false, t: 0, n: 0, swing: null, dig: false, pick: false });
   clear(w);
 }
 // A body taken off its job, back to the podium on foot.
@@ -367,14 +367,6 @@ function haulTarget(kind = null) {
 }
 const haulNeed = () => HAULED.reduce((n, key) => n + Math.min(Math.max(0, spareOf(FROM[key])), shortOf(key)), 0);
 
-// --- the sweep ----------------------------------------------------------------------
-// The heap is tipped a load at a time (mill.js): an idle member stands at
-// the notch while the saw is worked and tips a load each time the heap
-// comes within a load of its brim, so the saw never stops on its own
-// sawdust.
-const tipReady = () => sawdustCount() >= heapBrim() - AFTER_TIP_LOAD;
-const chainRuns = () => atStation('mill').length > 0;
-const sweeping = () => S.after.bodies.some(o => o.errand === AFTER_JOB.SWEEP);
 // Goods lying still on the floor -- the grove's felled logs, and whatever the
 // hand threw there (after/ground.js) -- taken up nearest first, the
 // next of the same kind while the load has room (the yard's carter), and
@@ -477,14 +469,6 @@ const JOB_STEP = {
     const key = w.target, what = key ? PILE[key] : AFTER_GOODS_HOME[loadKind(w)];
     if (go(w, key ? pileMid(key, what) : fedAt(what), floorY(), dt) && toPile(w, dt, what)) w.target = null;
   },
-  // An idle member's errand only: at the notch, a load tipped through each
-  // time the heap comes within a load of its brim.
-  sweeper(w, dt) {
-    if (!go(w, notchX(), floorY(), dt)) return;
-    if (!tipReady()) { w.t = 0; return; }
-    w.t += dt;
-    if (w.t >= AFTER_PUT_S) { tipSawdust(); w.t = 0; w.swing = S.after.t; }
-  },
   // An idle member's errand only: a bought row's timber (build.js, the
   // orders), taken up off the mound a block a beat, the oldest order first,
   // and carried to the station it is for, where each block set down brings
@@ -506,14 +490,6 @@ const JOB_STEP = {
     if (go(w, mound, floorY(), dt)) w.pick = !pickUp(w, dt, 'plank', () => Math.min(o.n - o.claimed, pileCount('timber')), () => { const v = takeFromPile('timber', w.x); if (v) o.claimed += 1; return v; });
   },
   sawyer(w, dt) {
-    // Off the saw while the heap has stood at its brim: to the notch beside
-    // it, a load tipped through, and back.
-    if (w.tipping) {
-      w.at = null;
-      if (go(w, notchX(), floorY(), dt)) { tipSawdust(); w.tipping = false; }
-      return;
-    }
-    if (built('mill') && sweepDue() && w.at === 'mill' && !sweeping() && !S.after.bodies.some(o => o.tipping)) { w.tipping = true; w.at = null; return; }
     if (built('mill') && fetchLogs(w, 'mill', dt)) return;
     stationWork(w, 'mill', AFTER_SAW_S, dt);
   },
@@ -572,8 +548,7 @@ const JOB_STEP = {
 
 // Idle hands take the camp's signs out themselves while they wait at the
 // stations (the owner, 2026-10-21: made, "but nobody is using them"): a
-// member with no job gathers the grove's loose logs, stands at the heap's
-// notch tipping it, carries a bought row's timber, hauls logs to the saw
+// member with no job gathers the grove's loose logs, carries a bought row's timber, hauls logs to the saw
 // mill and timber to the workshop, or runs the carrier's
 // round, as an errand (`w.errand`),
 // keeping no job, while more lie waiting than the hands
@@ -582,8 +557,6 @@ const JOB_STEP = {
 // carrier's own pick, made at the door.
 const ERRANDS = [
   { job: AFTER_JOB.GATHER, kind: 'log', left: () => looseLogs().length },
-  // One sweeper, kept at the notch while the chain runs (`hold`).
-  { job: AFTER_JOB.SWEEP, per: 1, left: () => (chainRuns() && !sweeping() ? 1 : 0), hold: chainRuns },
   // A bought row's timber, while any of it waits on the mound (build.js).
   { job: AFTER_JOB.ORDER, kind: 'plank', left: () => Math.min(timberReserved(), pileCount('timber')) },
   { job: AFTER_JOB.HAUL, kind: 'log', left: haulNeed },
@@ -597,11 +570,7 @@ function runErrand(w, dt) {
   // any other errand.
   if (w.errand && !carried(w) && (w.target == null || w.errand === AFTER_JOB.HAUL) && w.log == null) {
     const e = ERRANDS.find(q => q.job === w.errand);
-    if (!e || (!e.left() && !(e.hold && e.hold()))) { w.errand = null; w.target = null; }
-    // The notch first: with nobody there, the first empty hands on any other
-    // errand go to it, or every idle member can be out hauling while the
-    // heap stands at its brim and the saw stops.
-    else if (w.errand !== AFTER_JOB.SWEEP && !w.pick && chainRuns() && !sweeping()) { w.errand = AFTER_JOB.SWEEP; w.target = null; }
+    if (!e || !e.left()) { w.errand = null; w.target = null; }
   }
   if (!w.errand && !carried(w)) w.errand = errandFor();
   if (!w.errand) return false;

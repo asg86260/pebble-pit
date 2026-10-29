@@ -12,7 +12,7 @@ import { S } from '../../src/state.js';
 import * as C from '../../src/config.js';
 import { workAfter } from '../../src/after/work.js';
 import { chopTree, digStump, standing, stumped } from '../../src/after/grove.js';
-import { tipSawdust, heapFull, turnWheel, millView } from '../../src/after/mill.js';
+import { turnWheel, millView } from '../../src/after/mill.js';
 import { goodsRead, takeBlock } from '../../src/after/piles.js';
 import { lying, stripBox, stripOf, units, counted } from '../../src/after/ground.js';
 import { track, sweep, release } from '../../src/hands.js';
@@ -56,8 +56,7 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
     // swept off the pile and let go over the bed (`load`, a second and a half).
     mill: 0.5,
     load: 1.5,
-    workshop: C.GESTURE_NAILS * C.GESTURE_NAIL_TAPS * C.GESTURE_SWING_S,
-    tip: C.GESTURE_FLING_WINDOW_S * 4
+    workshop: C.GESTURE_NAILS * C.GESTURE_NAIL_TAPS * C.GESTURE_SWING_S
   };
   // A person is slower than the cap, and no motion is quicker than a quarter second.
   // A name gone from config/gestures.js is NaN here, and a NaN wait lets the
@@ -75,7 +74,7 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
   const PLAN = [
     'after-axe', 'after-build-mill', 'after-post-woodcutter', 'after-post-sawyer', 'after-build-workshop',
     'after-post-joiner', 'after-podium', 'after-post-woodcutter', 'after-plot',
-    'after-post-joiner', 'after-heap', 'after-blade', 'after-plot',
+    'after-post-joiner', 'after-blade', 'after-plot',
     'after-stumps', 'after-grow', 'after-post-sawyer', 'after-post-woodcutter',
     'after-bench', 'after-plot',
     'after-post-joiner', 'after-tree', 'after-signreach'
@@ -211,11 +210,10 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
     // the next thing on the plan is short of it.
     const want = wanted()[0], short = want ? shortOf(afterBill(row(want))) : [];
     if (built('workshop') && st.benchtimber >= C.AFTER_SIGN_TIMBER && st.signs < 3 && !short.includes('timber')) return 'workshop';
-    if (built('mill') && !heapFull()) {
+    if (built('mill')) {
       if (millView().log) return 'mill';
       if (st.logs > 0 && !a.bodies.some(b => b.at === 'mill') && !S.chips.some(c => c.place === 'after' && c.kind === 'log')) return 'load';
     }
-    if (heapFull()) return 'tip';
     if (a.axe && a.plots.some(standing)) return 'chop';
     if (a.plots.some(stumped)) return 'dig';
     return null;
@@ -231,7 +229,6 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
       const a = S.after;
       if (job === 'chop') chopTree(a.plots.findIndex(standing), true);
       else if (job === 'dig') digStump(a.plots.findIndex(stumped), true);
-      else if (job === 'tip') tipSawdust();
       else if (job === 'load') loadBed();
       else if (job === 'mill') turnWheel(HAND_S.mill * C.GESTURE_WHEEL_MAX_REV * HUMAN, true);
       else workAfter(job, 1, true);

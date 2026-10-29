@@ -137,12 +137,10 @@ test('a block reads back its kind and shade, and values stay clear of the shades
   putBlock(b, 4, 0, LOG);
   assert.equal(kindOf(at(b, 5, 2)), KINDS.log);
   assert.equal(toneOf(at(b, 5, 2)), 0);
-  const dark = cellOf('sawdust', 1);
-  assert.equal(kindOf(dark), KINDS.sawdust);
+  const dark = cellOf('plank', 1);
+  assert.equal(kindOf(dark), KINDS.plank);
   assert.equal(toneOf(dark), 1);
-  assert.equal(sizeOfCell(dark), 1);
-  put(b, 12, 0, dark);
-  assert.equal(takeUnit(b, 12, 0), dark, 'a grain of a kind keeps its tone through the take');
+  assert.equal(sizeOfCell(dark), 2);
   for (const k of Object.values(KINDS)) {
     assert.ok(k.first >= BLOCK_CELL && BLOCK_CELL > ROCK_CELL && ROCK_CELL > FIND_TOP && FIND_TOP > SHADES.length);
     assert.ok(k.first + k.tones - 1 <= 255);
@@ -154,7 +152,7 @@ test('a block reads back its kind and shade, and values stay clear of the shades
 });
 
 test('a unit made with no tone asked for takes any of its four, and keeps a tone of its own kind', () => {
-  for (const key of ['log', 'plank', 'sign', 'sawdust']) {
+  for (const key of ['log', 'plank', 'sign']) {
     const seen = new Set();
     for (let i = 0; i < 400; i++) { const v = cellOf(key); assert.equal(kindOf(v), KINDS[key]); seen.add(toneOf(v)); }
     assert.equal(seen.size, 4, `${key} is born in all four of its tones`);
@@ -165,7 +163,6 @@ test('KINDS sizes and weights read from config', () => {
   assert.equal(KINDS.log.size, AFTER_BLOCK.log);
   assert.equal(KINDS.plank.size, AFTER_BLOCK.plank);
   assert.equal(KINDS.sign.size, AFTER_BLOCK.sign);
-  assert.equal(KINDS.sawdust.size, 1);
   assert.equal(KINDS.load.size, AFTER_BLOCK.load);
   for (const k of Object.values(KINDS)) {
     assert.equal(k.weight, k.size * k.size, `${k.key} weighs its area`);

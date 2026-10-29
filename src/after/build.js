@@ -49,7 +49,7 @@ import { campSpot, speakerAt, stationDoor, buildPileAt, buildLayAt, floorAt, BUI
 export const isIdle = w => w.job == null && w.state === 'work' && w.pair == null && !(w.errand && !isEmpty(w));
 // Nothing in the arms and nothing under way with them: a load carried, laid
 // or a heap being tipped. A body may be taken off its job only like this.
-export const handsFree = w => isEmpty(w) && !w.tipping && !w.phase;
+export const handsFree = w => isEmpty(w) && !w.phase;
 
 // Every load a station takes: two a band.
 export const BUILD_LOADS = AFTER_BUILD_PIECES * AFTER_BUILD_A_BAND;

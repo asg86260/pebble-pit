@@ -15,7 +15,7 @@ import { S, afterGround as G } from '../state.js';
 import { AFTER_PILES, AFTER_LOG_TIMBER, AFTER_PILE_SETTLE_S, KINDS } from '../config.js';
 import { colOf, cellOf, kindOf } from '../grid.js';
 import { afterX0, afterX1, stationDoor, buildPileAt, AP } from './place.js';
-import { bedLand, sawdustCount, pourSawdust, heapPlot } from './mill.js';
+import { bedLand } from './mill.js';
 import { PILED, stripOf, slotTop, slotNear, colX, rowY, units, counted, uncovered, takeAt, putIn, putSomewhere, putBeside,
          standGround, settleGround, countOf, fallTag } from './ground.js';
 import { secs } from './util.js';
@@ -26,10 +26,10 @@ export const isPiled = what => what in AFTER_PILES;
 // --- the one interface ---------------------------------------------------------------
 export const pileCount = what => countOf(what);
 // Every good the camp holds as a number a card or a bill reads: a pile's units,
-// the sawdust heap's grains, zero for anything else.
+// zero for anything else.
 // Every count the camp holds, by name: what a card or a check reads at a glance.
-export const goodsRead = () => Object.fromEntries([...PILED, 'sawdust'].map(w => [w, goodCount(w)]));
-export const goodCount = what => (what === 'sawdust' ? sawdustCount() : isPiled(what) ? countOf(what) : 0);
+export const goodsRead = () => Object.fromEntries(PILED.map(w => [w, goodCount(w)]));
+export const goodCount = what => (isPiled(what) ? countOf(what) : 0);
 export const pileBrim = what => AFTER_PILES[what].brim;
 export const pileRoom = what => pileBrim(what) - pileCount(what);
 // What a pile's supply sets down at once: the saw's cut is a log's timber,
@@ -125,11 +125,9 @@ export function standPiles() {
   if (!S.after) return;
   const lay = Array.isArray(S.after.lay) ? S.after.lay : [];
   S.after.lay = [];
-  heapPlot();                                  // the heap's saved grains read back now, before anything is laid on them
   standGround(lay.map(item => () => {
     if (!item || typeof item !== 'object') return;
-    if (item.what === 'sawdust') pourSawdust(Math.max(0, Math.floor(+item.n || 0)));
-    else if (isPiled(item.what)) standPile(item.what, Math.max(0, Math.floor(+item.n || 0)));
+    if (isPiled(item.what)) standPile(item.what, Math.max(0, Math.floor(+item.n || 0)));
     else if (item.kind === 'load' && item.site) putSomewhere(cellOf('load'), buildPileAt(item.site) + (((item.at | 0) % 6) * 2 + 1) * AP);
     else if (KINDS[item.kind] && Number.isFinite(item.x)) putSomewhere(cellOf(item.kind), item.x + KINDS[item.kind].size * AP / 2);
     else if (KINDS[item.kind] && item.near === 'mill') putSomewhere(cellOf(item.kind), stationDoor('mill'));

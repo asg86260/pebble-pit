@@ -14,6 +14,9 @@
 // loads laid in bands, the account behind that sink.
 import { KINDS, AFTER_BUILD_PIECES, AFTER_BUILD_A_BAND } from '../config.js';
 
+// The load's cell value as the table stood that day, before sawdust left it
+// (2026-10-29-no-sawdust.js): the log, plank, sign and sawdust, four tones each.
+const LOAD_V33 = KINDS.log.first + 16;
 const obj = v => v && typeof v === 'object' && !Array.isArray(v);
 
 export default {
@@ -43,7 +46,7 @@ export default {
     if (Array.isArray(a.bodies)) {
       // 1 was a grain, the lightest shade, the load a builder carried in v32
       for (const b of a.bodies) {
-        if (obj(b) && (b.phase === 'carry' || b.phase === 'lay') && Array.isArray(b.load)) b.load = b.load.map(v => (v === 1 ? KINDS.load.first : v));
+        if (obj(b) && (b.phase === 'carry' || b.phase === 'lay') && Array.isArray(b.load)) b.load = b.load.map(v => (v === 1 ? LOAD_V33 : v));
       }
     }
     a.lay = lay;

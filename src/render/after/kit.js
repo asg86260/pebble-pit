@@ -27,7 +27,7 @@ export const nearest = g => FOUR.reduce((a, b) => (Math.abs(b - g) < Math.abs(a 
 // A fixed number in [0, 1) for a cell or a seed: tones pick off it, so they
 // hold still frame to frame.
 export const hash = n => { const v = Math.sin(n * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); };
-// The materials, a mix of the four a cell: sawdust pale flecked mid, soil
+// The materials, a mix of the four a cell: dust pale flecked mid, soil
 // mid with a pale crumb (never the ink, which up here is the masses: a
 // pine, a station).
 export const DUST = [PALE, MID, PALE, PALE, MID];

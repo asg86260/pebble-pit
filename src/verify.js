@@ -715,7 +715,7 @@ export function verifyWorld() {
   // bodies' arms, inside the saw mill -- and the deep's scales -- on its bed,
   // in its water, on the cursor, in the gatherers' arms -- change in number
   // only where a door says so (src/flow.js): a tree felled, a cut at the saw,
-  // a sign joined, a tip through the hatch, a sign planted, an order laid, a
+  // a sign joined, a sign planted, an order laid, a
   // band laid, a blow that sheds scales, the crusher. A
   // pile's count is no number but its cells, so there is nothing for it to
   // disagree with; what can go wrong is a unit written or erased round the
@@ -765,11 +765,11 @@ export function verifyWorld() {
   // --- rule 25: the log on the saw's bed adds up -------------------------------
   // A log only changes shape at the blade, into pieces that add up (DESIGN.md,
   // "Act 3's goods are blocks", rule 2): what is left of it, the block growing
-  // past the blade, the kerf in the teeth, and the blocks and grains its
-  // strokes counted out as they made them are its sixteen cells, every frame.
+  // past the blade and the blocks its strokes counted out as they made them
+  // are its sixteen cells, every frame.
   if (afterlifeOn() && S.after && S.after.saw && S.after.saw.bed) {
     const v = millView(), bed = S.after.saw.bed, Z = AFTER_BLOCK.log, z = AFTER_BLOCK.plank;
-    const cells = v.log.left * Z + v.grow * z * z + v.teeth + bed.cut * z * z + bed.dust;
+    const cells = v.log.left * Z + v.grow * z * z + bed.cut * z * z;
     if (Math.abs(cells - Z * Z) > 1e-6 || v.log.eaten < 0 || v.log.eaten > Z)
       fail("the log on the saw mill's bed does not add up", `${cells} cells of ${Z * Z}: ${JSON.stringify(bed)}`);
   }

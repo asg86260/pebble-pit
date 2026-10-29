@@ -9,9 +9,9 @@
 // ...and a construction site's load (after/build.js), two cells a side, the
 // shape the site's piled loads have always been drawn as.
 export const AFTER_BLOCK = { log: 4, plank: 2, sign: 4, load: 2 };
-// What a log saws into, in timber blocks (16 cells into 12 and the kerf's
-// four grains), and the logs a cut takes with the mill's second blade.
-export const AFTER_LOG_TIMBER = 3;
+// What a log saws into, in timber blocks (16 cells into four 2x2s, a column
+// of the cut each; the owner, 2026-10-29), and the logs a cut takes with the mill's second blade.
+export const AFTER_LOG_TIMBER = 4;
 export const AFTER_BLADE_LOGS = 2;
 // Each counted pile: the good it holds and its brim, the most blocks it holds
 // (the owner's calls, 2026-10-27). At the brim it wears the pile-full mark
@@ -22,8 +22,10 @@ export const AFTER_PILES = {
   logs:      { good: 'log', brim: 6, cols: 2 },
   grovelogs: { good: 'log', brim: 8 },
   // the timber mound is fed off the saw mill's chute from its near side
-  // (after/piles.js, `dropCol`)
-  timber:    { good: 'plank', brim: 20, near: true }
+  // (after/piles.js, `dropCol`). The saw stops once a cut of four no longer
+  // fits, so a pile it fills stands at the brim less three at the least: 21,
+  // so every bill of 18 timber can be paid off it.
+  timber:    { good: 'plank', brim: 21, near: true }
 };
 // A pass of the sand rules over a pile, seconds: a block set down rolls off
 // the heap's side a cell a pass, slow enough to be seen rolling (the voted

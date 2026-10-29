@@ -16,9 +16,9 @@
 //   - Works the stations by hand `--hand` of the time, at `--human` of each
 //     motion's top speed, read off config/gestures.js: the furthest station
 //     down the chain that has its input first (the workshop, the saw mill),
-//     else a tree, a stump, the heap. The work goes
+//     else a tree, a stump. The work goes
 //     through the doors the hand's motions go through (`workAfter`,
-//     `chopTree`, `digStump`, `tipSawdust`).
+//     `chopTree`, `digStump`).
 //   - Buys through `__buy`, greedily in PLAN's order: the first row on it
 //     not yet had that can be paid is bought; a post is passed over while
 //     nobody waits in the camp to take it. With the plan had, posts round

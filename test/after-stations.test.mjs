@@ -8,7 +8,7 @@
 import { group, ok, run, yard, P } from './helpers.mjs';
 import { asks } from './after-hands.mjs';
 import { stationAt, standRect, hitRect, STATIONS } from '../src/stations.js';
-import { stationBox, stationParts, plotX, afterFloor } from '../src/after/place.js';
+import { stationBox, plotX, afterFloor } from '../src/after/place.js';
 import { godMid, faceY } from '../src/after/sky.js';
 import { gestureUnder } from '../src/after/gestures.js';
 
@@ -38,7 +38,6 @@ group('act 3\'s stations answer the pointer\'s one hit test on their drawings, a
   const cards = ['mill', 'workshop', 'shack'];
   const at = {};
   for (const k of [...cards, 'pedestal']) at[k] = asks(onFrame(k));
-  at.heap = asks(mid(stationParts('heap').heap));
   at.grove = asks({ x: plotX(0), y: afterFloor() - P * 2 });
   at.forestry = asks(onFrame('forestry'));
   at.crowd = asks({ x: godMid(S.camX + S.viewW / 2), y: faceY() });
@@ -57,7 +56,6 @@ group('act 3\'s stations answer the pointer\'s one hit test on their drawings, a
   return [
     ok(cards.every(k => at[k] === `after-${k}`) && at.pedestal === 'after-pedestal',
        'each standing station\'s drawing names its board', JSON.stringify(at)),
-    ok(at.heap == null, 'the sawdust heap is the hand\'s, no board\'s', String(at.heap)),
     // A press on a pine saws it (the camp's second pass); the grove's board is
     // the forestry shack's.
     ok(at.grove == null, 'a pine opens no board', String(at.grove)),

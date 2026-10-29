@@ -14,7 +14,7 @@
 // so the reload harness is kept out: `{ reload: false }`.
 import { group, ok, run, yard, P } from './helpers.mjs';
 import { goodCount } from '../src/after/piles.js';
-import { AFTER_PODIUM_REBEL, AFTER_TIP_LOAD, AFTER_DIG_CLICKS, TREE_CHOPS, GESTURE_BUBBLE_CRIT, GESTURE_CUE_USES,
+import { AFTER_PODIUM_REBEL, AFTER_DIG_CLICKS, TREE_CHOPS, GESTURE_BUBBLE_CRIT, GESTURE_CUE_USES,
          GESTURE_CUE_FADE_S, GESTURE_CUE_IDLE_S, GESTURE_STRAIN_S,
          GESTURE_JOINER_WAIT_S, GESTURE_NAIL_TAPS } from '../src/config.js';
 import { gestureDown, gestureMove, gestureUp, gestureView, gestureHover, gestureUnder, partsOf, useBubbles, groveIcons } from '../src/after/gestures.js';
@@ -130,20 +130,6 @@ group('a tree: its saw icon clicked puts the handsaw on it; dragged back and for
     ok(asked === null && sawing, 'a plain click on the tree puts the saw on it, no board asked for', JSON.stringify([asked, sawing])),
     ok(board.spots > 0 && JSON.stringify(board.asks) === '[null]', 'a click on the forestry shack opens no board', JSON.stringify(board)),
     ok(button === 'after-grove', 'the UPGRADES button over its roster asks for the grove\'s', String(button))
-  ];
-}, NO_RELOAD);
-
-group('the sawdust heap under the saw: a click on it tips one load through the hatch', async () => {
-  up(['mill'], { sawdust: 24 });
-  const p = partsOf('heap'), a = mid(p.heap), d0 = read().sawdust;
-  const took = click(a);
-  const one = (d0 - read().sawdust) / AFTER_TIP_LOAD;
-  click(a);
-  const two = (d0 - read().sawdust) / AFTER_TIP_LOAD;
-  window.__actsOn(null);
-  return [
-    ok(took && one === 1, 'a click tips one load', `${one}`),
-    ok(two === 2, 'and the next another', `${two}`)
   ];
 }, NO_RELOAD);
 

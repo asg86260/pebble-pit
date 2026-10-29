@@ -150,7 +150,7 @@ group('a press on a pile takes the top block, and the blocks under it stay where
 });
 
 // Every good of a kind wherever it is: on the ground (its piles and open
-// floor), in the hand, in the air, in a body's arms, in the saw and the heap
+// floor), in the hand, in the air, in a body's arms, in the saw
 // (src/conserve.js, the census the conservation rule reads).
 function goods() {
   const { load, scale, ...n } = census();
@@ -159,14 +159,13 @@ function goods() {
 // The same, off an older save's raw object.
 function goodsBefore(raw) {
   const a = raw.after, st = a.stock, saw = a.saw || {};
-  const n = { log: st.logs + st.grovelogs, plank: st.timber + st.benchtimber, sign: st.signs, sawdust: st.sawdust };
+  const n = { log: st.logs + st.grovelogs, plank: st.timber + st.benchtimber, sign: st.signs };
   for (const q of a.groundLogs) n[q.kind || 'log']++;
   if (a.hand) n[a.hand.kind] += a.hand.n;
   for (const b of a.bodies) if (b.load in n) n[b.load] += b.carry ?? 1;
   if (saw.bed) n.log++;
   if (saw.trip && saw.trip.ph === 'carry') n.log++;
   n.plank += (saw.out || []).length;
-  n.sawdust += (saw.dust || []).length;
   return n;
 }
 
@@ -184,7 +183,7 @@ group('an older save\'s piles, lying goods, held planks and the saw caught mid-t
   window.__actsOn(null);
   return [
     ok(raw.saveV === 30 && raw.after.groundLogs.length > 0 && raw.after.hand && raw.after.saw.bed && raw.after.saw.trip, 'the fixture is a v30 save with lying goods, a held load, a log on the bed and one in the sawyer\'s arms', `${raw.saveV}`),
-    ok(JSON.stringify(got) === JSON.stringify(want), 'every good of every kind is still there, counted on the ground, in the saw and in the heap', `${JSON.stringify(want)} -> ${JSON.stringify(got)}`),
+    ok(JSON.stringify(got) === JSON.stringify(want), 'every good of every kind is still there, counted on the ground and in the saw', `${JSON.stringify(want)} -> ${JSON.stringify(got)}`),
     ok(piles.every(([, now, was]) => now === was), 'each pile holds what its count was', JSON.stringify(piles)),
     ok(loose.length >= raw.after.groundLogs.length + raw.after.hand.n + 1, 'the lying goods, the held planks and the sawyer\'s log lie on the ground', `${loose.length} lying`),
     ok(!('groundLogs' in blob) && sound(), 'no lying list is kept, and the ground is sound'),

@@ -4,9 +4,7 @@
 // shack's pile and members idle at the podium, idle hands carry them to the
 // saw mill's pile (after/bodies.js, the haul errand), so the sawyer never
 // leaves the saw to fetch and works nearly all the time; each cut drops out
-// of the saw's right side onto its timber pile there, and an idle member
-// stands at the notch tipping the heap, so the saw never stops on its own
-// sawdust.
+// of the saw's right side onto its timber pile there.
 //
 // Reached the way a player reaches it: the saw mill ordered off the
 // shack (`__buy`), the sawyer put on through the roster's +
@@ -19,7 +17,7 @@ import { loadKind } from '../src/carry.js';
 import { RIM_PIECES, AFTER_SAW_S, AFTER_PILES } from '../src/config.js';
 import { AFTER_JOB } from '../src/jobs.js';
 import { stationBox, pileAt } from '../src/after/place.js';
-import { millLanded, heapFull } from '../src/after/mill.js';
+import { millLanded } from '../src/after/mill.js';
 import { pileFull } from '../src/after/piles.js';
 
 const S = yard.S;
@@ -54,7 +52,7 @@ group('idle members haul logs to the saw, which stays worked, its cuts piling on
   const working = k => { const w = S.after.bodies.find(b => b.at === k); return !!w && w.t < AFTER_SAW_S; };
   const sawyer = () => S.after.bodies.find(b => b.job === AFTER_JOB.SAW);
   const t0 = Math.floor(goodCount('timber'));
-  let n = 0, saw = 0, brim = 0, swept = false, hauled = false, fetched = false, drops = 0, last = millLanded();
+  let n = 0, saw = 0, hauled = false, fetched = false, drops = 0, last = millLanded();
   let made = 0, was = goodCount('timber');
   for (let f = 0; f < 90 * 4; f++) {
     felled();
@@ -66,8 +64,6 @@ group('idle members haul logs to the saw, which stays worked, its cuts piling on
     was = goodCount('timber');
     n++;
     if (working('mill')) saw++;
-    if (heapFull()) brim++;
-    swept = swept || S.after.bodies.some(b => b.job == null && b.errand === AFTER_JOB.SWEEP);
     hauled = hauled || S.after.bodies.some(b => b.job == null && b.errand === AFTER_JOB.HAUL && loadKind(b) === 'log' && b.target === 'mill');
     fetched = fetched || !!(sawyer() && loadKind(sawyer()) === 'log');
     // a block off the saw's chute onto the mound on its right (after/mill.js)
@@ -82,7 +78,6 @@ group('idle members haul logs to the saw, which stays worked, its cuts piling on
     ok(saw / n >= 0.85, 'the saw is worked nearly all the time', `${(saw / n * 100).toFixed(0)}%`),
 
     ok(drops > 10 && made > 0 && out >= b.x + b.w, 'each cut drops onto the timber pile on the saw\'s right',
-       `${drops} cuts, ${made} timber made from ${t0}, pile at ${out} past ${b.x + b.w}`),
-    ok(swept && brim / n < 0.05, 'an idle hand tips the heap, so the saw never stops on its sawdust', `swept ${swept}, at the brim ${(brim / n * 100).toFixed(0)}%`)
+       `${drops} cuts, ${made} timber made from ${t0}, pile at ${out} past ${b.x + b.w}`)
   ];
 });
