@@ -18,7 +18,7 @@ import { stepRebel, clickPlace } from './rebel.js';
 import { stepGrove, blankPlots } from './grove.js';
 import { stepMill } from './mill.js';
 import { stepPiles, standPiles } from './piles.js';
-import { groundRecord } from './ground.js';
+import { groundRecord, standGround } from './ground.js';
 
 import { stepUnion, seedCrowd, syncRims } from './union.js';
 import { stepStrike } from './strike.js';
@@ -165,6 +165,9 @@ export const SAVE = {
     // The ground stood up from its cells, the terrain laid under them again
     // (ground.js), and anything an older save handed over laid on it.
     if (S.after) { standPiles(); settleHeld(S.after.bodies); settleHand(); }
+    else standGround();
   },
-  blank() { S.after = null; }
+  // No act: the plot is put down with it, or a slot switched to from an act
+  // keeps the blocks that were lying on it (ground.js, `standGround`).
+  blank() { S.after = null; standGround(); }
 };
