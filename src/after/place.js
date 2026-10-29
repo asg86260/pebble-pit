@@ -20,6 +20,7 @@ import { P, AFTER_GAP, AFTER_H, AFTER_W, AFTER_FLOOR_MARGIN, AFTER_PINE,
 import { S } from '../state.js';
 import { AFTER_MILL } from '../config.js';
 import { AFTER_PLOT_GAP, AFTER_PILE_GAP } from '../config.js'; // MOCK grove
+import { CAMP_ORDER } from './art.js'; // MOCK grove
 import { ART as BASE_ART, standCol, rampRun, pileLeft, pileCells, pileHigh, pileGrid } from './art.js';
 
 const snap = v => Math.round(v / P) * P;
@@ -63,10 +64,17 @@ export const ART = { ...BASE_ART, pedestal: { ...BASE_ART.pedestal,
   // own ground (`flip`, which the frame, its piles and its drawn rects read),
   // so its log pile stands on the side away from the grove and the shack's
   // wall faces the first plot; its ground and the camp's layout unchanged.
-  forestry: { ...BASE_ART.forestry, get flip() { return globalThis.__groveMock ? BASE_ART.forestry.lead + BASE_ART.forestry.ground : 0; } } }; // MOCK grove
+  forestry: { ...BASE_ART.forestry, get flip() { return globalThis.__groveMock ? BASE_ART.forestry.lead + BASE_ART.forestry.ground : 0; },
+    // its ground run on past the seed basket to the log pile laid beyond it
+    get ground() { return BASE_ART.forestry.ground + (globalThis.__groveMock ? GROVE_BASKET.w + AFTER_PILE_GAP : 0); } } }; // MOCK grove
 // MOCK grove: a column `x` cells `w` wide of a turned drawing, where it stands.
 const turnCol = (art, x, w = 0) => (art.flip ? art.flip - x - w : x); // MOCK grove
-export const stationX0 = key => afterX0() + AFTER_STATIONS[key].at * P;
+export const stationX0 = key => afterX0() + AFTER_STATIONS[key].at * P + campShift(key); // MOCK grove  campShift
+// MOCK grove: the forestry shack's ground grown by the seed basket, the
+// workshops past it laid that much further on, as the camp's layout would
+// lay them (config/after.js, `campLayout`), into the open floor before the
+// union's camp; the pedestal stays.
+const campShift = key => (globalThis.__groveMock && key !== 'pedestal' && CAMP_ORDER.indexOf(key) > CAMP_ORDER.indexOf('forestry') ? (GROVE_BASKET.w + AFTER_PILE_GAP) * AP : 0); // MOCK grove
 
 // --- the grove ---------------------------------------------------------------------
 // A plot's trunk column (its middle one), its left edge on the grid. The
@@ -87,6 +95,12 @@ const pineReach = () => Math.max(...pineRows(PINE_GROWN, true).map(r => r[2])) +
 const mockPlotX = i => Math.min(stationBox('forestry').x, signBox('forestry').x) - AFTER_PLOT_GAP * AP - pineReach() * AP - i * AFTER_PLOT_STEP; // MOCK grove  off the shack's nearest claim: its drawing or its board's column
 const realPlotX = i => afterX0() + AFTER_GROVE_X0 + i * AFTER_PLOT_STEP + snap(AFTER_PLOT_STEP / 2); // MOCK grove  renamed from plotX
 const groveMock = () => !!globalThis.__groveMock; // MOCK grove
+// MOCK grove: the seed basket (the owner: "lets have a little seed basket
+// next to the cabin that holds the seeds"), `w` by `h` cells, on the
+// shack's side away from the grove: the piles' gap off the shack's drawing,
+// its log pile laid that gap again past it (`pileAt`).
+export const GROVE_BASKET = { w: 9, h: 3 }; // MOCK grove
+export const basketBox = () => { const b = stationBox('forestry'), g = groundOf('forestry'); return { x: b.x + b.w + AFTER_PILE_GAP * AP, y: g - GROVE_BASKET.h * AP, w: GROVE_BASKET.w * AP, h: GROVE_BASKET.h * AP }; }; // MOCK grove
 export const GROVE_MOCK_SHELF = 3; // MOCK grove  cells over the floor line: the plot's soil clear of the lip's crest
 export const groveX1 = () => realPlotX(AFTER_PLOT_MAX - 1) + AFTER_PLOT_STEP; // MOCK grove  realPlotX: the grove's end stays where it is
 
@@ -122,7 +136,7 @@ export const signBoard = key => { const b = signBox(key); return b && { ...b, h:
 // drawing turns its piles too.
 export const pileAt = (key, what) => {
   const art = ART[key], x = pileLeft(art, what);
-  return stationX0(key) + (art.flip ? art.flip - x - pileCells(what) : x) * AP;
+  return stationX0(key) + (art.flip ? art.flip - x - pileCells(what) : x) * AP + (groveMock() && key === 'forestry' ? (GROVE_BASKET.w + AFTER_PILE_GAP) * AP : 0); // MOCK grove  past the seed basket
 };
 // The station a counted pile lies on, by the pile's stock key, and the box
 // the hand finds it in: across the pile, `reach` art cells up off the floor

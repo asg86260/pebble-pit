@@ -3736,8 +3736,9 @@ Object.assign(SCENES, {
 import { startGroveMock } from './after/grovemock.js'; // MOCK grove
 import { plotX } from './after/place.js'; // MOCK grove
 const GROVE_MOCK = [ // MOCK grove
-  ['a1', 'A1 a worker plants it', 300, "A worker brings an acorn out of the forestry shack, kneels at the bare plot beside it and plants it, and a shoot comes up row by row."], // MOCK grove
-  ['a2', 'A2 you plant it', 300, "You plant it yourself: take the acorn set out by the forestry shack, carry it over the bare plot and let go, and it sinks in and a shoot comes up row by row."], // MOCK grove
+  ['r', 'R the grove at rest', 300, "The grove at rest: the pine beside the forestry shack, and the seed basket on the shack's far side with five acorns sat in it."], // MOCK grove
+  ['a1', 'A1 a worker plants it', 300, "A worker takes an acorn out of the seed basket by the forestry shack, carries it to the bare plot, kneels and plants it, and a shoot comes up row by row."], // MOCK grove
+  ['a2', 'A2 you plant it', 300, "You plant it yourself: pick an acorn out of the seed basket by the forestry shack, carry it over the bare plot and let go, and it sinks in and a shoot comes up row by row."], // MOCK grove
   ['b1', 'B1 grows row by row', 420, "The planted acorn grows into the pine a row at a time from the ground up, the trunk first and then the crown, sped up to ten seconds."], // MOCK grove
   ['b2', 'B2 grows all over', 420, "The planted acorn grows into the pine all over at once, taller and wider a cell at a time, sped up to ten seconds."], // MOCK grove
   ['c', 'C the fall: the crown breaks', 520, "The sawn pine goes over whole, away from the shack, and its crown breaks into pieces where it hits, which scatter and fade; the trunk lies as its four logs."], // MOCK grove

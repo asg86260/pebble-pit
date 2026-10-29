@@ -24,7 +24,7 @@
 import { S } from '../state.js';
 // the frame's steps are handed in by the scene (game.js imports the drawing, which imports this)
 import { P, TREE_CHOPS, AFTER_WALK, GESTURE_SAW_AMP, AFTER_DIG_CLICKS } from '../config.js';
-import { plotX, groundOf, floorAt, stationDoor, AP, PINE_GROWN } from './place.js';
+import { plotX, groundOf, floorAt, stationDoor, AP, PINE_GROWN, basketBox } from './place.js';
 import { chopTree, digStump } from './grove.js';
 import { putSomewhere, tag, fallTag, takeAt } from './ground.js';
 import { cellOf } from '../grid.js';
@@ -308,6 +308,16 @@ export const handSaw = s => ({ x: cutX(M.logs) + AP / 2, y: trunkTop() + M.cut *
 // The saw gesture's record: where the hand has the standing saw.
 const sawRec = () => (gestureView() || []).find(r => r.key === 'tree');
 
+// --- the seed basket ----------------------------------------------------------------------
+// The acorns in the basket, each a unit, the count what is drawn: a row of
+// three sat in it, their lower halves under its rim, and two heaped over
+// the gaps between them; the top of the heap taken first.
+export const BASKET_FULL = 5;
+export function basketSlot(k) {
+  const b = basketBox(), aw = 3 * AP, top = b.y - 2 * AP;
+  return k < 3 ? { x: b.x + 0.5 * AP + k * aw, y: top } : { x: b.x + 0.5 * AP + aw / 2 + (k - 3) * aw, y: top - 2 * AP };
+}
+
 // --- the scripts -------------------------------------------------------------------------
 // Each a phase machine on M.ph and M.t, stepped by the frame's dt; `init`
 // stands it again, so each loops.
@@ -316,14 +326,19 @@ const SCRIPTS = {
   // plot and plants it; a shoot comes up while it walks back.
   a1: {
     init() {
-      takeBack(); barePlot();
-      const door = stationDoor('forestry');
-      M.bodies = [{ x: door - BODY / 2, y: floorAt(door), face: -1, tool: null, carry: 'cone', home: door - BODY / 2 }];
-      M.cone = null; M.grow = null; go('walk');
+      takeBack(); barePlot(); M.basket = BASKET_FULL;
+      const k = basketBox(), home = k.x - BODY - AP;
+      M.bodies = [{ x: home, y: floorAt(home + BODY / 2), face: 1, tool: null, carry: null, home }];
+      M.cone = null; M.grow = null; go('reach');
     },
     step(dt) {
       const b = M.bodies[0], spot = bx() + AP;
-      if (M.ph === 'walk') { if (walkTo(b, spot, dt)) { b.face = -1; go('kneel'); } }
+      if (M.ph === 'reach') {
+        // bent to the basket, an acorn lifted off its top onto the head
+        b.squat = M.t < 0.5;
+        if (M.t >= 0.25 && !M.taking) { const s = basketSlot(M.basket - 1); M.basket -= 1; M.taking = { from: s, at: S.after.t }; }
+        if (M.t >= 0.7) { M.taking = null; b.carry = 'cone'; b.squat = false; go('walk'); }
+      } else if (M.ph === 'walk') { if (walkTo(b, spot, dt)) { b.face = -1; go('kneel'); } }
       else if (M.ph === 'kneel') {
         b.squat = true;
         if (M.t >= 0.25) { b.carry = null; M.cone = { state: 'set', at: S.after.t, from: { x: b.x + BODY / 2 - 1.5 * AP, y: b.y - BODY + P - 4 * AP } }; go('set'); }
@@ -332,19 +347,23 @@ const SCRIPTS = {
       } else if (M.ph === 'press') {
         if (M.t >= 0.9) { b.squat = false; M.grow = { kind: 'b1', at: S.after.t, dur: 14 }; go('back'); }
       } else if (M.ph === 'back') {
-        if (walkTo(b, b.home, dt) || M.t > 4.5) go('hold');
+        if (walkTo(b, b.home, dt)) { b.face = 1; go('hold'); }
       } else if (M.ph === 'hold' && M.t >= 1.2) this.init();
     }
   },
+  // R: the grove at rest: the pine standing by the shack, the seed basket on
+  // the shack's far side with its acorns in it.
+  r: { init() { takeBack(); standTree(); M.basket = BASKET_FULL; go('rest'); }, step() {} },
   // A2: the hand takes the cone set out at the forestry shack's door, carries
   // it over the bare plot and lets go: it drops in and sinks, and a shoot
   // comes up. The ghost hand shows the motion first.
   a2: {
     init() {
-      barePlot();
-      const door = stationDoor('forestry'), x = door - AP * 5;
-      M.cone = { state: 'lying', x, y: floorAt(x) - 4 * AP };
-      M.from = { x: M.cone.x, y: M.cone.y };
+      barePlot(); M.basket = BASKET_FULL;
+      // the top acorn of the basket's heap, taken out of it on the grab
+      const s = basketSlot(M.basket - 1);
+      M.cone = { state: 'basket', x: s.x, y: s.y };
+      M.from = { x: s.x, y: s.y };
       M.bodies = []; M.grow = null; M.cursor = null; go('teach');
     },
     step(dt) {
@@ -357,7 +376,7 @@ const SCRIPTS = {
       } else if (M.ph === 'reach') {
         const k = Math.min(1, M.t / 0.6);
         M.cursor = { x: lerp(over.x + AP * 10, from.x + 1.5 * AP, ease(k)), y: lerp(over.y, from.y - 2 * AP, ease(k)), pose: 'point' };
-        if (M.t >= 0.8) { M.cursor.pose = 'grab'; c.state = 'held'; go('carry'); }
+        if (M.t >= 0.8) { M.cursor.pose = 'grab'; c.state = 'held'; M.basket -= 1; go('carry'); }
       } else if (M.ph === 'carry') {
         const k = Math.min(1, M.t / 1.5);
         M.cursor = { ...at(k), pose: 'grab' };
@@ -704,7 +723,7 @@ export function startGroveMock(opt, STEPS) {
   globalThis.__groveMock = opt;
   Object.assign(M, { opt, mine: S.after, ph: '', t: 0, T: 0, logs: 0, cut: 0, roll: null, grow: null, cone: null, bodies: [],
                      cursor: null, ghost: null, notch: 0, sawAt: null, stumpOut: null, landed: null, from: null,
-                     flip: FLIP.has(opt), stumpUp: 0, tilt: 0, shovel: null, dug: 0 });
+                     flip: FLIP.has(opt), stumpUp: 0, tilt: 0, shovel: null, dug: 0, basket: BASKET_FULL, taking: null });
   M.placed.length = 0;
   const idx = STEPS.findIndex(q => q.name === 'grovemock');
   if (idx >= 0) STEPS.splice(idx, 1);

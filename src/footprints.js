@@ -42,6 +42,7 @@ import { deepPortal, standOfStation, deepFloor } from './deep/place.js';
 import { stationById } from './deep/party.js';
 import { PROPS } from './deep/props.js';
 import { afterFloor, groundOf, stationBox, stationX0, signBox, plotX, pineRows, PINE_GROWN, ART, pileBox, stairFoot, stationParts, podiumMid, pileX, AP } from './after/place.js';
+import { basketBox } from './after/place.js'; // MOCK grove
 import { DRAW } from './render/after/stations.js';
 import { silhouette } from './render/after/kit.js';
 import { furnaceBox, barrierBox } from './hell/place.js';
@@ -289,6 +290,7 @@ function afterParts() {
   const a = Math.min(...rows.map(r => r[1])), z = Math.max(...rows.map(r => r[2])), top = Math.min(...rows.map(r => r[0]));
   for (let i = 0; i < AFTER_PLOT_MAX; i++)
     out.push({ id: `pine:${i}`, rects: [rect(plotX(i) + a * AP, fl + top * AP, (z - a + 1) * AP, -top * AP)] });
+  if (globalThis.__groveMock) { const k = basketBox(); out.push({ id: 'seed-basket', rects: [rect(k.x, k.y - 4 * AP, k.w, k.h + 4 * AP)] }); } // MOCK grove  the seed basket and the acorns heaped in it
   // The sawdust heap stands under the saw mill's bed, inside its drawing
   // (after/mill.js), so it is the mill's footprint and claims none of its own.
   out.push({ id: 'throne-stair', rects: [rect(stairFoot(), fl - AFTER_STAIR_RISE, AFTER_STAIR_W, AFTER_STAIR_RISE)] });

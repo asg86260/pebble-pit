@@ -27,9 +27,9 @@ import { handOn } from '../aftercues.js';
 import { drawBody, drawSquat } from '../crew.js';
 import { trees } from '../../after/grove.js';
 import { gestureView } from '../../after/gestures.js';
-import { AP } from '../../after/place.js';
+import { AP, basketBox, GROVE_BASKET } from '../../after/place.js';
 import { M, MT, TRUNK_TOP, treeCells, grownShape, rowOrder, bx, fl, mx, pivotX, cutX, trunkTop, GRIP, SWING, ROLL_S, SAW_ANG, SAW_TIP,
-         STROKE, shovelAt, SHOVEL_H, groveMockOn } from '../../after/grovemock.js';
+         STROKE, shovelAt, SHOVEL_H, basketSlot, groveMockOn } from '../../after/grovemock.js';
 
 export { groveMockOn };
 const BODY = 3 * P;
@@ -262,9 +262,23 @@ function shovel() {
   layMid(SHOVEL(), s.x, s.y + AP / 2, sh.ang, false);
 }
 
+// The seed basket beside the shack (after/place.js, `basketBox`): the
+// acorns in it, M.basket of them, each where it sits (`basketSlot`), and
+// over their feet the basket, a rim and a body tapering to its foot in
+// timber's pale wood, a weave of its darker shade across the middle.
+function basket() {
+  const k = basketBox(), rim = goodTone('plank', 3), body = goodTone('plank', 1), weave = goodTone('plank', 2);
+  for (let i = 0; i < M.basket; i++) { const s = basketSlot(i); acorn(Math.round(s.x), Math.round(s.y)); }
+  fill(rim, k.x, k.y, k.w, AP);
+  fill(body, k.x, k.y + AP, k.w, AP);
+  for (let c = 1; c < GROVE_BASKET.w; c += 2) fill(weave, k.x + c * AP, k.y + AP, AP, AP);
+  fill(body, k.x + AP, k.y + 2 * AP, k.w - 2 * AP, AP);
+}
+
 export function drawGroveMock() {
   const t = now(), p = trees()[0];
   if (!p) return;
+  basket();
   turned(() => {
     soil();
     acornInGround(t);
@@ -395,6 +409,12 @@ export function drawGroveMockBodies() {
   const t = now();
   for (const b of M.bodies) square(b);
   turned(() => { for (const b of M.bodies) body(b, t); });
+  // an acorn on its way out of the basket onto a planter's head
+  if (M.taking && M.bodies[0]) {
+    const b = M.bodies[0], k = ease(clamp01((t - M.taking.at) / 0.45)), s = M.taking.from;
+    const hx = b.x + BODY / 2 - AW * AP / 2, hy = b.y - BODY - AH * AP + (b.squat ? P : 0);
+    acorn(Math.round(s.x + (hx - s.x) * k), Math.round(s.y + (hy - s.y) * k - Math.sin(Math.PI * k) * AP * 2));
+  }
 }
 
 // --- the hands --------------------------------------------------------------------------

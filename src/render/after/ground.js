@@ -13,14 +13,14 @@ import { afterX0, afterFloor, floorProfile } from '../../after/place.js';
 import { ctx } from '../ctx.js';
 import { fillOnPixels } from '../frame.js';
 import { W, PALE, MID } from './kit.js';
-import { plotX, AP } from '../../after/place.js'; // MOCK grove
+import { plotX, AP, basketBox } from '../../after/place.js'; // MOCK grove
 import { BED } from './grovemock.js'; // MOCK grove
 // MOCK grove: whether a column stands under a plot's bed of soil, kept clear
 // of the lip so the plot reads above the cloud line (the owner, 2026-10-28).
 const groveBeds = () => { // MOCK grove
   if (!globalThis.__groveMock || !S.after) return () => false; // MOCK grove
-  const xs = S.after.plots.map((p, i) => plotX(i)); // MOCK grove
-  return x => xs.some(px => x >= px + BED[0] * AP && x < px + (BED[1] + 1) * AP); // MOCK grove
+  const xs = S.after.plots.map((p, i) => plotX(i)), k = basketBox(); // MOCK grove
+  return x => xs.some(px => x >= px + BED[0] * AP && x < px + (BED[1] + 1) * AP) || (x >= k.x && x < k.x + k.w); // MOCK grove  the seed basket stands clear too
 }; // MOCK grove
 
 const fr = (x, y, w, h, tone) => { ctx.fillStyle = GREY[tone]; fillOnPixels(ctx, x, y, w, h); };
