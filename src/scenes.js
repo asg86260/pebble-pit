@@ -158,7 +158,7 @@ const PIN_FRAMES = 240;
 // A pin outlives the scene that set it by up to PIN_FRAMES, so a check that
 // stands a scene and goes on would have its camera held under it: the next
 // group's `newRun` lets go (`__unpin`).
-let pinned = 0;
+let pinned = 0; // page: a scene's camera pin, a dev handle's; no save or new game owns it
 function pinCamera(x) {
   if (typeof window.__scene !== 'function') return;     // the page's alone
   let left = PIN_FRAMES;
