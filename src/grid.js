@@ -584,6 +584,7 @@ export function blockAt(b, c, r) {
 export function addBlock(b, x, v, skip = b.blocked, free = false) {
   const z = sizeOfCell(v);
   if (z === 1) return addGrain(b, x, skip, v, free);
+  if (heapFree()) return addBlockFree(b, x, v, skip, free); // MOCK after-heaps
   if (b.cols < z) return false;
   const col = Math.max(0, Math.min(b.cols - 1, colOf(b, x)));
   // The slot x falls in, or the nearest whole one beside it where x falls in
@@ -637,6 +638,99 @@ export function addBlock(b, x, v, skip = b.blocked, free = false) {
   return true;
 }
 
+// MOCK after-heaps: how block heaps behave (mock-heaps, never merged). `globalThis.__heapMode` // MOCK after-heaps
+// picks the rule: unset the real one above; 'a' brickwork, 'b' tumble, 'c' slump. // MOCK after-heaps
+export const heapMode = () => globalThis.__heapMode || null; // MOCK after-heaps
+const heapFree = () => { const m = heapMode(); return m === 'a' || m === 'b'; }; // MOCK after-heaps
+const hashOf = n => { let h = Math.imul(n + 1, 2654435761); h ^= h >>> 15; h = Math.imul(h, 2246822519); return (h ^ (h >>> 13)) >>> 0; }; // MOCK after-heaps
+// B's sideways momentum a block lands with, by its bottom-left cell: { dir, mag } // MOCK after-heaps
+const lean = new Map(); // MOCK after-heaps
+// Whether a block of width z may stand with its left column at s: on the plot, whole inside one region. // MOCK after-heaps
+const fitsFree = (b, s, z) => s >= 0 && s + z <= b.cols && (!b.region || b.region(s) === b.region(s + z - 1)); // MOCK after-heaps
+function addBlockFree(b, x, v, skip, free) { // MOCK after-heaps
+  const z = sizeOfCell(v); // MOCK after-heaps
+  if (b.cols < z) return false; // MOCK after-heaps
+  const col = Math.max(0, Math.min(b.cols - 1, colOf(b, x))); // MOCK after-heaps
+  const s0 = Math.max(0, Math.min(b.cols - z, col - Math.floor(z / 2))); // MOCK after-heaps
+  const restAt = s => { // MOCK after-heaps
+    if (!fitsFree(b, s, z)) return -1; // MOCK after-heaps
+    let r0 = 0; // MOCK after-heaps
+    for (let c = s; c < s + z; c++) { // MOCK after-heaps
+      if (skip && skip(c)) return -1; // MOCK after-heaps
+      r0 = Math.max(r0, topRow(b, c) + 1); // MOCK after-heaps
+    } // MOCK after-heaps
+    if (r0 + z > b.rows) return -1; // MOCK after-heaps
+    if (!free && b.ceiling) for (let c = s; c < s + z; c++) if (!roomFor(b, c, r0 + z - 1)) return -1; // MOCK after-heaps
+    return r0; // MOCK after-heaps
+  }; // MOCK after-heaps
+  let use = -1, r0 = -1; // MOCK after-heaps
+  const mid = Math.max(0, Math.min(b.cols - 1, s0 + Math.floor(z / 2))); // MOCK after-heaps
+  const from = b.region ? b.region(mid) : null; // MOCK after-heaps
+  for (let d = 0; d < b.cols && use < 0; d++) { // MOCK after-heaps
+    for (const s of d ? [s0 - d, s0 + d] : [s0]) { // MOCK after-heaps
+      if (b.region && fitsFree(b, s, z) && b.region(s) !== from) continue; // MOCK after-heaps
+      const r = restAt(s); // MOCK after-heaps
+      if (r >= 0) { use = s; r0 = r; break; } // MOCK after-heaps
+    } // MOCK after-heaps
+  } // MOCK after-heaps
+  if (use < 0) return false; // MOCK after-heaps
+  landed.c = use; landed.r = r0; // MOCK after-heaps
+  writeBlock(b, use, r0, z, v); // MOCK after-heaps
+  if (heapMode() === 'b') { // MOCK after-heaps
+    const h = hashOf(use * 31 + r0 + (globalThis.__heapSeed = (globalThis.__heapSeed | 0) + 1)); // MOCK after-heaps
+    lean.set(r0 * b.cols + use, { dir: h & 1 ? 1 : -1, mag: 1 + ((h >>> 3) % 3) }); // MOCK after-heaps
+  } // MOCK after-heaps
+  return true; // MOCK after-heaps
+} // MOCK after-heaps
+// A w-wide strip beside a block, over its rows, open to move into: on the plot, in the block's region, not barred, under the ceiling, empty. // MOCK after-heaps
+const stripOpen = (b, c, r0, z, skip, w = 1) => { // MOCK after-heaps
+  if (c < 0 || c + w > b.cols || !sameRegion(b, c, c + w - 1) || !emptyRect(b, c, r0, w, z)) return false; // MOCK after-heaps
+  for (let i = c; i < c + w; i++) { // MOCK after-heaps
+    if (skip && skip(i)) return false; // MOCK after-heaps
+    if (!roomFor(b, i, Math.min(r0 + z - 1, b.rows - 1))) return false; // MOCK after-heaps
+  } // MOCK after-heaps
+  return true; // MOCK after-heaps
+}; // MOCK after-heaps
+function stepFree(b, ai, skip, tumble) { // MOCK after-heaps
+  const cols = b.cols, c0 = ai % cols, r0 = (ai - c0) / cols, v = b.grid[ai], z = sizeOfCell(v); // MOCK after-heaps
+  if (r0 === 0) return; // MOCK after-heaps
+  let sl = -1, sr = -1; // MOCK after-heaps
+  for (let i = 0; i < z; i++) if (b.grid[(r0 - 1) * cols + c0 + i]) { if (sl < 0) sl = i; sr = i; } // MOCK after-heaps
+  if (sl < 0) { // MOCK after-heaps
+    moveBlock(b, c0, r0, c0, r0 - 1, z, v); // MOCK after-heaps
+    if (lean.has(ai)) { lean.set(ai - cols, lean.get(ai)); lean.delete(ai); } // MOCK after-heaps
+    return; // MOCK after-heaps
+  } // MOCK after-heaps
+  const covered = !emptyRect(b, c0, r0 + z, z, 1); // MOCK after-heaps
+  // B: the momentum it landed with, a skid of a few cells the way it was going // MOCK after-heaps
+  const ln = lean.get(ai); // MOCK after-heaps
+  if (ln) { // MOCK after-heaps
+    lean.delete(ai); // MOCK after-heaps
+    if (!covered) for (let k = ln.mag; k >= 1; k--) { // MOCK after-heaps
+      const n0 = c0 + ln.dir * k; // MOCK after-heaps
+      if (stripOpen(b, ln.dir > 0 ? c0 + z : n0, r0, z, skip, k)) { moveBlock(b, c0, r0, n0, r0, z, v); return; } // MOCK after-heaps
+    } // MOCK after-heaps
+  } // MOCK after-heaps
+  const com2 = 2 * c0 + z, lo2 = 2 * (c0 + sl), hi2 = 2 * (c0 + sr + 1); // MOCK after-heaps
+  let dir = com2 < lo2 ? -1 : com2 > hi2 ? 1 : 0; // MOCK after-heaps
+  if (!dir && !covered) { // MOCK after-heaps
+    // standing a block's height or more over the ground beside it: it goes over // MOCK after-heaps
+    const dl = c0 > 0 ? r0 - (topRow(b, c0 - 1) + 1) : 0, dr = c0 + z < cols ? r0 - (topRow(b, c0 + z) + 1) : 0; // MOCK after-heaps
+    if (dl >= z || dr >= z) dir = dl > dr ? -1 : dr > dl ? 1 : (hashOf(ai) & 1 ? 1 : -1); // MOCK after-heaps
+  } // MOCK after-heaps
+  if (!dir) return; // MOCK after-heaps
+  if (tumble) { // MOCK after-heaps
+    const n0 = c0 + dir * z; // MOCK after-heaps
+    if (stripOpen(b, dir > 0 ? c0 + z : n0, r0, z, skip, z)) { // MOCK after-heaps
+      globalThis.__heapTumble = dir; // MOCK after-heaps
+      moveBlock(b, c0, r0, n0, r0, z, v); // MOCK after-heaps
+      globalThis.__heapTumble = 0; // MOCK after-heaps
+      return; // MOCK after-heaps
+    } // MOCK after-heaps
+  } // MOCK after-heaps
+  if (stripOpen(b, dir > 0 ? c0 + z : c0 - 1, r0, z, skip)) moveBlock(b, c0, r0, c0 + dir, r0, z, v); // MOCK after-heaps
+} // MOCK after-heaps
+
 // One block's turn in a settle pass, and the whole rule of a heap of blocks:
 //   - nothing under any of its columns: it falls a cell;
 //   - supported under at least half its width: it rests, however uneven the
@@ -660,6 +754,7 @@ export function addBlock(b, x, v, skip = b.blocked, free = false) {
 function stepBlock(b, ai, skip) {
   globalThis.__perf.blocks++;
   const cols = b.cols, c0 = ai % cols, r0 = (ai - c0) / cols, v = b.grid[ai], z = sizeOfCell(v);
+  if (heapFree()) return stepFree(b, ai, skip, heapMode() === 'b'); // MOCK after-heaps
   if (r0 === 0) return;
   let left = 0, right = 0;
   for (let i = 0; i < z; i++) if (b.grid[(r0 - 1) * cols + c0 + i]) { if (i < z / 2) left++; else right++; }
@@ -685,12 +780,20 @@ function stepBlock(b, ai, skip) {
   const first = (Math.floor(c0 / z) + r0) & 1 ? -1 : 1;
   if ((left + right) * 2 >= z) {
     if (r0 < z || !emptyRect(b, c0, r0 + z, z, 1)) return;
-    for (const dir of [first, -first]) if (open(dir, r0 - z)) { moveBlock(b, c0, r0, c0 + dir * z, r0 - 1, z, v); return; }
+    for (const dir of [first, -first]) if (open(dir, r0 - z)) { moveBlock(b, c0, r0, c0 + dir * z, r0 - 1, z, v); slumpOn(b, c0 + dir * z, r0 - 1, dir, z, v, skip); return; } // MOCK after-heaps
     return;
   }
   const dir = left < right ? -1 : right < left ? 1 : first;
-  if (open(dir, r0 - 1)) moveBlock(b, c0, r0, c0 + dir * z, r0 - 1, z, v);
+  if (open(dir, r0 - 1)) { moveBlock(b, c0, r0, c0 + dir * z, r0 - 1, z, v); slumpOn(b, c0 + dir * z, r0 - 1, dir, z, v, skip); } // MOCK after-heaps
 }
+// C: a block that has rolled a slot sometimes rolls one slot further, poured rather than built // MOCK after-heaps
+const slumpOn = (b, c0, r0, dir, z, v, skip) => { // MOCK after-heaps
+  if (heapMode() !== 'c' || Math.random() > 0.4) return; // MOCK after-heaps
+  const n0 = c0 + dir * z; // MOCK after-heaps
+  if (n0 < 0 || n0 + z > b.cols || slotOf(b, n0, z) !== n0 || !sameRegion(b, c0, n0)) return; // MOCK after-heaps
+  for (let c = n0; c < n0 + z; c++) if ((skip && skip(c)) || !roomFor(b, c, r0 + z - 1)) return; // MOCK after-heaps
+  if (emptyRect(b, n0, r0, z, z)) moveBlock(b, c0, r0, n0, r0, z, v); // MOCK after-heaps
+}; // MOCK after-heaps
 function moveBlock(b, c0, r0, n0, nr, z, v) {
   eraseBlock(b, c0, r0, z);
   writeBlock(b, n0, nr, z, v);
@@ -709,7 +812,7 @@ export function blockProblems(b) {
   for (const ai of b.blockSet) {
     const c0 = ai % b.cols, r0 = (ai - c0) / b.cols, v = b.grid[ai], z = sizeOfCell(v);
     if (z === 1) { bad.push(`the block at ${c0},${r0} is not a block's value (${v})`); continue; }
-    if (slotOf(b, c0, z) !== c0) bad.push(`the block at ${c0},${r0} is off its lattice (${z})`);
+    if (!heapFree() && slotOf(b, c0, z) !== c0) bad.push(`the block at ${c0},${r0} is off its lattice (${z})`); // MOCK after-heaps
     for (let j = 0; j < z; j++) for (let i = 0; i < z; i++) {
       const k = (r0 + j) * b.cols + c0 + i;
       if (b.grid[k] !== v || lay[k] !== ai + 1) bad.push(`the block at ${c0},${r0} is missing its cell ${c0 + i},${r0 + j}`);

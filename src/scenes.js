@@ -16,7 +16,7 @@
 // The comments over the scenes say why each is set up as it is.
 
 import { S, floor } from './state.js';
-import { addGrain, bottomY } from './grid.js';
+import { addGrain, bottomY, cellOf, blockProblems } from './grid.js'; // MOCK after-heaps
 import { JOB, TYPE, AFTER_JOB } from './jobs.js';
 import { P, PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, DOME_WORK, DOME_RINGS, DOME_FADE_MS, LADDER, TIER_OWN, MACHINE_TUNE_RUNGS, LAND_HOP_MS, INTRO_CHAT_MS } from './config.js';
 import { dropMs, ramX } from './rock.js';
@@ -28,7 +28,7 @@ import { COIL_SEGS, SNATCH_ALONE_MS, SNATCH_LEAP_MS, PAIRS, CLASSES, FORK_RUNG, 
 import { depthAt } from './deep/depth.js';
 import { strike, clickDeep } from './deep/serpent.js';
 import { mouthX, portalX, spotX, coilAt, bellySeg, slotX, crusherRect, deepFloor, deepX0 } from './deep/place.js';
-import { sweep } from './hands.js';
+import { sweep, handHolds } from './hands.js'; // MOCK after-heaps -- handHolds
 import { windowS, startMeal, landAt } from './deep/meals.js';
 import { startleFauna, faunaWhen } from './deep/fauna.js';
 import { nextWave } from './render/deepwave.js';
@@ -49,7 +49,7 @@ import { CROWD_X0, CROWD_FILES, AFTER_COIN_UNDER_S, STRIKE_SHARE, AFTER_PODIUM_C
 import { millView } from './after/mill.js';
 import { siteLoads } from './after/build.js';
 import { dropSpot, goodsRead } from './after/piles.js';
-import { stripOf as groundStrip, units as groundUnits, counted as groundCounted } from './after/ground.js';
+import { stripOf as groundStrip, units as groundUnits, counted as groundCounted, stripBox as groundBox, takeAt as groundTake } from './after/ground.js'; // MOCK after-heaps
 import { afterGround } from './state.js';
 import { FINALE_HOUSE_W, APOTH_POTS_MAX } from './config.js';
 import { houseX } from './home.js';
@@ -3039,6 +3039,24 @@ export const SCENES = {
       window.__look(x - S.viewW / 2);
       window.__still(true); window.__holdShot();
     } },
+  // MOCK after-heaps: how block heaps settle (mock-heaps, never merged). The owner: "the heaps dont
+  // feel natural at all." One list of events (`heapsRestart`), four rules (grid.js, `__heapMode`).
+  ...Object.fromEntries([[null, 'current', "the heap rule as it is: blocks on a fixed lattice, a block a step, each straight over the one below"],
+    ['a', 'A brickwork', "no lattice: a block rests at any cell, half over two below like bricks, and slides off an edge a cell at a time when more than half of it hangs"],
+    ['b', 'B tumble', "A's free placing, and a block lands with a little sideways momentum and tips over an edge as a square rolls, a quarter turn a tumble, into a looser mound"],
+    ['c', 'C slump', "the lattice kept, but blocks sometimes roll a slot further and glide between slots, so the mound looks poured rather than built"]]
+    .map(([mode, option, say]) => [`after-heaps-${mode || 'now'}`, { about: 'the acts', review: 'act 3: how heaps settle', // MOCK after-heaps
+      stage: 'mock: throwaway review code, never merged -- shows how it would look; the real build comes after you pick', option, say, // MOCK after-heaps
+      swap: () => heapsRestart(mode), // MOCK after-heaps
+      run: () => { // MOCK after-heaps
+        globalThis.__heapMode = null; // MOCK after-heaps
+        act3Mid(); // MOCK after-heaps
+        for (S.carryLevel = 0; S.carryLevel < LADDER && handHolds('plank') < 3; S.carryLevel++); // MOCK after-heaps  a hand that holds three timber
+        S.after.crew = {}; // MOCK after-heaps
+        window.__fast(1 / 60); // MOCK after-heaps
+        heapsRestart(mode); // MOCK after-heaps
+        window.__fast(1 / 60); // MOCK after-heaps
+      } }])), // MOCK after-heaps
   // A held hand's weight by size (hands.js, `handHolds`, HAND_SWAY): a full
   // carry swept off each pile and held still over it, so the drift is all
   // there is to see.
@@ -3493,6 +3511,68 @@ function handWeight(what) {
   window.__fast(1 / 60);
   window.__holdShot();
 }
+// MOCK after-heaps: the same events under each heap rule, on the sim's clock (after/piles.js
+// `stepPiles` calls `__heapSeq`), so the review page plays them live and a shot stepping the sim sees the
+// same: eight logs let go one by one over open ground, twelve timber over the timber pile, then the hand
+// taking three off the top and carrying them away.
+const HEAP_PACE = 1; // MOCK after-heaps  seconds between two let-gos
+function heapsRestart(mode) { // MOCK after-heaps
+  globalThis.__heapMode = mode; // MOCK after-heaps
+  globalThis.__heapSeq = null; // MOCK after-heaps
+  window.__emptyHand(); S.trail = []; S.chips = []; // MOCK after-heaps
+  for (let k = 0; k < 60 && groundUnits().length; k++) for (const u of groundUnits()) groundTake(u.ai); // MOCK after-heaps
+  S.after.bodies = S.after.bodies.filter(w => w.job); S.after.camp = 0; // MOCK after-heaps
+  window.__afterGrant({ grovelogs: 8 - window.__afterRead().grovelogs }); // MOCK after-heaps
+  const flat = x => [-1, 1].every(k => Math.abs(floorAt(x + k * AP * 16) - floorAt(x)) < 1); // MOCK after-heaps
+  let x = campEdges()[1] + AP * 48; // MOCK after-heaps
+  while (!flat(x) && x < afterGround.x + afterGround.cols * AP) x += AP; // MOCK after-heaps
+  const spot = { x, y: floorAt(x) - P * 30 }; // MOCK after-heaps
+  const tb = groundBox('timber'), tspot = { x: tb.x + tb.w / 2, y: tb.top - AP * 8 }; // MOCK after-heaps
+  const frame = at => { pinCamera(at - S.viewW / 2); window.__look(at - S.viewW / 2); }; // MOCK after-heaps
+  const letGo = (p, kind) => { // MOCK after-heaps
+    if (kind === 'log') { // MOCK after-heaps
+      let from; try { from = topBlock('grovelogs'); } catch { return; } // MOCK after-heaps  none left on the pile
+      S.trail = []; S.mouse = { ...from }; window.__afterHand(from.x, from.y, 'press'); // MOCK after-heaps
+    } else { // MOCK after-heaps
+      const m = { s: cellOf('plank'), a: 0, d: 0, spin: 0, bob: 0, sway: 1, kind: 'plank', place: S.motes[0]?.place || 'after' }; // MOCK after-heaps
+      S.held = 1; S.motes = [m]; // MOCK after-heaps
+    } // MOCK after-heaps
+    S.trail = []; S.mouse = { ...p }; window.__afterHand(p.x, p.y, 'drop'); // MOCK after-heaps
+  }; // MOCK after-heaps
+  // what must hold of every frame: every block whole, and held up (supported, or settling a cell a pass) // MOCK after-heaps
+  globalThis.__heapCheck = () => { // MOCK after-heaps
+    const bad = blockProblems(afterGround).filter(p => !/lattice/.test(p)); // MOCK after-heaps
+    const G = afterGround; // MOCK after-heaps
+    const floating = groundUnits().filter(u => u.r0 > 0 && ![...Array(u.z).keys()].some(i => G.grid[(u.r0 - 1) * G.cols + u.c0 + i])).length; // MOCK after-heaps
+    return { bad, floating }; // MOCK after-heaps
+  }; // MOCK after-heaps
+  const ev = []; // MOCK after-heaps
+  ev.push({ t: 0, f: () => frame(spot.x) }); // MOCK after-heaps
+  for (let k = 0; k < 8; k++) ev.push({ t: 1 + k * HEAP_PACE, f: () => letGo(spot, 'log') }); // MOCK after-heaps
+  const t2 = 1 + 8 * HEAP_PACE + 4; // MOCK after-heaps
+  ev.push({ t: t2 - 1, f: () => frame(tspot.x) }); // MOCK after-heaps
+  for (let k = 0; k < 12; k++) ev.push({ t: t2 + k * 0.7, f: () => letGo({ x: tspot.x + (k % 3 - 1) * AP, y: tspot.y }, 'plank') }); // MOCK after-heaps
+  const t3 = t2 + 12 * 0.7 + 4; // MOCK after-heaps
+  // the hand sweeping along the top of the heap until it holds three, then carrying them off and letting go // MOCK after-heaps
+  for (let k = 0; k < 24; k++) ev.push({ t: t3 + k / 12, f: () => { // MOCK after-heaps
+    const us = groundUnits().filter(u => u.kind === 'plank' && u.c0 >= groundStrip('timber').c0 && u.c0 < groundStrip('timber').c1); // MOCK after-heaps
+    if (S.held < 3 && us.length && presses++ < 6) { // MOCK after-heaps
+      const u = us.reduce((b, q) => (q.r0 > b.r0 || (q.r0 === b.r0 && Math.abs(q.c0 - tspot.x) < Math.abs(b.c0 - tspot.x)) ? q : b)); // MOCK after-heaps
+      const p = { x: afterGround.x + (u.c0 + u.z / 2) * AP, y: afterGround.y + (afterGround.rows - u.r0 - u.z / 2) * AP }; // MOCK after-heaps
+      S.dragging = true; S.trail = []; S.mouse = { ...p }; window.__afterHand(p.x, p.y, 'press'); S.dragging = false; // MOCK after-heaps
+    } else if (S.held) { // MOCK after-heaps
+      const j = cj++, p = { x: tspot.x - j * AP * 0.8, y: tspot.y - Math.sin(Math.min(1, j / 10) * Math.PI) * AP * 6 }; // MOCK after-heaps
+      S.trail = []; S.mouse = { ...p }; window.__afterHand(p.x, p.y, 'move'); // MOCK after-heaps
+    } // MOCK after-heaps
+  } }); // MOCK after-heaps
+  ev.push({ t: t3 + 24 / 12 + 0.5, f: () => { const p = { ...S.mouse }; S.trail = []; window.__afterHand(p.x, p.y, 'drop'); } }); // MOCK after-heaps
+  let t0 = null, at = 0, cj = 0, presses = 0; // MOCK after-heaps
+  globalThis.__heapSeq = () => { // MOCK after-heaps
+    if (!S.after) return; // MOCK after-heaps
+    if (t0 == null) t0 = S.after.t; // MOCK after-heaps
+    while (at < ev.length && S.after.t - t0 >= ev[at].t) ev[at++].f(); // MOCK after-heaps
+  }; // MOCK after-heaps
+} // MOCK after-heaps
 // The middle of pile `what`'s highest block on act 3's ground: where a
 // player presses to take one off it.
 function topBlock(what) {

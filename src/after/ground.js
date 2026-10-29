@@ -29,7 +29,7 @@
 
 import { S, afterGround as G } from '../state.js';
 import { AFTER_W, AFTER_H, AFTER_PILES, AFTER_MILL, TERRAIN_CELL, KINDS, GRAV } from '../config.js';
-import { at, topRow, colOf, bottomY, landed, addBlock, putBlock, takeUnit, blockAt, kindOf, sizeOfCell, recount, settle } from '../grid.js';
+import { at, topRow, colOf, bottomY, landed, addBlock, putBlock, takeUnit, blockAt, kindOf, sizeOfCell, recount, settle, heapMode } from '../grid.js'; // MOCK after-heaps -- heapMode
 import { afterX0, afterTop, floorProfile, sitesKey, pileAt, pileOwner, heapX, AP } from './place.js';
 import { pileGrid, pileCells } from './art.js';
 
@@ -117,7 +117,7 @@ function wire() {
   G.ceiling = c => (capOf[c] >= 0 ? terrain[c] + capOf[c] : G.rows);
   G.blocked = heapCol;
   G.onPut = () => { version++; };
-  G.onMove = (from, to) => { const t = tags(); if (t.has(from)) { t.set(to, t.get(from)); t.delete(from); } };
+  G.onMove = (from, to) => { const t = tags(); if (t.has(from)) { t.set(to, t.get(from)); t.delete(from); } glideMove(t, from, to); }; // MOCK after-heaps
 }
 
 // Every column's terrain laid as cells, over an empty plot.
@@ -455,3 +455,28 @@ export function fallTag(ai, y) {
 // Kinds by key, for the doors' callers.
 export const sizeOf = kind => KINDS[kind].size;
 export const groundVersion = () => version;
+
+// MOCK after-heaps: a block that moves a cell (or a slot) glides there instead of jumping: its tag
+// keeps the offset it still owes (`glide`), worn off at a steady speed, a quarter turn and a hop over the
+// edge for a tumble. Chained moves add to what is still owed, so a slide down a slope is one smooth run.
+const GL_VX = AP * 9; // MOCK after-heaps
+const GL_VY = AP * 16; // MOCK after-heaps
+export function glideAt(tg, t) { // MOCK after-heaps
+  const g = tg && tg.glide; // MOCK after-heaps
+  if (!g) return null; // MOCK after-heaps
+  const k = g.dur > 0 ? Math.max(0, Math.min(1, (t - g.at) / g.dur)) : 1; // MOCK after-heaps
+  if (k >= 1) return null; // MOCK after-heaps
+  return { x: g.dx * (1 - k), y: g.dy * (1 - k) - g.hump * Math.sin(Math.PI * k), rot: g.rot * (1 - k) }; // MOCK after-heaps
+} // MOCK after-heaps
+function glideMove(t, from, to) { // MOCK after-heaps
+  if (!heapMode() || !S.after) return; // MOCK after-heaps
+  let tg = t.get(to); // MOCK after-heaps
+  if (!tg) { tg = {}; t.set(to, tg); } // MOCK after-heaps
+  const now = S.after.t, tum = globalThis.__heapTumble || 0, z = sizeOfCell(G.grid[to]) * AP; // MOCK after-heaps
+  const prev = glideAt(tg, now) || { x: 0, y: 0, rot: 0 }; // MOCK after-heaps
+  const dx = prev.x + ((from % G.cols) - (to % G.cols)) * AP; // MOCK after-heaps
+  const dy = prev.y + rowY(Math.floor(from / G.cols)) - rowY(Math.floor(to / G.cols)); // MOCK after-heaps
+  const rot = prev.rot - tum * Math.PI / 2; // MOCK after-heaps
+  const at = tg.fall != null && tg.at != null ? Math.max(now, tg.at + tg.fall) : now; // MOCK after-heaps
+  tg.glide = { dx, dy, rot, hump: tum ? z * 0.207 : 0, at, dur: Math.max(Math.abs(dx) / GL_VX, Math.abs(dy) / GL_VY, tum ? 0.45 : 0) }; // MOCK after-heaps
+} // MOCK after-heaps
