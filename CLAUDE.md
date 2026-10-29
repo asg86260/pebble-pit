@@ -68,8 +68,15 @@ pick this one" or "keep iterating" with what to change -- and the note lands
 in `shots/review/notes.jsonl`; wait for it with `node tools/review-wait.mjs
 <checkout>` run in the background, which exits (and so wakes you) the moment
 a note lands (`--all` prints the notes already there).
-Every tab and option says NEW or UPDATED when it changed since that
-browser last looked, and each tab how long ago it changed, with nobody
+The page is a board, a column a status (waiting on you, iterating,
+building, signed off; landed folded into a row): all but building are derived
+from the notes and fingerprints, and building is written -- the coordinator
+runs `node tools/review-status.mjs <checkout> set "<review>" building|iterating
+"<what>"` when it dispatches an agent and `... clear "<review>"` when the
+agent reports (`shots/review/status.json`, served at `/__review/status`; an
+entry over two hours old shows "stale?"). Every card and option says NEW or
+UPDATED when it changed since that
+browser last looked, and each card how long ago it changed, with nobody
 bumping anything: the dev server fingerprints each option from its scene
 (its fields and its `run`/`swap` source) plus every file tagged to it
 (`tools/review-prints.mjs`). So **tag the code a review draws with**: a

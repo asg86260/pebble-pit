@@ -221,7 +221,7 @@ function shoutMark(x, y) { ctx.fillStyle = GREY[K]; ctx.fillRect(x + 8, y - 12, 
 // A load of `n` of a good stacked the yard's way (render/crew.js), a thing a
 // row, as many rows as it carries, up to AFTER_CARRY_SHOWN: over a head whose
 // top left is (x, y).
-function drawLoad(x, y, kind, n, id = 0) { // MOCK after-goods -- id
+function drawLoad(x, y, kind, n, id = 0, load = null) { // MOCK after-goods -- id, load
   n = Math.min(AFTER_CARRY_SHOWN, n);
   // Logs and timber as the blocks they lie on their piles as
   // (render/after/piles.js, `goodBlock`), stacked a block on a block over the
@@ -234,10 +234,10 @@ function drawLoad(x, y, kind, n, id = 0) { // MOCK after-goods -- id
     goodBlock(lx, ly, kind);
   } else if (kind === 'log' || kind === 'plank') {
     const z = AFTER_BLOCK[kind] * AP, lx = x + 1.5 * P - z / 2;
-    for (let k = 0; k < n; k++) goodBlock(lx, y - (k + 1) * z, kind, seedOf(id, k)); // MOCK after-goods -- seed
+    for (let k = 0; k < n; k++) goodBlock(lx, y - (k + 1) * z, kind, goodsLook() === 'c' && load && load[k] ? load[k] : seedOf(id, k)); // MOCK after-goods -- seed, or the carried unit's own value
   } else if (kind === 'sign' && goodsLook()) { // MOCK after-goods
     const z = AFTER_BLOCK.sign * AP, lx = x + 1.5 * P - z / 2; // MOCK after-goods
-    for (let k = 0; k < n; k++) goodBlock(lx, y - (k + 1) * z, kind, seedOf(id, k)); // MOCK after-goods
+    for (let k = 0; k < n; k++) goodBlock(lx, y - (k + 1) * z, kind, goodsLook() === 'c' && load && load[k] ? load[k] : seedOf(id, k)); // MOCK after-goods
   } else if (kind === 'sign') {
     // The one in front held up on its post; the rest boards on the shoulder.
     drawFistFlag(x + P, y + P * 2, AFTER_SIGN_FLAG_U.held, 1, AFTER_SIGN_FLAG_U.up * P);
@@ -277,7 +277,7 @@ function drawMember(w) {
     const x = 0, y = 0;
     drawBody(x, y);
     ctx.fillStyle = GREY[K];
-    drawLoad(x, y, loadKind(w), carryOf(w), w.id); // MOCK: w.id
+    drawLoad(x, y, loadKind(w), carryOf(w), w.id, w.load); // MOCK: w.id, w.load
     if (w.tipping) { ctx.fillRect(x + 2, y - 10, 14, 10); ctx.fillStyle = GREY[PALE]; ctx.fillRect(x + 4, y - 8, 10, 6); }
     if (w.swing != null) {
       if (w.job == null) shoutMark(x, y);

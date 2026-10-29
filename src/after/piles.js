@@ -88,7 +88,7 @@ export function takeBlock(what, x = null) {
   const mid = u => colX(u.c0) + u.z * AP / 2;
   const pick = x == null ? t.reduce((b, u) => (u.r0 > b.r0 ? u : b))
     : t.reduce((b, u) => (Math.abs(mid(u) - x) < Math.abs(mid(b) - x) ? u : b));
-  return !!takeAt(pick.ai);
+  return takeAt(pick.ai) || false; // MOCK after-goods  the block's value, truthy, so its shade goes along
 }
 // A block set down on pile `what` at world x (where its drop is with no x),
 // of value `v` (a body's, keeping its tone; the pile's good's default with

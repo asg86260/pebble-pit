@@ -8,9 +8,10 @@
 // file with tools/review-wait.mjs, which returns the moment a line lands.
 // Serve only: a build has no bench and nothing here ships.
 
-import { appendFileSync, mkdirSync } from 'node:fs';
+import { appendFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { prints } from './review-prints.mjs';
+import { readStatus } from './review-status.mjs';
 
 export const notesPath = root => join(root, 'shots', 'review', 'notes.jsonl');
 
@@ -54,6 +55,20 @@ export function reviewPlugin(root) {
           res.setHeader('content-type', 'application/json');
           res.end(JSON.stringify(out));
         });
+      });
+      // The board's other inputs, in one GET: what agents are doing
+      // (shots/review/status.json, written by tools/review-status.mjs) and the
+      // owner's notes so far, from which the page works out who waits on whom.
+      server.middlewares.use('/__review/status', (req, res) => {
+        if (req.method !== 'GET') { res.statusCode = 405; res.end(); return; }
+        let notes = [];
+        try {
+          notes = readFileSync(file, 'utf8').split('\n').filter(Boolean)
+            .map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean).slice(-400);
+        } catch {}
+        res.setHeader('content-type', 'application/json');
+        res.setHeader('cache-control', 'no-store');
+        res.end(JSON.stringify({ entries: readStatus(root), notes }));
       });
       server.middlewares.use('/__review', (req, res) => {
         if (req.method !== 'POST') { res.statusCode = 405; res.end(); return; }
