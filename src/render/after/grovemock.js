@@ -16,6 +16,7 @@
 
 import { GREY, P, AFTER_FALL_S, AFTER_FALL_BOUNCE_S, AFTER_FALL_BOUNCE, GESTURE_CUE_ALPHA, TREE_CHOPS, AFTER_DIG_CLICKS } from '../../config.js';
 import { ctx } from '../ctx.js';
+import { themed } from '../../ink.js';
 import { K, W, PALE, MID, SOIL, DUST, toneOf, now, clamp01, hash } from './kit.js';
 import { goodBlock } from './piles.js';
 import { handOn } from '../aftercues.js';
@@ -35,7 +36,7 @@ const ease = u => u * u * (3 - 2 * u);
 // A drawing of cells [x, y, tone] (cell coordinates off its origin, which is
 // the corner at cell (0, 0)'s top left) cached on its own sheet, with where
 // its origin sits on the sheet.
-const SPRITES = new Map();
+const SPRITES = themed(new Map());   // cleared on a theme change, as pine.js's pieces are
 function sprite(id, cells) {
   if (SPRITES.has(id)) return SPRITES.get(id);
   const cv = paper();
