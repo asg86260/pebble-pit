@@ -274,6 +274,7 @@ this section; the release that switches it on moves these under Unreleased.
 - Loading a save no longer shows the last yard's income rates and air trend in the books until they age out (test/held-state.test.mjs).
 - The diggers' counter stays under the rock after the shack is bought, instead of moving to the shack (test/digger-roster.test.mjs).
 - Switching saves no longer carries dust on the cursor, scales in the water or blocks lying in act 3 from the old game into the new one (test/save-switch.test.mjs).
+- A card's refund and another buttons stand one over the other with room round their words instead of touching side by side (src/selftest/boardwords.js).
 
 ## v0.6.1 — 2026-10-19
 
