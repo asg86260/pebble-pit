@@ -197,6 +197,69 @@ function stump(up = 0, tilt = 0, roots = 0) {
   });
   fill(stumpTone(), x, y, z, z);
 }
+// F3a-1, -2, -3: the stump pulled with more to read in it (after/grovemock.js,
+// `_f3a`). `left` the roots not yet snapped; the next to go is the lowest
+// index still whole (they go left to right).
+// F3a-3's roots as cords over the soil from the start, one to a root, cells
+// [column off the plot's trunk line, row]: the first the end tied to the
+// stump (it rises with it), the rest lying on the ground.
+const CORDS = [
+  [[-3, -1], [-4, -1], [-5, -1], [-6, -1], [-7, -1]],
+  [[2, -1], [3, -1], [4, -1]],
+  [[2, -3], [3, -2], [4, -2], [5, -1], [6, -1]]
+];
+const CHIP_S = 0.7, CHIPS = 7;
+// `block` false once the stump is out and on the hand: only what it left.
+function pulledStump(p, t, block) {
+  const s = M.style, dig = AFTER_DIG_CLICKS, left = p.stump ? dig - (p.dug || 0) : (M.ph === 'last' ? 1 : 0);
+  const next = left > 0 ? dig - left : -1, since = M.snapAt == null ? 9 : t - M.snapAt;
+  let up = M.stumpUp || 0;
+  // the snap held: the stump jerked up a cell, held a beat (the earth gives)
+  if (s === 1 && since < 0.3) up += AP;
+  const x = bx() + MT.c0 * AP, z = MT.w * AP, foot = fl() - up, wood = LOG(3);
+  // the earth gives: the soil cracked either side, wider as the work goes
+  if (s === 1) {
+    const q = Math.min(1, ((p.dug || 0) + M.strain) / dig), n = p.stump ? Math.ceil(q * 4) : 4;
+    for (let i = 0; i < n; i++) { cellAt(MT.c0 - 1 - i * 2, -1, K); cellAt(MT.c0 + MT.w + i * 2, -1, K); }
+  }
+  // the roots under it: snapped ones stubs; the one under strain taut (1),
+  // stretched (2); the last and biggest thicker (2)
+  if (block) ROOTS.forEach((cells, k) => {
+    const live = k >= dig - left, strained = k === next && M.strain > 0;
+    for (const [c, d] of cells) {
+      if (!live && d > 0) continue;
+      const cx = x + c * AP;
+      if (s === 1 && strained && M.strain > 0.45) {
+        // taut: straight down to the ground under where it leaves the stump
+        if (d === 0) fill(wood, cx, foot, AP, Math.max(0, fl() - foot));
+        continue;
+      }
+      const stretch = s === 2 && strained ? 1 + Math.round(M.strain * 2) / 2 : 1;
+      const cy = foot + d * AP * stretch, h = Math.min(AP * stretch, fl() - cy);
+      if (h > 0) { fill(wood, cx, cy, AP, h); if (s === 2 && k === ROOTS.length - 1 && live) fill(wood, cx - AP, cy, AP, Math.min(AP, h)); }
+    }
+  });
+  // root count: the cords over the soil, the tied end rising with the stump;
+  // a snapped cord broken, its stub on the stump and the rest left lying
+  if (s === 3) CORDS.forEach((cells, k) => {
+    const live = k >= dig - left, [ac, ar] = cells[0], ay = fl() + ar * AP - up;
+    if (block) fill(wood, bx() + ac * AP, ay, AP, AP);
+    if (live && up > 0) fill(wood, bx() + ac * AP, ay, AP, Math.max(AP, fl() + ar * AP - ay + AP));
+    for (const [c, r] of cells.slice(live ? 1 : 2)) fill(wood, bx() + c * AP, fl() + r * AP, AP, AP);
+  });
+  if (block) fill(stumpTone(), x, foot - z, z, z);
+  // each snap's burst: dirt chips (1, 3) thrown off the break, lying where
+  // they land on the soil; the held impact a star at the break (3)
+  for (const b of M.chips || []) {
+    const age = t - b.at, bx0 = x + (ROOTS[b.k][0][0] + 0.5) * AP;
+    for (let j = 0; j < CHIPS; j++) {
+      const h1 = hash(b.at * 7 + j), h2 = hash(b.at * 13 + j * 3), a = Math.min(age, CHIP_S);
+      const vx = (h1 - 0.5) * 140, vy = -(70 + h2 * 90), cx = bx0 + vx * a, cy = Math.min(fl() - AP - AP / 2, fl() - AP + vy * a + 400 * a * a);
+      fill(toneOf(SOIL, j, b.k), Math.round(cx), Math.round(cy), AP / 2, AP / 2);
+    }
+    if (s === 3 && age < 0.3) for (const [dx, dy] of [[1, 0], [-1, 0], [0, -1], [1, -1], [-1, -1]]) fill(K, Math.round(bx0 + dx * AP * 1.5), Math.round(fl() - AP + dy * AP * 1.5), AP / 2, AP / 2);
+  }
+}
 // The trunk lying from the pivot along the floor, `n` logs of it, each in
 // its shade, and the cut at the far log opening down from the top.
 function lyingTrunk(n, cut) {
@@ -298,7 +361,8 @@ export function drawGroveMock() {
     // the stump, standing, coming up on the hand, or levered over
     const falling = p.fall != null || (p.fell != null && t - p.fell < AFTER_FALL_BOUNCE_S);
     const tipping = M.opt === 'f3b' && M.ph === 'tip';
-    if (p.stump || falling || tipping) {
+    if (M.style && /^f3a\d$/.test(M.opt)) pulledStump(p, t, p.stump || M.ph === 'last');
+    else if (p.stump || falling || tipping) {
       if (M.opt === 'f3') stump(p.stump ? (p.dug || 0) / AFTER_DIG_CLICKS * AP * 1.5 : 0);
       else if (M.opt === 'f3a') stump(M.stumpUp || 0, 0, AFTER_DIG_CLICKS - (p.dug || 0));
       else if (M.opt === 'f3b') stump(0, M.tilt || 0);
@@ -481,7 +545,11 @@ export function drawGroveMockCues() {
   if (!h) return;
   const hx = mx(h.x);
   if (h.tool === 'axe' && h.phase === 'fly') smear(hx, h.y, h.from, h.ang, M.flip, 6 * AP);
-  handOn(ctx, hx, h.y, h.pose, P / 2, '#000');
+  // tug of war: the fist leaning back harder the more the root strains, in
+  // three held steps
+  const lean = M.opt === 'f3a2' && M.ph === 'pull' && M.strain > 0 ? -0.14 * Math.ceil(M.strain * 3) : 0;
+  if (lean) { ctx.save(); ctx.translate(hx, h.y); ctx.rotate(lean); handOn(ctx, 0, 0, h.pose, P / 2, '#000'); ctx.restore(); }
+  else handOn(ctx, hx, h.y, h.pose, P / 2, '#000');
   // the handle over the fist that holds it
   if (h.tool === 'axe') handAxeAt(hx, h.y, h.ang, M.flip);
   if (M.sawAt && M.sawAt.buck) sawAt(hx, h.y, SAW_ANG, M.flip);

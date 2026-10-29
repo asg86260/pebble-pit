@@ -23,7 +23,7 @@
 
 import { S } from '../state.js';
 // the frame's steps are handed in by the scene (game.js imports the drawing, which imports this)
-import { P, TREE_CHOPS, AFTER_WALK, GESTURE_SAW_AMP, AFTER_DIG_CLICKS, ACT_GATES_CELL, AFTER_SEED_BUNDLE } from '../config.js';
+import { P, TREE_CHOPS, AFTER_WALK, GESTURE_SAW_AMP, GESTURE_STRAIN_S, AFTER_DIG_CLICKS, ACT_GATES_CELL, AFTER_SEED_BUNDLE } from '../config.js';
 import { plotX, groundOf, floorAt, stationDoor, AP, PINE_GROWN, basketBox } from './place.js';
 import { chopTree, digStump } from './grove.js';
 import { putSomewhere, tag, fallTag, takeAt } from './ground.js';
@@ -152,7 +152,7 @@ const lerp = (a, b, k) => a + (b - a) * k;
 const PLOT0 = { fall: null, fell: null, chops: 0, chip: null, dug: 0, big: false, at: null, grow: 0, logs: 0 };
 // The trunk's logs each a shade of the log's four, picked once a tree (and
 // the stump's, which is a log's block too), kept by each log cut off it.
-function shades() { M.tones = Array.from({ length: MT.logs }, () => Math.floor(Math.random() * 4)); M.stumpTone = Math.floor(Math.random() * 4); }
+function shades() { M.tones = Array.from({ length: MT.logs }, () => Math.floor(Math.random() * 4)); M.stumpTone = Math.floor(Math.random() * 3); }   // the stump never the darkest shade, which is its roots'
 function standTree() { Object.assign(plot(), PLOT0, { stage: PINE_GROWN, stump: false }); M.landed = null; M.logs = 0; M.notch = 0; shades(); }
 function felledPlot() { Object.assign(plot(), PLOT0, { stage: 0, stump: true }); shades(); }
 function barePlot() { Object.assign(plot(), PLOT0, { stage: 0, stump: false }); shades(); }
@@ -319,6 +319,10 @@ export function basketSlot(k) {
 }
 
 const seedFall = dt => SCRIPTS._seed.step(dt);
+// F3a and its three variants: one script, `M.style` what is drawn into it.
+function makeF3a(style) {
+  return { init() { M.style = style; SCRIPTS._f3a.init(); }, step(dt) { SCRIPTS._f3a.step.call(this, dt); } };
+}
 // The acorns hanging in the pine's crown for S1, their top lefts in cells off
 // the fall's pivot (the trunk's right edge on the stump's top), on its lowest
 // shelf either side of the trunk; an acorn AW_C by AH_C cells.
@@ -729,10 +733,29 @@ const SCRIPTS = {
   // up with the hand, its roots straining under it and snapping one by one
   // (the real stump gesture, a root a strain), no rope and no grip apart from
   // it; out, it is carried off on the hand and let go, a log on the ground.
-  f3a: {
-    init() { takeBack(); felledPlot(); M.stumpOut = null; M.cursor = null; M.stumpUp = 0; go('teach'); },
+  f3a: makeF3a(0),
+  // F3a-1, -2, -3: the same pull with more to read in it (the owner: "more
+  // sauce/indicators for the stump pulling"), no strip, tag or bar:
+  //   1 the earth gives: the soil cracks wider as the strain builds, the root
+  //     about to go straightens taut, and each snap is held: the stump jerks
+  //     a cell up and holds, dirt chips fly and lie where they land
+  //   2 tug of war: the pull in heaves, the stump settling back a little each
+  //     time the hand eases; the root under strain stretches, the hand leans
+  //     harder the more it strains; the last, biggest root takes a held two
+  //     beats before it lets go and the stump comes free into the hand
+  //   3 root count: the roots show from the start as cords over the soil,
+  //     three to count; each snap breaks one, a held burst at the break,
+  //     so what is left to do is the cords still whole
+  f3a1: makeF3a(1), f3a2: makeF3a(2), f3a3: makeF3a(3),
+  _f3a: {
+    init() { takeBack(); felledPlot(); M.stumpOut = null; M.cursor = null; M.stumpUp = 0; M.lastDug = 0; M.snapAt = null; M.snapK = -1; M.chips = []; go('teach'); },
     step(dt) {
       const p = plot(), x = bx(), mid = fl() - MT.stump * AP + AP / 2;   // the stump taken by its top, so the fist leaves the block and its roots in view
+      // a root snapping: when and which, for the held pose and the chips
+      if ((p.dug || 0) > M.lastDug || (M.lastDug > 0 && !p.stump && M.snapK < AFTER_DIG_CLICKS - 1)) {
+        M.snapK = p.stump ? (p.dug || 0) - 1 : AFTER_DIG_CLICKS - 1; M.snapAt = S.after.t; M.lastDug = p.stump ? p.dug : AFTER_DIG_CLICKS;
+        if (M.style === 1 || M.style === 3) M.chips.push({ at: S.after.t, k: M.snapK });
+      }
       if (M.ph === 'teach') {
         const u = (M.t % 1.4) / 1.4;
         M.ghost = { x, y: mid - Math.round(u * 3) * P, pose: u < 0.1 ? 'point' : 'grab' };
@@ -742,19 +765,27 @@ const SCRIPTS = {
         M.cursor = { x: lerp(x + AP * 8, x, ease(k)), y: lerp(mid - AP * 8, mid, ease(k)), pose: k < 1 ? 'point' : 'grab' };
         if (M.t >= 0.6) { gestureDown(x, mid); go('pull'); }
       } else if (M.ph === 'pull') {
-        // the pointer dragged up; the stump comes up as far as the gesture lifts it, the hand on it
-        gestureMove(x, mid - Math.min(80, M.t * 120));
+        // the pointer dragged up; the stump comes up as far as the gesture
+        // lifts it, the hand on it. Tug of war heaves: up, eased a little, up.
+        const heave = M.style === 2 ? (M.t % 1.1 < 0.8 ? 0 : 26) : 0;
+        gestureMove(x, mid - Math.min(80, M.t * 120) + heave);
         const rec = (gestureView() || []).find(r => r.key === 'stump');
         M.stumpUp = rec ? rec.lift : 0;
+        M.strain = rec && rec.grab ? Math.min(1, (rec.strain || 0) / GESTURE_STRAIN_S) : 0;
         M.cursor = { x, y: mid - M.stumpUp, pose: 'grab' };
         if (!p.stump) {
           gestureUp(x, mid);
-          M.stumpOut = { x: bx() + MT.c0 * AP, y: fl() - MT.stump * AP - M.stumpUp, tone: M.stumpTone };
-          M.from = { x: M.cursor.x, y: M.cursor.y, sx: M.stumpOut.x, sy: M.stumpOut.y };
-          go('carry');
+          // tug of war: the last root held two beats before the stump comes free
+          go(M.style === 2 ? 'last' : 'out');
         }
+      } else if (M.ph === 'last') {
+        if (M.t >= 0.45) go('out');
+      } else if (M.ph === 'out') {
+        M.stumpOut = { x: bx() + MT.c0 * AP, y: fl() - MT.stump * AP - M.stumpUp, tone: M.stumpTone };
+        M.from = { x: M.cursor.x, y: M.cursor.y, sx: M.stumpOut.x, sy: M.stumpOut.y };
+        go('carry');
       } else if (M.ph === 'carry') carryOff(dt, this);
-      else if (M.ph === 'rest') { M.cursor.y -= 20 * dt; if (M.t >= 2.2) { M.from = null; this.init(); } }
+      else if (M.ph === 'rest') { if (M.cursor) M.cursor.y -= 20 * dt; if (M.t >= 2.2) M.cursor = null; }   // held: the log lies where it was let go
     }
   },
   // F3b: dig it with the shovel. The shovel stands in the ground beside the
@@ -844,7 +875,7 @@ export function startGroveMock(opt, STEPS) {
   globalThis.__groveMock = opt;
   Object.assign(M, { opt, mine: S.after, ph: '', t: 0, T: 0, logs: 0, cut: 0, roll: null, grow: null, cone: null, bodies: [],
                      cursor: null, ghost: null, notch: 0, sawAt: null, stumpOut: null, landed: null, from: null,
-                     flip: FLIP.has(opt), stumpUp: 0, tilt: 0, shovel: null, dug: 0, basket: BASKET_FULL, taking: null, dropped: [], tip: null, bought: false });
+                     flip: FLIP.has(opt), stumpUp: 0, tilt: 0, shovel: null, dug: 0, basket: BASKET_FULL, taking: null, dropped: [], tip: null, bought: false, style: 0, strain: 0, snapAt: null, snapK: -1, chips: [], lastDug: 0 });
   M.placed.length = 0;
   const idx = STEPS.findIndex(q => q.name === 'grovemock');
   if (idx >= 0) STEPS.splice(idx, 1);

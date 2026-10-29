@@ -3754,9 +3754,11 @@ const GROVE_MOCK = [ // MOCK grove
   ['esaw2', 'E-saw-2 a bow saw', 520, "The woodcutter fells the pine with a bow saw, its blade strung under a bow, held up at the cut and stroked in and out."], // MOCK grove
   ['esaw3', 'E-saw-3 a pruning saw', 520, "The woodcutter fells the pine with a short one-hand pruning saw, held up at the cut and stroked in and out."], // MOCK grove
   ['f1', 'F1 you saw', 520, "You saw: the faint hand shows the stroke, then you drag the saw a log's height up the trunk until the pine goes over, and saw the trunk into its four logs one at a time."], // MOCK grove
-  ['f2', 'F2 you swing the axe', 520, "You swing the axe: the faint hand shows the stroke, then each stroke into the trunk is a blow, and on the fourth the pine goes over."], // MOCK grove
   ['f3', 'F3 you dig the stump', 300, "You dig the stump: the faint hand shows the lift, then you pull it up root by root until it comes out whole as a log's block, carry it off and let go."], // MOCK grove
   ['f3a', 'F3a the stump is the handle', 300, "Press and hold on the stump itself and drag up: it comes up with your hand, its roots straining and snapping one by one, then you carry it off as a log."], // MOCK grove
+  ['f3a1', 'F3a-1 the earth gives', 300, "The stump pulled as in F3a, and the earth gives: the soil cracks wider as you strain, the root about to go pulls taut, and each snap jerks the stump up a cell and holds it while dirt flies."], // MOCK grove
+  ['f3a2', 'F3a-2 tug of war', 300, "Pulled in heaves: the stump settles back a little each time the hand eases, the straining root stretches, the fist leans back harder, and the last, biggest root holds two beats before the stump comes free."], // MOCK grove
+  ['f3a3', 'F3a-3 root count', 300, "The roots show from the start as three cords over the soil; each snap breaks one with a held burst, so what is left to pull is the cords still whole."], // MOCK grove
   ['f3b', 'F3b dig it with the shovel', 300, "Press on the shovel standing beside the stump and lever it a stroke at a time; each stroke loosens the stump until it tips out as a block, which you carry off."] // MOCK grove
 ]; // MOCK grove
 Object.assign(SCENES, Object.fromEntries(GROVE_MOCK.map(([opt, option, at, say]) => [`after-grove-mock-${opt}`, { // MOCK grove
