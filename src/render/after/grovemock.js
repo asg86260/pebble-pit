@@ -360,6 +360,11 @@ function square(b) {
 }
 function body(b, t) {
   const x = Math.round(b.x), y = b.y - BODY, flip = b.face < 0;
+  if (b.carry && b.carry.tone != null) {
+    // a log lifted off the ground onto the head, as the yard carries a load
+    const z = MT.log * AP, k = ease(b.carry.k ?? 1), hx = b.x + BODY / 2 - z / 2, hy = b.y - BODY - z;
+    fill(LOG(b.carry.tone), Math.round(b.carry.x + (hx - b.carry.x) * k), Math.round(fl() - z + (hy - fl() + z) * k), z, z);
+  }
   if (b.carry === 'cone') acorn(x + BODY / 2 - AW * AP / 2, Math.round(y) - AH * AP + (b.squat ? P : 0));
   if (!b.tool) return;
   const gx = flip ? b.x + BODY - GRIP.dx : b.x + GRIP.dx, gy = b.y + GRIP.dy;

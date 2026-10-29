@@ -247,6 +247,50 @@ function bucker(dt, tool, script, blows = 3) {
   });
 }
 
+// D2 and E's bucking from the ground (the owner's D2, standing on the ground
+// where it can): the body just past the trunk's far end, facing back along
+// it, its axe level at the trunk's middle height so the head's far face meets
+// the cut a log in from the end (BUCK_HIT: the head's middle half a cell
+// under the trunk's middle). Cut through, the end log is lifted onto its
+// head as the yard carries (render/after.js, `drawLoad`), walked to the stack
+// past the trunk's end and set down there on the real ground's heap; then
+// back to the new end. The last log needs no cut: it is lifted as it lies.
+const BUCK_HIT = Math.asin((GRIP.dy + MT.w * AP / 2) / -AXE_FRONT);
+const endX = () => pivotX() + M.logs * MT.log * AP;
+export const endStand = () => Math.round(endX() - MT.log * AP + AXE_FRONT * Math.cos(BUCK_HIT) - (BODY - GRIP.dx));
+const stackX = () => pivotX() + (MT.logs + 3) * MT.log * AP;
+function groundBucker(dt, script, blows = 3) {
+  const b = M.bodies[0], z = MT.log * AP;
+  if (M.ph === 'cut') {
+    if (M.logs === 1) { go('lift'); return; }
+    const k = Math.floor(M.t / BLOW_S), t = M.t - k * BLOW_S;
+    if (swing(b, t, -2.7, BUCK_HIT)) M.cut = Math.min(1, (k + 1) / blows);
+    if (k >= blows - 1 && t >= SWING.up + SWING.fly + SWING.held) go('lift');
+  } else if (M.ph === 'lift') {
+    // the end log off the ground and onto the head
+    if (!b.carry) { b.carry = { tone: M.tones[M.logs - 1], x: endX() - z, k: 0 }; M.logs -= 1; M.cut = 0; b.pose = 'carry'; b.ang = -1.3; }
+    b.carry.k = Math.min(1, M.t / 0.4);
+    if (b.carry.k >= 1) go('carry');
+  } else if (M.ph === 'carry') {
+    if (walkTo(b, stackX(), dt)) go('set');
+  } else if (M.ph === 'set') {
+    if (M.t >= 0.25) {
+      // let go off the head onto the stack: a unit of the real ground, falling onto the heap
+      const c = b.carry, x = b.x + BODY / 2 - z / 2, wx = M.flip ? 2 * bx() - x - z : x;
+      source('log', 1, 'tree');
+      const ai = putSomewhere(cellOf('log', c.tone), wx + z / 2);
+      if (ai >= 0) { fallTag(ai, b.y - BODY - z); M.placed.push(ai); }
+      b.carry = null;
+      go(M.logs > 0 ? 'back' : 'done');
+    }
+  } else if (M.ph === 'back') {
+    if (walkTo(b, endStand(), dt)) { b.face = -1; b.pose = 'rest'; b.ang = -0.9; go('cut'); }
+  } else if (M.ph === 'done') {
+    b.pose = 'rest';
+    if (M.t >= 1.6) script.init();
+  }
+}
+
 // The hand's axe: a stroke whose head ends on the trunk is a blow, two of
 // the tree's chops (`chopTree`, the one door the saw and the woodcutter use
 // too). `x, y` where the head is on the contact frame.
@@ -357,11 +401,13 @@ const SCRIPTS = {
              M.bodies = [{ x: onTrunkAt(MT.logs, 'saw'), y: trunkTop(), face: 1, tool: 'saw', pose: 'saw', s: 0 }]; go('cut'); },
     step(dt) { bucker(dt, 'saw', this); }
   },
-  // D2: the same with the axe: a blow a third of the way, the log off in three.
+  // D2: with the axe, standing on the ground at the trunk's far end: a level
+  // blow into the cut a log in from the end, three to a log; the log cut
+  // free is lifted and carried to a stack, and the next cut is the new end.
   d2: {
     init() { takeBack(); felledPlot(); M.logs = MT.logs; M.cut = 0;
-             M.bodies = [{ x: onTrunkAt(MT.logs, 'axe'), y: trunkTop(), face: 1, tool: 'axe', pose: 'rest', ang: -0.9 }]; go('cut'); },
-    step(dt) { bucker(dt, 'axe', this); }
+             M.bodies = [{ x: endStand(), y: fl(), face: -1, tool: 'axe', pose: 'rest', ang: -0.9 }]; go('cut'); },
+    step(dt) { groundBucker(dt, this); }
   },
   // E: the woodcutter walks up with its axe on its shoulder, fells the pine
   // a blow at a time from the side away from the fall, hops up on the trunk
@@ -381,12 +427,8 @@ const SCRIPTS = {
         if (M.landed != null && S.after.t - M.landed >= 1.6) go('toend');
       } else if (M.ph === 'toend') {
         b.pose = 'carry'; b.ang = -1.3;
-        if (walkTo(b, pivotX() + TRUNK_H * AP + AP, dt)) { b.face = -1; b.from = { x: b.x, y: b.y }; go('up'); }
-      } else if (M.ph === 'up') {
-        const k = Math.min(1, M.t / 0.5);
-        hop(b, b.from, { x: onTrunkAt(MT.logs, 'axe'), y: trunkTop() }, k);
-        if (k >= 1) { b.face = 1; b.pose = 'rest'; b.from = null; go('cut'); }
-      } else bucker(dt, 'axe', this, 2);
+        if (walkTo(b, endStand(), dt)) { b.face = -1; b.pose = 'rest'; go('cut'); }
+      } else groundBucker(dt, this, 2);
     }
   },
   // F1: you saw. The handsaw lies across the pine's trunk; the ghost hand
@@ -690,3 +732,13 @@ export const groveMockOn = () => !!globalThis.__groveMock && !!M.opt;
 // For the shot tool: where the mock is.
 globalThis.__groveMockRead = () => ({ opt: M.opt, ph: M.ph, t: +M.t.toFixed(2), logs: M.logs, cut: +M.cut.toFixed(2), placed: M.placed.length,
   chops: S.after?.plots[0]?.chops, stump: S.after?.plots[0]?.stump, stage: S.after?.plots[0]?.stage });
+// For the shot tool: what shares ground on act 3's map (footprints.js), and
+// the gap from the first plot's footprint to the shack's drawing, cells.
+import { overlaps, footprints } from '../footprints.js';
+globalThis.__groveMockMap = () => {
+  const fp = footprints('after'), pine = fp.find(o => o.id === 'pine:0'), shack = { rects: fp.filter(o => o.id === 'forestry' || o.id === 'board:forestry').flatMap(o => o.rects) };
+  const pr = pine.rects[0], sx = Math.min(...shack.rects.map(r => r.x));
+  const wall = Math.min(...fp.find(o => o.id === 'forestry').rects.map(r => r.x));
+  return { wallCells: (wall - (pr.x + pr.w)) / P, trunkToWallCells: (wall - (plotX(0) + (MT.c0 + MT.w) * AP)) / P, overlaps: overlaps('after').map(o => o.key), gapCells: (sx - (pr.x + pr.w)) / P, trunkToShackCells: (sx - (plotX(0) + (MT.c0 + MT.w) * AP)) / P,
+           pile: fp.filter(o => o.id.startsWith('pile:grovelogs')).map(o => o.rects[0]), mill: fp.find(o => o.id === 'mill')?.rects.map(r => r.x) };
+};

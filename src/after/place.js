@@ -19,6 +19,7 @@ import { P, AFTER_GAP, AFTER_H, AFTER_W, AFTER_FLOOR_MARGIN, AFTER_PINE,
 
 import { S } from '../state.js';
 import { AFTER_MILL } from '../config.js';
+import { AFTER_PLOT_GAP, AFTER_PILE_GAP } from '../config.js'; // MOCK grove
 import { ART as BASE_ART, standCol, rampRun, pileLeft, pileCells, pileHigh, pileGrid } from './art.js';
 
 const snap = v => Math.round(v / P) * P;
@@ -31,7 +32,7 @@ export const AP = P * AFTER_ART_SCALE;
 export const afterFloor = () => snap(-AFTER_GAP);
 // A station's shelf, in cells over the floor line, and the top of it: where
 // its drawing, piles, board's spot, door and roster stand (config, AFTER_SHELF).
-export const shelfOf = key => ((key === 'tree' || key === 'stump') && globalThis.__groveMock ? GROVE_MOCK_SHELF : AFTER_SHELF[key] || 0); // MOCK grove  the grove's shelf
+export const shelfOf = key => ((key === 'tree' || key === 'stump' || key === 'forestry') && globalThis.__groveMock ? GROVE_MOCK_SHELF : AFTER_SHELF[key] || 0); // MOCK grove  the grove's shelf, the forestry shack on it
 export const groundOf = key => afterFloor() - shelfOf(key) * P;
 export const afterTop = () => afterFloor() - AFTER_H;
 export const afterX0 = () => 0;
@@ -57,7 +58,14 @@ const pedSign = () => (workshopsX1() + Math.max(AFTER_PEDESTAL_SIGN_GAP.shack * 
 export const ART = { ...BASE_ART, pedestal: { ...BASE_ART.pedestal,
   get box() { return [1, 10, Math.ceil(podiumTop() / AP)]; },
   get sign() { return pedSign(); },
-  get lead() { return Math.min(BASE_ART.pedestal.box[0], pedSign()); } } };
+  get lead() { return Math.min(BASE_ART.pedestal.box[0], pedSign()); } },
+  // MOCK grove: under the mock the forestry shack is drawn turned within its
+  // own ground (`flip`, which the frame, its piles and its drawn rects read),
+  // so its log pile stands on the side away from the grove and the shack's
+  // wall faces the first plot; its ground and the camp's layout unchanged.
+  forestry: { ...BASE_ART.forestry, get flip() { return globalThis.__groveMock ? BASE_ART.forestry.lead + BASE_ART.forestry.ground : 0; } } }; // MOCK grove
+// MOCK grove: a column `x` cells `w` wide of a turned drawing, where it stands.
+const turnCol = (art, x, w = 0) => (art.flip ? art.flip - x - w : x); // MOCK grove
 export const stationX0 = key => afterX0() + AFTER_STATIONS[key].at * P;
 
 // --- the grove ---------------------------------------------------------------------
@@ -65,17 +73,19 @@ export const stationX0 = key => afterX0() + AFTER_STATIONS[key].at * P;
 // grove's ground runs to the last plot its card can clear, so the camp
 // beside it never moves.
 export const plotX = i => (groveMock() ? mockPlotX(i) : realPlotX(i)); // MOCK grove  (the real rule is realPlotX)
-// MOCK grove: the first plot's far edge (half a plot's step off its trunk
-// column) the ramp off the grove's shelf short of the forestry shack's
-// ground, its first column (`lead`: its board's column and its log pile);
-// each next plot a plot's step further left.
-const mockPlotX = i => stationX0('forestry') + ART.forestry.lead * AP - rampRun(GROVE_MOCK_SHELF - (AFTER_SHELF.forestry || 0)) * P - snap(AFTER_PLOT_STEP / 2) - i * AFTER_PLOT_STEP; // MOCK grove
+// MOCK grove: the owner's layout (2026-10-28, on the grove review: "lets
+// start the first tree close to the cabin, then grow left from there with
+// new plots"). The first plot's footprint (a big pine's widest row, as the
+// map claims it, footprints.js) ends the grove's own gap between two pines'
+// feet (AFTER_PLOT_GAP) short of the forestry shack's drawing; each next
+// plot a plot's step further left. The shack's log pile, which stood on that
+// side, goes to its far side (`pileAt`), past its board's column; and the
+// shack stands on the grove's shelf (`shelfOf`), raised so a plot stands
+// clear of the cloud's lip, its slope off on the grove's far left and
+// between the shack and the saw mill.
+const pineReach = () => Math.max(...pineRows(PINE_GROWN, true).map(r => r[2])) + 1; // MOCK grove  cells right of the trunk column
+const mockPlotX = i => Math.min(stationBox('forestry').x, signBox('forestry').x) - AFTER_PLOT_GAP * AP - pineReach() * AP - i * AFTER_PLOT_STEP; // MOCK grove  off the shack's nearest claim: its drawing or its board's column
 const realPlotX = i => afterX0() + AFTER_GROVE_X0 + i * AFTER_PLOT_STEP + snap(AFTER_PLOT_STEP / 2); // MOCK grove  renamed from plotX
-// MOCK grove: the owner's layout (2026-10-28, on the grove review): the first
-// plot by the forestry shack, at the grove's end that the camp is laid off
-// with its gap, each plot cleared after it a plot's step further left; and
-// the grove on a shelf of its own so a plot stands clear of the cloud's lip,
-// raised as a station's shelf is (`floorFlats`, `shelfOf`).
 const groveMock = () => !!globalThis.__groveMock; // MOCK grove
 export const GROVE_MOCK_SHELF = 3; // MOCK grove  cells over the floor line: the plot's soil clear of the lip's crest
 export const groveX1 = () => realPlotX(AFTER_PLOT_MAX - 1) + AFTER_PLOT_STEP; // MOCK grove  realPlotX: the grove's end stays where it is
@@ -86,7 +96,7 @@ export const stationBox = key => {
   const s = AFTER_STATIONS[key], art = ART[key];
   if (!s || !art) return null;
   const [x, w, h] = art.box;
-  return { x: stationX0(key) + x * AP, y: groundOf(key) - h * AP, w: w * AP, h: h * AP };
+  return { x: stationX0(key) + turnCol(art, x, w) * AP, y: groundOf(key) - h * AP, w: w * AP, h: h * AP }; // MOCK grove  turnCol
 };
 // Where a carrier takes a sign off the workshop's pile (beside it, `pileMid`),
 // and the sign march's length from there to God's crowd's near edge, px:
@@ -96,7 +106,7 @@ export const signFetchX = () => pileMid('workshop', 'signs');
 export const signMarch = () => CROWD_X0 - signFetchX();
 // Where a body stands to work a station: the middle column of the worker the
 // mock draws there.
-export const stationDoor = key => (ART[key] ? stationX0(key) + ART[key].door * AP : 0);
+export const stationDoor = key => (ART[key] ? stationX0(key) + turnCol(ART[key], ART[key].door) * AP : 0); // MOCK grove  turnCol
 export const stationMid = key => { const b = stationBox(key); return b ? b.x + b.w / 2 : 0; };
 // The column of a station's ground its board stands over (after/art.js,
 // SIGN), from the floor up, and its upper part alone, the board's anchor
@@ -104,7 +114,7 @@ export const stationMid = key => { const b = stationBox(key); return b ? b.x + b
 // covers none of the parts the hand works.
 export const signBox = key => {
   const C = AFTER_SIGN_BOARD;
-  return ART[key] && { x: stationX0(key) + ART[key].sign * AP, y: groundOf(key) - (C.post + C.h) * AP, w: C.w * AP, h: (C.post + C.h) * AP };
+  return ART[key] && { x: stationX0(key) + turnCol(ART[key], ART[key].sign, C.w) * AP, y: groundOf(key) - (C.post + C.h) * AP, w: C.w * AP, h: (C.post + C.h) * AP }; // MOCK grove  turnCol
 };
 export const signBoard = key => { const b = signBox(key); return b && { ...b, h: AFTER_SIGN_BOARD.h * AP }; };
 // A station's pile of `what`, its left edge in the world. A pile's place in
