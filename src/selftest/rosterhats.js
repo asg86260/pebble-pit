@@ -79,6 +79,9 @@ export const TESTS = [
       });
     }
     out.push(ok(seen > 4, 'hats were measured', String(seen)));
+    // Act 3's roster scene is left standing otherwise, and the next group's
+    // camera starts in the afterlife (the opening view reads 3926 of 800).
+    newRun();
     return out;
   }],
 ];
