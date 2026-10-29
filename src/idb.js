@@ -28,7 +28,15 @@ export async function openKv() {
   const tx = mode => db.transaction(STORE, mode).objectStore(STORE);
   return {
     get: key => done(tx('readonly').get(key)).then(v => (typeof v === 'string' ? v : null)),
-    set: (key, raw) => done(tx('readwrite').put(raw, key)).then(() => true),
+    // Taken when the transaction commits, not when the put is queued: a
+    // write can be accepted and then lost when the commit fails (the disk,
+    // the quota), and only the transaction says so.
+    set: (key, raw) => new Promise((ok, no) => {
+      const os = tx('readwrite');
+      os.put(raw, key);
+      os.transaction.oncomplete = () => ok(true);
+      os.transaction.onabort = os.transaction.onerror = () => no(os.transaction.error || new Error('aborted'));
+    }),
     del: key => done(tx('readwrite').delete(key)).then(() => true),
     // Every key and value, for the one read at boot: the yard treats the store
     // as synchronous, so it is all read once and answered from memory after.

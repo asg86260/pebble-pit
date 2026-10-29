@@ -338,6 +338,26 @@ canvas {
 }
 .way[data-way="up"] .chevron { transform: rotate(180deg); }
 #crewfade[data-view="hide"] .body { height: 2px; margin-top: 16px; border: 0; background: var(--ink); }
+/* The save mark (savemark.js): a disk nine cells square at three screen
+   pixels a cell, a mask over the ink like the way's chevron, so it turns with
+   the page in dark mode. Always laid out and shown by its opacity, so it
+   fades rather than pops and the row never moves for it; it takes no pointer
+   while it is down, so it never stands between a click and the yard. */
+#savemark {
+  width: var(--fs-size); height: var(--fs-size);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity .3s linear;
+  pointer-events: none;
+}
+#savemark::before {
+  content: ''; display: block; width: 27px; height: 27px;
+  background: var(--ink);
+  -webkit-mask: var(--disk) no-repeat center / 27px 27px;
+  mask: var(--disk) no-repeat center / 27px 27px;
+}
+#savemark.on { opacity: 1; pointer-events: auto; }
+#savemark.trouble::before { -webkit-mask-image: var(--struck); mask-image: var(--struck); }
+#savemark.take { cursor: pointer; }
 /* The held sheet as a sheet from the bottom, on a phone (pause.js, through
    the boards' seat in sheet.js): the same box, handle and slide as a board
    (the .bottom rules below), scrolling inside itself. It moves as one thing
