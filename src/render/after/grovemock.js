@@ -50,9 +50,12 @@ const CROWNS = {
 // row, so it keeps its shade standing, falling and in a broken piece): the
 // two body tones most, the lit tone on a shelf's top row's ends, the shadow
 // on a shelf's bottom row.
-const ROLE = new Map();   // cache: each crown cell's role, worked out once off the pine
+const ROLES = new Map();   // cache: each crown cell's role, worked out once a crown shape
 function crownRoles() {
-  if (ROLE.size) return ROLE;
+  const key = M.crown || 0;
+  if (ROLES.has(key)) return ROLES.get(key);
+  const ROLE = new Map();
+  ROLES.set(key, ROLE);
   const crown = treeCells().filter(q => q[2] === 'crown'), rows = new Map();
   for (const [c, r, , ti] of crown) { const k = `${ti}|${r}`; const s = rows.get(k) || [c, c]; rows.set(k, [Math.min(s[0], c), Math.max(s[1], c)]); }
   const bottom = new Map();
@@ -66,7 +69,7 @@ function crownRoles() {
 function crownTone(c, r) {
   const pal = CROWNS[M.crownPal];
   if (!pal) return K;
-  const l = darkPage ? pal.dark.map(raw) : pal.light, role = crownRoles().get(`${c}|${r}`), h = hash(c * 31.7 + r * 17.3);
+  const l = darkPage ? pal.dark.map(raw) : pal.light, role = crownRoles().get(`${c}|${r}`), h = hash(Math.abs(c + 0.5) * 31.7 + r * 17.3);   // mirrored about the trunk's middle line, so the crown balances
   // the shelf's underside in shadow, its stepped ends lit, the body the two
   // middle tones a cell at a time
   return l[role != null ? role : h < 0.5 ? 1 : 2];
@@ -140,9 +143,12 @@ const trunkCells = () => {
 const crownCells = () => treeCells().filter(q => q[2] === 'crown').map(([c, r, , ti]) => [c - PIV_C, r - PIV_R, crownTone(c, r), ti]);
 // The crown broken where it hits: each tier in pieces across, each a sprite
 // about its own middle, with where that middle is off the pivot.
-const PIECES = [];
+const PIECE_SETS = new Map();   // cache: the crown's pieces, a set a shape
 function crownPieces() {
-  if (PIECES.length) return PIECES;
+  const sk = M.crown || 0;
+  if (PIECE_SETS.has(sk)) return PIECE_SETS.get(sk);
+  const PIECES = [];
+  PIECE_SETS.set(sk, PIECES);
   const cells = crownCells(), cut = [-PIV_C - 3, -PIV_C, -PIV_C + 3];
   const groups = new Map();
   for (const q of cells) {
@@ -183,7 +189,7 @@ function drawCrownBreak(t) {
     const vx = 20 + (h1 - 0.5) * 150, vy = -(60 + h2 * 110), w = (h3 - 0.5) * 6;
     const half = AP * 1.5, x = at.x + vx * (1 - Math.exp(-2.2 * since)) / 2.2;
     const y = Math.min(fl() - half, at.y + vy * since + GRAV * since * since / 2);
-    lay(sprite(`pc|${pc.key}|${M.crownPal}`, pc.cells.map(([cx, cy, c, r]) => [cx, cy, crownTone(c, r)])), x, y, th + w * since, false, a);
+    lay(sprite(`pc|${pc.key}|${M.crownPal}|${M.crown}`, pc.cells.map(([cx, cy, c, r]) => [cx, cy, crownTone(c, r)])), x, y, th + w * since, false, a);
   }
 }
 
@@ -411,7 +417,7 @@ export function drawGroveMock() {
       // the crown broken off the moment it hits
       const { th, drop } = fallPose(p, t), o = turnPt(0, 0, th, drop);
       lay(sprite(`trunk|${M.tones}`, trunkCells()), o.x, o.y, th);
-      if (p.fall != null) lay(sprite(`crown|${M.crownPal}`, crownCells()), o.x, o.y, th);
+      if (p.fall != null) lay(sprite(`crown|${M.crownPal}|${M.crown}`, crownCells()), o.x, o.y, th);
     } else if (M.logs > 0) lyingTrunk(M.logs, M.cut);
     if (M.landed != null) drawCrownBreak(t);
     // S1: the acorns in the crown, standing and going over with it; then out
@@ -486,9 +492,13 @@ const FELL_SAWS = {
   saw1: () => [[0, -2, K], [0, -1, K], [0, 0, K], ...[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(x => [x, 0, PALE]), ...TEETH([1, 3, 5, 7, 9]), [11, -2, K], [11, -1, K], [11, 0, K]],
   saw2: () => [[0, 0, K], [0, -1, K], [1, -2, K], [2, -3, K], [3, -3, K], [4, -3, K], [5, -3, K], [6, -3, K], [7, -2, K], [8, -1, K], [8, 0, K],
                ...[1, 2, 3, 4, 5, 6, 7].map(x => [x, 0, PALE]), ...TEETH([2, 4, 6])],
-  saw3: () => [[-1, 0, K], [0, 0, K], [-1, 1, K], [1, 0, PALE], [2, 0, PALE], [3, 0, PALE], [4, 0, PALE], [5, -1, PALE], ...TEETH([1, 3]), [4, 1, K]]
+  saw3: () => [[-1, 0, K], [0, 0, K], [-1, 1, K], [1, 0, PALE], [2, 0, PALE], [3, 0, PALE], [4, 0, PALE], [5, -1, PALE], ...TEETH([1, 3]), [4, 1, K]],
+  // the player's handsaw (F1's, the bucking saw's drawing), held by its grip
+  hand: () => [[-1, -1, K], [0, -1, K], [-1, 0, K], [0, 0, K], [1, 0, PALE], [2, 0, PALE], [3, 0, PALE], [4, 0, PALE], [1, 1, K], [3, 1, K], [1, 0, K, 0, 0, AP * 4, 1]]
 };
-const TRAVEL = { saw1: 3, saw2: 2, saw3: 1.5 };
+const TRAVEL = { saw1: 3, saw2: 2, saw3: 1.5, hand: 1.5 };
+// The saw's tip off its grip, cells, held upright to buck
+const SAW_LEN = { saw1: 11.5, hand: 5 };
 const fellSaw = tool => sprite(`fell|${tool}`, FELL_SAWS[tool]());
 // The swing's smear: pale cells along the arc the head swept, a frame or two.
 function smear(x, y, a0, a1, flip, r = 4 * AP) {
@@ -541,6 +551,19 @@ function body(b, t) {
   } else if (FELL_SAWS[b.tool]) {
     const sp = fellSaw(b.tool);
     if (b.pose === 'carry') { layMid(sp, x + BODY / 2 + (flip ? AP : -AP), y - AP, flip ? 0.35 : -0.35, flip); return; }
+    if (b.pose === 'bucksaw') {
+      // bucking from the ground: the saw upright in the cut a log in from the
+      // trunk's end, its tip as deep as the cut, stroked up and down (each end
+      // held, the slide smeared), an arm out to its grip
+      const gx = cutX(M.logs) + AP / 2, depth = M.cut * MT.w * AP, lift = (b.s || 0) * AP;
+      const gy = trunkTop() + depth - SAW_LEN[b.tool] * AP - lift;
+      const hx = flip ? b.x : b.x + BODY, hy = y + P;
+      const n = Math.max(1, Math.ceil(Math.hypot(gx - hx, gy - hy) / 3));
+      for (let j = 0; j <= n; j++) fill(K, Math.round(hx + (gx - hx) * j / n - 1), Math.round(hy + (gy - hy) * j / n - 1), 3, 3);
+      if (b.smear) layMid(sp, gx, gy + (b.smear === 'in' ? lift - AP : lift), Math.PI / 2, false, 0.35);
+      layMid(sp, gx, gy, Math.PI / 2, false);
+      return;
+    }
     // held up at the felling cut, a log's height, an arm up to it: the blade
     // along the cut, `s` of its stroke in
     const cutY = fl() - MT.stump * AP, hx = b.x + BODY + 1, hy = cutY - AP / 2;

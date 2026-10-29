@@ -3748,9 +3748,11 @@ const GROVE_MOCK = [ // MOCK grove
   ['cg1', 'C-green-1 deep pine green', 520, "The fall with the crown in a deep pine green, each cell one of four close shades, standing, going over and breaking."], // MOCK grove
   ['cg2', 'C-green-2 warm moss green', 520, "The fall with the crown in a lighter, warmer moss green, each cell one of four close shades."], // MOCK grove
   ['cg3', 'C-green-3 blue-green', 520, "The fall with the crown in a blue-green, each cell one of four close shades."], // MOCK grove
-  ['d2', 'D2 bucked with an axe', 520, "The same with the axe: three blows a log, each log rolling off the end in the shade it had in the trunk, until all four are cut."], // MOCK grove
-  ['d2axe1', 'D2-axe-1 a felling axe', 520, "D2 with the axe redrawn: a longer haft and a wedge head, its pale bit five cells tall and wider than the poll, leading into each cut."], // MOCK grove
-  ['d2axe2', 'D2-axe-2 a bearded axe', 520, "D2 with a bearded axe: a longer haft, the head's beard sweeping down to a long pale bit that leads into each cut."], // MOCK grove
+  ['w1', 'W-1 the crosscut, felling and bucking', 520, "The woodcutter fells with the two-man crosscut, then bucks the trunk with it from the ground at the far end, the saw upright in the cut, one log at a time, each carried to the stack."], // MOCK grove
+  ['w2', 'W-2 the handsaw, felling and bucking', 520, "The woodcutter fells and bucks with the same handsaw you use, held up at the cut on its arm, from the ground at the trunk's end, each log carried to the stack."], // MOCK grove
+  ['cr1', 'CR-1 a tiered pine', 520, "Deep pine green, a classic pine: four tiers stepped evenly, widest at the foot, a point on top; grown row by row, then felled."], // MOCK grove
+  ['cr2', 'CR-2 a tall spruce', 520, "Deep pine green, a tall narrow spruce tapering to a point; grown row by row, then felled."], // MOCK grove
+  ['cr3', 'CR-3 a round crown', 520, "Deep pine green, a full round crown on the trunk, an acorn tree's; grown row by row, then felled."], // MOCK grove
   ['esaw1', 'E-saw-1 a two-man crosscut', 520, "The woodcutter fells the pine with a two-man crosscut, a long blade between two pegs, held up at the cut and stroked in and out."], // MOCK grove
   ['f1', 'F1 you saw', 520, "You saw: the faint hand shows the stroke, then you drag the saw a log's height up the trunk until the pine goes over, and saw the trunk into its four logs one at a time."], // MOCK grove
   ['f3a1', 'F3a-1 the earth gives', 300, "The stump pulled as in F3a, and the earth gives: the soil cracks wider as you strain, the root about to go pulls taut, and each snap jerks the stump up a cell and holds it while dirt flies."], // MOCK grove
@@ -3761,7 +3763,8 @@ const GROVE_REVIEW = { // MOCK grove  one card per question the owner is choosin
   r: 'grove: layout, growth, the fall', b1: 'grove: layout, growth, the fall', c: 'grove: layout, growth, the fall', // MOCK grove
   cg1: 'grove: layout, growth, the fall', cg2: 'grove: layout, growth, the fall', cg3: 'grove: layout, growth, the fall', // MOCK grove
   a1: 'grove: planting and seeds', a2: 'grove: planting and seeds', s2: 'grove: planting and seeds', s3a: 'grove: planting and seeds', s3b: 'grove: planting and seeds', // MOCK grove
-  esaw1: 'grove: the woodcutter', d2: 'grove: the woodcutter', d2axe1: 'grove: the woodcutter', d2axe2: 'grove: the woodcutter', // MOCK grove
+  esaw1: 'grove: the woodcutter', w1: 'grove: the woodcutter', w2: 'grove: the woodcutter', // MOCK grove
+  cr1: 'grove: layout, growth, the fall', cr2: 'grove: layout, growth, the fall', cr3: 'grove: layout, growth, the fall', // MOCK grove
   f1: 'grove: by hand', f3a1: 'grove: by hand', f3a2: 'grove: by hand', f3a3: 'grove: by hand', // MOCK grove
 }; // MOCK grove
 Object.assign(SCENES, Object.fromEntries(GROVE_MOCK.map(([opt, option, at, say]) => [`after-grove-mock-${opt}`, { // MOCK grove

@@ -44,22 +44,36 @@ export const MT = { c0: -2, w: 4, stump: 4, logs: 4, log: 4,   // the stump a wh
   tiers: [{ h: 6, top: 6 }, { h: 5, top: 4 }, { h: 4, top: 2 }] };
 export const TRUNK_H = MT.logs * MT.log;               // the trunk past the stump, cells
 export const TRUNK_TOP = -(MT.stump + TRUNK_H);        // its top row
+// The crown's shapes (the owner: "lets try a few diff tree crown designs. it
+// looks a bit unbalanced"), each rows top to bottom as [width, tier], every
+// width even so the row is centred on the trunk's middle line, the bottom
+// row on the trunk's top: 0 the pine as it was, from its tiers;
+//   1 a classic tiered pine: four tiers stepped evenly, each two cells wider
+//     at its foot than the last, a point on top
+//   2 a tall narrow spruce: a slim column tapering to a point, eased in at
+//     its foot
+//   3 a round broadleaf crown: full and round on the trunk (as an acorn tree)
+const tierRows = tiers => tiers.slice().reverse().flatMap(({ h, top }, k) => Array.from({ length: h }, (_, j) => [top + 2 * j, tiers.length - 1 - k]));
+const band = (ws, n) => ws.map((w, i) => [w, Math.floor(i / n)]);
+export const CROWN_ROWS = {
+  0: tierRows(MT.tiers),
+  1: [[2, 0], [4, 0], [6, 0], [8, 0], [4, 1], [6, 1], [8, 1], [10, 1], [6, 2], [8, 2], [10, 2], [12, 2], [8, 3], [10, 3], [12, 3], [14, 3]],
+  2: band([2, 2, 4, 4, 4, 6, 6, 6, 6, 8, 8, 8, 8, 8, 10, 10, 10, 10, 8, 6], 5),
+  3: band([8, 12, 14, 16, 18, 18, 20, 20, 20, 20, 18, 18, 16, 14, 10], 99)   // one mass, as wide as a plot holds: only its underside in shadow
+};
 // The tree's cells [c, r, part, tier], part 'stump', 'trunk' or 'crown',
-// worked out once.
-const CELLS = [];
+// for the crown shape the option names (M.crown), worked out once a shape.
+const CELLS = new Map();
 export function treeCells() {
-  if (CELLS.length) return CELLS;
-  for (let r = -1; r >= -MT.stump; r--) for (let c = MT.c0; c < MT.c0 + MT.w; c++) CELLS.push([c, r, 'stump']);
-  for (let r = -MT.stump - 1; r >= TRUNK_TOP; r--) for (let c = MT.c0; c < MT.c0 + MT.w; c++) CELLS.push([c, r, 'trunk']);
-  let r0 = TRUNK_TOP - 1;
-  MT.tiers.forEach(({ h, top }, ti) => {
-    for (let j = h - 1; j >= 0; j--) {
-      const wd = top + 2 * j, r = r0 - (h - 1 - j);
-      for (let c = -wd / 2; c < wd / 2; c++) CELLS.push([c, r, 'crown', ti]);
-    }
-    r0 -= h;
-  });
-  return CELLS;
+  const key = M.crown || 0;
+  if (CELLS.has(key)) return CELLS.get(key);
+  const out = [];
+  for (let r = -1; r >= -MT.stump; r--) for (let c = MT.c0; c < MT.c0 + MT.w; c++) out.push([c, r, 'stump']);
+  for (let r = -MT.stump - 1; r >= TRUNK_TOP; r--) for (let c = MT.c0; c < MT.c0 + MT.w; c++) out.push([c, r, 'trunk']);
+  const rows = CROWN_ROWS[key];
+  rows.forEach(([wd, ti], i) => { const r = TRUNK_TOP - rows.length + i; for (let c = -wd / 2; c < wd / 2; c++) out.push([c, r, 'crown', ti]); });
+  CELLS.set(key, out);
+  return out;
 }
 // The tree's shape at fraction f of its growth, all over at once (B2): the
 // trunk and every tier scaled, each a whole number of cells, an even width;
@@ -85,13 +99,14 @@ export function grownShape(f) {
 // The order the cells come in row by row (B1): the stump and trunk from the
 // ground up, then the crown from its lowest row up, each row from the middle
 // out.
-const ROWWISE = [];
+const ROWWISE = new Map();
 export function rowOrder() {
-  if (ROWWISE.length) return ROWWISE;
+  const key = M.crown || 0;
+  if (ROWWISE.has(key)) return ROWWISE.get(key);
   const cells = treeCells().slice();
   cells.sort((a, b) => (b[1] - a[1]) || (Math.abs(a[0] + 0.5) - Math.abs(b[0] + 0.5)) || (a[0] - b[0]));
-  ROWWISE.push(...cells);
-  return ROWWISE;
+  ROWWISE.set(key, cells);
+  return cells;
 }
 
 // --- where things stand, world px ------------------------------------------------------
@@ -322,6 +337,58 @@ export function basketSlot(k) {
 }
 
 const seedFall = dt => SCRIPTS._seed.step(dt);
+// A felling-saw stroke, in and out, each end held and the slide smeared:
+// true on the frame the stroke comes in.
+function sawStroke(b, t0) {
+  const { held, slide } = STROKE, per = 2 * (held + slide), t = t0 % per, wasIn = b.s >= 1;
+  if (t < held) { b.s = 0; b.smear = null; }
+  else if (t < held + slide) { b.s = (t - held) / slide; b.smear = 'in'; }
+  else if (t < 2 * held + slide) { b.s = 1; b.smear = null; }
+  else { b.s = 1 - (t - 2 * held - slide) / slide; b.smear = 'out'; }
+  return b.s >= 1 && !wasIn;
+}
+// W: felled with the saw, then bucked with it from the ground.
+const SAW_STROKES = 6;   // strokes to take a log off
+function makeW(tool) {
+  return {
+    init() { takeBack(); standTree();
+             M.bodies = [{ x: bx() - AP * 40, y: floorM(bx() - AP * 40), face: 1, tool, pose: 'carry', s: 0 }]; go('walk'); },
+    step(dt) {
+      const b = M.bodies[0], p = plot(), stand = bx() + MT.c0 * AP - BODY - SAW_STAND[tool] * AP;
+      if (M.ph === 'walk') { b.pose = 'carry'; if (walkTo(b, stand, dt)) { b.face = 1; b.pose = 'saw'; go('fell'); } }
+      else if (M.ph === 'fell') {
+        if (sawStroke(b, M.t)) { chopTree(0); M.notch = p.fall != null ? MT.w : Math.min(MT.w, Math.ceil(p.chops / TREE_CHOPS * MT.w)); }
+        if (p.fall != null) { b.pose = 'carry'; b.s = 0; b.smear = null; go('watch'); }
+      } else if (M.ph === 'watch') { if (M.landed != null && S.after.t - M.landed >= 1.6) go('toend'); }
+      else if (M.ph === 'toend') { b.pose = 'carry'; if (walkTo(b, sawEndStand(), dt)) { b.face = -1; b.pose = 'bucksaw'; b.k = 0; go('cut'); } }
+      else if (M.ph === 'cut') {
+        if (M.logs === 1) { go('lift'); return; }
+        b.pose = 'bucksaw';
+        if (sawStroke(b, M.t)) { b.k += 1; M.cut = Math.min(1, b.k / SAW_STROKES); }
+        if (b.k >= SAW_STROKES && b.s <= 0) { b.k = 0; go('lift'); }
+      } else if (M.ph === 'back') {
+        b.pose = 'carry';
+        if (walkTo(b, sawEndStand(), dt)) { b.face = -1; b.pose = 'bucksaw'; b.k = 0; go('cut'); }
+      } else if (M.ph === 'done') b.pose = 'carry';   // held at the end: the four logs stacked, no loop
+      else groundBucker(dt, this);
+    }
+  };
+}
+// Bucking with a saw from the ground: just past the trunk's far end, facing it.
+export const sawEndStand = () => Math.round(endX() + AP);
+// CR: a crown shape grown, stood and felled.
+function makeCR(shape) {
+  return {
+    init() { takeBack(); barePlot(); M.crown = shape; M.crownPal = 1; M.cone = { state: 'in', at: S.after.t - 5 }; M.grow = { kind: 'b1', at: S.after.t + 0.4, dur: 8 }; go('grow'); },
+    step() {
+      const p = plot();
+      // grown whole: the tree it grew into, standing (the same cells, nothing redrawn)
+      if (M.ph === 'grow' && M.t >= 8.8) { p.stage = PINE_GROWN; M.grow = null; go('stand'); }
+      else if (M.ph === 'stand' && M.t >= 1.2) { p.fall = S.after.t; go('fall'); }
+      else if (M.ph === 'fall' && M.landed != null) go('lie');
+    }
+  };
+}
 // F3a and its three variants: one script, `M.style` what is drawn into it.
 function makeF3a(style) {
   return { init() { M.style = style; SCRIPTS._f3a.init(); }, step(dt) { SCRIPTS._f3a.step.call(this, dt); } };
@@ -747,6 +814,15 @@ const SCRIPTS = {
         if (p.fall != null) { b.pose = 'carry'; b.s = 0; b.smear = null; go('watch'); }
       } else if (M.ph === 'watch') { if (M.landed != null && S.after.t - M.landed >= 2.6) this.init(); }
     } }])),
+  // W-1, W-2: the woodcutter with a saw only (the owner dropped the axe): it
+  // fells the pine as E-saw does, then bucks it from the ground at the
+  // trunk's far end, the saw upright in the cut a log in from the end, the
+  // cut deeper a stroke, each log carried to the stack. W-1 the two-man
+  // crosscut; W-2 the handsaw the player uses (F1's), so the grove has one saw.
+  w1: makeW('saw1'), w2: makeW('hand'),
+  // CR-1..3: the crown's shapes in the deep pine green (C-green-1): grown
+  // row by row from the acorn (B1), standing a beat, felled and broken (C).
+  cr1: makeCR(1), cr2: makeCR(2), cr3: makeCR(3),
   // F3a: the stump is the handle. Press and hold on it and drag up: it comes
   // up with the hand, its roots straining under it and snapping one by one
   // (the real stump gesture, a root a strain), no rope and no grip apart from
@@ -861,7 +937,7 @@ const SCRIPTS = {
 export const STROKE = { held: 0.16, slide: 0.07 };
 // Where the woodcutter stands off the trunk for each saw, cells, so its
 // blade spans the trunk at the cut.
-const SAW_STAND = { saw1: 3, saw2: 2, saw3: 1 };
+const SAW_STAND = { saw1: 3, saw2: 2, saw3: 1, hand: 1 };
 // The stump on the hand, carried off along the floor and let go: a log on the
 // real ground, falling from the hand, its shade the stump's.
 function carryOff(dt, script, dist = AP * 14) {
@@ -883,7 +959,7 @@ export const SHOVEL_H = 7 * AP;
 export const shovelTop = ang => { const s = shovelAt(); return { x: s.x + Math.sin(ang) * SHOVEL_H, y: s.y - Math.cos(ang) * SHOVEL_H }; };
 
 // The options with a fall, turned to fall away from the shack.
-const FLIP = new Set(['c', 'cg1', 'cg2', 'cg3', 'd2axe1', 'd2axe2', 's1', 's3a', 's3b', 'd1', 'd2', 'e', 'esaw1', 'esaw2', 'esaw3', 'f1', 'f2']);
+const FLIP = new Set(['c', 'w1', 'w2', 'cr1', 'cr2', 'cr3', 'cg1', 'cg2', 'cg3', 'd2axe1', 'd2axe2', 's1', 's3a', 's3b', 'd1', 'd2', 'e', 'esaw1', 'esaw2', 'esaw3', 'f1', 'f2']);
 
 // --- the scene's door --------------------------------------------------------------------
 // Stand option `opt` on the act now standing: the global set, the state
@@ -893,7 +969,7 @@ export function startGroveMock(opt, STEPS) {
   globalThis.__groveMock = opt;
   Object.assign(M, { opt, mine: S.after, ph: '', t: 0, T: 0, logs: 0, cut: 0, roll: null, grow: null, cone: null, bodies: [],
                      cursor: null, ghost: null, notch: 0, sawAt: null, stumpOut: null, landed: null, from: null,
-                     flip: FLIP.has(opt), stumpUp: 0, tilt: 0, shovel: null, dug: 0, basket: BASKET_FULL, taking: null, dropped: [], tip: null, bought: false, style: 0, strain: 0, snapAt: null, snapK: -1, chips: [], lastDug: 0, axe: 0, crownPal: 0 });
+                     flip: FLIP.has(opt), stumpUp: 0, tilt: 0, shovel: null, dug: 0, basket: BASKET_FULL, taking: null, dropped: [], tip: null, bought: false, style: 0, strain: 0, snapAt: null, snapK: -1, chips: [], lastDug: 0, axe: 0, crownPal: 0, crown: 0 });
   M.placed.length = 0;
   const idx = STEPS.findIndex(q => q.name === 'grovemock');
   if (idx >= 0) STEPS.splice(idx, 1);
