@@ -24,6 +24,7 @@ import { openBoard, inSafeZone } from '../board.js';
 import { toScreen } from '../world.js';
 import { portalEnd } from '../portals.js';
 import { pairBox } from '../after/rebel.js';
+import { shopBoxOf } from '../roster.js';
 import { speakerAt } from '../after/place.js';
 import { K as INK, W as PAPER } from '../render/after/kit.js';
 import { mouthX, portalX, portalCircle, deepPortal } from '../deep/place.js';
@@ -127,7 +128,22 @@ const openRows = () => STATIONS.filter(r => r.board && r.stand && here(r) && r.o
 
 // A row's station visited: the camera on it, the pointer walked up, and what
 // the page said back.
-async function visit(row) {
+async function visit(row, shop = false) {
+  // Act 3's stations open from their UPGRADES button, not the station (the
+  // owner, 2026-10-28): the camera on the button, the pointer walked to it
+  // and pressed, as a hand does.
+  if (shop) {
+    for (let i = 0; i < 2; i++) { const k = shopBoxOf(row.key); await lookAt(k.x + k.w / 2); }
+    const k = shopBoxOf(row.key), [sx, sy] = glass(k.x + k.w / 2, k.y + k.h / 2);
+    point('pointermove', 4, 4, 0);
+    await until(() => openBoard() === null, 90);
+    await walkTo(sx, sy);
+    const cursor = canvas().style.cursor;
+    point('pointerdown', sx, sy); point('pointerup', sx, sy);
+    const opened = await until(() => openBoard() === row.key, 90);
+    for (let i = 0; i < 30; i++) await raf();     // the board slides to its seat
+    return { key: row.key, spot: true, opened, got: String(openBoard()), cursor };
+  }
   // The camera on the station first and the spot found there: a station
   // drawn against the camera (God's camp) is somewhere else once it moves.
   const r0 = hitRect(row.key);
@@ -154,9 +170,9 @@ async function visit(row) {
 
 // Every open station visited. Where a station cannot be stood at (no spot of
 // it is its own) or opens no board, the name is in the detail.
-async function stationChecks(name, rows = openRows()) {
+async function stationChecks(name, rows = openRows(), shop = false) {
   const seen = [];
-  for (const row of rows) seen.push(await visit(row));
+  for (const row of rows) seen.push(await visit(row, shop));
   const noSpot = seen.filter(v => !v.spot).map(v => v.key);
   const shut = seen.filter(v => v.spot && !v.opened).map(v => `${v.key} (got ${v.got})`);
   const mute = seen.filter(v => v.opened && v.cursor !== 'pointer').map(v => `${v.key}: ${v.cursor}`);
@@ -198,10 +214,10 @@ const spent = (was, now) => Object.keys(was).filter(k => now[k] < was[k]);
 // A board bought from: a live tile pressed, the coins down. `rows` are tried
 // in turn until one has a tile to press (a lot with nothing built on it
 // sells nothing); the open board is left up for the scroll check.
-async function buyCheck(name, rows) {
+async function buyCheck(name, rows, shop = false) {
   let tile = null;
   for (const row of rows) {
-    await visit(row);
+    await visit(row, shop);
     tile = liveTiles()[0];
     if (tile) break;
   }
@@ -375,8 +391,8 @@ export const TESTS = [
     await settle(0.3);
     out.push(ok(S.view === 'after', 'afterlife: the camera is up there', S.view));
     out.push(...await panChecks('afterlife'));
-    out.push(...await stationChecks('afterlife'));
-    out.push(...await buyCheck('afterlife', [STATIONS.find(r => r.key === 'after-shack')]));
+    out.push(...await stationChecks('afterlife', openRows(), true));
+    out.push(...await buyCheck('afterlife', [STATIONS.find(r => r.key === 'after-shack')], true));
     out.push(...await scrollCloses('afterlife'));
     // A member picked up with the hand and put down: it walks back to its
     // spot at the podium (the setup: one waiting in the crowd, who steps out
