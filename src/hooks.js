@@ -238,8 +238,9 @@ export const brewWizard = () => {
   openMeteor();
   S.towerOpen = true;
   const u = everyRow().find(r => r.key === TYPE.WIZARD);
+  const secs = u ? workFor(u) : 0;          // before the start: a copy under way moves the row's rung
   if (u && !workOn(TYPE.WIZARD)) start(u.site, u, null);
-  return u ? workFor(u) : 0;
+  return secs;
 };
 
 export const wizardHat = (n = 1) => {
