@@ -13,15 +13,6 @@ DESIGN.md, "The light page's deep, drawn in its own inks": a negative map
 through the same `inkOf` plumbing the dark page's deep uses, and the pass,
 the probe and `invert.js` deleted. Blocker: the owner's approval.
 
-## The lamp's light is a plain fill -- MOCKED, AWAITING VOTE (2026-10-29)
-
-`lampCone` (render/lamplight.js) lays its wedge with `darken`/`lighten`,
-which takes Firefox's canvas off the card whenever a lamp is on screen
-(PERF.md, "Firefox's canvas off the card"). The owner picked B (a plain
-fill where it is drawn now) and asked for it smoother, fading out with
-distance and see-through; the mock of that tweak (B1 linear to 48 px, B2 a
-long soft tail to 60 px) is with the owner. Blocker: the vote.
-
 ## The yard joins the conservation rule (2026-10-28)
 
 "One resource system for every act" is built (DESIGN.md, `(built)`). Its one

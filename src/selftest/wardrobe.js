@@ -18,6 +18,8 @@ import { S } from '../state.js';
 import { P, WORKER, NAME_MAX, WARD_AURAS, WARD_AURA_FPS, WARD_GRID_ROWS, TEXT_FLOOR } from '../config.js';
 import { advance } from '../clock.js';
 import { draw } from '../render.js';
+import { ctx } from '../render/ctx.js';
+import { lampCone } from '../render/lamplight.js';
 import { paper, ink, inkOf } from '../ink.js';
 
 const lumOf = h => { if (h.length === 4) h = '#' + h[1] + h[1] + h[2] + h[2] + h[3] + h[3];
@@ -1048,6 +1050,33 @@ export const TESTS = [
     const checks = [];
     for (const h of [800, 900]) checks.push(...(await shortWindow(h)).map(c => ({ ...c, what: `1280x${h}: ${c.what}` })));
     return checks;
+  }],
+  // A blend on the frame's canvas takes Firefox's off its card whenever a
+  // lamp is on screen (PERF.md, "Firefox's canvas off the card"); the light
+  // is plain fills, see-through, fading to nothing at its end (B2, the
+  // owner, 2026-10-29).
+  ['wardrobe: a lamp\'s light is plain fills fading out to nothing, with no blend or filter', async () => {
+    const sets = [], alphas = [];
+    const spy = key => {
+      const proto = Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, key);
+      Object.defineProperty(ctx, key, { configurable: true, get() { return proto.get.call(this); },
+        set(v) { sets.push(`${key}=${v}`); proto.set.call(this, v); } });
+    };
+    spy('globalCompositeOperation');
+    spy('filter');
+    ctx.fillRect = function (...a) { alphas.push(this.globalAlpha); return CanvasRenderingContext2D.prototype.fillRect.apply(this, a); };
+    try {
+      lampCone(ctx, S.camX + 100, S.groundY - WORKER, 1, { on: true });
+    } finally {
+      delete ctx.globalCompositeOperation;
+      delete ctx.filter;
+      delete ctx.fillRect;
+    }
+    return [
+      ok(!sets.length, 'no blend or filter is set', sets.join(', ')),
+      ok(alphas.length >= 20 && alphas.every(a => a < 1), 'it is many see-through columns', `${alphas.length}, top ${alphas[0]}`),
+      ok(alphas.every((a, i) => !i || a <= alphas[i - 1]) && alphas.at(-1) < 0.02, 'each fainter than the last, to nothing', `${alphas[0]} -> ${alphas.at(-1)}`)
+    ];
   }],
 ];
 

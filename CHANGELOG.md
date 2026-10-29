@@ -180,6 +180,7 @@ this section; the release that switches it on moves these under Unreleased.
 
 **New this release**
 - The chips off a builder's hammer are the paper over buildings and ground and the ink over the sky, on either page (src/selftest/work.js, "a builder's grit is plain paper or ink").
+- A lamp's light is a soft see-through beam that fades out with distance, lying over whatever it reaches (src/selftest/wardrobe.js, "a lamp's light is plain fills").
 - A disk in the corner fades up for a moment as the game saves (src/selftest/savemark.js).
 - A log at the saw mill saws into four timber blocks and nothing else: the sawdust heap, its hatch, its tip and its upgrade row are gone (test/after-mill-machine.test.mjs, test/no-sawdust.test.mjs).
 - Act 3's goods have their own colors: each log, timber block and sign is one of four tones of its good -- bark brown, pale wood, slate -- picked when it is made and kept wherever it goes, so a pile reads as separate pieces (test/after-palette.test.mjs).
@@ -222,7 +223,7 @@ this section; the release that switches it on moves these under Unreleased.
 - A game tab that is not being saved -- another tab has the save, or the browser refused it -- shows a struck-through disk in the corner instead of playing on in silence, takes the save back by itself once its game is the newest, and a game tab opened in the background no longer takes the save from the one you are playing (test/save-alarm.test.mjs).
 - The browser closing the save's database under the page no longer stops the game; the save is retried on a fresh connection (src/selftest/savemark.js).
 - The save as it was before an update changed its shape is kept beside it, so a bad update can be rolled back (test/save-alarm.test.mjs).
-- In Firefox on the dark page, a builder at work no longer drops the whole game to twenty-odd frames a second after a reload (src/selftest/work.js, "the dark page draws a builder's grit with no difference fill").
+- In Firefox, a builder at work or a lamp on screen no longer drops the whole game to twenty-odd frames a second (src/selftest/work.js, "a builder's grit is plain paper or ink"; src/selftest/wardrobe.js, "a lamp's light is plain fills").
 - A worker's hat in a roster counter sits flush on its head instead of a pixel to one side with ragged seams (src/selftest/rosterhats.js).
 - Saving on the very frame the star's sphere closes no longer leaves the ring uncut after a reload (test/sphere.test.mjs).
 - Shop cards keep one width and one height, so buying a rung, a deeper bill or a card being built no longer shifts the board (src/selftest/boardwords.js).

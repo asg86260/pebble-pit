@@ -121,8 +121,8 @@ function afterLight(l) {
 let mode = 'yard';  // cache: the layer being drawn, set by render.js each frame and put back to 'yard'
 // Which map the next fills go through (render.js, a layer at a time).
 export function inkMode(m) { if (m) mode = m; return mode; }
-// Whether black is being drawn light: the turned maps, where a `darken`
-// becomes a `lighten` and the deep skips its negative.
+// Whether black is being drawn light: the turned maps, where the deep skips
+// its negative.
 export const turnedOver = () => on && (dim || mode !== 'after');
 
 function mapRgb(r, g, b, m) {

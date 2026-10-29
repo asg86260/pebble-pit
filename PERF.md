@@ -335,14 +335,16 @@ takes a restored sky nearly to nothing, and carries its own measurements.
   (the ground line, the footprints, a rising building's laid courses) rather
   than of the frame, so the filter's readback of the frame is gone with it.
 
-  Still open: the lamp hats' light (render/lamplight.js) is laid with
-  `darken` (`lighten` on the dark page) straight onto the frame, and Firefox's
-  card has neither. Panning onto the owner's quarry, its quarriers in lamp
-  hats, took a page that had never been reloaded off the card on either page
+  The lamp hats' light (render/lamplight.js) was laid with `darken`
+  (`lighten` on the dark page) straight onto the frame, and Firefox's card
+  has neither. Panning onto the owner's quarry, its quarriers in lamp hats,
+  took a page that had never been reloaded off the card on either page
   (`page` 0.74-1.11 ms, draw 8.3-11.3 ms, 68 fps), and with the light
-  switched off the same pan stayed on it (draw 2.7 ms, 118 fps). That is the
-  drop "when the camera moves". Drawing the wedge without the blend changes
-  the picture, so it waits on the owner.
+  switched off the same pan stayed on it (draw 2.7 ms, 118 fps). That was the
+  drop "when the camera moves". The light is now plain see-through fills
+  fading to nothing (the owner's B2); reloaded into the save and panned onto
+  the quarry, light page 135 fps, draw 2.4 ms, dark page 134-138 fps, draw
+  2.5-2.7, `page` and `press` 0.01 ms throughout.
 
   Not the cause, measured on the same save: the
   sim (0.4 ms a frame in node, nothing growing over an hour), the autosave
