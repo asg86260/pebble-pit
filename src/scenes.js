@@ -3211,7 +3211,8 @@ export const SCENES = {
     ['b1', 'B1 colors, neighbors apart', "act 1's way with color: each good its own family of four shades (logs bark brown, timber pale wood, signs slate, sawdust pale wood grains), each block one flat shade, its own shade unless that sits within a step of a block it touches; no texture"],
     ['b2', 'B2 colors, a shade each', "the same families, each block keeping the one shade it was set down with, as each of act 1's grains keeps its own; a pile reads as a heap of shades, and two the same can sit side by side"],
     ['b3', 'B3 greys, neighbors apart', "B1 inside act 3's black and white: each block one flat grey of its good's own range, its own unless that sits within a step of a block it touches; no texture, no color"],
-    ['c', 'C random shade', "B1's colors with no rule between neighbors: each block and each grain of sawdust takes a random shade of its family (six a family) once, when it is made, and keeps it through every roll, carry, cut and throw"]]
+    ['c', 'C random shade', "B1's colors with no rule between neighbors: each block and each grain of sawdust takes a random shade of its family (six a family) once, when it is made, and keeps it through every roll, carry, cut and throw"],
+    ['d', 'D subtle per unit', "B2's colors, but every unit (log, timber block, sign, grain of sawdust) picks its own shade once from ten close ones, near the middle as act 1's grains do, and keeps it through every station"]]
     .map(([look, option, say]) => [`after-goods-${look || 'now'}`, { about: 'the acts', review: 'act 3: what the goods look like', // MOCK
       stage: 'mock: throwaway review code, never merged -- shows how it would look; the real build comes after you pick', option, say, // MOCK
       swap: () => { globalThis.__goodsLook = look; }, // MOCK

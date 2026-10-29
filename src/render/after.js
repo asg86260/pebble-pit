@@ -39,7 +39,7 @@ import { drawGrove } from './after/pine.js';
 import { DRAW, workerPose, GLYPHS, backOf, drawMillHeap } from './after/stations.js';
 import { drawFistFlag } from './aftercrowd.js';
 import { heap, heapCells, drawGround, goodBlock } from './after/piles.js';
-import { goodsLook, MOCK_DUST, seedOf } from './after/piles.js'; // MOCK
+import { goodsLook, STORED, MOCK_DUST, seedOf } from './after/piles.js'; // MOCK
 import { drawBody } from './crew.js';
 import { onDevice } from './wardrobe.js';
 import { drawPillar, drawPair, drawBubbles, drawRebelPile } from './after/pedestal.js';
@@ -234,10 +234,10 @@ function drawLoad(x, y, kind, n, id = 0, load = null) { // MOCK after-goods -- i
     goodBlock(lx, ly, kind);
   } else if (kind === 'log' || kind === 'plank') {
     const z = AFTER_BLOCK[kind] * AP, lx = x + 1.5 * P - z / 2;
-    for (let k = 0; k < n; k++) goodBlock(lx, y - (k + 1) * z, kind, goodsLook() === 'c' && load && load[k] ? load[k] : seedOf(id, k)); // MOCK after-goods -- seed, or the carried unit's own value
+    for (let k = 0; k < n; k++) goodBlock(lx, y - (k + 1) * z, kind, STORED() && load && load[k] ? load[k] : seedOf(id, k)); // MOCK after-goods -- seed, or the carried unit's own value
   } else if (kind === 'sign' && goodsLook()) { // MOCK after-goods
     const z = AFTER_BLOCK.sign * AP, lx = x + 1.5 * P - z / 2; // MOCK after-goods
-    for (let k = 0; k < n; k++) goodBlock(lx, y - (k + 1) * z, kind, goodsLook() === 'c' && load && load[k] ? load[k] : seedOf(id, k)); // MOCK after-goods
+    for (let k = 0; k < n; k++) goodBlock(lx, y - (k + 1) * z, kind, STORED() && load && load[k] ? load[k] : seedOf(id, k)); // MOCK after-goods
   } else if (kind === 'sign') {
     // The one in front held up on its post; the rest boards on the shoulder.
     drawFistFlag(x + P, y + P * 2, AFTER_SIGN_FLAG_U.held, 1, AFTER_SIGN_FLAG_U.up * P);
