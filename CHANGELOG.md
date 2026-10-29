@@ -215,6 +215,7 @@ this section; the release that switches it on moves these under Unreleased.
 - The recruit row, greyed while nobody is won, says so and how to win one instead of reading like a price you cannot pay (test/after-recruit.test.mjs).
 - Signs and posters no longer pile up unused in act 3 when nobody is on the carrier or the paster: idle workers take them out (test/after-roster.test.mjs).
 
+- Shop cards keep one width and one height, so buying a rung, a deeper bill or a card being built no longer shifts the board (src/selftest/boardwords.js).
 - In act 3 logs and timber stack, roll and settle the same way wherever they land, on a pile or on open floor, never one drawn through another, heap into a mound rather than a tower, and a press on a pile takes the block on top (test/after-ground.test.mjs).
 - In act 3 every member carries cells the way the yard's haulers do, by the hand's weights (a log sixteen grains, timber four), a station's loads come out of the shack's door, and a unit is held only if it was really taken (test/one-carry.test.mjs).
 - Dust, scales and act 3's logs and timber held on the cursor drift round it smoothly again instead of hopping a cell at a time (scenes hand-dust, after-hand-timber).

@@ -11582,10 +11582,13 @@ objects and one line of tags:
   ══════════════════════ the plank
 ```
 
-- **Every item is one slot** (`SHELF_SLOT`, 140px); five to a plank on the
+- **Every item is one slot**, one width on every board for the session
+  (`SHELF_SLOT_LANG`, the widest any board needs in the language; 156px in
+  English, guarded by boardwords.js in every language); five to a plank on the
   bench's sheet; a section with more wraps to a second plank. A bill of three
-  or more coins wraps inside its tag two coins a line -- the tag grows a
-  line, the slot does not.
+  or more coins wraps inside its tag two coins a line; the tag's row keeps the
+  four-coin height (`SHELF_TAG_TALL`) and a ladder's tile the room of its
+  strip, so a card changing its words, bill or state moves nothing.
 - **The glyph is the rung marker, and the pips climb the right edge.** The
   glyph is black; a one-pixel stroke around its outside (holes stay white)
   wears the color of the deepest coin on the *next* rung's bill -- nothing

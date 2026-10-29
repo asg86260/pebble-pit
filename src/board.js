@@ -1,10 +1,10 @@
 // The workbench board: where it sits on screen, when it opens, and the counter
 // above the pit that chases the number.
 
-import { P, PIP_EM, PIP_TONE, PIP_HOVER_LIFT, SHELF_SLOT, SHELF_REFUND, SHELF_SLOTS, SHELF_SLOTS_MIN, SHELF_STEP, SHELF_TOP, SHELF_FOOT, SHELF_AIR, SHELF_GAP, SHELF_SIGN, SHELF_PLANK, SHELF_HOVER_MS, SHELF_FLOAT_MS,
+import { P, PIP_EM, PIP_TONE, PIP_HOVER_LIFT, SHELF_SLOT, SHELF_SLOT_LANG, SHELF_TAG_TALL, SHELF_REFUND, SHELF_SLOTS, SHELF_SLOTS_MIN, SHELF_STEP, SHELF_TOP, SHELF_FOOT, SHELF_AIR, SHELF_GAP, SHELF_SIGN, SHELF_PLANK, SHELF_HOVER_MS, SHELF_FLOAT_MS,
          SHEET_MS, SCALE_MARK, AFTER_COIN_MARKS, AFTER_ACT_COINS } from './config.js';
 import { fmt, MARK } from './words.js';
-import { fitSlot } from './slotfit.js';
+import { LANG } from './lang.js';
 import { S, bench } from './state.js';
 import { toScreen } from './world.js';
 import { seatObjective } from './objline.js';
@@ -46,7 +46,7 @@ document.documentElement.style.setProperty?.('--pip-em', `${PIP_EM}em`);
 document.documentElement.style.setProperty?.('--pip-tone', String(PIP_TONE));
 document.documentElement.style.setProperty?.('--pip-hover', String(PIP_HOVER_LIFT));
 // The shelf's steps, the same way: config owns them, shelf.css reads them.
-for (const [name, v] of [['slot', SHELF_SLOT], ['step', SHELF_STEP], ['top', SHELF_TOP], ['foot', SHELF_FOOT], ['air', SHELF_AIR], ['gap', SHELF_GAP], ['sign', SHELF_SIGN], ['plank', SHELF_PLANK], ['refund', SHELF_REFUND]])
+for (const [name, v] of [['slot', SHELF_SLOT_LANG[LANG] ?? SHELF_SLOT], ['step', SHELF_STEP], ['top', SHELF_TOP], ['foot', SHELF_FOOT], ['air', SHELF_AIR], ['gap', SHELF_GAP], ['sign', SHELF_SIGN], ['plank', SHELF_PLANK], ['refund', SHELF_REFUND], ['tag-tall', SHELF_TAG_TALL]])
   document.documentElement.style.setProperty?.(`--shelf-${name}`, `${v}px`);
 document.documentElement.style.setProperty?.('--shelf-hover-ms', `${SHELF_HOVER_MS}ms`);
 document.documentElement.style.setProperty?.('--shelf-float-ms', `${SHELF_FLOAT_MS}ms`);
@@ -188,11 +188,9 @@ function pinWidth() {
   // against. Signs are measured as a range, not as the box, since a sign's box
   // carries its plank, drawn the whole shelf wide.
   const shelf = sheet.querySelector(':scope > .page:not([hidden]) .rows.shelves');
-  if (!shelf) sheet.style.removeProperty('--shelf-slot');
   if (shelf) {
-    // The slot first: as wide as the open board's widest unbreakable words
-    // (slotfit.js), so the sign's count below is in slots of that width.
-    const slot = fitSlot(shelf, sheet);
+    // The slot is the language's one width, never fitted to the open board.
+    const slot = SHELF_SLOT_LANG[LANG] ?? SHELF_SLOT;
     let most = 0, run = 0;
     for (const el of shelf.children) {
       if (el.classList.contains('sect')) run = 0;
