@@ -187,7 +187,7 @@ export const STATIONS = [
   // before the rock in input.js's cascade.
   { key: 'shack', name: msg('station-shack'), glyph: 'hut',
     empty: msg('station-shack-empty'), post: { key: 'mine', job: JOB.ROCK, kit: true, show: () => S.crew > 0,
-            at: () => (S.shackOpen ? null : S.cx) },
+            at: () => S.cx },
     open: () => S.shackOpen, stand: () => shack, board: 'shackBoardOpen',
     after: [],
     // Sticky, for the same reason as the farm: a third of a building, and the
