@@ -29,7 +29,7 @@ import { trees } from '../../after/grove.js';
 import { gestureView } from '../../after/gestures.js';
 import { AP, basketBox, GROVE_BASKET } from '../../after/place.js';
 import { M, MT, TRUNK_TOP, treeCells, grownShape, rowOrder, bx, fl, mx, pivotX, cutX, trunkTop, GRIP, SWING, ROLL_S, SAW_ANG, SAW_TIP,
-         STROKE, shovelAt, SHOVEL_H, basketSlot, groveMockOn } from '../../after/grovemock.js';
+         STROKE, shovelAt, SHOVEL_H, basketSlot, TREE_ACORNS, TIP_S, groveMockOn } from '../../after/grovemock.js';
 
 export { groveMockOn };
 const BODY = 3 * P;
@@ -205,11 +205,10 @@ function rolling(t) {
 // cells wide and four high off its top left, a stalk and a cap in the log's
 // darkest shade over a nut in its warmest, rounded at the foot.
 const AW = 3, AH = 4;
-function acorn(x, y) {
-  const cap = LOG(3), nut = LOG(0);
-  fill(cap, x + AP, y, AP, AP); fill(cap, x, y + AP, AP * 3, AP);
-  fill(nut, x, y + AP * 2, AP * 3, AP); fill(nut, x + AP, y + AP * 3, AP, AP);
-}
+const ACORN_CELLS = () => [[1, 0, LOG(3)], [0, 1, LOG(3)], [1, 1, LOG(3)], [2, 1, LOG(3)], [0, 2, LOG(0)], [1, 2, LOG(0)], [2, 2, LOG(0)], [1, 3, LOG(0)]];
+function acorn(x, y) { for (const [c, r, tone] of ACORN_CELLS()) fill(tone, x + c * AP, y + r * AP, AP, AP); }
+// The crown's acorns as one drawing in cells off the fall's pivot, turned with the tree.
+const treeAcornCells = () => TREE_ACORNS.flatMap(([x, y]) => ACORN_CELLS().map(([c, r, tone]) => [x + c, y + r, tone]));
 export const ACORN = { w: AW * AP, h: AH * AP };
 const SINK_S = 0.9;
 function acornInGround(t) {
@@ -300,6 +299,20 @@ export function drawGroveMock() {
       if (p.fall != null) lay(sprite('crown', crownCells()), o.x, o.y, th);
     } else if (M.logs > 0) lyingTrunk(M.logs, M.cut);
     if (M.landed != null) drawCrownBreak(t);
+    // S1: the acorns in the crown, standing and going over with it; then out
+    // of it, falling to the ground and lying, or being lifted onto a head
+    if (M.opt === 's1' && M.landed == null) {
+      if (falling) { const { th, drop } = fallPose(p, t), o = turnPt(0, 0, th, drop); lay(sprite('tree-acorns', treeAcornCells()), o.x, o.y, th); }
+      else if (p.stage) for (const [x, y] of TREE_ACORNS) acorn(bx() + (x + PIV_C) * AP, fl() + (y + PIV_R) * AP);
+    }
+    for (const q of M.dropped || []) {
+      if (q.taken) continue;
+      const rest = fl() - AH * AP, since = t - q.at, y = Math.min(rest, q.y0 + 0.5 * 900 * since * since);
+      if (q.liftAt && M.bodies[0]) {
+        const b = M.bodies[0], k = ease(clamp01((t - q.liftAt) / 0.35)), hx = b.x + BODY / 2 - AW * AP / 2, hy = b.y - BODY + P - (b.acorns + 1) * AH * AP;
+        acorn(Math.round(q.x + (hx - q.x) * k), Math.round(rest + (hy - rest) * k));
+      } else acorn(Math.round(q.x), Math.round(y));
+    }
     rolling(t);
     // standing whole, or growing
     if (p.stage && p.fall == null) {
@@ -379,6 +392,8 @@ function body(b, t) {
     const z = MT.log * AP, k = ease(b.carry.k ?? 1), hx = b.x + BODY / 2 - z / 2, hy = b.y - BODY - z;
     fill(LOG(b.carry.tone), Math.round(b.carry.x + (hx - b.carry.x) * k), Math.round(fl() - z + (hy - fl() + z) * k), z, z);
   }
+  // acorns carried on the head, a stack of them
+  for (let i = 0; i < (b.acorns || 0); i++) acorn(x + BODY / 2 - AW * AP / 2, Math.round(y) + (b.squat ? P : 0) - (i + 1) * AH * AP);
   if (b.carry === 'cone') acorn(x + BODY / 2 - AW * AP / 2, Math.round(y) - AH * AP + (b.squat ? P : 0));
   if (!b.tool) return;
   const gx = flip ? b.x + BODY - GRIP.dx : b.x + GRIP.dx, gy = b.y + GRIP.dy;
@@ -409,6 +424,11 @@ export function drawGroveMockBodies() {
   const t = now();
   for (const b of M.bodies) square(b);
   turned(() => { for (const b of M.bodies) body(b, t); });
+  // an acorn tipped off a head into the basket
+  if (M.tip) {
+    const k = ease(clamp01((t - M.tip.at) / TIP_S)), a = M.tip.from, z = M.tip.to;
+    acorn(Math.round(a.x + (z.x - a.x) * k), Math.round(a.y + (z.y - a.y) * k - Math.sin(Math.PI * k) * AP * 3));
+  }
   // an acorn on its way out of the basket onto a planter's head
   if (M.taking && M.bodies[0]) {
     const b = M.bodies[0], k = ease(clamp01((t - M.taking.at) / 0.45)), s = M.taking.from;

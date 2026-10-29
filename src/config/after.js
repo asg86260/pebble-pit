@@ -624,3 +624,9 @@ export const AFTER_HEAP_SETTLE_S = 0.04;
 // a cell (16 cells less the three 2x2 timber blocks).
 import { AFTER_LOG_TIMBER as LOG_TIMBER } from './afterpiles.js';
 export const AFTER_KERF_GRAINS = AFTER_BLOCK.log * AFTER_BLOCK.log - LOG_TIMBER * AFTER_BLOCK.plank * AFTER_BLOCK.plank;
+
+// MOCK grove: the seed row (after/rows.js): a bundle of acorns a press, its
+// bills the first in the earlier acts' coins only, each deeper by a band --
+// dust, then dust and crops, then dust, crops and ore.
+export const AFTER_SEED_BILLS = [[['dust', 12000]], [['dust', 30000], ['spore', 8000]], [['dust', 60000], ['spore', 15000], ['shard', 15000]]]; // MOCK grove
+export const AFTER_SEED_BUNDLE = 3; // MOCK grove  acorns a bundle

@@ -8113,6 +8113,13 @@
   "text": "plot"
  },
  {
+  "id": "after-row-seed",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/rows.js",
+  "context": "act 3 card row (MOCK grove, placeholder): a bundle of acorns carried in to the seed basket",
+  "text": "seeds"
+ },
+ {
   "id": "after-row-grow",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",

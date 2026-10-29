@@ -32,7 +32,7 @@ import { msg } from '../lang.js';
 import { P, AFTER_UPGRADES, AFTER_JOBS, AFTER_JOB_POST, AFTER_SEAT_BILLS, AFTER_BUILDS,
          AFTER_CARDS, AFTER_YARD_COINS, AFTER_TAG_ORDER, AFTER_PATCH_AT,
          AFTER_COIN_MOTES, AFTER_COIN_UNDER_S, AFTER_COIN_STAGGER_S, AFTER_COIN_SPREAD, AFTER_COIN_LIFE_S,
-         AFTER_RECRUIT_COST0, AFTER_RECRUIT_RATE, MEET_MEMBERS, SLOW_SHARE, STRIKE_SHARE, AFTER_BOARD_SLOTS, SHADES, SHARD_CELL, SPORE_CELL, SPARK_CELL, FIND_TONES, SCALE_SHADE, SCALE_SPREAD } from '../config.js';
+         AFTER_SEED_BILLS, /* MOCK grove */ AFTER_RECRUIT_COST0, AFTER_RECRUIT_RATE, MEET_MEMBERS, SLOW_SHARE, STRIKE_SHARE, AFTER_BOARD_SLOTS, SHADES, SHARD_CELL, SPORE_CELL, SPARK_CELL, FIND_TONES, SCALE_SHADE, SCALE_SPREAD } from '../config.js';
 import { registerBoard, openBoardByKey } from '../boardrows.js';
 import { purse, leftText } from '../words.js';
 import { payTo } from '../pit.js';
@@ -218,6 +218,17 @@ export const AFTER_ROWS = [
 ].map(inAct);
 // First on the pedestal's board; its line is a getter, so it is not spread.
 AFTER_ROWS.unshift(recruitRow);
+// MOCK grove: the seed row on the grove's board (the owner: "lets have the
+// first seeds cost prev resources"): a bundle of acorns a press, carried in
+// from the gates to the seed basket by a worker (after/grovemock.js); its
+// bills in the earlier acts' coins, deepening band by band as every bill
+// does (AFTER_SEED_BILLS). Shown only while the grove mock stands.
+const SEED = 'after-seed'; // MOCK grove
+const seedsBought = () => (S.after && S.after.ups[SEED]) || 0; // MOCK grove
+AFTER_ROWS.push({ key: SEED, name: msg('after-row-seed'), get card() { return globalThis.__groveMock ? 'grove' : null; }, ...ACT_ROW, repeats: true, from: seedsBought, // MOCK grove  on the grove's board only while the mock stands
+  bill: () => AFTER_SEED_BILLS[Math.min(seedsBought(), AFTER_SEED_BILLS.length - 1)].map(([c, n]) => [c, n]), // MOCK grove
+  show: () => !!S.after && !!globalThis.__groveMock && cardOpen('grove'), // MOCK grove
+  buy: () => { S.after.ups[SEED] = seedsBought() + 1; S.after.upAt[SEED] = S.after.t; globalThis.__groveSeedBought?.(); } }); // MOCK grove
 export const afterRow = key => AFTER_ROWS.find(u => u.key === key) || null;
 
 // --- buying ------------------------------------------------------------------------------

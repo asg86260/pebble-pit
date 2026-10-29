@@ -23,7 +23,7 @@
 
 import { S } from '../state.js';
 // the frame's steps are handed in by the scene (game.js imports the drawing, which imports this)
-import { P, TREE_CHOPS, AFTER_WALK, GESTURE_SAW_AMP, AFTER_DIG_CLICKS } from '../config.js';
+import { P, TREE_CHOPS, AFTER_WALK, GESTURE_SAW_AMP, AFTER_DIG_CLICKS, ACT_GATES_CELL, AFTER_SEED_BUNDLE } from '../config.js';
 import { plotX, groundOf, floorAt, stationDoor, AP, PINE_GROWN, basketBox } from './place.js';
 import { chopTree, digStump } from './grove.js';
 import { putSomewhere, tag, fallTag, takeAt } from './ground.js';
@@ -318,6 +318,33 @@ export function basketSlot(k) {
   return k < 3 ? { x: b.x + 0.5 * AP + k * aw, y: top } : { x: b.x + 0.5 * AP + aw / 2 + (k - 3) * aw, y: top - 2 * AP };
 }
 
+// The acorns hanging in the pine's crown for S1, their top lefts in cells off
+// the fall's pivot (the trunk's right edge on the stump's top), on its lowest
+// shelf either side of the trunk; an acorn AW_C by AH_C cells.
+export const TREE_ACORNS = [[-9, -19], [3, -19]];
+export const AW_C = 3, AH_C = 4;
+// A world x as the scripts have it (the plot's turn undone for a fall to the left).
+const simX = x => (M.flip ? 2 * bx() - x : x);
+// A body walked to stand at the seed basket's near side, facing it.
+function basketWalk(b, dt) {
+  const k = basketBox(), wl = k.x - BODY - AP, to = M.flip ? 2 * bx() - wl - BODY : wl;
+  if (!walkTo(b, to, dt)) return false;
+  b.face = M.flip ? -1 : 1;
+  return true;
+}
+// The acorns on a body's head tipped into the basket one at a time, each
+// arcing from the head into its place there: true once the head is empty.
+export const TIP_S = 0.35;
+function tipInto(b) {
+  if (!M.tip && b.acorns > 0) {
+    const wl = M.flip ? 2 * bx() - b.x - BODY : b.x;
+    M.tip = { from: { x: wl + BODY / 2 - AW_C * AP / 2, y: b.y - BODY - b.acorns * AH_C * AP }, to: basketSlot(M.basket), at: S.after.t };
+    b.acorns -= 1;
+  }
+  if (M.tip && S.after.t - M.tip.at >= TIP_S) { M.tip = null; M.basket += 1; }
+  return !M.tip && b.acorns <= 0;
+}
+
 // --- the scripts -------------------------------------------------------------------------
 // Each a phase machine on M.ph and M.t, stepped by the frame's dt; `init`
 // stands it again, so each loops.
@@ -348,12 +375,79 @@ const SCRIPTS = {
         if (M.t >= 0.9) { b.squat = false; M.grow = { kind: 'b1', at: S.after.t, dur: 14 }; go('back'); }
       } else if (M.ph === 'back') {
         if (walkTo(b, b.home, dt)) { b.face = 1; go('hold'); }
-      } else if (M.ph === 'hold' && M.t >= 1.2) this.init();
+      } // held here: the scene ends with the basket an acorn short (no loop, so no acorn comes back from nowhere)
     }
   },
   // R: the grove at rest: the pine standing by the shack, the seed basket on
   // the shack's far side with its acorns in it.
   r: { init() { takeBack(); standTree(); M.basket = BASKET_FULL; go('rest'); }, step() {} },
+  // S1: the basket filled from a felled tree (the owner: both ways). Two
+  // acorns hang in the pine's crown; it goes over, the crown breaks and
+  // fades but the acorns do not: they drop out of it and lie, a worker comes
+  // out of the forestry shack, picks each up onto its head and tips them into
+  // the seed basket. Held at the end.
+  s1: {
+    init() { takeBack(); standTree(); M.basket = 2; M.dropped = []; M.bodies = []; M.tip = null; go('stand'); },
+    step(dt) {
+      const p = plot();
+      if (M.ph === 'stand' && M.t >= 1.2) { p.fall = S.after.t; go('fall'); }
+      else if (M.ph === 'fall' && M.landed != null) {
+        // out of the crown where it lies: each from where it hung, turned with the tree
+        M.dropped = TREE_ACORNS.map(([x, y], k) => {
+          const cx = (x + AW_C / 2) * AP, cy = (y + AH_C / 2) * AP, sx = pivotX() - cy + k * 3 * AP, sy = fl() + cx;
+          return { x: sx - AW_C * AP / 2, y0: Math.min(sy - AH_C * AP / 2, fl() - AH_C * AP), at: S.after.t, lying: false };
+        });
+        go('drop');
+      } else if (M.ph === 'drop') {
+        if (M.t >= 1.4) {
+          const door = simX(stationDoor('forestry'));
+          M.bodies = [{ x: door - BODY / 2, y: floorM(door), face: 1, tool: null, acorns: 0 }];
+          go('fetch');
+        }
+      } else if (M.ph === 'fetch') {
+        const b = M.bodies[0], q = M.dropped.find(d => !d.taken);
+        if (!q) { go('home'); return; }
+        if (walkTo(b, q.x + AW_C * AP / 2 - BODY / 2, dt)) {
+          b.squat = true;
+          if (!q.liftAt) q.liftAt = S.after.t;
+          if (S.after.t - q.liftAt >= 0.35) { q.taken = true; b.acorns += 1; b.squat = false; }
+        }
+      } else if (M.ph === 'home') {
+        if (basketWalk(M.bodies[0], dt)) go('tip');
+      } else if (M.ph === 'tip') {
+        if (tipInto(M.bodies[0])) go('away');
+      } else if (M.ph === 'away') {
+        const b = M.bodies[0], door = simX(stationDoor('forestry'));
+        if (walkTo(b, door - BODY / 2, dt)) go('end');
+      }
+    }
+  },
+  // S2: the seed row bought: the grove's board up with the row and its bill
+  // in the earlier acts' coins; pressed, the coins go (the yard's way up
+  // through the cloud), a worker walks in from heaven's gates with a bundle
+  // of acorns on its head and tips them into the seed basket, then walks
+  // back out. Held at the end.
+  s2: {
+    init() { takeBack(); standTree(); M.basket = 1; M.bodies = []; M.tip = null; M.bought = false;
+             globalThis.__groveSeedBought = () => { M.bought = true; };
+             globalThis.__openAfterBoard?.('grove'); go('board'); },
+    step(dt) {
+      if (M.ph === 'board' && M.t >= 2.2) { globalThis.__buy?.('after-seed'); go('paid'); }
+      else if (M.ph === 'paid' && M.t >= 1.2) {
+        // the board put away, as a press on open ground puts it away (board.js `showPanel`, handed in by the scene)
+        globalThis.__groveCloseBoard?.();
+        if (M.bought) { const g = ACT_GATES_CELL * P; M.bodies = [{ x: g, y: floorAt(g), face: 1, tool: null, acorns: AFTER_SEED_BUNDLE }]; }
+        go(M.bought ? 'in' : 'end');
+      } else if (M.ph === 'in') {
+        if (basketWalk(M.bodies[0], dt)) go('tip');
+      } else if (M.ph === 'tip') {
+        if (tipInto(M.bodies[0])) go('out');
+      } else if (M.ph === 'out') {
+        const b = M.bodies[0];
+        if (walkTo(b, ACT_GATES_CELL * P, dt)) { M.bodies = []; go('end'); }
+      }
+    }
+  },
   // A2: the hand takes the cone set out at the forestry shack's door, carries
   // it over the bare plot and lets go: it drops in and sinks, and a shoot
   // comes up. The ghost hand shows the motion first.
@@ -391,8 +485,8 @@ const SCRIPTS = {
         M.cursor.x += 30 * dt; M.cursor.y -= 20 * dt;
         if (M.t >= 0.9) { M.grow = { kind: 'b1', at: S.after.t, dur: 14 }; go('hold'); }
       } else if (M.ph === 'hold') {
-        M.cursor.x += 10 * dt;
-        if (M.t >= 3.2) { M.cursor = null; this.init(); }
+        if (M.cursor) M.cursor.x += 10 * dt;
+        if (M.t >= 3.2) M.cursor = null;   // held here, the basket an acorn short: no loop
       }
     }
   },
@@ -713,7 +807,7 @@ export const SHOVEL_H = 7 * AP;
 export const shovelTop = ang => { const s = shovelAt(); return { x: s.x + Math.sin(ang) * SHOVEL_H, y: s.y - Math.cos(ang) * SHOVEL_H }; };
 
 // The options with a fall, turned to fall away from the shack.
-const FLIP = new Set(['c', 'd1', 'd2', 'e', 'esaw1', 'esaw2', 'esaw3', 'f1', 'f2']);
+const FLIP = new Set(['c', 's1', 'd1', 'd2', 'e', 'esaw1', 'esaw2', 'esaw3', 'f1', 'f2']);
 
 // --- the scene's door --------------------------------------------------------------------
 // Stand option `opt` on the act now standing: the global set, the state
@@ -723,7 +817,7 @@ export function startGroveMock(opt, STEPS) {
   globalThis.__groveMock = opt;
   Object.assign(M, { opt, mine: S.after, ph: '', t: 0, T: 0, logs: 0, cut: 0, roll: null, grow: null, cone: null, bodies: [],
                      cursor: null, ghost: null, notch: 0, sawAt: null, stumpOut: null, landed: null, from: null,
-                     flip: FLIP.has(opt), stumpUp: 0, tilt: 0, shovel: null, dug: 0, basket: BASKET_FULL, taking: null });
+                     flip: FLIP.has(opt), stumpUp: 0, tilt: 0, shovel: null, dug: 0, basket: BASKET_FULL, taking: null, dropped: [], tip: null, bought: false });
   M.placed.length = 0;
   const idx = STEPS.findIndex(q => q.name === 'grovemock');
   if (idx >= 0) STEPS.splice(idx, 1);

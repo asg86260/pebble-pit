@@ -3529,6 +3529,9 @@ after-row-axe = axe
 # act 3 card row (placeholder): the grove's plots, a plot cleared a press
 after-row-plot = plot
 
+# act 3 card row (MOCK grove, placeholder): a bundle of acorns carried in to the seed basket
+after-row-seed = seeds
+
 # act 3 card row (placeholder): the grove's faster growth
 after-row-grow = faster growth
 
