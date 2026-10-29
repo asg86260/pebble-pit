@@ -255,16 +255,19 @@ function bucker(dt, tool, script, blows = 3) {
 // head as the yard carries (render/after.js, `drawLoad`), walked to the stack
 // past the trunk's end and set down there on the real ground's heap; then
 // back to the new end. The last log needs no cut: it is lifted as it lies.
-const BUCK_HIT = Math.asin((GRIP.dy + MT.w * AP / 2) / -AXE_FRONT);
+// the D2 axe drawings (render/after/grovemock.js, AXES): the head's far face off the hand, cells
+export const AXE_FRONTS = { 0: 4.5, 1: 7.5, 2: 7.5 };
+const axeFront = () => (AXE_FRONTS[M.axe || 0]) * AP;
+const buckHit = () => Math.asin((GRIP.dy + MT.w * AP / 2) / -axeFront());
 const endX = () => pivotX() + M.logs * MT.log * AP;
-export const endStand = () => Math.round(endX() - MT.log * AP + AXE_FRONT * Math.cos(BUCK_HIT) - (BODY - GRIP.dx));
+export const endStand = () => Math.round(endX() - MT.log * AP + axeFront() * Math.cos(buckHit()) - (BODY - GRIP.dx));
 const stackX = () => pivotX() + (MT.logs + 3) * MT.log * AP;
 function groundBucker(dt, script, blows = 3) {
   const b = M.bodies[0], z = MT.log * AP;
   if (M.ph === 'cut') {
     if (M.logs === 1) { go('lift'); return; }
     const k = Math.floor(M.t / BLOW_S), t = M.t - k * BLOW_S;
-    if (swing(b, t, -2.7, BUCK_HIT)) M.cut = Math.min(1, (k + 1) / blows);
+    if (swing(b, t, -2.7, buckHit())) M.cut = Math.min(1, (k + 1) / blows);
     if (k >= blows - 1 && t >= SWING.up + SWING.fly + SWING.held) go('lift');
   } else if (M.ph === 'lift') {
     // the end log off the ground and onto the head
@@ -553,6 +556,21 @@ const SCRIPTS = {
              M.bodies = [{ x: endStand(), y: fl(), face: -1, tool: 'axe', pose: 'rest', ang: -0.9 }]; go('cut'); },
     step(dt) { groundBucker(dt, this); }
   },
+  // D2 with the axe redrawn (the owner: "give the axe some love. it looks
+  // like a hammer right now"): a longer haft and a wedge of a head whose bit
+  // flares wider than its poll, in a lighter tone, leading into the cut.
+  //   1 a felling axe: a straight wedge, the bit five cells tall
+  //   2 a bearded axe: the bit sweeping down below the head
+  d2axe1: { init() { M.axe = 1; SCRIPTS.d2.init(); }, step(dt) { groundBucker(dt, this); } },
+  d2axe2: { init() { M.axe = 2; SCRIPTS.d2.init(); }, step(dt) { groundBucker(dt, this); } },
+  // C with the crown in colour (the owner: "lets give the crown some color
+  // too, look sweird with black and brown trunk"): the crown's cells each a
+  // shade of four, picked once off where the cell stands (render/after/
+  // grovemock.js, CROWNS): 1 a deep pine green, 2 a warmer moss green, 3 a
+  // blue-green.
+  cg1: { init() { M.crownPal = 1; SCRIPTS.c.init(); }, step() { SCRIPTS.c.step.call(this); } },
+  cg2: { init() { M.crownPal = 2; SCRIPTS.c.init(); }, step() { SCRIPTS.c.step.call(this); } },
+  cg3: { init() { M.crownPal = 3; SCRIPTS.c.init(); }, step() { SCRIPTS.c.step.call(this); } },
   // E: the woodcutter walks up with its axe on its shoulder, fells the pine
   // a blow at a time from the side away from the fall, hops up on the trunk
   // and bucks it with the same axe.
@@ -865,7 +883,7 @@ export const SHOVEL_H = 7 * AP;
 export const shovelTop = ang => { const s = shovelAt(); return { x: s.x + Math.sin(ang) * SHOVEL_H, y: s.y - Math.cos(ang) * SHOVEL_H }; };
 
 // The options with a fall, turned to fall away from the shack.
-const FLIP = new Set(['c', 's1', 's3a', 's3b', 'd1', 'd2', 'e', 'esaw1', 'esaw2', 'esaw3', 'f1', 'f2']);
+const FLIP = new Set(['c', 'cg1', 'cg2', 'cg3', 'd2axe1', 'd2axe2', 's1', 's3a', 's3b', 'd1', 'd2', 'e', 'esaw1', 'esaw2', 'esaw3', 'f1', 'f2']);
 
 // --- the scene's door --------------------------------------------------------------------
 // Stand option `opt` on the act now standing: the global set, the state
@@ -875,7 +893,7 @@ export function startGroveMock(opt, STEPS) {
   globalThis.__groveMock = opt;
   Object.assign(M, { opt, mine: S.after, ph: '', t: 0, T: 0, logs: 0, cut: 0, roll: null, grow: null, cone: null, bodies: [],
                      cursor: null, ghost: null, notch: 0, sawAt: null, stumpOut: null, landed: null, from: null,
-                     flip: FLIP.has(opt), stumpUp: 0, tilt: 0, shovel: null, dug: 0, basket: BASKET_FULL, taking: null, dropped: [], tip: null, bought: false, style: 0, strain: 0, snapAt: null, snapK: -1, chips: [], lastDug: 0 });
+                     flip: FLIP.has(opt), stumpUp: 0, tilt: 0, shovel: null, dug: 0, basket: BASKET_FULL, taking: null, dropped: [], tip: null, bought: false, style: 0, strain: 0, snapAt: null, snapK: -1, chips: [], lastDug: 0, axe: 0, crownPal: 0 });
   M.placed.length = 0;
   const idx = STEPS.findIndex(q => q.name === 'grovemock');
   if (idx >= 0) STEPS.splice(idx, 1);

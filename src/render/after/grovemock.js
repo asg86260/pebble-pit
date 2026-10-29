@@ -20,7 +20,7 @@
 
 import { GREY, P, AFTER_FALL_S, AFTER_FALL_BOUNCE_S, AFTER_FALL_BOUNCE, GESTURE_CUE_ALPHA, TREE_CHOPS, AFTER_DIG_CLICKS } from '../../config.js';
 import { ctx } from '../ctx.js';
-import { themed } from '../../ink.js';
+import { themed, darkPage, raw } from '../../ink.js';
 import { K, W, PALE, MID, SOIL, DUST, toneOf, now, clamp01, hash } from './kit.js';
 import { goodTone } from './piles.js';
 import { handOn } from '../aftercues.js';
@@ -34,7 +34,43 @@ import { M, MT, TRUNK_TOP, treeCells, grownShape, rowOrder, bx, fl, mx, pivotX, 
 export { groveMockOn };
 const BODY = 3 * P;
 // A tone: one of the act's greys by its rung, or a color itself (the goods').
-const ink = tone => (typeof tone === 'string' ? tone : GREY[tone]);
+const ink = tone => (typeof tone === 'string' || tone instanceof String ? tone : GREY[tone]);
+// The crown in colour (C-green-1..3): four tones a family at the goods' act 1
+// contrast, lightest first -- the lit tips, the body, the body's darker
+// half, the shadow under each shelf -- every cell one of them, picked once
+// off where it stands; on the dark page each lifted a step, drawn raw as the
+// goods' are. Kept clear of act 1's crop green (#57c074): these are darker,
+// bluer or browner. 0, the crown in ink as it is.
+const CROWNS = {
+  1: { light: ['#3e7a52', '#336645', '#2c5a3c', '#1f432c'], dark: ['#54996b', '#47855b', '#3d7650', '#2f5e3e'] },   // deep pine green
+  2: { light: ['#7d8c3a', '#6a7731', '#5e6a2b', '#475121'], dark: ['#98a84c', '#839240', '#758339', '#5d692c'] },   // warm moss green
+  3: { light: ['#3b7a76', '#316764', '#2b5a57', '#1f4442'], dark: ['#4f9893', '#43837f', '#3a7470', '#2d5c59'] }    // blue-green
+};
+// A crown cell's tone, by where it stands in the tree (its own column and
+// row, so it keeps its shade standing, falling and in a broken piece): the
+// two body tones most, the lit tone on a shelf's top row's ends, the shadow
+// on a shelf's bottom row.
+const ROLE = new Map();   // cache: each crown cell's role, worked out once off the pine
+function crownRoles() {
+  if (ROLE.size) return ROLE;
+  const crown = treeCells().filter(q => q[2] === 'crown'), rows = new Map();
+  for (const [c, r, , ti] of crown) { const k = `${ti}|${r}`; const s = rows.get(k) || [c, c]; rows.set(k, [Math.min(s[0], c), Math.max(s[1], c)]); }
+  const bottom = new Map();
+  for (const [, r, , ti] of crown) bottom.set(ti, Math.max(bottom.get(ti) ?? r, r));
+  for (const [c, r, , ti] of crown) {
+    const [a, b] = rows.get(`${ti}|${r}`);
+    ROLE.set(`${c}|${r}`, r === bottom.get(ti) ? 3 : (c === a || c === b) ? 0 : null);
+  }
+  return ROLE;
+}
+function crownTone(c, r) {
+  const pal = CROWNS[M.crownPal];
+  if (!pal) return K;
+  const l = darkPage ? pal.dark.map(raw) : pal.light, role = crownRoles().get(`${c}|${r}`), h = hash(c * 31.7 + r * 17.3);
+  // the shelf's underside in shadow, its stepped ends lit, the body the two
+  // middle tones a cell at a time
+  return l[role != null ? role : h < 0.5 ? 1 : 2];
+}
 const fill = (tone, x, y, w, h) => { ctx.fillStyle = ink(tone); ctx.fillRect(x, y, w, h); };
 const paper = () => (typeof document === 'undefined' ? null : document.createElement('canvas'));
 const ease = u => u * u * (3 - 2 * u);
@@ -101,7 +137,7 @@ const trunkCells = () => {
   for (let r = TRUNK_TOP; r < -MT.stump; r++) for (let c = MT.c0; c < MT.c0 + MT.w; c++) out.push([c - PIV_C, r - PIV_R, logTone(segOf(r))]);
   return out;
 };
-const crownCells = () => treeCells().filter(q => q[2] === 'crown').map(([c, r, , ti]) => [c - PIV_C, r - PIV_R, K, ti]);
+const crownCells = () => treeCells().filter(q => q[2] === 'crown').map(([c, r, , ti]) => [c - PIV_C, r - PIV_R, crownTone(c, r), ti]);
 // The crown broken where it hits: each tier in pieces across, each a sprite
 // about its own middle, with where that middle is off the pivot.
 const PIECES = [];
@@ -120,7 +156,8 @@ function crownPieces() {
     const cx = qs.reduce((s, q) => s + q[0] + 0.5, 0) / qs.length, cy = qs.reduce((s, q) => s + q[1] + 0.5, 0) / qs.length;
     const rx = Math.round(cx), ry = Math.round(cy);
     // its cells off a whole cell near its middle, so it turns about that
-    PIECES.push({ key, cx: rx * AP, cy: ry * AP, cells: qs.map(q => [q[0] - rx, q[1] - ry, K]), seed: ++n * 7.31 });
+    // each cell with where it stood in the tree, for its tone
+    PIECES.push({ key, cx: rx * AP, cy: ry * AP, cells: qs.map(q => [q[0] - rx, q[1] - ry, q[0] + PIV_C, q[1] + PIV_R]), seed: ++n * 7.31 });
   }
   return PIECES;
 }
@@ -146,7 +183,7 @@ function drawCrownBreak(t) {
     const vx = 20 + (h1 - 0.5) * 150, vy = -(60 + h2 * 110), w = (h3 - 0.5) * 6;
     const half = AP * 1.5, x = at.x + vx * (1 - Math.exp(-2.2 * since)) / 2.2;
     const y = Math.min(fl() - half, at.y + vy * since + GRAV * since * since / 2);
-    lay(sprite(`pc|${pc.key}`, pc.cells), x, y, th + w * since, false, a);
+    lay(sprite(`pc|${pc.key}|${M.crownPal}`, pc.cells.map(([cx, cy, c, r]) => [cx, cy, crownTone(c, r)])), x, y, th + w * since, false, a);
   }
 }
 
@@ -159,7 +196,7 @@ function soil() { for (let c = BED[0]; c <= BED[1]; c++) cellAt(c, -1, toneOf(SO
 // The standing pine, or the cells of it grown so far: the stump and each of
 // the trunk's logs in its shade, the crown in ink.
 function pineCells(cells) {
-  for (const [c, r, part] of cells) cellAt(c, r, part === 'crown' ? K : r >= -MT.stump ? stumpTone() : logTone(segOf(r)));
+  for (const [c, r, part] of cells) cellAt(c, r, part === 'crown' ? crownTone(c, r) : r >= -MT.stump ? stumpTone() : logTone(segOf(r)));
 }
 // The felling cut along the stump's top, `n` cells in from the near side: a
 // line opening across the trunk.
@@ -374,7 +411,7 @@ export function drawGroveMock() {
       // the crown broken off the moment it hits
       const { th, drop } = fallPose(p, t), o = turnPt(0, 0, th, drop);
       lay(sprite(`trunk|${M.tones}`, trunkCells()), o.x, o.y, th);
-      if (p.fall != null) lay(sprite('crown', crownCells()), o.x, o.y, th);
+      if (p.fall != null) lay(sprite(`crown|${M.crownPal}`, crownCells()), o.x, o.y, th);
     } else if (M.logs > 0) lyingTrunk(M.logs, M.cut);
     if (M.landed != null) drawCrownBreak(t);
     // S1: the acorns in the crown, standing and going over with it; then out
@@ -413,7 +450,22 @@ export function drawGroveMock() {
 // The axe: a handle of three cells and a head of two by three, off the hand
 // at the handle's near end (after/grovemock.js, AXE_BIT, AXE_FRONT); the
 // edge down when the handle is level.
-const AXE = () => sprite('axe', [[0, 0, MID], [1, 0, MID], [2, 0, MID], [3, -1, K], [4, -1, K], [3, 0, K], [4, 0, K], [3, 1, K], [4, 1, K]]);
+const AXE = () => (M.axe ? sprite(`axe${M.axe}`, AXES[M.axe]()) : sprite('axe', [[0, 0, MID], [1, 0, MID], [2, 0, MID], [3, -1, K], [4, -1, K], [3, 0, K], [4, 0, K], [3, 1, K], [4, 1, K]]));
+// The D2 axe drawings (after/grovemock.js, AXE_FRONTS: the far face, cells
+// off the hand): a haft of five cells in the timber's mid shade, an eye and
+// cheek in ink, and the bit, the cutting edge facing on along the haft so it
+// leads into the cut, flaring wider than the poll, in timber's pale shade.
+//   1 a felling axe: poll two cells tall, cheek three, the bit five
+//   2 a bearded axe: the head's beard sweeping down under it to a long bit
+const HAFT = () => [0, 1, 2, 3, 4].map(x => [x, 0, goodTone('plank', 2)]);
+const AXES = {
+  1: () => [...HAFT(), [5, -1, K], [5, 0, K], [6, -1, K], [6, 0, K], [6, 1, K],
+            ...[-2, -1, 0, 1, 2].map(y => [7, y, goodTone('plank', 0)])],
+  2: () => [...HAFT(), [5, -1, K], [5, 0, K], [6, -1, K], [6, 0, K], [6, 1, K], [6, 2, K], [5, 2, K],
+            ...[-1, 0, 1, 2, 3].map(y => [7, y, goodTone('plank', 0)])]
+};
+// where the edge is, off the hand, the haft level: for the blow's puff
+const AXE_EDGE = { 0: [3.5, 1.5], 1: [7.5, 0], 2: [7.5, 1] };
 const axeAt = (x, y, ang, flip, a = 1) => layMid(AXE(), x, y, ang, flip, a);
 // The hand's axe: the same with a handle two cells longer, so it shows past
 // the fist that holds its end (after/grovemock.js, HAND_AXE_FRONT).
@@ -479,7 +531,7 @@ function body(b, t) {
     if (b.pose === 'fly') smear(gx, gy, b.from, b.ang, flip);
     axeAt(gx, gy, b.ang, flip);
     if (b.pose === 'hit') {
-      const ex = gx + (flip ? -1 : 1) * (Math.cos(b.ang) * 3.5 * AP - Math.sin(b.ang) * 1.5 * AP), ey = gy + Math.sin(b.ang) * 3.5 * AP + Math.cos(b.ang) * 1.5 * AP;
+      const [ea, eb] = AXE_EDGE[M.axe || 0], ex = gx + (flip ? -1 : 1) * (Math.cos(b.ang) * ea * AP - Math.sin(b.ang) * eb * AP), ey = gy + Math.sin(b.ang) * ea * AP + Math.cos(b.ang) * eb * AP;
       puff(ex, ey, t - (b.hitAt ?? t));
     }
   } else if (b.tool === 'saw') {
