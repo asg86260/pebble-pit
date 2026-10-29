@@ -176,8 +176,9 @@ takes a restored sky nearly to nothing, and carries its own measurements.
      (moved to render/invert.js, shared) has answered, the filter is used
      wherever one exists, so the first deep frame after a reload is not a
      `difference` fill either. Chrome's probe still says no, so Chrome is on
-     the fills as before. The dark page keeps the `difference` grit (the
-     wanted color there is not 255 minus the ground).
+     the fills as before. The dark page kept the `difference` grit (the
+     wanted color there is not 255 minus the ground) until 2026-10-29: see
+     "Firefox's canvas off the card" below.
   2. **The rift's still copy was a fresh canvas every frame.** `drawBend`
      sized its copy to the disc exactly, and a growing rift changes that
      every frame; in Firefox the copy into the new canvas cost 2.5-4.6 ms of
@@ -304,6 +305,45 @@ takes a restored sky nearly to nothing, and carries its own measurements.
   rest; the portal's hole (0.47 ms, all of it on the window in this view)
   and the clouds' per-cell tones (0.33) the drawing's. A one-off 10 ms
   serpent step at a phase change is the only spike in 90 s of the deep.
+
+- **Firefox's canvas off the card (2026-10-29).** The owner saw 60+ fps in
+  a mid yard (24 crew, the belt being built) in Firefox, falling to 15-35
+  the moment the mouse or the camera moved. Their Firefox profile showed the
+  game's canvas drawn on the processor (Skia's `blit_row_s32a_opaque` and
+  `SkPMSrcOver` in the tab's own thread) while the scratch canvases it copies
+  from were still on the card, so every `drawImage` of one waited on the GPU
+  process for a readback (`PCanvas::Msg_SnapshotExternalCanvas`, 800 of
+  1,915 samples there): `press`, the scanline sheet, was 454 of the frame's
+  1,787 samples on its own. The only `difference` fill left in a yard frame
+  was the builder's grit on the dark page (`xorGrit`). Measured in headless
+  Firefox over BiDi, GPU prefs forced, the owner's save at 2560x1440: loaded
+  in place, the dark page stayed on the card (126 fps, draw 2.9 ms); the same
+  page *reloaded* into the save, the grit on its first frames, went to the
+  processor for good -- `page` (one fill) 0.01 -> 1.22 ms, `press` 0.01 ->
+  3.06, draw 10.4 ms, 78 fps -- and the light page reloaded the same way
+  stayed on the card. The dark page's fill is its paper and ink summed,
+  `#fefefe`, so the invert filter lands every tone exactly one step above it
+  (measured in Firefox: 236 -> 237, 18 -> 19, 126 -> 127); the grit now goes
+  through the filter on either page wherever the filter is exact. After,
+  reloaded on the dark page: `page` and `press` 0.01 ms, draw 3.1 ms. Tried
+  first and dropped: the `difference` fill moved onto the scratch patch
+  instead -- the main canvas stayed on the card, but the patch went to the
+  processor and copying the frame into it was a readback every frame (the
+  grit layer alone 6 ms).
+
+  Still open: the lamp hats' light (render/lamplight.js) is laid with
+  `darken` (`lighten` on the dark page) straight onto the frame, and Firefox's
+  card has neither. Panning onto the owner's quarry, its quarriers in lamp
+  hats, took a page that had never been reloaded off the card on either page
+  (`page` 0.74-1.11 ms, draw 8.3-11.3 ms, 68 fps), and with the light
+  switched off the same pan stayed on it (draw 2.7 ms, 118 fps). That is the
+  drop "when the camera moves". Drawing the wedge without the blend changes
+  the picture, so it waits on the owner.
+
+  Not the cause, measured on the same save: the
+  sim (0.4 ms a frame in node, nothing growing over an hour), the autosave
+  (2 ms a second), and the pointer handler (0.3-0.5 ms a move; 1,000 moves
+  a second through it still held 128 fps headless).
 
 ## 1. The frame budget
 
