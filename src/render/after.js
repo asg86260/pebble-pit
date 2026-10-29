@@ -40,7 +40,6 @@ import { drawGroveMockBodies, groveMockOn } from './after/grovemock.js'; // MOCK
 import { DRAW, workerPose, GLYPHS, backOf, drawMillHeap } from './after/stations.js';
 import { drawFistFlag } from './aftercrowd.js';
 import { heap, heapCells, drawGround, goodBlock } from './after/piles.js';
-import { goodsLook, STORED, MOCK_DUST, seedOf } from './after/piles.js'; // MOCK
 import { drawBody } from './crew.js';
 import { onDevice } from './wardrobe.js';
 import { drawPillar, drawPair, drawBubbles, drawRebelPile } from './after/pedestal.js';
@@ -222,7 +221,8 @@ function shoutMark(x, y) { ctx.fillStyle = GREY[K]; ctx.fillRect(x + 8, y - 12, 
 // A load of `n` of a good stacked the yard's way (render/crew.js), a thing a
 // row, as many rows as it carries, up to AFTER_CARRY_SHOWN: over a head whose
 // top left is (x, y).
-function drawLoad(x, y, kind, n, id = 0, load = null) { // MOCK after-goods -- id, load
+// `load` is the body's carried cells: each block shows its unit's own tone.
+function drawLoad(x, y, kind, n, load = null) {
   n = Math.min(AFTER_CARRY_SHOWN, n);
   // Logs and timber as the blocks they lie on their piles as
   // (render/after/piles.js, `goodBlock`), stacked a block on a block over the
@@ -235,10 +235,7 @@ function drawLoad(x, y, kind, n, id = 0, load = null) { // MOCK after-goods -- i
     goodBlock(lx, ly, kind);
   } else if (kind === 'log' || kind === 'plank') {
     const z = AFTER_BLOCK[kind] * AP, lx = x + 1.5 * P - z / 2;
-    for (let k = 0; k < n; k++) goodBlock(lx, y - (k + 1) * z, kind, STORED() && load && load[k] ? load[k] : seedOf(id, k)); // MOCK after-goods -- seed, or the carried unit's own value
-  } else if (kind === 'sign' && goodsLook()) { // MOCK after-goods
-    const z = AFTER_BLOCK.sign * AP, lx = x + 1.5 * P - z / 2; // MOCK after-goods
-    for (let k = 0; k < n; k++) goodBlock(lx, y - (k + 1) * z, kind, STORED() && load && load[k] ? load[k] : seedOf(id, k)); // MOCK after-goods
+    for (let k = 0; k < n; k++) goodBlock(lx, y - (k + 1) * z, kind, load && load[k]);
   } else if (kind === 'sign') {
     // The one in front held up on its post; the rest boards on the shoulder.
     drawFistFlag(x + P, y + P * 2, AFTER_SIGN_FLAG_U.held, 1, AFTER_SIGN_FLAG_U.up * P);
@@ -258,14 +255,14 @@ function drawHandGoods() {
     for (const m of S.motes) {
       if (m.place !== 'after' || !AFTER_BLOCK[m.kind]) continue;
       const z = AFTER_BLOCK[m.kind] * AP, at = motePos(m, t);
-      onPixel(at.x - z / 2, at.y - z / 2, () => goodBlock(0, 0, m.kind, m.s)); // MOCK after-goods -- m.s
+      onPixel(at.x - z / 2, at.y - z / 2, () => goodBlock(0, 0, m.kind, m.s));
     }
   }
   for (const ch of S.chips) {
     if (ch.place !== 'after' || !AFTER_BLOCK[ch.kind]) continue;
     const z = AFTER_BLOCK[ch.kind] * AP;
     if (!inView(ch.x - z, z * 2)) continue;
-    goodBlock(Math.round(ch.x - z / 2), Math.round(ch.y - z / 2), ch.kind, ch.s); // MOCK after-goods -- ch.s
+    goodBlock(Math.round(ch.x - z / 2), Math.round(ch.y - z / 2), ch.kind, ch.s);
   }
 }
 function drawMember(w) {
@@ -278,7 +275,7 @@ function drawMember(w) {
     const x = 0, y = 0;
     drawBody(x, y);
     ctx.fillStyle = GREY[K];
-    drawLoad(x, y, loadKind(w), carryOf(w), w.id, w.load); // MOCK: w.id, w.load
+    drawLoad(x, y, loadKind(w), carryOf(w), w.load);
     if (w.tipping) { ctx.fillRect(x + 2, y - 10, 14, 10); ctx.fillStyle = GREY[PALE]; ctx.fillRect(x + 4, y - 8, 10, 6); }
     if (w.swing != null) {
       if (w.job == null) shoutMark(x, y);

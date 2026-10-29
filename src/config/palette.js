@@ -59,6 +59,32 @@ export const GOLD = { yard: '#c99406', deep: '#f2c14e' };
 // each lands on its step of AFTER_DARK.
 export const AFTER_TONES = { paper: 0, pale: 3, mid: 6, ink: 10 };
 
+// Act 3's goods carry their own color families, outside the four tones (the
+// owner, 2026-10-29: "B2 colors, act 1 contrast"). Each good is a run of four
+// tones light to dark, as each of act 1's coins is (COIN_TONES): the lightest
+// full strength and the rest at the coin's own steps down (0.82, 0.75, 0.58).
+// A unit takes one of its four at birth, with equal odds, and keeps it in its
+// cell (grid.js, `cellOf`) through every station, so a heap reads as separate
+// pieces without a border. Hues are apart from every coin's (ore blue, crop
+// green, spark red, gold, the deep's purple). Each family is one role:
+export const AFTER_GOODS = {
+  log:     ['#9c6a3c', '#805731', '#75502d', '#5a3d23'],   // the felled log: bark brown
+  plank:   ['#e6c896', '#bda47b', '#ac9670', '#857457'],   // timber: sawn pale wood
+  sign:    ['#57606b', '#474f58', '#414850', '#32383e'],   // the sign: a painted slate board
+  sawdust: ['#f0dcb6', '#c5b495', '#b4a588', '#8b806a']    // sawdust: the timber's wood a step paler, a grain each
+};
+
+// The same families on the dark page, lifted a step toward the light as
+// COIN_DARK lifts the coins, and spread so the four tones of a good still tell
+// apart on the page's charcoal (ink.js would squeeze a brown's four steps
+// into one). Drawn raw, one-to-one with AFTER_GOODS.
+export const AFTER_GOODS_DARK = {
+  log:     ['#b8814a', '#98683b', '#8a5d34', '#6c4727'],
+  plank:   ['#efd6a6', '#cdb68b', '#bba57d', '#988764'],
+  sign:    ['#8793a1', '#707b88', '#667180', '#4f5a67'],
+  sawdust: ['#f5e6c4', '#d2c3a3', '#c1b496', '#9a8e76']
+};
+
 // Act 3 on the dark page (DESIGN.md, "The sky, redrawn flat"): the same order
 // turned, each of the four tones where it lands there (src/ink.js, the
 // 'after' map) -- the paper darkest, the ink lightest, a clear step between

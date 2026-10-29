@@ -469,18 +469,10 @@ export const kindOf = v => KIND_OF[v] || null;
 export const toneOf = v => (KIND_OF[v] ? v - KIND_OF[v].first : -1);
 // the cell value of a kind (by key) in one of its tones
 // (clamped to its palette, so a tone past it never spills into the next kind's run)
-// MOCK after-goods  option C: a unit made with no tone asked for takes a random one of its kind's six, once
-// MOCK after-goods  a stored shade of n: C uniform over six, D near the middle of ten as act 1's `shadeNear` is, the ends rare
-export const mockShade = (n, block) => {
-  const look = globalThis.__goodsLook;
-  if (!look) return 0;
-  const u = () => ((Math.sin((globalThis.__goodsSeq = (globalThis.__goodsSeq || 0) + 1) * 12.9898) * 43758.5453) % 1 + 1) % 1;
-  if (look === 'c') return Math.floor(u() * Math.min(n, 6));
-  if (look !== 'd') return Math.floor(u() * 4); // b1, b2, b3: four tones, each as likely, as act 1's someFind
-  return Math.max(0, Math.min(9, Math.round(4.5 + (u() + u() - 1) * 4.5)));
-};
+// A unit takes one of its kind's tones with equal odds when it is made, as
+// act 1's finds do (`someFind`), and keeps it from then on.
 export const cellOf = (kind, tone) => {
-  if (tone === undefined) tone = KINDS[kind].tones > 1 ? mockShade(KINDS[kind].tones, true) : 0;
+  if (tone === undefined) tone = Math.floor(rand() * KINDS[kind].tones);
   return KINDS[kind].first + Math.max(0, Math.min(KINDS[kind].tones - 1, tone | 0));
 };
 // cells a side of whatever a value is: one for everything that is not a block

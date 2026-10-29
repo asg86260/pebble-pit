@@ -3185,38 +3185,23 @@ export const SCENES = {
       window.__look(mid - S.viewW / 2);
       window.__still(true); window.__holdShot();
     } },
-  // MOCK after-goods: what act 3's goods look like (mock-goods-look4, never merged). The
-  // chain run and every pile topped up, framed from the forestry shack's log
-  // pile to the workshop's signs, a member carrying while it holds; `look`
-  // the drawing mode (render/after/piles.js, `__goodsLook`), null the real one.
-  ...Object.fromEntries([[null, 'current', "the goods as they are drawn now: each block a flat tone with a one-pixel seam on its right and bottom only"],
-    ['b1', 'B1 colors, a shade each', "B1's four colors, each unit (log, block, sign, grain) taking one of the four at random when it is made and keeping it; no neighbor rule"],
-    ['b2', 'B2 colors, act 1 contrast', "each good in four tones at act 1's coin contrast (as ore and crops are shaded), every unit one of them, picked once when it is made and kept through every station"],
-    ['b3', 'B3 greys, a shade each', "the same, in act 3's greys: each unit one of the good's four greys, picked once when it is made"],
-    ['c', 'C random shade', "B1's colors with no rule between neighbors: each block and each grain of sawdust takes a random shade of its family (six a family) once, when it is made, and keeps it through every roll, carry, cut and throw"],
-    ['d', 'D subtle per unit', "B2's colors, but every unit (log, timber block, sign, grain of sawdust) picks its own shade once from ten close ones, near the middle as act 1's grains do, and keeps it through every station"]]
-    .map(([look, option, say]) => [`after-goods-${look || 'now'}`, { about: 'the acts', review: 'act 3: what the goods look like', // MOCK
-      stage: 'mock: throwaway review code, never merged -- shows how it would look; the real build comes after you pick', option, say, // MOCK
-      swap: () => { globalThis.__goodsLook = look; }, // MOCK
-      run: () => { // MOCK
-        globalThis.__goodsLook = look; // MOCK
-        afterChain(false); // MOCK
-        window.__fast(20); // MOCK
-        window.__afterGrant({ grovelogs: 20, logs: -20 }); // MOCK  the mill's pile bare, so a member hauls
-        window.__fast(2); // MOCK
-        // a member under a load of logs, between the shack and the mill // MOCK
-        const lo = window.__afterPile('forestry', 'grovelogs').x, hi = window.__afterPile('mill', 'timber').x; // MOCK
-        const carrying = () => S.after.bodies.some(w => loadKind(w) === 'log' && w.x > lo + P * 12 && w.x < hi - P * 30); // MOCK
-        for (let k = 0; k < 1800 && !carrying(); k++) window.__fast(1 / 30); // MOCK
-        window.__afterGrant({ grovelogs: 20, logs: 4, timber: 40, sawdust: 30, signs: 4, benchtimber: 8 }); // MOCK after-goods  room left for the load on its way
-        globalThis.__goodsStock = () => goodsRead(); // MOCK after-goods  each pile's stock, for the shot's count
-        globalThis.__goodsMill = () => ({ hv: millView().hv, bed: millView().log && millView().log.v, pile: groundUnits().filter(u => u.kind === 'log' && u.c0 > 230 && u.c0 < 275).map(u => [u.c0, u.r0, u.v]) }); // MOCK after-goods  the log's value at the pile, in the sawyer's arms, on the bed
-        globalThis.__goodsUnits = () => groundUnits().map(u => ({ k: u.kind, c: u.c0, r: u.r0, z: u.z, v: u.v })); // MOCK after-goods  every unit's cell and stored value, for the count
-        window.__fast(1 / 60); // MOCK
-        const x = lo - P * 30; // MOCK
-        pinCamera(x); window.__look(x); // MOCK
-      } }])), // MOCK
-
+  // The chain run and every pile topped up, framed from the forestry shack's
+  // log pile to the workshop's signs, a member carrying while it holds: every
+  // good in the four tones its units were born with.
+  'after-goods': { about: 'the acts', say: "every good in its own colors: logs, timber, signs and sawdust, each unit one of its good's four tones",
+    run: () => {
+      afterChain(false);
+      window.__fast(20);
+      window.__afterGrant({ grovelogs: 20, logs: -20 });     // the mill's pile bare, so a member hauls
+      window.__fast(2);
+      const lo = window.__afterPile('forestry', 'grovelogs').x, hi = window.__afterPile('mill', 'timber').x;
+      const carrying = () => S.after.bodies.some(w => loadKind(w) === 'log' && w.x > lo + P * 12 && w.x < hi - P * 30);
+      for (let k = 0; k < 1800 && !carrying(); k++) window.__fast(1 / 30);
+      window.__afterGrant({ grovelogs: 20, logs: 4, timber: 40, sawdust: 30, signs: 4, benchtimber: 8 });   // room left for the load on its way
+      window.__fast(1 / 60);
+      const x = lo - P * 30;
+      pinCamera(x); window.__look(x);
+    } },
 
   // The workshop (docs/mocks/act3-workshop-2026-10-18, roof A): nails tapped
   // by hand, two driven flush, one half in; and a sign just done, standing

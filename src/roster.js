@@ -26,7 +26,7 @@ import { reducedMotion } from './prefs.js';
 import { writeCount } from './render/numfont.js';
 import { msg, FACE } from './lang.js';
 import { crispText } from './render/crisptext.js';
-import { drift } from './render/bars.js';
+import { drift } from './render/drift.js';
 import { GREY } from './config/palette.js';
 import { fillDots } from './render/dots.js';
 import { SHELF_HOVER_MS, SHOP_BTN_PX, SHOP_BTN_H, SHOP_BTN_PAD, SHOP_BTN_AIR, SHOP_BTN_ADVANCE,

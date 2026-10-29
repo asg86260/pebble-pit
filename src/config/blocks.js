@@ -7,7 +7,7 @@
 // of one value; a grain (size 1) is a cell on its own.
 import { ROCK_CELL } from './view.js';
 import { AFTER_BLOCK } from './afterpiles.js';
-import { AFTER_TONES } from './palette.js';
+import { AFTER_TONES, AFTER_GOODS, GREY } from './palette.js';
 
 // What each kind is, in the order its run of values is laid out (so a kind
 // added at the end never shifts a saved value):
@@ -15,18 +15,18 @@ import { AFTER_TONES } from './palette.js';
 //   weight   grains of the hand's capacity one unit takes: a block's area, so
 //            a log is sixteen dust and the strength ladder means the same in
 //            every act (the owner, 2026-10-28)
-//   palette  its tones, rungs of GREY by AFTER_TONES; a block is one flat
-//            tone (act 3's rule), a heap of grains takes several
+//   palette  its tones, one color each (AFTER_GOODS); a unit keeps the one
+//            it was born with, a block is one flat square of it
 //   home     the pile a body carries it back to (none: it is no good to carry
 //            home, and a gatherer leaves it lying)
 const KIND_DEFS = [
-  { key: 'log',     size: AFTER_BLOCK.log,   palette: Array(10).fill(AFTER_TONES.mid),      home: 'grovelogs' },
-  { key: 'plank',   size: AFTER_BLOCK.plank, palette: Array(10).fill(AFTER_TONES.pale),     home: 'timber' },
-  { key: 'sign',    size: AFTER_BLOCK.sign,  palette: Array(10).fill(AFTER_TONES.ink),      home: 'signs' },
-  { key: 'sawdust', size: 1,                 palette: [AFTER_TONES.pale, AFTER_TONES.mid],  home: 'sawdust' },
+  { key: 'log',     size: AFTER_BLOCK.log,   palette: AFTER_GOODS.log,                      home: 'grovelogs' },
+  { key: 'plank',   size: AFTER_BLOCK.plank, palette: AFTER_GOODS.plank,                    home: 'timber' },
+  { key: 'sign',    size: AFTER_BLOCK.sign,  palette: AFTER_GOODS.sign,                     home: 'signs' },
+  { key: 'sawdust', size: 1,                 palette: AFTER_GOODS.sawdust,                  home: 'sawdust' },
   // a construction site's load (after/build.js): made at the shack's door,
   // laid in a band, carried by nobody home, so no pile is its home
-  { key: 'load',    size: AFTER_BLOCK.load, palette: [AFTER_TONES.mid],                    home: null }
+  { key: 'load',    size: AFTER_BLOCK.load, palette: [GREY[AFTER_TONES.mid]],         home: null }
 ];
 
 // The first value a unit may take, the one after the rock's.

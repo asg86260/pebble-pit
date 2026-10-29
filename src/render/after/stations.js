@@ -17,14 +17,11 @@
 // it instead: the hammer on the nail it struck. The saw mill is drawn off
 // its machine (after/mill.js) alone, whoever turns it.
 
-import { P, GREY, AFTER_SAW_TEETH, AFTER_ART_SCALE, AFTER_MILL, AFTER_SPILL_S } from '../../config.js';
-import { K, W, PALE, MID, DUST, hash, silhouette } from './kit.js';
+import { P, KINDS, AFTER_SAW_TEETH, AFTER_ART_SCALE, AFTER_MILL, AFTER_SPILL_S } from '../../config.js';
+import { K, W, PALE, MID, hash, silhouette } from './kit.js';
 import { held } from '../../reset.js';
 import { ctx } from '../ctx.js';
-import { goodBlock } from './piles.js';
-import { goodsLook, SAWDUST_HUES, dustOf, famOf, toneIdx, STORED } from './piles.js'; // MOCK after-goods
-// MOCK after-goods: each option's sawdust, a grain each: the wood family's paler shades in b1/b2, the heap's own greys otherwise
-const LOOK_DUST = () => dustOf(); // MOCK after-goods
+import { goodBlock, goodColor, goodTone } from './piles.js';
 import { wheelAngle, millView, sawyerPose } from '../../after/mill.js';
 import { at } from '../../grid.js';
 
@@ -92,17 +89,10 @@ function millBlade(d, x, y0, y1, o) {
 }
 // A block of one good laid at a point of the frame (its top left, cells),
 // on whole pixels at its true position.
-function blockOn(d, x, y, kind, v) { const p = d.world(x, y); goodBlock(Math.round(p.x), Math.round(p.y), kind, STORED() ? v ?? 1 : 1); } // MOCK after-goods -- v
-// MOCK after-goods  option C: a part-cut block in its own unit's flat shade, no seam
-function partFlat(d, x, y, w, z, kind, v) { if (w <= 0) return; const p = d.world(x, y); ctx.fillStyle = famOf(kind)[toneIdx(kind, v)]; ctx.fillRect(Math.round(p.x), Math.round(p.y), Math.round(w * S1), z * S1); }
-// A good's block cut short, `w` cells of its width: the log in the blade,
-// the timber block growing out of it.
-function partBlock(d, x, y, w, z, tone, seam) {
-  if (w <= 0) return;
-  const p = d.world(x, y), X = Math.round(p.x), Y = Math.round(p.y), pw = Math.round(w * S1), pz = z * S1;
-  ctx.fillStyle = GREY[seam]; ctx.fillRect(X, Y, pw, pz);
-  ctx.fillStyle = GREY[tone]; ctx.fillRect(X, Y, pw - 1, pz - 1);
-}
+function blockOn(d, x, y, kind, v) { const p = d.world(x, y); goodBlock(Math.round(p.x), Math.round(p.y), kind, v); }
+// A good's block cut short, `w` cells of its width, in its own unit's tone: the
+// log in the blade, the timber block growing out of it.
+function partBlock(d, x, y, w, z, kind, v) { if (w <= 0) return; const p = d.world(x, y); ctx.fillStyle = goodColor(kind, v); ctx.fillRect(Math.round(p.x), Math.round(p.y), Math.round(w * S1), z * S1); }
 // The burst of chips off the kerf at a stroke's foot, thrown either side and
 // falling, gone in AFTER_MILL.chips_s.
 function chips(d, age, seed) {
@@ -127,7 +117,7 @@ function heapOn(d, b) {
   const x0 = AFTER_MILL.heap.x;
   for (let c = 0; c < b.cols; c++) for (let r = 0; r < b.rows; r++) {
     const v = at(b, c, r);
-    if (v) d.c(x0 + c, -1 - r, LOOK_DUST() ? LOOK_DUST()[(v - 1) % LOOK_DUST().length] : DUST[(v - 1) % DUST.length]); // MOCK after-goods
+    if (v) d.c(x0 + c, -1 - r, goodTone('sawdust', (v - 1) % KINDS.sawdust.tones));
   }
 }
 // The heap and a tip's grains dropping out through the hatch, gone under
@@ -167,17 +157,12 @@ function mill(d, work, t, h, body = false) {
     // from its right end and the block it is becoming grows past the blade
     if (live.log) {
       const lg = live.log;
-      if (STORED()) { // MOCK after-goods
-        partFlat(d, lg.x, bed - LOG, Math.min(lg.x + LOG, bx) - lg.x, LOG, 'log', lg.v);
-        partFlat(d, bx + 2, bed - PL, PL * live.grow, PL, 'plank', lg.pv);
-      } else { // MOCK after-goods
-      partBlock(d, lg.x, bed - LOG, Math.min(lg.x + LOG, bx) - lg.x, LOG, MID, K);
-      partBlock(d, bx + 2, bed - PL, PL * live.grow, PL, PALE, MID);
-      } // MOCK after-goods
+      partBlock(d, lg.x, bed - LOG, Math.min(lg.x + LOG, bx) - lg.x, LOG, 'log', lg.v);
+      partBlock(d, bx + 2, bed - PL, PL * live.grow, PL, 'plank', lg.pv);
     }
     for (const b of live.out) blockOn(d, b.x - PL / 2, b.y - PL, 'plank', b.v);
-    for (const g of live.dust) { // MOCK after-goods
-      if (STORED() && g.v && dustOf()) { const p = d.world(g.x, g.y); const df = dustOf(); ctx.fillStyle = df[(g.v - 1) % df.length]; ctx.fillRect(Math.round(p.x), Math.round(p.y), Math.round(S1), Math.round(S1)); } else d.px(g.x * P, g.y * P, P, P, MID);
+    for (const g of live.dust) {
+      if (g.v) { const p = d.world(g.x, g.y); ctx.fillStyle = goodTone('sawdust', (g.v - 1) % KINDS.sawdust.tones); ctx.fillRect(Math.round(p.x), Math.round(p.y), Math.round(S1), Math.round(S1)); } else d.px(g.x * P, g.y * P, P, P, MID);
     }
     if (live.hitAt != null) chips(d, t - live.hitAt, Math.floor(live.hitAt * 7));
     if (live.setAt != null) puff(d, AFTER_MILL.seat.x, t - live.setAt);

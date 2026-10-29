@@ -14,7 +14,7 @@ import {
   settle, put, at, topRow, kindOf, toneOf, cellOf, sizeOfCell
 } from '../src/grid.js';
 
-const LOG = cellOf('log'), PLANK = cellOf('plank');
+const LOG = cellOf('log', 0), PLANK = cellOf('plank', 0);
 const LZ = KINDS.log.size, PZ = KINDS.plank.size;
 
 // a plot, with the awake fields declared as state.js's floor does, and
@@ -151,6 +151,14 @@ test('a block reads back its kind and shade, and values stay clear of the shades
   for (let i = 1; i < runs.length; i++) assert.ok(runs[i][0] > runs[i - 1][1], 'no two kinds share a value');
   assert.equal(kindOf(1), null);
   assert.equal(kindOf(ROCK_CELL), null);
+});
+
+test('a unit made with no tone asked for takes any of its four, and keeps a tone of its own kind', () => {
+  for (const key of ['log', 'plank', 'sign', 'sawdust']) {
+    const seen = new Set();
+    for (let i = 0; i < 400; i++) { const v = cellOf(key); assert.equal(kindOf(v), KINDS[key]); seen.add(toneOf(v)); }
+    assert.equal(seen.size, 4, `${key} is born in all four of its tones`);
+  }
 });
 
 test('KINDS sizes and weights read from config', () => {
