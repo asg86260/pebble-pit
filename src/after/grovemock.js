@@ -23,9 +23,9 @@
 
 import { S } from '../state.js';
 // the frame's steps are handed in by the scene (game.js imports the drawing, which imports this)
-import { P, TREE_CHOPS, AFTER_WALK, GESTURE_SAW_AMP } from '../config.js';
-import { plotX, afterFloor, floorAt, stationDoor, AP, PINE_GROWN } from './place.js';
-import { chopTree } from './grove.js';
+import { P, TREE_CHOPS, AFTER_WALK, GESTURE_SAW_AMP, AFTER_DIG_CLICKS } from '../config.js';
+import { plotX, groundOf, floorAt, stationDoor, AP, PINE_GROWN } from './place.js';
+import { chopTree, digStump } from './grove.js';
 import { putSomewhere, tag, fallTag, takeAt } from './ground.js';
 import { cellOf } from '../grid.js';
 import { source, sink } from '../flow.js';
@@ -38,7 +38,7 @@ import { gestureDown, gestureMove, gestureUp, partsOf, gestureView } from './ges
 // trunk spans columns -2..1 off the plot's column, so it and every row of
 // the crown are an even number of cells wide, centered on the plot line
 // with no half cell. Rows count up from the floor: row -1 the bottom.
-export const MT = { c0: -2, w: 4, stump: 2, logs: 4, log: 4,
+export const MT = { c0: -2, w: 4, stump: 4, logs: 4, log: 4,   // the stump a whole log's block, its cut a log up (the owner: the saw higher off the floor)
   // the crown's tiers, the lowest first: h rows, its top row `top` cells wide,
   // a cell wider a side every row down
   tiers: [{ h: 6, top: 6 }, { h: 5, top: 4 }, { h: 4, top: 2 }] };
@@ -96,7 +96,13 @@ export function rowOrder() {
 
 // --- where things stand, world px ------------------------------------------------------
 export const bx = () => plotX(0);
-export const fl = () => afterFloor();
+export const fl = () => groundOf('tree');   // the grove's shelf (place.js, GROVE_MOCK_SHELF)
+// The first plot stands by the forestry shack (the owner's layout), so a
+// tree there falls away from it, to the left: the scripts work as if it fell
+// right, and the drawing and everything laid on the real ground is that
+// turned about the plot's middle line (`mx`), for the options with a fall.
+export const mx = x => (M.flip ? 2 * bx() - x : x);
+const floorM = x => floorAt(mx(x));
 // The fall's pivot: the trunk's right edge on the stump's top. Lying, the
 // trunk runs right from here along the floor.
 export const pivotX = () => bx() + (MT.c0 + MT.w) * AP;
@@ -144,9 +150,12 @@ const ease = u => u * u * (3 - 2 * u);
 const lerp = (a, b, k) => a + (b - a) * k;
 
 const PLOT0 = { fall: null, fell: null, chops: 0, chip: null, dug: 0, big: false, at: null, grow: 0, logs: 0 };
-function standTree() { Object.assign(plot(), PLOT0, { stage: PINE_GROWN, stump: false }); M.landed = null; M.logs = 0; M.notch = 0; }
-function felledPlot() { Object.assign(plot(), PLOT0, { stage: 0, stump: true }); }
-function barePlot() { Object.assign(plot(), PLOT0, { stage: 0, stump: false }); }
+// The trunk's logs each a shade of the log's four, picked once a tree (and
+// the stump's, which is a log's block too), kept by each log cut off it.
+function shades() { M.tones = Array.from({ length: MT.logs }, () => Math.floor(Math.random() * 4)); M.stumpTone = Math.floor(Math.random() * 4); }
+function standTree() { Object.assign(plot(), PLOT0, { stage: PINE_GROWN, stump: false }); M.landed = null; M.logs = 0; M.notch = 0; shades(); }
+function felledPlot() { Object.assign(plot(), PLOT0, { stage: 0, stump: true }); shades(); }
+function barePlot() { Object.assign(plot(), PLOT0, { stage: 0, stump: false }); shades(); }
 // The logs the mock laid taken up again, so a loop starts as it began.
 function takeBack() {
   for (const ai of M.placed) if (takeAt(ai)) sink('log', 1, 'mock');
@@ -154,11 +163,14 @@ function takeBack() {
 }
 // A log cut free and come to rest at left x on the floor: a unit of the
 // act's one ground from now on, sliding into its slot from where it stopped.
-function layLog(x) {
+// `tone` the shade it had in the trunk; x as the script has it, turned onto
+// the real ground with the drawing.
+function layLog(x, tone) {
   source('log', 1, 'tree');
-  const ai = putSomewhere(cellOf('log'), x + MT.log * AP / 2);
+  const wx = M.flip ? 2 * bx() - x - MT.log * AP : x;
+  const ai = putSomewhere(cellOf('log', tone), wx + MT.log * AP / 2);
   if (ai < 0) return;
-  tag(ai, { i: 0, x0: x, at: S.after.t });
+  tag(ai, { i: 0, x0: wx, at: S.after.t });
   M.placed.push(ai);
 }
 
@@ -167,7 +179,7 @@ function walkTo(b, x, dt, y = null) {
   const d = x - b.x, s = AFTER_WALK * dt;
   if (Math.abs(d) > 0.5) b.face = Math.sign(d);
   b.x = Math.abs(d) <= s ? x : b.x + Math.sign(d) * s;
-  b.y = y ?? floorAt(b.x + BODY / 2);
+  b.y = y ?? floorM(b.x + BODY / 2);
   return b.x === x;
 }
 // A hop from `from` to `to` (left, feet), k of the way: a smooth arc.
@@ -200,7 +212,7 @@ function buckStep(dt, work, after) {
     if (work(dt)) { M.roll = { x: cutX(M.logs), at: S.after.t }; M.cut = 0; go('roll'); }
   } else if (M.ph === 'roll') {
     if (M.t >= ROLL_S) {
-      layLog(M.roll.x + MT.log * AP);
+      layLog(M.roll.x + MT.log * AP, M.tones[M.logs - 1]);
       M.roll = null; M.logs -= 1;
       go(M.logs > 1 ? 'step' : 'last');
     }
@@ -230,7 +242,7 @@ function bucker(dt, tool, script, blows = 3) {
     if (!b.from) b.from = { x: b.x, y: b.y };
     const k = Math.min(1, M.t / 0.5);
     hop(b, b.from, { x: bx() + MT.c0 * AP + (MT.w * AP - BODY) / 2, y: fl() - MT.stump * AP }, k, AP * 2);
-    if (k >= 1 && M.logs === 1) { layLog(pivotX()); M.logs = 0; b.face = 1; b.pose = 'rest'; b.ang = -0.9; }
+    if (k >= 1 && M.logs === 1) { layLog(pivotX(), M.tones[0]); M.logs = 0; b.face = 1; b.pose = 'rest'; b.ang = -0.9; }
     if (M.t >= 2.4) { b.from = null; script.init(); }
   });
 }
@@ -270,11 +282,11 @@ const SCRIPTS = {
       if (M.ph === 'walk') { if (walkTo(b, spot, dt)) { b.face = -1; go('kneel'); } }
       else if (M.ph === 'kneel') {
         b.squat = true;
-        if (M.t >= 0.25) { b.carry = null; M.cone = { state: 'set', at: S.after.t, from: { x: b.x + BODY / 2 - AP, y: b.y - BODY + P - 2 * AP } }; go('set'); }
+        if (M.t >= 0.25) { b.carry = null; M.cone = { state: 'set', at: S.after.t, from: { x: b.x + BODY / 2 - 1.5 * AP, y: b.y - BODY + P - 4 * AP } }; go('set'); }
       } else if (M.ph === 'set') {
         if (M.t >= 0.5) { M.cone = { state: 'in', at: S.after.t }; go('press'); }
       } else if (M.ph === 'press') {
-        if (M.t >= 0.9) { b.squat = false; M.grow = { kind: 'b2', at: S.after.t, dur: 14 }; go('back'); }
+        if (M.t >= 0.9) { b.squat = false; M.grow = { kind: 'b1', at: S.after.t, dur: 14 }; go('back'); }
       } else if (M.ph === 'back') {
         if (walkTo(b, b.home, dt) || M.t > 4.5) go('hold');
       } else if (M.ph === 'hold' && M.t >= 1.2) this.init();
@@ -287,34 +299,34 @@ const SCRIPTS = {
     init() {
       barePlot();
       const door = stationDoor('forestry'), x = door - AP * 5;
-      M.cone = { state: 'lying', x, y: floorAt(x) - 2 * AP };
+      M.cone = { state: 'lying', x, y: floorAt(x) - 4 * AP };
       M.from = { x: M.cone.x, y: M.cone.y };
       M.bodies = []; M.grow = null; M.cursor = null; go('teach');
     },
     step(dt) {
       const c = M.cone, from = M.from, over = { x: bx() - AP, y: fl() - AP * 9 };
-      const at = k => ({ x: lerp(from.x + AP, over.x + AP, ease(k)), y: lerp(from.y - 2 * AP, over.y, ease(k)) - Math.sin(Math.PI * ease(k)) * AP * 8 });
+      const at = k => ({ x: lerp(from.x + 1.5 * AP, over.x + AP, ease(k)), y: lerp(from.y - 2 * AP, over.y, ease(k)) - Math.sin(Math.PI * ease(k)) * AP * 8 });
       if (M.ph === 'teach') {
         const u = (M.t % 1.6) / 1.6, k = Math.min(1, u * 1.3);
         M.ghost = { ...at(k), pose: u < 0.08 ? 'point' : 'grab' };
         if (M.t >= 3.2) { M.ghost = null; go('reach'); }
       } else if (M.ph === 'reach') {
         const k = Math.min(1, M.t / 0.6);
-        M.cursor = { x: lerp(over.x + AP * 10, from.x + AP, ease(k)), y: lerp(over.y, from.y - 2 * AP, ease(k)), pose: 'point' };
+        M.cursor = { x: lerp(over.x + AP * 10, from.x + 1.5 * AP, ease(k)), y: lerp(over.y, from.y - 2 * AP, ease(k)), pose: 'point' };
         if (M.t >= 0.8) { M.cursor.pose = 'grab'; c.state = 'held'; go('carry'); }
       } else if (M.ph === 'carry') {
         const k = Math.min(1, M.t / 1.5);
         M.cursor = { ...at(k), pose: 'grab' };
-        c.x = M.cursor.x - AP; c.y = M.cursor.y + 2 * AP;   // hanging under the fist, as goods in the hand
+        c.x = M.cursor.x - 1.5 * AP; c.y = M.cursor.y + 2 * AP;   // hanging under the fist, as goods in the hand
         if (M.t >= 1.7) { M.cursor.pose = 'point'; Object.assign(c, { state: 'falling', at: S.after.t, fy: c.y }); go('fall'); }
       } else if (M.ph === 'fall') {
         // under the yard's gravity onto the soil, then in
-        const ground = fl() - 3 * AP;
+        const ground = fl() - 5 * AP;   // the acorn's top, sitting on the soil
         c.y = Math.min(ground, c.fy + 0.5 * 900 * M.t * M.t);
         if (c.y >= ground) { M.cone = { state: 'in', at: S.after.t }; go('press'); }
       } else if (M.ph === 'press') {
         M.cursor.x += 30 * dt; M.cursor.y -= 20 * dt;
-        if (M.t >= 0.9) { M.grow = { kind: 'b2', at: S.after.t, dur: 14 }; go('hold'); }
+        if (M.t >= 0.9) { M.grow = { kind: 'b1', at: S.after.t, dur: 14 }; go('hold'); }
       } else if (M.ph === 'hold') {
         M.cursor.x += 10 * dt;
         if (M.t >= 3.2) { M.cursor = null; this.init(); }
@@ -356,9 +368,9 @@ const SCRIPTS = {
   // and bucks it with the same axe.
   e: {
     init() { takeBack(); standTree();
-             M.bodies = [{ x: bx() + AP * 40, y: fl(), face: -1, tool: 'axe', pose: 'carry', ang: -1.3 }]; go('walk'); },
+             M.bodies = [{ x: bx() - AP * 40, y: floorM(bx() - AP * 40), face: -1, tool: 'axe', pose: 'carry', ang: -1.3 }]; go('walk'); },
     step(dt) {
-      const b = M.bodies[0], p = plot(), HIT = -0.25, stand = bx() + MT.c0 * AP - GRIP.dx - Math.round(AXE_FRONT * Math.cos(HIT));
+      const b = M.bodies[0], p = plot(), HIT = Math.asin((GRIP.dy + MT.stump * AP + 3) / -AXE_FRONT), stand = bx() + MT.c0 * AP - GRIP.dx - Math.round(AXE_FRONT * Math.cos(HIT));
       if (M.ph === 'walk') { b.pose = 'carry'; b.ang = -1.3; if (walkTo(b, stand, dt)) { b.face = 1; go('chop'); } }
       else if (M.ph === 'chop') {
         const k = Math.floor(M.t / BLOW_S), t = M.t - k * BLOW_S;
@@ -416,7 +428,7 @@ const SCRIPTS = {
         if (M.ph === 'last') {
           if (!M.from) M.from = { x: M.cursor.x, y: M.cursor.y };
           M.cursor = { x: lerp(M.from.x, M.from.x + AP * 10, ease(k)), y: lerp(M.from.y, M.from.y - AP * 6, ease(k)), pose: 'point' };
-          if (M.t >= 0.3 && M.logs === 1) { layLog(pivotX()); M.logs = 0; M.sawAt = null; }
+          if (M.t >= 0.3 && M.logs === 1) { layLog(pivotX(), M.tones[0]); M.logs = 0; M.sawAt = null; }
           if (M.t >= 2.2) this.init();
           return;
         }
@@ -493,7 +505,7 @@ const SCRIPTS = {
         s.y = M.from.sy - rise;
         if (k >= 1) { M.from = { x: M.cursor.x, y: M.cursor.y, sx: s.x, sy: s.y }; go('carry'); }
       } else if (M.ph === 'carry') {
-        const k = Math.min(1, M.t / 1.4), s = M.stumpOut, dx = ease(k) * AP * 22, dy = -Math.sin(Math.PI * k) * AP * 3;
+        const k = Math.min(1, M.t / 1.4), s = M.stumpOut, dx = ease(k) * AP * 14, dy = -Math.sin(Math.PI * k) * AP * 3;
         M.cursor = { x: M.from.x + dx, y: M.from.y + dy, pose: 'grab' };
         s.x = M.from.sx + dx; s.y = M.from.sy + dy;
         if (k >= 1) {
@@ -508,8 +520,139 @@ const SCRIPTS = {
         if (M.t >= 2.6) { M.from = null; this.init(); }
       }
     }
+  },
+  // E with a saw, three designs (the owner: "lets work on the saw design"):
+  // the woodcutter carries it in on its shoulder, stands at the trunk's side
+  // away from the fall and saws across it at the felling cut, a stroke in
+  // and out, each end held and the slide between smeared; a stroke in is a
+  // chop of the tree's, and on the last it goes over.
+  ...Object.fromEntries(['saw1', 'saw2', 'saw3'].map(tool => [`e${tool}`, {
+    init() { takeBack(); standTree();
+             M.bodies = [{ x: bx() - AP * 40, y: floorM(bx() - AP * 40), face: 1, tool, pose: 'carry', s: 0 }]; go('walk'); },
+    step(dt) {
+      const b = M.bodies[0], p = plot(), stand = bx() + MT.c0 * AP - BODY - SAW_STAND[tool] * AP;
+      if (M.ph === 'walk') { b.pose = 'carry'; if (walkTo(b, stand, dt)) { b.face = 1; b.pose = 'saw'; go('saw'); } }
+      else if (M.ph === 'saw') {
+        const { held, slide } = STROKE, per = 2 * (held + slide), k = Math.floor(M.t / per), t = M.t - k * per;
+        const wasIn = b.s >= 1;
+        if (t < held) { b.s = 0; b.smear = null; }
+        else if (t < held + slide) { b.s = (t - held) / slide; b.smear = 'in'; }
+        else if (t < 2 * held + slide) { b.s = 1; b.smear = null; }
+        else { b.s = 1 - (t - 2 * held - slide) / slide; b.smear = 'out'; }
+        if (b.s >= 1 && !wasIn) { chopTree(0); M.notch = p.fall != null ? MT.w : Math.min(MT.w, Math.ceil(p.chops / TREE_CHOPS * MT.w)); }
+        if (p.fall != null) { b.pose = 'carry'; b.s = 0; b.smear = null; go('watch'); }
+      } else if (M.ph === 'watch') { if (M.landed != null && S.after.t - M.landed >= 2.6) this.init(); }
+    } }])),
+  // F3a: the stump is the handle. Press and hold on it and drag up: it comes
+  // up with the hand, its roots straining under it and snapping one by one
+  // (the real stump gesture, a root a strain), no rope and no grip apart from
+  // it; out, it is carried off on the hand and let go, a log on the ground.
+  f3a: {
+    init() { takeBack(); felledPlot(); M.stumpOut = null; M.cursor = null; M.stumpUp = 0; go('teach'); },
+    step(dt) {
+      const p = plot(), x = bx(), mid = fl() - MT.stump * AP / 2;
+      if (M.ph === 'teach') {
+        const u = (M.t % 1.4) / 1.4;
+        M.ghost = { x, y: mid - Math.round(u * 3) * P, pose: u < 0.1 ? 'point' : 'grab' };
+        if (M.t >= 3.2) { M.ghost = null; go('reach'); }
+      } else if (M.ph === 'reach') {
+        const k = Math.min(1, M.t / 0.5);
+        M.cursor = { x: lerp(x + AP * 8, x, ease(k)), y: lerp(mid - AP * 8, mid, ease(k)), pose: k < 1 ? 'point' : 'grab' };
+        if (M.t >= 0.6) { gestureDown(x, mid); go('pull'); }
+      } else if (M.ph === 'pull') {
+        // the pointer dragged up; the stump comes up as far as the gesture lifts it, the hand on it
+        gestureMove(x, mid - Math.min(80, M.t * 120));
+        const rec = (gestureView() || []).find(r => r.key === 'stump');
+        M.stumpUp = rec ? rec.lift : 0;
+        M.cursor = { x, y: mid - M.stumpUp, pose: 'grab' };
+        if (!p.stump) {
+          gestureUp(x, mid);
+          M.stumpOut = { x: bx() + MT.c0 * AP, y: fl() - MT.stump * AP - M.stumpUp, tone: M.stumpTone };
+          M.from = { x: M.cursor.x, y: M.cursor.y, sx: M.stumpOut.x, sy: M.stumpOut.y };
+          go('carry');
+        }
+      } else if (M.ph === 'carry') carryOff(dt, this);
+      else if (M.ph === 'rest') { M.cursor.y -= 20 * dt; if (M.t >= 2.2) { M.from = null; this.init(); } }
+    }
+  },
+  // F3b: dig it with the shovel. The shovel stands in the ground beside the
+  // stump; press on its handle and lever it, a stroke at a time, each end
+  // held and the swing between smeared; each stroke loosens the stump (the
+  // real dig, `digStump`), tilting it up off the shovel's side, until it
+  // tips out onto its side as a block; then carried off and let go.
+  f3b: {
+    init() { takeBack(); felledPlot(); M.stumpOut = null; M.cursor = null; M.shovel = { ang: 0 }; M.tilt = 0; M.dug = 0; go('teach'); },
+    step(dt) {
+      const p = plot(), sh = shovelAt(), top = shovelTop(M.shovel.ang), push = SHOVEL_PUSH;
+      const lever = (t, who) => {
+        const { held, slide } = STROKE;
+        if (t < held) return { ang: 0, sm: null };
+        if (t < held + slide) return { ang: push * (t - held) / slide, sm: 'in' };
+        if (t < 2 * held + slide) return { ang: push, sm: null };
+        return { ang: push * (1 - (t - 2 * held - slide) / slide), sm: 'out' };
+      };
+      const per = 2 * (STROKE.held + STROKE.slide) + 0.15;
+      if (M.ph === 'teach') {
+        const l = lever(M.t % per), tp = shovelTop(l.ang);
+        M.ghost = { x: tp.x, y: tp.y, pose: 'grab' };
+        if (M.t >= 3.2) { M.ghost = null; go('reach'); }
+      } else if (M.ph === 'reach') {
+        const k = Math.min(1, M.t / 0.5);
+        M.cursor = { x: lerp(top.x + AP * 8, top.x, ease(k)), y: lerp(top.y - AP * 6, top.y, ease(k)), pose: k < 1 ? 'point' : 'grab' };
+        if (M.t >= 0.6) go('lever');
+      } else if (M.ph === 'lever') {
+        const k = Math.floor(M.t / per), l = lever(M.t - k * per), was = M.shovel.ang;
+        M.shovel = { ang: l.ang, sm: l.sm, from: was };
+        const tp = shovelTop(l.ang);
+        M.cursor = { x: tp.x, y: tp.y, pose: 'grab' };
+        if (l.ang >= push && was < push && p.stump) { digStump(0, true); M.dug += 1; }
+        M.tilt = Math.min(1, M.dug / AFTER_DIG_CLICKS) * STUMP_TILT;
+        if (!p.stump && l.ang <= 0) { M.tipAt = S.after.t; go('tip'); }
+      } else if (M.ph === 'tip') {
+        // over onto its side, away from the shovel, about its far foot
+        const k = Math.min(1, M.t / 0.5);
+        M.tilt = STUMP_TILT + (Math.PI / 2 - STUMP_TILT) * k * k;
+        if (k >= 1) {
+          M.tilt = 0;
+          M.stumpOut = { x: bx() + MT.c0 * AP - MT.log * AP, y: fl() - MT.log * AP, tone: M.stumpTone, lying: true };
+          go('grab');
+        }
+      } else if (M.ph === 'grab') {
+        const s = M.stumpOut, c = { x: s.x + MT.log * AP / 2, y: s.y + MT.log * AP / 2 }, k = Math.min(1, M.t / 0.6);
+        M.cursor = { x: lerp(top.x, c.x, ease(k)), y: lerp(top.y, c.y, ease(k)), pose: k < 1 ? 'point' : 'grab' };
+        if (M.t >= 0.8) { s.lying = false; M.from = { x: c.x, y: c.y, sx: s.x, sy: s.y }; go('carry'); }
+      } else if (M.ph === 'carry') carryOff(dt, this, AP * 18);
+      else if (M.ph === 'rest') { M.cursor.y -= 20 * dt; if (M.t >= 2.2) { M.from = null; this.init(); } }
+    }
   }
 };
+// The saws' strokes: each end held, the slide between.
+export const STROKE = { held: 0.16, slide: 0.07 };
+// Where the woodcutter stands off the trunk for each saw, cells, so its
+// blade spans the trunk at the cut.
+const SAW_STAND = { saw1: 3, saw2: 2, saw3: 1 };
+// The stump on the hand, carried off along the floor and let go: a log on the
+// real ground, falling from the hand, its shade the stump's.
+function carryOff(dt, script, dist = AP * 14) {
+  const k = Math.min(1, M.t / 1.3), s = M.stumpOut, dx = ease(k) * dist, dy = -Math.sin(Math.PI * k) * AP * 4 - ease(Math.min(1, k * 3)) * AP * 2;
+  M.cursor = { x: M.from.x + dx, y: M.from.y + dy, pose: 'grab' };
+  s.x = M.from.sx + dx; s.y = M.from.sy + dy;
+  if (k >= 1) {
+    source('log', 1, 'stump');
+    const ai = putSomewhere(cellOf('log', s.tone), s.x + MT.log * AP / 2);
+    if (ai >= 0) { fallTag(ai, s.y); M.placed.push(ai); }
+    M.stumpOut = null; M.cursor.pose = 'point'; go('rest');
+  }
+}
+// F3b's shovel: standing in the ground a cell off the stump's shovel side,
+// leaned `ang` (radians, away from the stump) about its foot on the ground.
+export const SHOVEL_PUSH = 0.45, STUMP_TILT = 0.3;
+export const shovelAt = () => ({ x: bx() + (MT.c0 + MT.w) * AP + AP * 1.5, y: fl() });
+export const SHOVEL_H = 7 * AP;
+export const shovelTop = ang => { const s = shovelAt(); return { x: s.x + Math.sin(ang) * SHOVEL_H, y: s.y - Math.cos(ang) * SHOVEL_H }; };
+
+// The options with a fall, turned to fall away from the shack.
+const FLIP = new Set(['c', 'd1', 'd2', 'e', 'esaw1', 'esaw2', 'esaw3', 'f1', 'f2']);
 
 // --- the scene's door --------------------------------------------------------------------
 // Stand option `opt` on the act now standing: the global set, the state
@@ -518,7 +661,8 @@ const SCRIPTS = {
 export function startGroveMock(opt, STEPS) {
   globalThis.__groveMock = opt;
   Object.assign(M, { opt, mine: S.after, ph: '', t: 0, T: 0, logs: 0, cut: 0, roll: null, grow: null, cone: null, bodies: [],
-                     cursor: null, ghost: null, notch: 0, sawAt: null, stumpOut: null, landed: null, from: null });
+                     cursor: null, ghost: null, notch: 0, sawAt: null, stumpOut: null, landed: null, from: null,
+                     flip: FLIP.has(opt), stumpUp: 0, tilt: 0, shovel: null, dug: 0 });
   M.placed.length = 0;
   const idx = STEPS.findIndex(q => q.name === 'grovemock');
   if (idx >= 0) STEPS.splice(idx, 1);

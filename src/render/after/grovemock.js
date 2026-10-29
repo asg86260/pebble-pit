@@ -1,15 +1,19 @@
 // MOCK grove: the grove redesign's drawing (after/grovemock.js is its
 // director), never merged. While `globalThis.__groveMock` is set, plot 0 is
 // drawn from here instead of render/after/pine.js: the mock pine (a trunk a
-// log wide, its length its logs end to end, the crown in tiers on it),
-// standing, growing cell by cell, going over by its true angle (today's tip,
-// the fall's numbers), its crown breaking where it hits into pieces that
-// fly, tumble and fade (the one fade the owner allowed); the trunk lying in
-// the log's own look, the cut opening at its far end and the end log
-// tumbling off it; the stump the top half of a log's block, its root half
-// under the ground until it is pulled. Over the members, the woodcutter's
-// tools in its hands and the cone on a planter's head; over everything, the
-// ghost hand and the hand.
+// log wide, its length its logs end to end, each log a shade of the log's
+// brown, the crown in tiers on it), standing, growing cell by cell, going
+// over by its true angle (today's tip, the fall's numbers), its crown
+// breaking where it hits into pieces that fly, tumble and fade (the one fade
+// the owner allowed); the trunk lying as its logs, the cut opening at its
+// far end and the end log tumbling off it; the stump a whole log's block.
+// Over the members, the woodcutter's tools and the acorn on a planter's
+// head; over everything, the ghost hand and the hand.
+//
+// The first plot stands by the forestry shack, so a tree there falls away
+// from it, left: for the options with a fall the director works it as a fall
+// to the right and everything here is drawn turned about the plot's middle
+// line (`turned`, `mx`).
 //
 // Art on the grid, motion smooth: every drawing is whole cells on its own
 // grid, and a thing that moves or turns is laid at its true position.
@@ -18,19 +22,36 @@ import { GREY, P, AFTER_FALL_S, AFTER_FALL_BOUNCE_S, AFTER_FALL_BOUNCE, GESTURE_
 import { ctx } from '../ctx.js';
 import { themed } from '../../ink.js';
 import { K, W, PALE, MID, SOIL, DUST, toneOf, now, clamp01, hash } from './kit.js';
-import { goodBlock } from './piles.js';
+import { goodTone } from './piles.js';
 import { handOn } from '../aftercues.js';
 import { drawBody, drawSquat } from '../crew.js';
 import { trees } from '../../after/grove.js';
 import { gestureView } from '../../after/gestures.js';
 import { AP } from '../../after/place.js';
-import { M, MT, TRUNK_TOP, treeCells, grownShape, rowOrder, bx, fl, pivotX, cutX, trunkTop, GRIP, SWING, ROLL_S, handSaw, SAW_ANG, SAW_TIP, groveMockOn } from '../../after/grovemock.js';
+import { M, MT, TRUNK_TOP, treeCells, grownShape, rowOrder, bx, fl, mx, pivotX, cutX, trunkTop, GRIP, SWING, ROLL_S, SAW_ANG, SAW_TIP,
+         STROKE, shovelAt, SHOVEL_H, groveMockOn } from '../../after/grovemock.js';
 
 export { groveMockOn };
 const BODY = 3 * P;
-const fill = (tone, x, y, w, h) => { ctx.fillStyle = GREY[tone]; ctx.fillRect(x, y, w, h); };
+// A tone: one of the act's greys by its rung, or a color itself (the goods').
+const ink = tone => (typeof tone === 'string' ? tone : GREY[tone]);
+const fill = (tone, x, y, w, h) => { ctx.fillStyle = ink(tone); ctx.fillRect(x, y, w, h); };
 const paper = () => (typeof document === 'undefined' ? null : document.createElement('canvas'));
 const ease = u => u * u * (3 - 2 * u);
+// The log's shades (the goods' brown, config/palette.js AFTER_GOODS.log): a
+// trunk's logs and its stump each one of them, picked once a tree.
+const LOG = i => goodTone('log', i || 0);
+const logTone = j => LOG(M.tones ? M.tones[Math.min(MT.logs - 1, Math.max(0, j))] : 0);
+const stumpTone = () => LOG(M.stumpTone);
+// The trunk's log a row of the standing tree is part of (0 the lowest).
+const segOf = r => Math.floor((-MT.stump - 1 - r) / MT.log);
+// Everything of the plot's drawn turned about its middle line, for a fall to the left.
+function turned(draw) {
+  if (!M.flip) { draw(); return; }
+  ctx.save();
+  ctx.translate(2 * bx(), 0); ctx.scale(-1, 1);
+  try { draw(); } finally { ctx.restore(); }
+}
 
 // --- sprites -------------------------------------------------------------------------------
 // A drawing of cells [x, y, tone] (cell coordinates off its origin, which is
@@ -47,7 +68,7 @@ function sprite(id, cells) {
   const g = cv.getContext('2d');
   if (!g) return null;
   for (const [x, y, tone, sx, sy, sw, sh] of cells) {
-    g.fillStyle = GREY[tone];
+    g.fillStyle = ink(tone);
     if (sw) g.fillRect((x - x0) * AP + sx, (y - y0) * AP + sy, sw, sh);
     else g.fillRect((x - x0) * AP, (y - y0) * AP, AP, AP);
   }
@@ -67,20 +88,17 @@ function lay(sp, x, y, th = 0, flip = false, a = 1) {
   ctx.drawImage(sp.cv, -sp.ox, -sp.oy);
   ctx.restore();
 }
+// A sprite laid by the middle of its cell (0, 0) rather than its corner.
+const layMid = (sp, x, y, th, flip, a) => { if (sp) lay({ ...sp, ox: sp.ox + AP / 2, oy: sp.oy + AP / 2 }, x, y, th, flip, a); };
 
 // --- the pine's pieces --------------------------------------------------------------------
 // In cells off the pivot the fall turns about (the trunk's right edge on the
-// stump's top): the trunk past the stump, a log's flat tone with its seam
-// down its right edge as a log block has (it lies as the log blocks it
-// makes), and the crown in ink.
+// stump's top): the trunk past the stump, its logs each in its shade, and
+// the crown in ink.
 const PIV_C = MT.c0 + MT.w, PIV_R = -MT.stump;
 const trunkCells = () => {
   const out = [];
-  for (let r = TRUNK_TOP; r < -MT.stump; r++) for (let c = MT.c0; c < MT.c0 + MT.w; c++) {
-    const x = c - PIV_C, y = r - PIV_R;
-    out.push([x, y, MID]);
-    if (c === MT.c0 + MT.w - 1) out.push([x, y, K, AP - 1, 0, 1, AP]);
-  }
+  for (let r = TRUNK_TOP; r < -MT.stump; r++) for (let c = MT.c0; c < MT.c0 + MT.w; c++) out.push([c - PIV_C, r - PIV_R, logTone(segOf(r))]);
   return out;
 };
 const crownCells = () => treeCells().filter(q => q[2] === 'crown').map(([c, r, , ti]) => [c - PIV_C, r - PIV_R, K, ti]);
@@ -134,80 +152,96 @@ function drawCrownBreak(t) {
 
 // --- the standing, growing and lying pine -------------------------------------------------
 const cellAt = (c, r, tone) => fill(tone, bx() + c * AP, fl() + r * AP, AP, AP);
-function soil() { for (let c = -6; c <= 5; c++) cellAt(c, -1, toneOf(SOIL, bx() / AP + c, 0)); }
-// The standing pine, or the cells of it grown so far: the trunk (and its
-// stump) a log's tone, its seam down the right, and the crown in ink.
+// The plot's bed of soil, its cells across BED (render/after/ground.js keeps
+// the cloud's lip off it, so the plot reads above the cloud line).
+export const BED = [-6, 5];
+function soil() { for (let c = BED[0]; c <= BED[1]; c++) cellAt(c, -1, toneOf(SOIL, bx() / AP + c, 0)); }
+// The standing pine, or the cells of it grown so far: the stump and each of
+// the trunk's logs in its shade, the crown in ink.
 function pineCells(cells) {
-  for (const [c, r, part] of cells) {
-    cellAt(c, r, part === 'crown' ? K : MID);
-    if (part !== 'crown' && c === MT.c0 + MT.w - 1) fill(K, bx() + (c + 1) * AP - 1, fl() + r * AP, 1, AP);
-  }
+  for (const [c, r, part] of cells) cellAt(c, r, part === 'crown' ? K : r >= -MT.stump ? stumpTone() : logTone(segOf(r)));
 }
-// The felling cut along the stump's top, `n` cells in from the left: a seam
-// opening, as the cut a log block is split along.
+// The felling cut along the stump's top, `n` cells in from the near side: a
+// line opening across the trunk.
 function fellCut(n) { if (n > 0) fill(K, bx() + MT.c0 * AP, fl() - MT.stump * AP - 1, Math.round(n * AP), 1); }
-// The stump: the top half of a log's block standing out of the ground, its
-// root half under it; `up` px pulled out, clipped at the ground line.
-function stump(up = 0) {
-  const x = bx() + MT.c0 * AP, y = fl() - MT.stump * AP - up;
-  ctx.save();
-  ctx.beginPath(); ctx.rect(x - AP, y - AP, MT.w * AP + 2 * AP, fl() - y + AP); ctx.clip();
-  goodBlock(x, y, 'log');
-  ctx.restore();
+// The stump: a whole log's block on the ground. F3a: lifted `up` px on the
+// hand, its roots under it, those not yet snapped strained to the ground and
+// the snapped ones stubs. F3b: tilted `tilt` up off the shovel's side about
+// its far foot.
+const ROOTS = [-2, 0, 1];
+function stump(up = 0, tilt = 0, roots = 0) {
+  const x = bx() + MT.c0 * AP, y = fl() - MT.stump * AP - up, z = MT.w * AP;
+  if (tilt) {
+    ctx.save(); ctx.translate(x, fl()); ctx.rotate(-tilt);
+    fill(stumpTone(), 0, -z, z, z);
+    ctx.restore();
+    return;
+  }
+  ROOTS.forEach((c, k) => {
+    const live = k >= ROOTS.length - roots, len = live ? up : Math.min(up, AP);
+    if (len > 0) fill(K, bx() + c * AP + AP / 3, fl() - up, AP / 3, len);
+  });
+  fill(stumpTone(), x, y, z, z);
 }
-// The trunk lying from the pivot along the floor, `n` logs of it, one log
-// block long apiece but seamless till cut: its seam along the bottom and the
-// far end, and the cut at the far log opening down from the top.
+// The trunk lying from the pivot along the floor, `n` logs of it, each in
+// its shade, and the cut at the far log opening down from the top.
 function lyingTrunk(n, cut) {
   if (n <= 0) return;
-  const x = pivotX(), y = trunkTop(), w = n * MT.log * AP, h = MT.w * AP;
-  fill(K, x, y, w, h); fill(MID, x, y, w - 1, h - 1);
+  const y = trunkTop(), z = MT.log * AP, h = MT.w * AP;
+  for (let j = 0; j < n; j++) fill(logTone(j), pivotX() + j * z, y, z, h);
   if (cut > 0 && n > 1) fill(K, cutX(n) - 1, y, 1, Math.round(Math.min(1, cut) * h));
 }
 // A log cut free, tumbling off the end: a quarter turn over its far bottom
-// corner, slow then quick, its seam drawn turned back so it lands as the
-// block lies (seam right and bottom).
+// corner, slow then quick.
 function rolling(t) {
   if (!M.roll) return;
   const k = clamp01((t - M.roll.at) / ROLL_S), th = Math.PI / 2 * k * k, z = MT.log * AP;
-  const rx = M.roll.x + z, ry = fl();
   ctx.save();
-  ctx.translate(rx, ry); ctx.rotate(th);
-  fill(K, -z, -z, z, z); fill(MID, -z, -z + 1, z - 1, z - 1);
+  ctx.translate(M.roll.x + z, fl()); ctx.rotate(th);
+  fill(logTone(M.logs - 1), -z, -z, z, z);
   ctx.restore();
 }
-// The cone: two by two, a scale of ink across it.
-function cone(x, y) { fill(MID, x, y, AP * 2, AP * 2); fill(K, x + AP, y, AP, AP); fill(K, x, y + AP, AP, AP); }
-const CONE_SINK_S = 0.9;
-function coneInGround(t) {
+// The acorn (the owner: "lets make the seed look like an acorn"): three
+// cells wide and four high off its top left, a stalk and a cap in the log's
+// darkest shade over a nut in its warmest, rounded at the foot.
+const AW = 3, AH = 4;
+function acorn(x, y) {
+  const cap = LOG(3), nut = LOG(0);
+  fill(cap, x + AP, y, AP, AP); fill(cap, x, y + AP, AP * 3, AP);
+  fill(nut, x, y + AP * 2, AP * 3, AP); fill(nut, x + AP, y + AP * 3, AP, AP);
+}
+export const ACORN = { w: AW * AP, h: AH * AP };
+const SINK_S = 0.9;
+function acornInGround(t) {
   const c = M.cone;
   if (!c) return;
-  const sx = bx() - AP, rest = fl() - 3 * AP;
-  if (c.state === 'lying') { cone(Math.round(c.x), Math.round(c.y)); return; }
+  const sx = bx() - AW * AP / 2, rest = fl() - AP - AH * AP;
+  if (c.state === 'lying') { acorn(Math.round(c.x), Math.round(c.y)); return; }
   if (c.state === 'set') {
     const k = ease(clamp01((t - c.at) / 0.5));
-    cone(Math.round(c.from.x + (sx - c.from.x) * k), Math.round(c.from.y + (rest - c.from.y) * k - Math.sin(Math.PI * k) * AP * 2));
+    acorn(Math.round(c.from.x + (sx - c.from.x) * k), Math.round(c.from.y + (rest - c.from.y) * k - Math.sin(Math.PI * k) * AP * 2));
     return;
   }
   if (c.state === 'in') {
-    const k = clamp01((t - c.at) / CONE_SINK_S);
+    // pressed into the soil, under its top
+    const k = clamp01((t - c.at) / SINK_S);
     if (k >= 1) return;
     ctx.save();
-    ctx.beginPath(); ctx.rect(sx - AP, rest - AP * 4, AP * 4, AP * 4 + 2 * AP); ctx.clip();
-    cone(sx, Math.round(rest + 2 * AP * k));
+    ctx.beginPath(); ctx.rect(sx - AP, rest - AP * 6, AP * 6, AP * 6 + AH * AP); ctx.clip();
+    acorn(sx, Math.round(rest + AH * AP * k));
     ctx.restore();
   }
 }
 // The saw across the standing trunk (F1, before it goes over), `s` px along
 // where the hand has it: a grip at the near end and the blade along the
-// trunk's foot at the felling cut, its teeth under it; the blade hidden in
-// the wood where it has not cut, showing in the cut.
+// felling cut, a log's height up the trunk, its teeth under it; the blade
+// hidden in the wood where it has not cut, showing in the cut.
 function standingSaw(s, kerf) {
   const t0 = MT.c0, row = -MT.stump - 1, inTrunk = c => c >= t0 && c < t0 + MT.w;
   ctx.save();
   ctx.translate(s, 0);
-  for (let r = -6; r <= -3; r++) for (let c = -15; c <= -13; c++) {
-    const hole = c === -14 && (r === -5 || r === -4);
+  for (let r = row - 3; r <= row; r++) for (let c = -15; c <= -13; c++) {
+    const hole = c === -14 && (r === row - 2 || r === row - 1);
     cellAt(c, r, hole ? W : K);
   }
   for (let c = -12; c <= 5; c++) {
@@ -220,58 +254,85 @@ function standingSaw(s, kerf) {
   }
   ctx.restore();
 }
+// F3b's shovel: a grip, a handle and a blade in the ground, off its foot.
+const SHOVEL = () => sprite('shovel', [[-1, -7, K], [0, -7, K], [1, -7, K], ...[-6, -5, -4, -3, -2].map(r => [0, r, MID]), [-1, -1, K], [0, -1, K], [1, -1, K]]);
+function shovel() {
+  const s = shovelAt(), sh = M.shovel || { ang: 0 };
+  if (sh.sm) layMid(SHOVEL(), s.x, s.y + AP / 2, sh.from, false, 0.35);
+  layMid(SHOVEL(), s.x, s.y + AP / 2, sh.ang, false);
+}
 
 export function drawGroveMock() {
   const t = now(), p = trees()[0];
   if (!p) return;
-  soil();
-  coneInGround(t);
-  // the stump, standing or coming up on the hand's pull
-  const pulling = M.opt === 'f3' && p.stump;
-  const falling = p.fall != null || (p.fell != null && t - p.fell < AFTER_FALL_BOUNCE_S);
-  if (p.stump || falling) stump(pulling ? (p.dug || 0) / AFTER_DIG_CLICKS * AP * 1.5 : 0);
-  if (falling) {
-    // over whole, the trunk and the crown one drawing turned about the cut;
-    // the crown broken off the moment it hits
-    const { th, drop } = fallPose(p, t), o = turnPt(0, 0, th, drop);
-    lay(sprite('trunk', trunkCells()), o.x, o.y, th);
-    if (p.fall != null) lay(sprite('crown', crownCells()), o.x, o.y, th);
-  } else if (M.logs > 0) lyingTrunk(M.logs, M.cut);
-  if (M.landed != null) drawCrownBreak(t);
-  rolling(t);
-  // standing whole, or growing
-  if (p.stage && p.fall == null) {
-    pineCells(treeCells());
-    const rec = (gestureView() || []).find(r => r.key === 'tree');
-    const kerf = M.opt === 'f1' ? Math.ceil(Math.min(1, p.chops / TREE_CHOPS) * MT.w) : M.notch;
-    fellCut(kerf);
-    if (M.sawAt && !M.sawAt.buck) standingSaw(rec && rec.i === 0 ? rec.s : 0, kerf);
-  } else if (M.grow && !p.stage && !p.stump) {
-    const f = clamp01((t - M.grow.at) / M.grow.dur);
-    if (f > 0) {
-      if (M.grow.kind === 'b1') { const all = rowOrder(); pineCells(all.slice(0, Math.max(1, Math.floor(f * all.length)))); }
-      else pineCells(grownShape(Math.max(0.04, Math.floor(f * 40) / 40)));
+  turned(() => {
+    soil();
+    acornInGround(t);
+    // the stump, standing, coming up on the hand, or levered over
+    const falling = p.fall != null || (p.fell != null && t - p.fell < AFTER_FALL_BOUNCE_S);
+    const tipping = M.opt === 'f3b' && M.ph === 'tip';
+    if (p.stump || falling || tipping) {
+      if (M.opt === 'f3') stump(p.stump ? (p.dug || 0) / AFTER_DIG_CLICKS * AP * 1.5 : 0);
+      else if (M.opt === 'f3a') stump(M.stumpUp || 0, 0, AFTER_DIG_CLICKS - (p.dug || 0));
+      else if (M.opt === 'f3b') stump(0, M.tilt || 0);
+      else stump();
     }
-  }
+    if (M.opt === 'f3b') shovel();
+    if (falling) {
+      // over whole, the trunk and the crown one drawing turned about the cut;
+      // the crown broken off the moment it hits
+      const { th, drop } = fallPose(p, t), o = turnPt(0, 0, th, drop);
+      lay(sprite(`trunk|${M.tones}`, trunkCells()), o.x, o.y, th);
+      if (p.fall != null) lay(sprite('crown', crownCells()), o.x, o.y, th);
+    } else if (M.logs > 0) lyingTrunk(M.logs, M.cut);
+    if (M.landed != null) drawCrownBreak(t);
+    rolling(t);
+    // standing whole, or growing
+    if (p.stage && p.fall == null) {
+      pineCells(treeCells());
+      const rec = (gestureView() || []).find(r => r.key === 'tree');
+      const kerf = M.opt === 'f1' ? Math.ceil(Math.min(1, p.chops / TREE_CHOPS) * MT.w) : M.notch;
+      fellCut(kerf);
+      if (M.sawAt && !M.sawAt.buck) standingSaw(rec && rec.i === 0 ? rec.s : 0, kerf);
+    } else if (M.grow && !p.stage && !p.stump) {
+      const f = clamp01((t - M.grow.at) / M.grow.dur);
+      if (f > 0) {
+        if (M.grow.kind === 'b1') { const all = rowOrder(); pineCells(all.slice(0, Math.max(1, Math.floor(f * all.length)))); }
+        else pineCells(grownShape(Math.max(0.04, Math.floor(f * 40) / 40)));
+      }
+    }
+  });
 }
 
 // --- the tools --------------------------------------------------------------------------
 // The axe: a handle of three cells and a head of two by three, off the hand
 // at the handle's near end (after/grovemock.js, AXE_BIT, AXE_FRONT); the
 // edge down when the handle is level.
-const AXE = () => sprite('axe', [[0, 0, MID], [1, 0, MID], [2, 0, MID], [3, -1, K], [4, -1, K], [3, 0, K], [4, 0, K], [3, 1, K], [4, 1, K]].map(([x, y, tone]) => [x, y, tone]));
-// laid so the hand is the middle of the handle's first cell
-const axeAt = (x, y, ang, flip, a = 1) => { const sp = AXE(); if (sp) lay({ ...sp, ox: sp.ox + AP / 2, oy: sp.oy + AP / 2 }, x, y, ang, flip, a); };
+const AXE = () => sprite('axe', [[0, 0, MID], [1, 0, MID], [2, 0, MID], [3, -1, K], [4, -1, K], [3, 0, K], [4, 0, K], [3, 1, K], [4, 1, K]]);
+const axeAt = (x, y, ang, flip, a = 1) => layMid(AXE(), x, y, ang, flip, a);
 // The hand's axe: the same with a handle two cells longer, so it shows past
 // the fist that holds its end (after/grovemock.js, HAND_AXE_FRONT).
 const HAND_AXE = () => sprite('handaxe', [0, 1, 2, 3, 4].map(x => [x, 0, MID]).concat([[5, -1, K], [6, -1, K], [5, 0, K], [6, 0, K], [5, 1, K], [6, 1, K]]));
-const handAxeAt = (x, y, ang, a = 1) => { const sp = HAND_AXE(); if (sp) lay({ ...sp, ox: sp.ox + AP / 2, oy: sp.oy + AP / 2 }, x, y, ang, false, a); };
-// The saw: a grip of two by two and a blade of three, its teeth along one
-// side; held upright its tip is SAW_TIP under the grip.
+const handAxeAt = (x, y, ang, flip, a = 1) => layMid(HAND_AXE(), x, y, ang, flip, a);
+// The bucking saw: a grip of two by two and a blade of three, its teeth
+// along one side; held upright its tip is SAW_TIP under the grip.
 const SAW = () => sprite('saw', [[-1, -1, K], [0, -1, K], [-1, 0, K], [0, 0, K],
   [1, 0, PALE], [2, 0, PALE], [3, 0, PALE], [1, 1, K], [3, 1, K], [1, 0, K, 0, 0, AP * 3, 1]]);
-// laid with the hand on the grip's middle
 const sawAt = (x, y, ang, flip) => lay(SAW(), x, y, ang, flip);
+// The woodcutter's felling saws, three designs, each off the hand at its
+// grip (cell (0, 0)), the blade along row 0 forward, the teeth under it:
+//   saw1 the two-man crosscut: a long blade between two upright pegs
+//   saw2 the bow saw: a blade strung under a bow of ink
+//   saw3 the pruning saw: a short curved blade off a grip
+const TEETH = xs => xs.map(x => [x, 1, K]);
+const FELL_SAWS = {
+  saw1: () => [[0, -2, K], [0, -1, K], [0, 0, K], ...[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(x => [x, 0, PALE]), ...TEETH([1, 3, 5, 7, 9]), [11, -2, K], [11, -1, K], [11, 0, K]],
+  saw2: () => [[0, 0, K], [0, -1, K], [1, -2, K], [2, -3, K], [3, -3, K], [4, -3, K], [5, -3, K], [6, -3, K], [7, -2, K], [8, -1, K], [8, 0, K],
+               ...[1, 2, 3, 4, 5, 6, 7].map(x => [x, 0, PALE]), ...TEETH([2, 4, 6])],
+  saw3: () => [[-1, 0, K], [0, 0, K], [-1, 1, K], [1, 0, PALE], [2, 0, PALE], [3, 0, PALE], [4, 0, PALE], [5, -1, PALE], ...TEETH([1, 3]), [4, 1, K]]
+};
+const TRAVEL = { saw1: 3, saw2: 2, saw3: 1.5 };
+const fellSaw = tool => sprite(`fell|${tool}`, FELL_SAWS[tool]());
 // The swing's smear: pale cells along the arc the head swept, a frame or two.
 function smear(x, y, a0, a1, flip, r = 4 * AP) {
   const n = 6;
@@ -290,10 +351,16 @@ function puff(x, y, since) {
 }
 
 // A mock body (the yard's square, its feet at y), its load and its tool.
+// The square itself is laid at its turned place, never under the turn (the
+// yard's square reads the transform's scale for its rim); its load and tool
+// are drawn turned with the plot.
+function square(b) {
+  const x = Math.round(M.flip ? 2 * bx() - b.x - BODY : b.x), y = Math.round(b.y - BODY);
+  if (b.squat) drawSquat(x, y); else drawBody(x, y);
+}
 function body(b, t) {
   const x = Math.round(b.x), y = b.y - BODY, flip = b.face < 0;
-  if (b.squat) drawSquat(x, Math.round(y)); else drawBody(x, Math.round(y));
-  if (b.carry === 'cone') cone(x + BODY / 2 - AP, Math.round(y) - AP * 2 - (b.squat ? -P : 0));
+  if (b.carry === 'cone') acorn(x + BODY / 2 - AW * AP / 2, Math.round(y) - AH * AP + (b.squat ? P : 0));
   if (!b.tool) return;
   const gx = flip ? b.x + BODY - GRIP.dx : b.x + GRIP.dx, gy = b.y + GRIP.dy;
   if (b.tool === 'axe') {
@@ -307,45 +374,58 @@ function body(b, t) {
     // upright in the cut at the body's side, its tip as deep as the cut
     const s = b.s || 0, cutting = M.ph === 'cut' ? M.cut * MT.w * AP : 0;
     sawAt(b.x + BODY + 1 + AP / 2, b.y - SAW_TIP + cutting + s, SAW_ANG, false);
+  } else if (FELL_SAWS[b.tool]) {
+    const sp = fellSaw(b.tool);
+    if (b.pose === 'carry') { layMid(sp, x + BODY / 2 + (flip ? AP : -AP), y - AP, flip ? 0.35 : -0.35, flip); return; }
+    // held up at the felling cut, a log's height, an arm up to it: the blade
+    // along the cut, `s` of its stroke in
+    const cutY = fl() - MT.stump * AP, hx = b.x + BODY + 1, hy = cutY - AP / 2;
+    fill(K, b.x + BODY - AP, hy, AP / 2, y - hy + 2);
+    const dx = (b.s || 0) * TRAVEL[b.tool] * AP;
+    if (b.smear) layMid(sp, hx + (b.smear === 'in' ? 0 : TRAVEL[b.tool] * AP), hy, 0, false, 0.35);
+    layMid(sp, hx + dx, hy, 0, false);
   }
 }
 export function drawGroveMockBodies() {
   const t = now();
-  for (const b of M.bodies) body(b, t);
+  for (const b of M.bodies) square(b);
+  turned(() => { for (const b of M.bodies) body(b, t); });
 }
 
 // --- the hands --------------------------------------------------------------------------
 // The ghost hand teaching (the cues' own, faint) and the hand itself, drawn
-// over everything as the saw mill's hand scene draws it; what each holds
-// under it: the axe, the saw, the cone, the stump on its rope.
+// over everything as the saw mill's hand scene draws it, at their turned
+// places but never mirrored themselves; what each holds: the axe, the saw,
+// the acorn, the stump.
 export function drawGroveMockCues() {
-  const t = now(), p = trees()[0];
+  const p = trees()[0];
   const g = M.ghost;
   if (g) {
     ctx.globalAlpha = GESTURE_CUE_ALPHA;
-    handOn(ctx, g.x, g.y, g.pose);
-    if (g.tool === 'axe') handAxeAt(g.x, g.y, g.ang, 0.6);
+    handOn(ctx, mx(g.x), g.y, g.pose);
+    if (g.tool === 'axe') handAxeAt(mx(g.x), g.y, g.ang, M.flip, 0.6);
     ctx.globalAlpha = 1;
   }
   const c = M.cone;
-  if (c && (c.state === 'held' || c.state === 'falling')) cone(Math.round(c.x), Math.round(c.y));
-  // the stump's rope while it is pulled, and the stump out on the hand
-  if (M.opt === 'f3' && M.cursor && (p && p.stump && M.ph === 'pull')) {
+  if (c && (c.state === 'held' || c.state === 'falling')) acorn(Math.round(c.x), Math.round(c.y));
+  // the old F3's rope while it is pulled, and the stump out on the hand
+  if (M.opt === 'f3' && M.cursor && p && p.stump && M.ph === 'pull') {
     const top = fl() - MT.stump * AP - (p.dug || 0) / AFTER_DIG_CLICKS * AP * 1.5;
     rope(bx(), top, M.cursor.x, M.cursor.y);
   }
   if (M.stumpOut) {
     const s = M.stumpOut;
-    rope(s.x + MT.log * AP / 2, s.y, M.cursor.x, M.cursor.y);
-    goodBlock(Math.round(s.x), Math.round(s.y), 'log');
+    if (M.opt === 'f3') rope(s.x + MT.log * AP / 2, s.y, M.cursor.x, M.cursor.y);
+    fill(stumpTone(), Math.round(mx(s.x + (M.flip ? MT.log * AP : 0))), Math.round(s.y), MT.log * AP, MT.log * AP);
   }
   const h = M.cursor;
   if (!h) return;
-  if (h.tool === 'axe' && h.phase === 'fly') smear(h.x, h.y, h.from, h.ang, false, 6 * AP);
-  handOn(ctx, h.x, h.y, h.pose, P / 2, '#000');
+  const hx = mx(h.x);
+  if (h.tool === 'axe' && h.phase === 'fly') smear(hx, h.y, h.from, h.ang, M.flip, 6 * AP);
+  handOn(ctx, hx, h.y, h.pose, P / 2, '#000');
   // the handle over the fist that holds it
-  if (h.tool === 'axe') handAxeAt(h.x, h.y, h.ang);
-  if (M.sawAt && M.sawAt.buck) sawAt(h.x, h.y, SAW_ANG, false);
+  if (h.tool === 'axe') handAxeAt(hx, h.y, h.ang, M.flip);
+  if (M.sawAt && M.sawAt.buck) sawAt(hx, h.y, SAW_ANG, M.flip);
 }
 // A rope from the stump's top to the hand: a line of half cells.
 function rope(x0, y0, x1, y1) {

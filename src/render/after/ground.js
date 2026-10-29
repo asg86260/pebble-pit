@@ -13,6 +13,15 @@ import { afterX0, afterFloor, floorProfile } from '../../after/place.js';
 import { ctx } from '../ctx.js';
 import { fillOnPixels } from '../frame.js';
 import { W, PALE, MID } from './kit.js';
+import { plotX, AP } from '../../after/place.js'; // MOCK grove
+import { BED } from './grovemock.js'; // MOCK grove
+// MOCK grove: whether a column stands under a plot's bed of soil, kept clear
+// of the lip so the plot reads above the cloud line (the owner, 2026-10-28).
+const groveBeds = () => { // MOCK grove
+  if (!globalThis.__groveMock || !S.after) return () => false; // MOCK grove
+  const xs = S.after.plots.map((p, i) => plotX(i)); // MOCK grove
+  return x => xs.some(px => x >= px + BED[0] * AP && x < px + (BED[1] + 1) * AP); // MOCK grove
+}; // MOCK grove
 
 const fr = (x, y, w, h, tone) => { ctx.fillStyle = GREY[tone]; fillOnPixels(ctx, x, y, w, h); };
 const hsh = (a, b) => {
@@ -48,7 +57,8 @@ export function drawFrontLip() {
   shape(el.length);
   const j0 = Math.max(0, Math.floor((S.camX - afterX0()) / P) - 1);
   const j1 = Math.min(el.length, Math.ceil((S.camX + S.viewW - afterX0()) / P) + 2);
-  const foot = j => afterFloor() + (L.drop - (el[j] || 0)) * P, top = j => foot(j) - tops[j] * P;
+  const bed = groveBeds(); // MOCK grove
+  const foot = j => afterFloor() + (L.drop - (el[j] || 0)) * P, top = j => (bed(afterX0() + j * P) ? Math.max(foot(j) - tops[j] * P, afterFloor() - (el[j] || 0) * P) : foot(j) - tops[j] * P); // MOCK grove  under a plot's bed, the lip no higher than the shelf's top
   for (let j = j0; j < j1; j++) {
     const x = afterX0() + j * P, y = top(j), bot = foot(j) + (L.hang + hangs[j]) * P;
     fr(x, y, P, bot - y, PALE);

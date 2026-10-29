@@ -31,7 +31,7 @@ export const AP = P * AFTER_ART_SCALE;
 export const afterFloor = () => snap(-AFTER_GAP);
 // A station's shelf, in cells over the floor line, and the top of it: where
 // its drawing, piles, board's spot, door and roster stand (config, AFTER_SHELF).
-export const shelfOf = key => AFTER_SHELF[key] || 0;
+export const shelfOf = key => ((key === 'tree' || key === 'stump') && globalThis.__groveMock ? GROVE_MOCK_SHELF : AFTER_SHELF[key] || 0); // MOCK grove  the grove's shelf
 export const groundOf = key => afterFloor() - shelfOf(key) * P;
 export const afterTop = () => afterFloor() - AFTER_H;
 export const afterX0 = () => 0;
@@ -64,8 +64,21 @@ export const stationX0 = key => afterX0() + AFTER_STATIONS[key].at * P;
 // A plot's trunk column (its middle one), its left edge on the grid. The
 // grove's ground runs to the last plot its card can clear, so the camp
 // beside it never moves.
-export const plotX = i => afterX0() + AFTER_GROVE_X0 + i * AFTER_PLOT_STEP + snap(AFTER_PLOT_STEP / 2);
-export const groveX1 = () => plotX(AFTER_PLOT_MAX - 1) + AFTER_PLOT_STEP;
+export const plotX = i => (groveMock() ? mockPlotX(i) : realPlotX(i)); // MOCK grove  (the real rule is realPlotX)
+// MOCK grove: the first plot's far edge (half a plot's step off its trunk
+// column) the ramp off the grove's shelf short of the forestry shack's
+// ground, its first column (`lead`: its board's column and its log pile);
+// each next plot a plot's step further left.
+const mockPlotX = i => stationX0('forestry') + ART.forestry.lead * AP - rampRun(GROVE_MOCK_SHELF - (AFTER_SHELF.forestry || 0)) * P - snap(AFTER_PLOT_STEP / 2) - i * AFTER_PLOT_STEP; // MOCK grove
+const realPlotX = i => afterX0() + AFTER_GROVE_X0 + i * AFTER_PLOT_STEP + snap(AFTER_PLOT_STEP / 2); // MOCK grove  renamed from plotX
+// MOCK grove: the owner's layout (2026-10-28, on the grove review): the first
+// plot by the forestry shack, at the grove's end that the camp is laid off
+// with its gap, each plot cleared after it a plot's step further left; and
+// the grove on a shelf of its own so a plot stands clear of the cloud's lip,
+// raised as a station's shelf is (`floorFlats`, `shelfOf`).
+const groveMock = () => !!globalThis.__groveMock; // MOCK grove
+export const GROVE_MOCK_SHELF = 3; // MOCK grove  cells over the floor line: the plot's soil clear of the lip's crest
+export const groveX1 = () => realPlotX(AFTER_PLOT_MAX - 1) + AFTER_PLOT_STEP; // MOCK grove  realPlotX: the grove's end stays where it is
 
 // --- the camp ----------------------------------------------------------------------
 // A station's box on the floor: its drawing, off ART.
@@ -289,6 +302,7 @@ export function floorFlats() {
   const out = [];
   // The grove, from the first stump to its end: a tree falls across its
   // plot and its logs roll to rest anywhere along it (after/grove.js).
+  if (groveMock()) { const x = plotX(AFTER_PLOT_MAX - 1) - snap(AFTER_PLOT_STEP / 2), x1 = plotX(0) + snap(AFTER_PLOT_STEP / 2); out.push([...span(x, (x1 - x) / P), GROVE_MOCK_SHELF]); } else // MOCK grove  the grove on its own shelf, from the plot by the shack leftward
   { const x = plotX(0) + STUMP[0] * AP; out.push(span(x, (groveX1() - x) / P)); }
   // A station's whole ground, from the moment it is ordered: an unbuilt
   // spot is open floor like any other (the owner, 2026-10-18).
@@ -323,7 +337,7 @@ export const sited = key => (S.after ? S.after.built.includes(key) || !!S.after.
 export const closed = key => !!S.after && !AFTER_START_BUILT.includes(key) && !S.after.built.includes(key) && key in AFTER_STATIONS;
 // Which grounds are taken, as a key: the profile is worked out again only
 // when that changes.
-export const sitesKey = () => Object.keys(AFTER_STATIONS).filter(sited).join(',');
+export const sitesKey = () => Object.keys(AFTER_STATIONS).filter(sited).join(',') + (groveMock() ? '|grovemock' : ''); // MOCK grove  the mock's shelf relays the floor
 let profile = null, profileKey = null; // cache: keyed by `sitesKey()`
 export function floorProfile() {
   const key = sitesKey();
