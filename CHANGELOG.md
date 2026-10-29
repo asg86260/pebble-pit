@@ -179,6 +179,7 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
+- A disk in the corner fades up for a moment as the game saves (src/selftest/savemark.js).
 - A log at the saw mill saws into four timber blocks and nothing else: the sawdust heap, its hatch, its tip and its upgrade row are gone (test/after-mill-machine.test.mjs, test/no-sawdust.test.mjs).
 - Act 3's goods have their own colors: each log, timber block and sign is one of four tones of its good -- bark brown, pale wood, slate -- picked when it is made and kept wherever it goes, so a pile reads as separate pieces (test/after-palette.test.mjs).
 - A scale falling through the deep's water is a chip of the one air, and one still in it when the page reloads is where it was; act 3's thrown goods and the deep's scales come down on the same landing chain the yard's dust does (test/one-landing.test.mjs).
@@ -216,6 +217,9 @@ this section; the release that switches it on moves these under Unreleased.
 - Signs and posters no longer pile up unused in act 3 when nobody is on the carrier or the paster: idle workers take them out (test/after-roster.test.mjs).
 - Every build takes 10 to 20 seconds at one pair of hands, the biggest (a new station, a machine, the last shield) 30 at most, by one rule off a row's place in its ladder instead of a figure a row (test/build-times.test.mjs).
 
+- A game tab that is not being saved -- another tab has the save, or the browser refused it -- shows a struck-through disk in the corner instead of playing on in silence, takes the save back by itself once its game is the newest, and a game tab opened in the background no longer takes the save from the one you are playing (test/save-alarm.test.mjs).
+- The browser closing the save's database under the page no longer stops the game; the save is retried on a fresh connection (src/selftest/savemark.js).
+- The save as it was before an update changed its shape is kept beside it, so a bad update can be rolled back (test/save-alarm.test.mjs).
 - A worker's hat in a roster counter sits flush on its head instead of a pixel to one side with ragged seams (src/selftest/rosterhats.js).
 - Saving on the very frame the star's sphere closes no longer leaves the ring uncut after a reload (test/sphere.test.mjs).
 - Shop cards keep one width and one height, so buying a rung, a deeper bill or a card being built no longer shifts the board (src/selftest/boardwords.js).

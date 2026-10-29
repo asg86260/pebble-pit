@@ -5,9 +5,9 @@
 // many grains of each shade there are, and the speckle is dealt out again on
 // the way back in: a value per cell would be megabytes written every second.
 
-import { P, SHADES, LOO_POSTS, SAVE_V } from './config.js';
-import { load, clear, isSave, loadRaw, saveRaw, savePrev, loadBroken,
-         claimTab, tabOwner, TAB, setSlot } from './save.js';
+import { P, SHADES, LOO_POSTS, SAVE_V, CLAIM_SLACK_MS } from './config.js';
+import { load, clear, isSave, loadRaw, saveRaw, savePrev, loadBroken, savePremig,
+         claimTab, tabOwner, claimAt, TAB, setSlot } from './save.js';
 import { seedSmog, SAVE as SMOG } from './smog.js';
 import { resetHeld, held } from './reset.js';
 import { resetWeather } from './weather.js';
@@ -247,17 +247,62 @@ export function persist() {
   if (S.fatal) return;
   // A yard stood at a scene is not the player's (scenesheet.js).
   if (S.staged) return;
-  // Another page has written since this one did: this page's yard is the
-  // stale one, so it stops writing and main.js reloads it when next looked
-  // at. Only a page that has made a claim can be overtaken (the node yard
-  // never claims), and only another page's name counts: no name at all means
-  // the store cannot be read, and yielding on that reloaded onto a store
-  // that held nothing, so tabbing away and back reset the game.
-  const owner = claimed ? tabOwner() : TAB;
-  if (S.yielded || (owner !== null && owner !== TAB)) { S.yielded = true; return; }
-  lastBlob = JSON.stringify(blob());
-  // The sheet reads `S.unsaved`.
+  // Another page holds the slot. This page stands aside only while that
+  // page's last save is newer than this yard (the stamp in the claim), or
+  // while nobody is looking at this one: a page on screen whose yard is as
+  // new as anything written takes the slot back on its own, so a race for the
+  // claim -- two tabs reloaded at once, a page booted in the background --
+  // never leaves the game being played unsaved. Only a page that has made a
+  // claim can be overtaken (the node yard never claims), and only another
+  // page's name counts: no name at all means the store cannot be read, and
+  // yielding on that reset the game when the page was tabbed away and back.
+  if (claimed) {
+    const owner = tabOwner();
+    const foreign = owner !== null && owner !== TAB;
+    if ((foreign || unseenBoot) && (!seen() || (foreign && claimAt() > lastSync + CLAIM_SLACK_MS))) {
+      S.yielded = true;
+      return;
+    }
+  }
+  unseenBoot = false;
+  S.yielded = false;
+  const out = blob();
+  lastBlob = JSON.stringify(out);
+  // The sheet and the save mark read `S.unsaved`.
   S.unsaved = !saveRaw(lastBlob);
+  if (S.unsaved) return;
+  lastSync = out.savedAt;
+  landedAt = out.savedAt;
+  if (claimed) claimTab(lastSync);
+}
+
+// The stamp of the save this page last read or wrote: what the claim's stamp
+// is weighed against, so a page takes the slot back only when nothing newer
+// than its own yard has been written since. Give or take `CLAIM_SLACK_MS`:
+// the last write of a page going away names itself at once but reaches the
+// database a moment later, and the page after it reads the write before.
+let lastSync = 0;               // page: savedAt of the store copy this yard last read or wrote
+// When this page's last save landed, for the save mark (savemark.js).
+let landedAt = 0;               // page: wall time of the last save the store took
+export const lastLanded = () => landedAt;
+// Whether the player can see this page; main.js answers from the document.
+// The node yard is always looked at.
+let seen = () => true;          // page: whether the page is on screen
+export function setSeen(fn) { seen = fn; }
+// A page booted where nobody could see it writes nothing until it is looked
+// at, and then only if nothing newer was written in between.
+let unseenBoot = false;         // page: booted hidden and not yet looked at
+
+// The boot's claim. A page opened in the background -- a second tab, or every
+// open tab reloaded at once by the dev server -- would otherwise race the one
+// on screen for the slot. So a page that boots unseen names itself but writes
+// nothing (`unseenBoot`) until it is looked at; then `persist` lets it write
+// only if the slot's last save is no newer than the yard it read.
+export function claimAtBoot(hidden) {
+  unseenBoot = !!hidden;
+  if (hidden) { claimed = true; S.yielded = true; return false; }
+  claimSave();
+  return true;
 }
 
 // Whether this page has put its name beside the save; main.js does, once, at
@@ -265,7 +310,7 @@ export function persist() {
 // is some earlier page's, and a page that treated it as another tab's would
 // stand aside for nobody, reload, and stand aside again.
 let claimed = false;            // page: whether this tab put its name beside the save, once at boot
-export function claimSave() { claimed = claimTab(); }
+export function claimSave() { claimed = claimTab(lastSync); }
 
 // Reading a saved plot into one whose left-hand end has moved. The world only
 // changes width at the ground in front of the boulder (`GROUND_LEFT` derives
@@ -568,6 +613,9 @@ export function restore({ warm = false } = {}) {
   const s = load();
   // The raw save is brought up to today's shape before a field of it is read
   // (src/migrations/); everything below reads today's shape and nothing else.
+  // The blob as it was goes aside first, once a shape change: the autosave
+  // writes the migrated yard over it inside a second.
+  if (s && !(+s.saveV >= SAVE_V) && !S.staged) savePremig(loadRaw());
   if (s) migrate(s);
   RNG.read(s);
   VIEW.read(s);
@@ -579,6 +627,7 @@ export function restore({ warm = false } = {}) {
     // aside by `load`, and the sheet offers it for as long as it is there.
     S.broken = !!loadBroken();
     S.newerSave = null;             // no save, so no build to be newer than this one
+    lastSync = 0;
     // The same one line as reading a save, so the two cannot drift apart.
     readSaved({});
     blankByHand();
@@ -589,6 +638,7 @@ export function restore({ warm = false } = {}) {
   // First, because the savers below read what it sets (the rift is clamped
   // to `S.stored`, the wizards to `S.wizardHats`).
   readSaved(s);
+  lastSync = Number.isFinite(s.savedAt) ? s.savedAt : 0;
   S.shownStored = S.stored; snapShown();
   // The hole is the whole hole at one grain size for ever; a save written at
   // a finer grain will not fit this plot, and `rehomeDust` (the pit's saver)
@@ -713,4 +763,3 @@ export function bootYard() {
   S.camX = S.camWas ?? openingCamX();
   clampCam();
 }
-

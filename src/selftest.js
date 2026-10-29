@@ -30,6 +30,7 @@ import { TESTS as house } from './selftest/house.js';
 import { TESTS as sky } from './selftest/sky.js';
 import { TESTS as input } from './selftest/input.js';
 import { TESTS as settings } from './selftest/settings.js';
+import { TESTS as savemark } from './selftest/savemark.js';
 import { TESTS as index } from './selftest/index.js';
 import { TESTS as scenes } from './selftest/scenes.js';
 import { TESTS as queue } from './selftest/queue.js';
@@ -71,6 +72,7 @@ const TESTS = [
   ...sky,
   ...input,
   ...settings,
+  ...savemark,
   ...index,
   ...scenes,
   ...queue,

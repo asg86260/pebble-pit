@@ -317,7 +317,7 @@
  {
   "id": "said-yielded",
   "group": "Sheets",
-  "where": "src/settings.js",
+  "where": "src/savemark.js",
   "context": "pause sheet reply, yard open elsewhere",
   "text": "this yard is open in another tab; that one is being saved"
  },
@@ -1729,10 +1729,24 @@
   "text": "fullscreen"
  },
  {
+  "id": "savemark-saved",
+  "group": "Other",
+  "where": "src/savemark.js",
+  "context": "crew-fade corner button label the save mark in the corner, a disk shown as a save lands",
+  "text": "saved"
+ },
+ {
+  "id": "savemark-take",
+  "group": "Other",
+  "where": "src/savemark.js",
+  "context": "the save mark struck through while another tab has the save: what a press does",
+  "text": "press to save this tab instead"
+ },
+ {
   "id": "other-corner-show",
   "group": "Other",
   "where": "src/corner.js",
-  "context": "crew-fade corner button label",
+  "context": "",
   "text": "show workers"
  },
  {

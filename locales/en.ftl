@@ -816,6 +816,12 @@ other-fullscreen-title-on = leave fullscreen
 other-fullscreen-title-off = fullscreen
 
 # crew-fade corner button label
+# the save mark in the corner, a disk shown as a save lands
+savemark-saved = saved
+
+# the save mark struck through while another tab has the save: what a press does
+savemark-take = press to save this tab instead
+
 other-corner-show = show workers
 
 # crew-fade corner button label
