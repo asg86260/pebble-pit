@@ -3722,7 +3722,10 @@ Object.assign(SCENES, {
 // breaks and its trunk's logs hop apart. Framed as the signed-off mock's
 // scenes were (after-grove-mock-*, the first plot's line less `at`), so the
 // two shoot side by side.
-const groveAt = at => { const x = plotX(0) - at; pinCamera(x); window.__look(x); };
+// Framed on the first plot's line less `at`; the notices the scene's grants
+// earned (act 1's firsts, "the first ore") hushed, since play never shows
+// them up here.
+const groveAt = at => { const x = plotX(0) - at; pinCamera(x); window.__look(x); S.wonShown = S.wonSeq | 0; };
 Object.assign(SCENES, {
   'after-grove-rest': { about: 'the acts', say: "the grove at rest: a grown oak beside the forestry shack, its seed basket on the shack's far side with five acorns in it",
     run: () => { window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1); groveAt(300); window.__fast(0.5); window.__holdShot(); } },
@@ -3885,8 +3888,7 @@ function stumpStage() {
 Object.assign(SCENES, {
   'after-grove-stump': { about: 'the acts', say: "a stump pulled by hand: taken by the block itself and dragged up, the soil cracking, the next root pulling taut, each snapping with a held jerk and a throw of dirt that falls and fades; out, the stump is a log in the hand, carried off and let go",
     run: () => { stumpStage(); window.__fast(0.2); stumpHandDemo(); window.__fast(2.4); window.__holdShot(); } },
-  'after-grove-stump-woodcutter': { about: 'the acts', review: 'grove: the woodcutter pulls a stump', option: 'A hands on the stump, heave and lean back',
-    stage: 'built: grove-c, not on main yet', branch: 'grove-c',
+  'after-grove-stump-woodcutter': { about: 'the acts',
     say: "With stump removal bought, the woodcutter pulls the stump the way your hand does: it takes hold of the block, heaves it up, leans back while a root strains, each snap jerks the stump a cell and throws dirt; with the last it swings the stump-log onto its head and carries it to the shack's pile.",
     run: () => {
       stumpStage();
@@ -3897,9 +3899,9 @@ Object.assign(SCENES, {
       for (let f = 0; f < 240 * 10 && !(w() && w().pull && w().pull.ph === 'heave'); f++) window.__fast(0.1);
       // stood again once the last log is home, so the pull plays on
       stumpStep('stumppull', () => { const b = w(); if (!S.after.plots[0].stump && b && !b.load.length && !b.dig) restump(); });
+      window.__holdShot();
     } }
 });
-      window.__holdShot();
 
 // Track D: seeds (DESIGN.md, "Act 3's grove, rebuilt"): a woodcutter planting
 // from the basket, a seed bought and carried in from heaven's gates, and a
@@ -3938,7 +3940,7 @@ Object.assign(SCENES, {
       until(() => S.after.bodies.some(b => loadKind(b) === 'acorn' && Math.abs(b.x - basketAt().x) < P * 10));
       groveAt(300); window.__holdShot();
     } },
-  'after-grove-selfseed': { about: 'the acts', say: "self-seeding bought, an oak sawn down and its crown broken: an acorn fell out of it and lies past the last log until a member carries it to the seed basket",
+  'after-grove-selfseed': { about: 'the acts', say: "self-seeding bought, an oak sawn down and its crown broken: an acorn fell out of it and lies on the logs until a member carries it to the seed basket",
     run: () => {
       grovePeople(3);
       window.__afterGrant({ seeds: -4 });
@@ -3950,3 +3952,33 @@ Object.assign(SCENES, {
       groveAt(420); window.__holdShot();
     } }
 });
+
+// The woodcutter's whole round on one plot, for a take of the loop: the saw,
+// stump removal and faster growth bought, the plot bare, the woodcutter put on.
+// It plants from the basket, the oak grows, it saws it down, the logs are
+// carried home, it pulls the stump and carries that home, and plants again.
+Object.assign(SCENES, {
+  'after-grove-loop': { about: 'the acts', say: "the woodcutter's whole round on one plot: plant, grow, saw it down, the logs carried home, the stump pulled and carried, plant again",
+    run: () => {
+      grovePeople(3);
+      // the saw bought, and handed over without its beat (the act's opening is
+      // not played here, so the beat would wait on it)
+      buyAfter('after-saw'); buyAfter('after-stumps'); buyAfter('after-grow');
+      window.__afterSaw();
+      S.after.plots = []; clearPlot();
+      window.__afterPress(AFTER_JOB.CUT, 1);
+      groveAt(360);
+    } }
+});
+// The grove's real build for the owner, one review (review.html#grove-built):
+// every real grove scene says where it is built, and nine stand as its
+// options, putting away the four mock reviews they came out of.
+const GROVE_BUILT = { stage: 'built: grove-integrate, not on main yet', branch: 'grove-integrate' };
+const GROVE_OPTIONS = [
+  ['after-grove-rest', 'A rest'], ['after-grove-grow', 'B grow'], ['after-grove-woodcutter', 'C the woodcutter fells'],
+  ['after-grove-saw', 'D F1 hand saw'], ['after-grove-stump', 'E stump by hand'], ['after-grove-stump-woodcutter', 'F the woodcutter pulls a stump'],
+  ['after-grove-plant', 'G plant'], ['after-grove-seeds', 'H seeds/basket'], ['after-grove-selfseed', 'I self-seed']
+];
+for (const key of Object.keys(SCENES)) if (key.startsWith('after-grove-') && !key.startsWith('after-grove-mock')) Object.assign(SCENES[key], GROVE_BUILT);
+for (const [key, option] of GROVE_OPTIONS) Object.assign(SCENES[key], { review: 'grove: built', option,
+  supersedes: ['grove: layout, growth, the fall', 'grove: planting and seeds', 'grove: the woodcutter', 'grove: by hand'] });

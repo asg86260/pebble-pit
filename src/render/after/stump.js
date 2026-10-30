@@ -27,6 +27,8 @@
 // the members. Art on the grid, motion smooth: the stump and its roots are
 // one drawing of whole cells laid at the lift's true position.
 
+// REVIEW grove-built
+
 import { P, GREY, AFTER_TREE, AFTER_DIG_CLICKS, AFTER_PULL, GESTURE_STRAIN_S, STUMP_ROOTS, STUMP_TAUT, STUMP_CRACKS, STUMP_CRACK_STEP,
          STUMP_CRACK_IN_S, STUMP_CRACK_OUT_S, STUMP_JERK_S, STUMP_DIRT, STUMP_DIRT_VX, STUMP_DIRT_UP, STUMP_DIRT_GRAV } from '../../config.js';
 import { S } from '../../state.js';

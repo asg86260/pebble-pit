@@ -10,6 +10,8 @@
 // fills round those, the far rim behind the top row's tips, and the top row
 // reads as heaped in the basket (AFTER_BASKET's rows). The body's weave is
 // every other cell, as the voted mock's was.
+// REVIEW grove-built
+
 import { AFTER_BASKET } from '../../config.js';
 import { ctx } from '../ctx.js';
 import { goodTone } from './piles.js';

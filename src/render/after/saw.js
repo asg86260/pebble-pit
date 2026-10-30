@@ -24,6 +24,9 @@
 // Art on the grid, motion smooth: the saw is one drawing of whole cells on its
 // own sheet, laid at its true position; each speck is a whole cell.
 
+// REVIEW grove-built
+import { PULL_HOLDS } from '../../after/stump.js';
+
 import { P, GREY, TREE_CHOPS, AFTER_TREE, AFTER_SAW, AFTER_SAW_HEFT, AFTER_SAWDUST, AFTER_SAW_SMEAR, AFTER_SAW_CARRY,
          AFTER_SAW_FADE_S } from '../../config.js';
 import { S } from '../../state.js';
@@ -194,8 +197,11 @@ export function drawHeldSaws() {
     } else {
       // Carried at its side by the grip, the blade forward and tilted up (the
       // tilt is in the drawing's own turn, so it points up either way it faces).
-      const back = w.face < 0;
-      laySaw(left + BODY / 2 + (back ? AP : -AP), top - AP, { th: -AFTER_SAW_CARRY, left: back, ax: -AP / 2, ay: -AP / 2 });
+      // With its hands on a stump (track C's pull) the blade is turned away
+      // behind it, never over the stump it pulls.
+      const pulling = !!w.dig && !!w.pull && PULL_HOLDS.includes(w.pull.ph);
+      const back = w.face < 0 && !pulling;
+      laySaw(pulling ? left + BODY + AP / 2 : left + BODY / 2 + (back ? AP : -AP), top - AP, { th: -AFTER_SAW_CARRY, left: back, ax: -AP / 2, ay: -AP / 2 });
     }
     ctx.globalAlpha = was;
   }
