@@ -150,5 +150,5 @@ export const AFTER_STATION_ROWS = [
 // Every station with a board hands its button to the roster, shown while the
 // station's board can be asked for (a station closed for its rebuild too).
 const SHOP_ROWS = AFTER_STATION_ROWS.filter(r => r.board && r.line)
-  .map(r => ({ board: r.key, place: 'after', show: () => r.open(), line: r.line }));
+  .map(r => ({ board: r.key, place: 'after', show: () => r.open() && !(globalThis.__buildBtnMock && closed(r.key.slice(6))), line: r.line })); // MOCK build-button-in-the-world  no UPGRADES on a station not yet built
 rosterShops('after', () => SHOP_ROWS);

@@ -1,0 +1,20 @@
+/* MOCK build-button-in-the-world: option c, the bench's call (style.css,
+   `#raise`) standing over every lot not yet built. Throwaway, never merged. */
+.buildcall {
+  position: fixed; left: 0; top: auto; bottom: 0; z-index: 11;
+  padding: var(--pad-m);
+  background: var(--fill) var(--dots-on-fill); color: var(--on-fill);
+  border: 2px solid var(--fill); box-shadow: var(--float-shadow);
+  font: inherit; letter-spacing: calc(var(--track-m) * var(--track)); text-transform: uppercase;
+  cursor: pointer; white-space: nowrap;
+  display: inline-flex; gap: 10px; align-items: center;
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity 200ms steps(4, end), visibility 0s linear 200ms;
+}
+.buildcall.on { opacity: 1; visibility: visible; pointer-events: auto; transition: opacity 200ms steps(4, end), visibility 0s; }
+.buildcall .bill { display: inline-flex; gap: 8px; }
+.buildcall .bill > span { display: inline-flex; gap: 4px; align-items: center; }
+.buildcall i { display: inline-block; }
+.buildcall .short { opacity: .5; }
+.buildcall.dead { background: var(--paper) var(--dots); color: var(--ink-5, #8a8a8a); border-color: currentColor; cursor: default; }
+.buildcall.over:not(.dead), .buildcall:not(.dead):hover { background: var(--paper) var(--dots); color: var(--ink); border-color: var(--ink); }

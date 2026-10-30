@@ -3804,3 +3804,41 @@ Object.assign(SCENES, Object.fromEntries(CABIN_MOCK.map(([opt, option, say]) => 
     startGroveMock('r', STEPS);
     window.__fast(1 / 60);
   } }])));
+
+// MOCK build-button-in-the-world: no UPGRADES button on a station not yet
+// built, and a button in the world at its lot that buys the first build
+// (src/buildmock.js), never merged. Act 3: the saw mill payable beside the
+// workshop, which waits on it, the pointer on the mill's button. Act 1: the
+// shack offered but short (120 of its 150), the pointer on its button.
+// `swap` flips the option on the game standing when it is the same act.
+import { shack as buildMockShack } from './state.js'; // MOCK build-button-in-the-world
+const BUILD_MOCK = [ // MOCK build-button-in-the-world
+  ['a', 'A the plate, saying BUILD', "Where UPGRADES stood, the same plate says BUILD and the price; a hover lifts it and says what it builds. Press it and the builders walk."],
+  ['b', 'B a pill on the outline', "No button under the lot: a BUILD pill stands on the station's dotted outline, the price only on hover; dotted and grey while it can't be bought."],
+  ['c', "C the bench's call", "The BUILD THE BENCH button, for every lot: a black button over it naming the station and its price; coins you're short of faded, a lot that waits greyed."],
+  ['d', 'D a staked sign', "A sign staked in the empty lot, BUILD over the price; a new thing on the map, standing inside the station's own ground."],
+];
+const buildMockAfter = opt => { // MOCK build-button-in-the-world
+  window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+  for (let k = 0; k < 90 && window.__afterRead().walking > 0; k++) window.__fast(1);
+  S.after.camp = 4;
+  window.__afterGrant({ rebel: 50 }); yardPurse();
+  globalThis.__buildBtnMock = opt;
+  const a = stationBox('mill'), b = stationBox('workshop'), x = (a.x + b.x + b.w) / 2 - S.viewW / 2;
+  pinCamera(x); window.__look(x); window.__fast(1 / 60);
+  globalThis.__buildMockHover?.('mill');
+};
+const buildMockYard = opt => { // MOCK build-button-in-the-world
+  window.__reset(); window.__crew(2); S.seenBench = true; window.__give(120); window.__fast(2);
+  globalThis.__buildBtnMock = opt;
+  const x = buildMockShack.x + buildMockShack.w / 2 - S.viewW / 2;
+  pinCamera(x); window.__look(x); window.__fast(1 / 60);
+  globalThis.__buildMockHover?.('shack');
+};
+for (const [opt, option, say] of BUILD_MOCK) for (const [act, name, stand, view, lot] of [ // MOCK build-button-in-the-world
+  ['3', `buildbtn-${opt}`, buildMockAfter, 'after', 'mill'], ['1', `buildbtn-yard-${opt}`, buildMockYard, 'yard', 'shack']]) {
+  SCENES[name] = { about: 'the acts', review: 'build button in the world', branch: 'a3-review-both',
+    stage: 'mock: throwaway, never merged', option: `${option}: act ${act}`, say,
+    swap: () => { if (S.view !== view) { window.__scene(name); return; } globalThis.__buildBtnMock = opt; globalThis.__buildMockHover?.(lot); },
+    run: () => stand(opt) };
+}

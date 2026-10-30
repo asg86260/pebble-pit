@@ -8433,5 +8433,40 @@
   "where": "src/roster.js",
   "context": "The button above a station's worker count that opens its upgrades (act 3).",
   "text": "upgrades"
+ },
+ {
+  "id": "buildmock-word",
+  "group": "Act 3 boards (track C, placeholder)",
+  "where": "src/buildmock.js",
+  "context": "MOCK build-button-in-the-world: the button at a lot not yet built that buys its first build (throwaway review code, never merged).",
+  "text": "build"
+ },
+ {
+  "id": "buildmock-call",
+  "group": "Act 3 boards (track C, placeholder)",
+  "where": "src/buildmock.js",
+  "context": "",
+  "text": "build the ${name}"
+ },
+ {
+  "id": "buildmock-say",
+  "group": "Act 3 boards (track C, placeholder)",
+  "where": "src/buildmock.js",
+  "context": "",
+  "text": "${call}: ${bill}"
+ },
+ {
+  "id": "buildmock-wait",
+  "group": "Act 3 boards (track C, placeholder)",
+  "where": "src/buildmock.js",
+  "context": "",
+  "text": "${call}: ${why}"
+ },
+ {
+  "id": "buildmock-coin",
+  "group": "Act 3 boards (track C, placeholder)",
+  "where": "src/buildmock.js",
+  "context": "",
+  "text": "${n} ${coin}"
  }
 ]

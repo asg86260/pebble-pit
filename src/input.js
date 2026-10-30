@@ -29,6 +29,7 @@ import { shownPiles, fullSays } from './render/pilemarks.js';
 import { doneName } from './works.js';
 import { fadeIn, fadeOut } from './fade.js';
 import { rosterHit, overRoster, rosterSays, shopAt, shopBoxOf, rosterUp } from './roster.js';
+import { buildMockPress, buildMockSays, buildMockOver } from './buildmock.js'; // MOCK build-button-in-the-world
 import { overCount, countRect } from './render/counter.js';
 import { potPick, potHover } from './potpick.js';
 import { shutOpts } from './shop.js';
@@ -214,6 +215,7 @@ canvas.addEventListener('pointerdown', e => {
   const way = portalAt(p.x, p.y) || handAt(p.x, p.y);
   if (way && throughPortal(way)) return;
   if (onGoOn(p.x, p.y) && sayGoOn()) return;
+  if (buildMockPress(p.x, p.y)) return; // MOCK build-button-in-the-world  a lot's build button, in either act
   // The acts' places: a click up there is the afterlife's (after/index.js,
   // `clickAfter`), down in hell hell's (hell/index.js, `clickHell`), each
   // asked only once its act's track exports it; nothing of the yard's stands
@@ -669,6 +671,8 @@ function askedAbout(x, y, cx, cy) {
     return true;
   }
 
+  const bm = buildMockSays(x, y); // MOCK build-button-in-the-world
+  if (bm) { showTip(bm.text, bm.at); return true; } // MOCK build-button-in-the-world
   const roster = rosterSays(x, y);
   if (roster) {
     showTip(roster.text, roster.at);
@@ -732,7 +736,7 @@ const CURSORS = [
   [() => S.crewSight != null && S.mining, 'grabbing'],
   [() => S.crewSight != null, 'grab'],
   // the counts under a station, and the places with a board on them
-  [(x, y) => overRoster(x, y), 'pointer'],
+  [(x, y) => overRoster(x, y) || buildMockOver(x, y), 'pointer'], // MOCK build-button-in-the-world  or a lot's build button
   // the way through the surface, from either side, and the serpent to hit
   [(x, y) => onShaftArrow(x, y) || onPortal(x, y) || onCoil(x, y) || overOrb(x, y), 'pointer'],
   // the acts' portals and their hands, asked as the press is (heaven's gates

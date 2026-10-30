@@ -305,6 +305,7 @@ const LAYERS = [
   { name: 'done marks', in: YARD_DEEP, draw: drawDoneMarks },   // a tick over any station that finished something
   { name: 'sight veil', draw: drawSightVeil },   // the right button held: the yard behind the crew veiled pale
   { name: 'roster', in: YARD_DEEP, draw: drawRosterBodies },    // who is working here, under the place they work
+  { name: 'buildmock', in: ['yard', 'after'], draw: drawBuildMock }, // MOCK build-button-in-the-world  a lot's build button
   { name: 'intro', draw: drawIntro },            // the two of them, or whoever is under the rock
   { name: 'forklifts', draw: drawForklifts },   // behind the crew, who walk in front of the machines
   { name: 'workers', draw: drawWorkers, dim: 1 },
@@ -687,4 +688,5 @@ function drawRipples(rip) {
 // deep it is for.
 import { seatRails } from './deep/rails.js';
 import { seatBuildButton } from './deep/buildbutton.js';
+import { drawBuildMock } from './buildmock.js'; // MOCK build-button-in-the-world
 LAYERS.push({ name: 'rails', in: ALL, draw: seatRails }, { name: 'build button', in: ALL, draw: seatBuildButton });

@@ -3662,3 +3662,10 @@ after-crowd-none = none due
 
 # The button above a station's worker count that opens its upgrades (act 3).
 roster-upgrades = upgrades
+
+# MOCK build-button-in-the-world: the button at a lot not yet built that buys its first build (throwaway review code, never merged).
+buildmock-word = build
+buildmock-call = build the { $name }
+buildmock-say = { $call }: { $bill }
+buildmock-wait = { $call }: { $why }
+buildmock-coin = { $n } { $coin }
