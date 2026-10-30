@@ -180,6 +180,7 @@ this section; the release that switches it on moves these under Unreleased.
 
 **New this release**
 - Act 3's grove is oaks planted from acorns beside the forestry shack, grown row by row, sawn down by hand any time (a bought saw lets the woodcutter do it), breaking into their four logs as the crown scatters and fades; the stump is a fifth log, and the axe is now the saw (test/after-grove-migrate.test.mjs, test/after-loop.test.mjs).
+- Act 3's grove has a seed basket by the forestry shack, five acorns in it to start: a seeds row buys one acorn a press (a member fetches it from heaven's gates), the woodcutter plants a bare plot from it and your hand can drop an acorn on one, and self-seeding, a quarter to every crown by rung, leaves an acorn for a member to carry back (test/after-grove.test.mjs).
 - Going through a portal, the place on the other side shows live through the ring instead of a still picture (src/selftest/deep.js, "the ring going down shows the deep live").
 - The chips off a builder's hammer are the paper over buildings and ground and the ink over the sky, on either page (src/selftest/work.js, "a builder's grit is plain paper or ink").
 - A lamp's light is a soft see-through beam that fades out with distance, lying over whatever it reaches (src/selftest/wardrobe.js, "a lamp's light is plain fills").

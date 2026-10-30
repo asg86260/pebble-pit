@@ -11,7 +11,7 @@ import { goodCount } from '../src/after/piles.js';
 import { siteLoads } from '../src/after/build.js';
 import { lying } from '../src/after/ground.js';
 import { TREE_CHOPS, AFTER_TREE, CROWD_FILES, RIM_PIECES, MEET_MEMBERS, AFTER_GATES,
-         ACT_CAPTION_S, AFTER_DIG_CLICKS, AFTER_PODIUM_REBEL, AFTER_PODIUM_CLIMB, AFTER_PODIUM_TOPS, AFTER_PODIUM_U, AFTER_PLOTS0, AFTER_PLOT_MAX,
+         ACT_CAPTION_S, AFTER_DIG_CLICKS, AFTER_PODIUM_REBEL, AFTER_PODIUM_CLIMB, AFTER_PODIUM_TOPS, AFTER_PODIUM_U, AFTER_PLOTS0, AFTER_PLOT_MAX, AFTER_SELF_SEED,
          AFTER_UPGRADES, AFTER_CARDS, AFTER_YARD_COINS, AFTER_FIRST_MEMBERS, STRIKE_SHARE, AFTER_AGITATE_REBEL, AFTER_AGITATE_S,
          AFTER_BUILD_PIECES, AFTER_LOG_TIMBER, AFTER_MILL, AFTER_SAW_S,
          AFTER_BUILDS, AFTER_SEAT_BILLS, AFTER_WALK, AFTER_SIGN_INK_S, AFTER_BURN_S,
@@ -558,7 +558,7 @@ group('every act-3 card sells two or three named upgrades, none of them a ladder
     .map(c => [c, ups.filter(([, u]) => u.card === c).length]);
   // The podium is the one ladder (DESIGN.md, "The level, the two crowds and
   // the flags"): a rung a support mark, not the yard's bands.
-  const long = ups.filter(([k, u]) => u.bills.length > (k === 'after-plot' ? AFTER_PLOT_MAX - AFTER_PLOTS0 : u.marks ? u.marks.length : 1)).map(([k]) => k);
+  const long = ups.filter(([k, u]) => u.bills.length > (k === 'after-plot' ? AFTER_PLOT_MAX - AFTER_PLOTS0 : k === 'after-selfseed' ? AFTER_SELF_SEED.length : u.marks ? u.marks.length : 1)).map(([k]) => k);
   const coins = new Set(ups.flatMap(([, u]) => u.bills.flat().map(([c]) => c)));
   window.__actsOn(null);
   return [

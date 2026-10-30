@@ -454,11 +454,16 @@ export const AFTER_UPGRADES = {
                                                     [['rebel', 200], ['timber', 5], ['dust', 40000], ['spore', 10000]],
                                                     [['rebel', 400], ['timber', 18], ['dust', 80000], ['spore', 20000], ['shard', 20000], ['scale', 800]]] },   // a plot cleared, AFTER_PLOT_MAX in all
   'after-grow':        { card: 'grove',     bills: [[['rebel', 150], ['timber', 5], ['dust', 30000], ['spore', 8000]]] },                    // faster growth
-  'after-tree':        { card: 'grove',     bills: [[['rebel', 450], ['timber', 18], ['dust', 100000], ['spore', 35000], ['shard', 40000], ['scale', 2000], ['spark', 8000]]] },  // bigger trees
   // Stump removal names no timber: the first trees are the only timber until
   // it is had, and a player who never digs a stump by hand fells them, spends
   // the timber on signs and has no way to the next tree.
   'after-stumps':      { card: 'grove',     bills: [[['rebel', 200], ['dust', 40000], ['spore', 10000]]] },                                   // stump removal: woodcutters dig stumps too
+  // Self-seeding (track D): four rungs, the chance a felled crown drops an
+  // acorn (AFTER_SELF_SEED). Timber is an order, carried.
+  'after-selfseed':    { card: 'grove',     bills: [[['rebel', 150], ['dust', 30000]],
+                                                    [['rebel', 300], ['timber', 6], ['dust', 60000], ['spore', 15000]],
+                                                    [['rebel', 600], ['timber', 12], ['dust', 100000], ['spore', 30000], ['shard', 30000]],
+                                                    [['rebel', 1000], ['timber', 18], ['dust', 150000], ['spore', 45000], ['shard', 45000], ['spark', 6000]]] },
   'after-blade':       { card: 'mill',      bills: [[['rebel', 180], ['timber', 15], ['dust', 35000], ['spore', 8000]]] },                    // a second blade
   'after-bench':       { card: 'workshop',  bills: [[['rebel', 300], ['timber', 18], ['dust', 70000], ['spore', 18000], ['shard', 18000], ['scale', 1000]]] },  // a second bench
   'after-signreach':   { card: 'workshop',  bills: [[['rebel', 600], ['timber', 18], ['dust', 120000], ['spore', 45000], ['shard', 50000], ['scale', 2500], ['spark', 10000]]] }   // a bigger sign
@@ -696,3 +701,37 @@ export const AFTER_PULL = { stand: 1, grip: 0.3, heave: 0.35, lean: 1, hoist: 0.
 // The stump come out into the hand swings in from where it came out to hang
 // off the pointer as a held log does, at this rate a second.
 export const STUMP_HOLD_EASE = 6;
+
+// --- track D: seeds (DESIGN.md, "Act 3's grove, rebuilt", "The economy and the pace") ---
+// The seeds row's first six bills, deepening a band every two in the earlier
+// acts' coins only (the owner, 2026-10-30: "the first seeds cost prev
+// resources"); past the table each purchase costs the last bill times
+// AFTER_SEED_RATE for every purchase beyond it, so none is as cheap as the one before.
+export const AFTER_SEED_BILLS = [[['dust', 4000]], [['dust', 8000]], [['dust', 15000], ['spore', 3000]],
+                                 [['dust', 25000], ['spore', 6000]], [['dust', 40000], ['spore', 10000], ['shard', 8000]],
+                                 [['dust', 60000], ['spore', 15000], ['shard', 15000]]];
+export const AFTER_SEED_RATE = 1.15;
+// The chance a felled crown drops an acorn, by self-seeding's rung. Kept as a
+// debt (`S.after.selfSeed`): each fall adds the chance, and an acorn drops
+// when it reaches one, so 25% is exactly every fourth tree.
+export const AFTER_SELF_SEED = [0.25, 0.5, 0.75, 1];
+// A seed fetched from heaven's gates: the beat the hands take to close on it.
+export const AFTER_SEED_TAKE_S = 0.6;
+// Where a crown's acorn comes to rest, cells off the trunk's pivot toward
+// the fall: past the last log's end, on its own plot.
+export const AFTER_SEED_DROP = AFTER_TREE.logs * AFTER_TREE.log + 3;
+// A woodcutter's planting, the mock's beats (a1): the reach into the basket,
+// then the kneel and the set-down at the bed.
+export const AFTER_SEED_REACH_S = 0.7;
+export const AFTER_SEED_PLANT_S = 0.75;
+// The seed basket (render/after/basket.js), its rows up off the floor, each
+// [cells it starts past the heap's left edge, cells it ends past the right
+// edge, its part, front or back]: the woven body and the near rim over the
+// bottom row's nuts, then behind the acorns the inside, showing round their
+// caps and stalks, and the far rim a cell in from each end behind the top
+// row's tips, so the top row sits in the basket and a part-filled one is a
+// basket with acorns in it. Each part one of timber's tones, the body woven of two.
+export const AFTER_BASKET = {
+  rows: [[0, 0, 'body', 'front'], [-1, 1, 'rim', 'front'], [-1, 1, 'inside', 'back'], [0, 0, 'inside', 'back'], [1, -1, 'lip', 'back']],
+  tone: { rim: 3, inside: 2, lip: 0, body: 1, weave: 2 }
+};

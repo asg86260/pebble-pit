@@ -77,7 +77,7 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
     'after-post-joiner', 'after-blade', 'after-plot',
     'after-stumps', 'after-grow', 'after-post-sawyer', 'after-post-woodcutter',
     'after-bench', 'after-plot',
-    'after-post-joiner', 'after-tree', 'after-signreach'
+    'after-post-joiner', 'after-selfseed', 'after-signreach'
   ];
   // Past the plan, a post where the chain is short, as a player watching the
   // piles would put one: a joiner while carriers wait on signs with timber in,

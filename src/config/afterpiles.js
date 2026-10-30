@@ -34,7 +34,9 @@ export const AFTER_PILES = {
   // track A: the grove's seed basket by the forestry shack (DESIGN.md, "Act
   // 3's grove, rebuilt", call 12): five acorns, three across, the count what
   // is drawn
-  seeds:     { good: 'acorn', brim: 5, cols: 3 }
+  // `rests`: full is its normal state, so it wears no pile-full mark (the
+  // seeds row's dead state says "full" instead)
+  seeds:     { good: 'acorn', brim: 5, cols: 3, rests: true }
 };
 // A pass of the sand rules over a pile, seconds: a block set down rolls off
 // the heap's side a cell a pass, slow enough to be seen rolling (the voted

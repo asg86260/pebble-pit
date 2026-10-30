@@ -16,6 +16,7 @@ import { AFTER_START_BUILT, AFTER_SEEDS0 } from '../config.js';
 import { afterlifeOn } from '../acts.js';
 import { stepRebel, clickPlace } from './rebel.js';
 import { stepGrove, blankPlots } from './grove.js';
+import { stepSeeds } from './seeds.js';
 import { stepMill } from './mill.js';
 import { stepPiles, standPiles } from './piles.js';
 import { groundRecord, standGround } from './ground.js';
@@ -131,6 +132,7 @@ export function stepAfter(c) {
   S.after.t += secs(c);
   stepRebel(c);
   stepGrove(c);
+  stepSeeds();
   stepBodies(c);
   stepMill(c);
   stepPiles(c);

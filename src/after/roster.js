@@ -24,6 +24,7 @@ import { standing, stumped } from './grove.js';
 import { pileFull, pileCount } from './piles.js';
 import { lying } from './ground.js';
 import { JOB_NAMES } from './rows.js';
+import { waitsOnSeeds } from './seeds.js';
 
 const stationOf = card => (card === 'grove' ? 'forestry' : card);
 const live = () => afterlifeOn() && !!S.after;
@@ -43,7 +44,9 @@ const SRC = {
 // (bodies.js, mill.js): a message id, or null while it can work.
 const noLogs = pile => pileCount(pile) <= 0 && pileCount('grovelogs') <= 0;
 const STALL = {
-  woodcutter: () => (!lying().length && !S.after.plots.some(p => standing(p) || (stumpsOn() && stumped(p))) ? 'after-stall-trees' : null),
+  // a bare plot and an empty basket is its own wait (after/seeds.js)
+  woodcutter: () => (!lying().length && !S.after.plots.some(p => standing(p) || (stumpsOn() && stumped(p)))
+    ? (waitsOnSeeds() ? 'after-stall-seeds' : 'after-stall-trees') : null),
   sawyer: () => (pileFull('timber') ? 'hover-pile-full' : noLogs('logs') ? 'after-stall-logs' : null),
   joiner: () => (pileCount('timber') < AFTER_SIGN_TIMBER && pileCount('signs') < holds('sign') ? 'after-stall-timber' : null)
 };

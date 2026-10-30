@@ -57,16 +57,17 @@ group('short of a yard coin, the buy refuses and takes nothing', async () => {
 
 group('a spark-band upgrade needs a spark', async () => {
   up();
-  const bill = AFTER_UPGRADES['after-tree'].bills[0];
+  S.after.ups['after-selfseed'] = 3;   // the last rung is the spark's
+  const bill = AFTER_UPGRADES['after-selfseed'].bills[3];
   window.__afterGrant({ rebel: billOf(bill, 'rebel'), timber: billOf(bill, 'timber') });
   window.__grant({ dust: billOf(bill, 'dust'), spores: billOf(bill, 'spore'), shards: billOf(bill, 'shard'), scales: billOf(bill, 'scale') });
-  const without = window.__buy('after-tree');
+  const without = window.__buy('after-selfseed');
   window.__grant({ sparks: billOf(bill, 'spark') });
   const sparks0 = S.sparks;
-  const withIt = window.__buy('after-tree');
+  const withIt = window.__buy('after-selfseed');
   window.__actsOn(null);
   return [
-    ok(billOf(bill, 'spark') > 0, 'bigger trees ask a spark', JSON.stringify(bill)),
+    ok(billOf(bill, 'spark') > 0, 'the last rung of self-seeding asks a spark', JSON.stringify(bill)),
     ok(!without, 'refused with every coin but the spark'),
     ok(withIt && sparks0 - S.sparks === billOf(bill, 'spark'), 'bought once the spark is there, the sparks taken', `${sparks0} -> ${S.sparks}`)
   ];

@@ -39,6 +39,7 @@ import { payTo } from '../pit.js';
 import { upCount, built, raising, seatKey, seatsBought } from './levels.js';
 import { crewAt, spareMembers } from './bodies.js';
 import { clearPlot } from './grove.js';
+import { SEEDS_ROW, seedsBought, seedsRoom, seedBill, owe } from './seeds.js';
 import { raiseStation, placeOrder, orderedOf, onOrderLanded } from './build.js';
 import { stationBox, plotX, groveX1, afterFloor, afterX0, floorAt, AP, closed } from './place.js';
 import { union, won, ready, hire, support } from './union.js';
@@ -102,7 +103,7 @@ const ACT_ROW = { coinOrder: AFTER_TAG_ORDER, place: 'after', flyFrom: () => pat
 const UP_NAMES = {
   'after-podium': () => msg('after-row-podium'), 'after-saw': () => msg('after-row-saw'),
   'after-plot': () => msg('after-row-plot'), 'after-grow': () => msg('after-row-grow'),
-  'after-tree': () => msg('after-row-tree'), 'after-stumps': () => msg('after-row-stumps'),
+  'after-selfseed': () => msg('after-row-selfseed'), 'after-stumps': () => msg('after-row-stumps'),
   'after-blade': () => msg('after-row-blade'),
   'after-bench': () => msg('after-row-bench'), 'after-signreach': () => msg('after-row-signreach')
 };
@@ -209,11 +210,27 @@ const recruitRow = {
   buy: () => { if (hire()) { S.after.ups[RECRUIT] = recruits() + 1; S.after.upAt[RECRUIT] = S.after.t; } }
 };
 
+// --- the seeds ---------------------------------------------------------------------------
+// One acorn a press, in the earlier acts' coins, dearer each time (seeds.js,
+// `seedBill`): a repeating row, as the recruit is. Bought, the acorn is owed;
+// a member walks to heaven's gates for it and carries it to the basket. Dead
+// while the basket, the seeds owed and those on their way would pass its
+// brim, and says so: a full basket is the row's end, not a jam.
+const seedsRow = {
+  key: SEEDS_ROW, name: msg('after-row-seeds'), card: 'grove', ...ACT_ROW, repeats: true, from: seedsBought,
+  bill: () => seedBill(),
+  show: () => cardOpen('grove'),
+  dead: () => seedsRoom() <= 0,
+  waits: () => (seedsRoom() <= 0 ? msg('after-seeds-full') : null),
+  buy: () => { if (seedsRoom() > 0) { owe(); S.after.ups[SEEDS_ROW] = seedsBought() + 1; S.after.upAt[SEEDS_ROW] = S.after.t; } }
+};
+
 // Nothing up here is for sale before the act has begun.
 const inAct = u => ({ ...u, show: () => !!S.after && u.show() });
 export const AFTER_ROWS = [
   ...AFTER_JOBS.map(seatRow),
-  ...Object.keys(AFTER_UPGRADES).map(upRow),
+  // the seeds row stands between stump removal and self-seeding
+  ...Object.keys(AFTER_UPGRADES).flatMap(k => (k === 'after-selfseed' ? [seedsRow, upRow(k)] : [upRow(k)])),
   ...Object.keys(AFTER_BUILDS).map(buildRow)
 ].map(inAct);
 // First on the pedestal's board; its line is a getter, so it is not spread.

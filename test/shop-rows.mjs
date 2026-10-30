@@ -183,6 +183,10 @@ export const ROWS = [
   // reads the act back from a save. None is a ladder (DESIGN.md, act 3's
   // call 12) but the pair's podium, a rung a support mark, which it buys
   // rung by rung at its marks and reads back after a reload.
+  // The grove's seeds row (a repeating row like the recruit) and self-seeding
+  // (four rungs) are bought the same way, `__buy` and the member who walks to
+  // the gates, in test/after-grove.test.mjs; their place on the board is
+  // test/after-boards.test.mjs's.
 
   // --- act 4, hell (upgrades/rows-hell.js) -------------------------------------
   // Off every board until hell has begun; its cards are paid in brimstone

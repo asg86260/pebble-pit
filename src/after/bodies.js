@@ -41,7 +41,7 @@ import { built, stumpsOn, seatsOf, bladeLogs, benchSigns } from './levels.js';
 // and its planting of a bare plot from the basket, each true while it has
 // the body this frame.
 import { pullStep } from './stump.js';
-import { plantStep } from './seeds.js';
+import { plantStep, fetchStep, seedsOwed } from './seeds.js';
 import { afterX0, afterX1, afterFloor, floorAt, stationDoor, stationBox, signFetchX, pileMid, pileOwner, plotX, soulX, soulY, groveX1, campSpot, idleX, idleSpots, podiumMid, overCrowd, crowdEdge, AP } from './place.js';
 import { agitate } from './rebel.js';
 import { standing, stumped, chopTree, digStump, settled, layGood } from './grove.js';
@@ -547,6 +547,8 @@ const JOB_STEP = {
     // last one handing the stump-log into its arms.
     if (w.t >= AFTER_DIG_S / AFTER_DIG_CLICKS) { digStump(w.target, false, v => push(w, v)); w.t = 0; w.swing = a.t; if (!stumped(a.plots[w.target])) w.target = null; }
   },
+  // An idle member's errand only (track D): a seed owed, fetched from the gates.
+  seeder: fetchStep,
   // An idle member's errand only: a woodcutter gathers as part of its own.
   gatherer(w, dt) { return gather(w, dt); },
   // An idle member's errand only: blocks to the station most short of them
@@ -654,6 +656,8 @@ const JOB_STEP = {
 // carrier's own pick, made at the door.
 const ERRANDS = [
   { job: AFTER_JOB.GATHER, kind: 'log', left: () => looseLogs().length },
+  // A bought seed owed at heaven's gates (track D, after/seeds.js): one member a seed.
+  { job: AFTER_JOB.SEED, kind: 'acorn', per: 1, left: seedsOwed },
   // A bought row's timber, while any of it waits on the mound (build.js).
   { job: AFTER_JOB.ORDER, kind: 'plank', left: () => Math.min(timberReserved(), pileCount('timber')) },
   { job: AFTER_JOB.HAUL, kind: 'log', left: haulNeed },

@@ -38,7 +38,7 @@ const SUPPLY = { timber: AFTER_LOG_TIMBER };
 // At its brim: no room for what its supply sets down at once, so the supply
 // stops and the pile wears the pile-full mark -- one test for both, so a
 // stopped saw is never unmarked.
-export const pileFull = what => !!S.after && pileRoom(what) < (SUPPLY[what] || 1);
+export const pileFull = what => !!S.after && !AFTER_PILES[what].rests && pileRoom(what) < (SUPPLY[what] || 1);
 
 // Where on its strip a block is set down when nobody says where, as a slot of
 // the strip counted from its left: the slot nearest the strip's middle that
