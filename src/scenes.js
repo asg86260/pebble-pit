@@ -3970,6 +3970,13 @@ Object.assign(SCENES, {
       groveAt(360);
     } }
 });
+// The forestry shack's stump house, built (render/after/stations.js), for the
+// owner beside the mock it came from: the grove at rest, framed as the mock
+// was, its stovepipe smoking.
+SCENES['after-cabin'] = { about: 'the acts', review: 'act 3: the cabin, built', option: 'A the stump house',
+  stage: 'built: cabin-stump, not on main yet', branch: 'cabin-stump', supersedes: ['act 3: the cabin'],
+  say: "the forestry shack as the stump house: a sawn stump with an arched door, a round window and a shelf fungus in its bark, the stovepipe smoking",
+  run: () => { window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1); groveAt(300); window.__fast(0.5); } };
 // The grove's real build for the owner, one review (review.html#grove-built):
 // every real grove scene says where it is built, and nine stand as its
 // options, putting away the four mock reviews they came out of.
