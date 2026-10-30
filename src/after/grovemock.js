@@ -393,6 +393,7 @@ function sawStroke(b, t0) {
 // frames' smear, the bite held at the end of the push (the saw in, the body
 // leant in a cell's worth), eased back. 'bite' on the frame the push lands.
 export const HEAVY = { back: 0.22, push: 0.08, bite: 0.2, pull: 0.16, travel: 3.5 };
+export const GRIP_HALF = 0.5;   // the hand saw's grip runs this far past the hand toward the blade, cells (its ring ends half a cell on)
 function heavyStroke(b, t0) {
   const { back, push, bite, pull } = HEAVY, per = back + push + bite + pull, t = t0 % per, was = b.phase;
   if (t < back) { b.s = 0; b.smear = null; b.lean = 0; b.phase = 'back'; }
@@ -416,7 +417,8 @@ function makeW(tool, heavy = false) {
     init() { takeBack(); standTree();
              M.bodies = [{ x: bx() - AP * 40, y: floorM(bx() - AP * 40), face: 1, tool, heavy, pose: 'carry', s: 0, lean: 0 }]; M.dust = []; go('walk'); },
     step(dt) {
-      const b = M.bodies[0], p = plot(), stand = bx() + MT.c0 * AP - BODY - SAW_STAND[tool] * AP;
+      // with heft: stood back far enough that at the full push (the travel, and the body leant a cell in) the grip stops at the trunk's near edge, the blade alone over the trunk
+      const b = M.bodies[0], p = plot(), stand = heavy ? bx() + MT.c0 * AP - BODY - 1 - (HEAVY.travel + 1 + GRIP_HALF) * AP : bx() + MT.c0 * AP - BODY - SAW_STAND[tool] * AP;
       if (M.ph === 'walk') { b.pose = 'carry'; if (walkTo(b, stand, dt)) { b.face = 1; b.pose = 'saw'; go('fell'); } }
       else if (M.ph === 'fell' && heavy) {
         // the stroke with heft: a long push-pull, each end held, the push
