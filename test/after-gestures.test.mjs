@@ -104,30 +104,28 @@ group('the workshop: four nails a sign, two taps each; a miss does nothing; the 
   ];
 }, NO_RELOAD);
 
-group('a tree: its saw icon clicked puts the handsaw on it; dragged back and forth, a stroke a chop, faster fells it sooner', async () => {
+group('a tree: the hand saw lies across its trunk, no icon; taken and dragged back and forth, a stroke a chop, faster fells it sooner', async () => {
   const trial = period => {
     up();
-    window.__afterSaw();
     run(0.5);
-    const icon = groveIcons().some(c => c.kind === 'saw' && c.i === 0);
-    const on = sawOn(0) && rec('tree').i === 0;
-    return { icon, on, secs: saw(0, () => S.after.plots[0].fall != null, period) };
+    const icon = groveIcons().some(c => c.kind !== 'shovel');
+    const on = sawOn(0);
+    return { icon, on, secs: saw(0, () => S.after.plots[0].fall != null, period), by: S.after.plots[0].by };
   };
   const slow = trial(3), fast = trial(0.6);
-  // A plain click on the trunk puts the saw on it, as the icon does (the
-  // owner, 2026-10-20: "clicking a tree starts the sawing"); the grove's
-  // board is the forestry shack's, opened from the UPGRADES button over the
+  // A plain click on the tree takes the saw lying across it (the owner,
+  // 2026-10-20: "clicking a tree starts the sawing"); the grove's board is
+  // the forestry shack's, opened from the UPGRADES button over the
   // woodcutters' roster and not from the shack's drawing.
   up();
-  window.__afterSaw();
   const t = window.__afterTrees()[0];
-  const asked = asks({ x: t.x, y: t.y }), sawing = rec('tree').i === 0;
+  const asked = asks({ x: t.x, y: t.y }), sawing = rec('tree').on === 0;
   const board = frameAsks('forestry'), button = pressShop('after-grove');
   window.__actsOn(null);
   return [
-    ok(slow.icon && slow.on, 'the saw icon shows over the grown tree, and a click on it puts the saw on'),
+    ok(!slow.icon && slow.on && slow.by === 'hand', 'no icon over the grown tree; the saw lies across its trunk, nothing bought, and the hand fells it', JSON.stringify(slow)),
     ok(fast.secs < slow.secs && Number.isFinite(slow.secs), `sawn faster, it falls sooner (${TREE_CHOPS} strokes)`, `${slow.secs.toFixed(2)} s -> ${fast.secs.toFixed(2)} s`),
-    ok(asked === null && sawing, 'a plain click on the tree puts the saw on it, no board asked for', JSON.stringify([asked, sawing])),
+    ok(asked === null && sawing, 'a plain click on the tree takes its saw, no board asked for', JSON.stringify([asked, sawing])),
     ok(board.spots > 0 && JSON.stringify(board.asks) === '[null]', 'a click on the forestry shack opens no board', JSON.stringify(board)),
     ok(button === 'after-grove', 'the UPGRADES button over its roster asks for the grove\'s', String(button))
   ];

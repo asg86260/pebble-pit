@@ -10,7 +10,7 @@
 // read by the sim and the drawing alike, so a body walks to the spot the
 // picture shows.
 
-import { P, AFTER_GAP, AFTER_H, AFTER_W, AFTER_FLOOR_MARGIN,
+import { P, AFTER_SAW, AFTER_GAP, AFTER_H, AFTER_W, AFTER_FLOOR_MARGIN,
          AFTER_GROVE_X0, AFTER_GROVE_START, AFTER_PLOT_MAX, AFTER_PLOT_STEP, AFTER_PLOT_GAP, AFTER_TREE, AFTER_OAK, AFTER_OAK_HALF, AFTER_BED, AFTER_STATIONS, AFTER_PODIUM_U, AFTER_PODIUM_TOPS, AFTER_PODIUM_PAIR, AFTER_PODIUM_CLIMB, AFTER_PODIUM_PILE, UNION_CROWD, AFTER_START_BUILT,
          CROWD_X0, CROWD_FILES, CROWD_PITCH, CROWD_NEAR, CROWD_ROW, CROWD_FAR_ROW,
          AFTER_STAIR_X, AFTER_STAIR_W, AFTER_STAIR_RISE,
@@ -427,12 +427,16 @@ export const bedSpan = i => [plotX(i) + AFTER_BED[0] * AP, plotX(i) + (AFTER_BED
 export const plotSpan = i => [plotX(i) - AFTER_PLOT_STEP + plotReach() * AP, plotX(i) + (AFTER_PLOT_GAP + plotReach()) * AP];
 
 // --- each station's moving part, for the hand ----------------------------------------
-// The handsaw's rest across a grown trunk, in cells off the plot's line, for
-// the hand's placeholder (after/gestures.js) until the saw lies across the
-// trunk a log's height up (track B): the columns its grip and blade span and
-// the rows it stands in.
-export const SAW_SPAN = [-15, 9];
-export const SAW_ROWS = [-AFTER_TREE.stump - 4, -AFTER_TREE.stump - 1];
+// The hand saw lying across a grown trunk a log's height up, its blade's edge
+// on the stump's top and its grip on the shack's side (the tree falls the
+// other way): in cells off the plot's line, the columns it sweeps over its
+// whole stroke and the rows it stands in, teeth to grip (track B;
+// after/gestures.js `handSawAt` lays it). At the full push the grip stops
+// flush at the trunk's edge; at the full pull the blade's toe is still a cell
+// inside the trunk, so the stroke is a cell short of the blade.
+const SAW_EDGE = AFTER_TREE.c0 + AFTER_TREE.w, SAW_BLADE = AFTER_SAW.depth.length;
+export const SAW_SPAN = [SAW_EDGE - SAW_BLADE, SAW_EDGE + (SAW_BLADE - 1) + AFTER_SAW.grip - 1];
+export const SAW_ROWS = [-AFTER_TREE.stump - Math.max(...AFTER_SAW.depth), -AFTER_TREE.stump];
 // The grove's icons, [width, height] in their own dots of ICON_DOT px: the
 // saw over a grown tree and the shovel over a stump (render/after/pine.js),
 // the hand's placeholder until tracks B and C retire them.

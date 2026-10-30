@@ -21,6 +21,11 @@ import { AP } from '../after/place.js';
 import { bedWants } from '../after/mill.js';
 import { stripBox } from '../after/ground.js';
 import { drawGroveIcons } from './after/pine.js';
+// track B: the trunk's cue on the hand saw, and the woodcutter's saw drawn
+// over the members, in its hand
+import { handSawAt } from '../after/gestures.js';
+import { trees, standing } from '../after/grove.js';
+import { drawHeldSaws, workedBy } from './after/saw.js';
 import { K, W, MID } from './after/kit.js';
 
 const D = GESTURE_CUE_DOT;
@@ -89,11 +94,16 @@ function cueAt(key, r) {
     const b = lowestBubble(), box = partsOf('pedestal').box;
     return b ? { x: b.x + b.w / 2, y: b.y + b.h + (tapDown() ? D * 2 : 0), pose: 'point' } : { x: box.x + box.w / 2, y: box.y + P + (tapDown() ? D * 2 : 0), pose: 'point' };
   }
+  // track B: the trunk's cue (F1): the ghost hand on the grip of the saw
+  // lying across a grown trunk -- the one the hand last took, else the first
+  // grown that no woodcutter is sawing with its own -- acting its stroke out
+  // end to end. No icon over a tree.
   if (key === 'tree') {
-    const icon = groveIcons().find(c => c.kind === 'saw');
-    if (r.i == null) return icon ? { x: icon.x, y: icon.y + (tapDown() ? D * 2 : 0), pose: 'point' } : null;
-    const b = partsOf('tree', r.i).sawBox;
-    return { x: b.x + P * 2 + Math.sin(turn) * GESTURE_SAW_AMP, y: b.y + b.h / 2, pose: 'grab' };
+    const list = trees(), free = k => standing(list[k]) && !workedBy(k);
+    const i = r.on != null && free(r.on) ? r.on : list.findIndex((p, k) => free(k));
+    if (i < 0) return null;
+    const s = Math.sin(turn) * GESTURE_SAW_AMP, g = handSawAt(i, s).grip;
+    return { x: g.x, y: g.y, pose: 'grab' };
   }
   if (key === 'stump') {
     const c = groveIcons().find(k => k.kind === 'shovel');
@@ -134,6 +144,7 @@ export function drawAfterCues() {
   const view = gestureView();
   if (!view) return;
   const t = now();
+  drawHeldSaws();   // track B
   drawGroveIcons();
   shown = {};
   for (const r of view) {

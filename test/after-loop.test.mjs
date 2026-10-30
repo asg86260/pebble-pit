@@ -21,6 +21,7 @@ import { stepAfter } from '../src/after/index.js';
 import { crowdSpan } from '../src/render/after.js';
 import { pileAt, stationBox, plotX, speakerAt, afterFloor, idleSpots, AP } from '../src/after/place.js';
 import { groveIcons } from '../src/after/gestures.js';
+import { sawSpot } from '../src/after/bodies.js';
 import { sawOn, saw, lift, spin, loadBed } from './after-hands.mjs';
 import { millView } from '../src/after/mill.js';
 
@@ -169,7 +170,7 @@ group('a member put on through the roster walks off the podium to the grove in a
     while (s < 120) { run(1); s++; const w = S.after.bodies.find(b => b.job === job); if (w && there(w)) return s; }
     return Infinity;
   };
-  const cut = trip('woodcutter', w => Math.abs(w.x - (plotX(0) + AP * 3)) < 1);
+  const cut = trip('woodcutter', w => !!w.sawing && Math.abs(w.x - sawSpot(0)) <= AP);
   window.__actsOn(null);
   // The walk is the camp's length, podium to grove, at the act's pace.
   const far = Math.ceil((stationBox('pedestal').x - plotX(0)) / AFTER_WALK) + 2;
@@ -182,7 +183,7 @@ group('the hand saws a tree from the start; the saw is bought on the grove\'s ca
   up();
   // The hand needs nothing bought (the owner, 2026-10-30: "the player can
   // always cut the tree down, the saw unlocks worker automation").
-  const early = groveIcons().some(c => c.kind === 'saw');
+  const early = !groveIcons().some(c => c.kind !== 'shovel');
   const on = sawOn(0);
   saw(0, () => S.after.plots[0].chops >= 1);
   const chopped = S.after.plots[0].chops;
@@ -193,7 +194,7 @@ group('the hand saws a tree from the start; the saw is bought on the grove\'s ca
   const told = runUntil(() => S.beatsDone.includes('saw'), 4 * ACT_CAPTION_S);
   window.__actsOn(null);
   return [
-    ok(early && on && chopped === 1, 'before the saw is bought, the icon puts the hand\'s saw on the tree, and a stroke is a chop', String(chopped)),
+    ok(early && on && chopped === 1, 'before the saw is bought, the hand saw lies across the tree, no icon, and a stroke is a chop', String(chopped)),
     ok(!before && bought && card === 'grove', 'the saw is a row on the grove\'s card, paid in rebel', card),
     ok(told && read().sawHanded, 'its beat plays and hands the saw to the woodcutter')
   ];

@@ -27,7 +27,7 @@
 import { S } from '../state.js';
 import { sink } from '../flow.js';
 import { AFTER_JOB } from '../jobs.js';
-import { P, AFTER_SLOT_GAP, AFTER_JOBS, AFTER_JOB_POST, AFTER_AGITATE_S, AFTER_FELL_S, AFTER_DIG_S, AFTER_DIG_CLICKS, AFTER_PLANT_S,
+import { P, AFTER_SLOT_GAP, AFTER_JOBS, AFTER_JOB_POST, AFTER_AGITATE_S, AFTER_SAW_HEFT, AFTER_TREE, TREE_CHOPS, AFTER_DIG_S, AFTER_DIG_CLICKS, AFTER_PLANT_S,
          AFTER_PUT_S, AFTER_SAW_S, AFTER_CHOP_HOLD_S,
          AFTER_JOIN_FADE_S, AFTER_GOODS_HOME, AFTER_GOODS_FOOT, AFTER_WALK,
          AFTER_PILES, AFTER_SIGN_TIMBER, AFTER_SIGN_S, KINDS } from '../config.js';
@@ -213,12 +213,12 @@ function toPile(w, dt, what) {
 // A body put on a job, from where it stands: it forgets what it was doing
 // and walks to the job (the job's own frame takes it there).
 function takeJob(w, job) {
-  Object.assign(w, { job, errand: null, order: null, on: false, at: null, target: null, to: null, log: null, out: false, t: 0, n: 0, swing: null, dig: false, pick: false, plant: null });
+  Object.assign(w, { job, errand: null, order: null, on: false, at: null, target: null, to: null, log: null, out: false, t: 0, n: 0, swing: null, dig: false, pick: false, plant: null, ...UNSAW });
   clear(w);
 }
 // A body taken off its job, back to the podium on foot.
 function dropJob(w) {
-  Object.assign(w, { job: null, on: false, at: null, target: null, to: null, log: null, out: false, t: 0, n: 0, swing: null, dig: false, pick: false, plant: null });
+  Object.assign(w, { job: null, on: false, at: null, target: null, to: null, log: null, out: false, t: 0, n: 0, swing: null, dig: false, pick: false, plant: null, ...UNSAW });
 }
 // A member out of the crowd, who steps out of its front at the camp's edge
 // by the pedestal, fading in: put on `job`, or (null) to stand at the podium.
@@ -427,13 +427,88 @@ function takeOut(w, dt, kind, stock, room, round) {
 const ROUND_OF = { [AFTER_JOB.JOIN]: AFTER_JOB.CARRY };
 const onRound = (o, round) => o.errand === round || (o.out && ROUND_OF[o.job] === round);
 // The plot of `test` nearest `w`, one no other woodcutter has claimed first
-// if there is one.
-function nearestPlot(w, test) {
+// if there is one; with `alone`, only such a one (one saw to a trunk).
+function nearestPlot(w, test, alone = false) {
   const a = S.after;
   const free = a.plots.map((p, k) => k).filter(k => test(a.plots[k]));
   const lone = free.filter(k => !a.bodies.some(o => o !== w && o.job === AFTER_JOB.CUT && o.target === k));
-  const pick = lone.length ? lone : free;
+  const pick = lone.length || alone ? lone : free;
   return pick.length ? pick.reduce((b, k) => (Math.abs(plotX(k) - w.x) < Math.abs(plotX(b) - w.x) ? k : b)) : null;
+}
+
+// --- the woodcutter's saw (track B; DESIGN.md, "Act 3's grove, rebuilt",
+// call 8: W-2 with heft) ------------------------------------------------------------
+// The woodcutter fells from the side away from the fall, the shack's, facing
+// the trunk, with the hand saw held up at the felling cut. Its stroke is the
+// owner's beats (AFTER_SAW_HEFT): pulled back and held, pushed fast, the bite
+// held with the body leant in, eased back; each bite is a stroke of the saw
+// into the trunk (grove.js `chopTree`, the hand's door too) and throws
+// sawdust off the kerf; before the last the push is held a beat of strain.
+// All of it is kept on the body, which is saved whole: `sawing` once it
+// stands at its tree, `st` the seconds into the stroke, `strainT` the seconds
+// into the strain (null outside it), and `bite` the last bite { at, i, n }
+// (when on the act's clock, which plot, how many specks), which the drawing
+// throws its sawdust from (render/after/saw.js), so the pose and the dust
+// are a pure function of the body and the clock.
+const UNSAW = { sawing: false, st: 0, strainT: null };
+const H = AFTER_SAW_HEFT, STROKE_S = H.back + H.push + H.bite + H.pull, BITE_AT = H.back + H.push;
+// Where the woodcutter stands to saw plot i's tree, its x (the body's square
+// from x - P): back far enough from the trunk's near edge that at the full
+// push, leant in, the hand's grip stops flush at that edge and only the blade
+// crosses the trunk (the owner: "the handle goes over the trunk, it should
+// just be the saw"); a pixel between the body and the hand, as drawn.
+export const sawSpot = i => plotX(i) + (AFTER_TREE.c0 + AFTER_TREE.w) * AP + 1 + (H.travel + H.lean + H.gripHalf) * AP + P;
+// The woodcutter's stroke now: `s` the saw's push, 0 pulled back to 1 home;
+// `lean` the cells the body is leant in; `smear` the slide under way ('in'
+// the push, 'out' the pull), for the smear; and `strain` while the last cut
+// is held.
+export function sawPose(w) {
+  if (w.strainT != null) return { s: 1, lean: H.lean, smear: null, strain: true };
+  const t = w.st || 0;
+  if (t < H.back) return { s: 0, lean: 0, smear: null };
+  if (t < BITE_AT) { const k = (t - H.back) / H.push; return { s: k, lean: H.lean * k, smear: 'in' }; }
+  if (t < BITE_AT + H.bite) return { s: 1, lean: H.lean, smear: null };
+  const k = Math.min(1, (t - BITE_AT - H.bite) / H.pull);
+  return { s: 1 - k, lean: H.lean * (1 - k), smear: 'out' };
+}
+// A bite home: a stroke into the trunk, and its sawdust thrown.
+function bite(w, i, n) {
+  if (chopTree(i)) w.bite = { at: S.after.t, i, n };
+}
+// Done sawing (the tree down, or taken from under it): the body stands where
+// it is, leant or not, and walks on from there.
+const unsaw = w => Object.assign(w, UNSAW);
+// A frame of felling plot i's tree: walked to its spot first, then the
+// strokes. The beats are crossed in order however long the frame, so a long
+// frame never skips a bite or the strain.
+function fell(w, i, dt) {
+  const a = S.after, spot = sawSpot(i);
+  if (!w.sawing) {
+    // Not slotted: one woodcutter to a tree, and its spot is exact.
+    w.dest = null;
+    if (!walkTo(w, spot, floorY(), dt)) return;
+    Object.assign(w, { sawing: true, st: 0, strainT: null });
+  }
+  let left = dt;
+  while (left > 1e-9 && standing(a.plots[i])) {
+    if (w.strainT != null) {
+      const d = Math.min(left, H.strain - w.strainT);
+      w.strainT += d; left -= d;
+      if (w.strainT >= H.strain - 1e-9) { w.strainT = null; bite(w, i, H.lastSpecks); }
+      continue;
+    }
+    const to = w.st < BITE_AT ? BITE_AT : STROKE_S, d = Math.min(left, to - w.st);
+    w.st += d; left -= d;
+    if (w.st < to - 1e-9) break;
+    if (to === STROKE_S) { w.st = 0; continue; }
+    // The bite: the last stroke held a beat of strain before it lands.
+    if (a.plots[i].chops >= TREE_CHOPS - 1) w.strainT = 0;
+    else bite(w, i, H.specks);
+  }
+  // Leant into the push: the body itself, a cell toward the trunk.
+  w.face = -1;
+  w.x = spot - sawPose(w).lean * AP;
+  w.y = floorAt(w.x);
 }
 
 const JOB_STEP = {
@@ -441,24 +516,33 @@ const JOB_STEP = {
     // Logs lying first, so a felled tree is carried in before the next is
     // felled; then the stump pull and the planting (tracks C and D); then a
     // grown tree, once the saw is handed over (the hand saws without it); a
-    // stump only with stump removal bought.
-    if (w.plant == null && gather(w, dt)) return;
-    if (pullStep(w, dt) || plantStep(w, dt)) return;
+    // stump only with stump removal bought. A tree under the saw is sawn
+    // through before anything else.
+    if (!w.sawing && w.plant == null && gather(w, dt)) return;
+    if (!w.sawing && (pullStep(w, dt) || plantStep(w, dt))) return;
     const a = S.after, saws = !!a.sawHanded;
     const p = w.target != null ? a.plots[w.target] : null;
     const ok = p && (w.dig ? stumpsOn() && stumped(p) : saws && standing(p));
     if (!ok) {
-      let i = saws ? nearestPlot(w, standing) : null, dig = false;
+      unsaw(w);
+      let i = saws ? nearestPlot(w, standing, true) : null, dig = false;
       if (i == null && stumpsOn()) { i = nearestPlot(w, stumped); dig = i != null; }
       w.target = i; w.dig = dig; w.t = 0;
     }
-    if (w.target == null) { idle(w, dt); return; }
+    if (w.target == null) {
+      // No saw yet and a tree grown: it waits by the tree, facing it, until
+      // the saw is handed over.
+      const k = saws ? null : nearestPlot(w, standing);
+      if (k == null) { idle(w, dt); return; }
+      if (go(w, sawSpot(k), floorY(), dt)) w.face = -1;
+      return;
+    }
+    if (!w.dig) { fell(w, w.target, dt); return; }
     if (!go(w, plotX(w.target) + AP * 3, floorY(), dt)) return;
     w.t += dt;
-    // Placeholders until the strokes and pulls are beats (tracks B and C):
-    // a pull a root, the last one handing the stump-log into its arms.
-    if (w.dig) { if (w.t >= AFTER_DIG_S / AFTER_DIG_CLICKS) { digStump(w.target, false, v => push(w, v)); w.t = 0; w.swing = a.t; if (!stumped(a.plots[w.target])) w.target = null; } }
-    else if (w.t >= AFTER_FELL_S) { chopTree(w.target); w.t = 0; w.swing = a.t; }
+    // Placeholder until the pulls are beats (track C): a pull a root, the
+    // last one handing the stump-log into its arms.
+    if (w.t >= AFTER_DIG_S / AFTER_DIG_CLICKS) { digStump(w.target, false, v => push(w, v)); w.t = 0; w.swing = a.t; if (!stumped(a.plots[w.target])) w.target = null; }
   },
   // An idle member's errand only: a woodcutter gathers as part of its own.
   gatherer(w, dt) { return gather(w, dt); },

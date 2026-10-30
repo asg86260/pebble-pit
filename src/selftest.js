@@ -49,6 +49,7 @@ import { TESTS as textaa } from './selftest/textaa.js';   // every word above th
 import { TESTS as aftergestures } from './selftest/aftergestures.js';   // act 3's hand work through the pointer
 import { TESTS as afterboards } from './selftest/afterboards.js';   // track C: act 3's boards, bought through their tiles
 import { TESTS as afterhover } from './selftest/afterhover.js';   // track a3-shared: act 3 on the shared hover and pile marks
+import { TESTS as aftersaw } from './selftest/aftersaw.js';   // track B: act 3's grove by hand, F1, through the pointer
 import { TESTS as playcheck } from './selftest/playcheck.js';   // a play check for each place, by the pointer
 import { TESTS as cutbench } from './selftest/cutbench.js';   // the cutscene bench (cutscenes.html)
 
@@ -91,6 +92,7 @@ const TESTS = [
   ...aftergestures,
   ...afterboards,
   ...afterhover,
+  ...aftersaw,
   ...playcheck,
   ...cutbench,
 ];

@@ -616,3 +616,34 @@ export const AFTER_MILL = {
   set_s: 0.6, held: 0.25, puff: 0.3,
   chips_s: 0.6
 };
+
+// --- track B: the saw (DESIGN.md, "Act 3's grove, rebuilt", calls 7 to 9) ---------
+// The one hand saw, the woodcutter's and the hand's: a grip `grip` cells
+// square round a paper cell, and a blade as long as `depth` is, each cell of
+// it as deep as `depth` says (deep at the heel, tapering to the toe), its back
+// a line of ink and its teeth under its odd cells.
+export const AFTER_SAW = { grip: 3, depth: [3, 3, 3, 2, 2, 2, 1, 1, 1] };
+// The woodcutter's stroke, W-2 with heft (the owner's beats, not tuned):
+// pulled back and held `back` s; pushed in `push` s, smeared; the bite held
+// `bite` s with the body leant `lean` cells in; eased back in `pull` s. A
+// stroke carries the saw `travel` cells; the grip's ring ends `gripHalf` of a
+// cell past the hand toward the blade, so it is stood back far enough that at
+// the full push the grip stops flush at the trunk's near edge. Before the
+// last stroke lands the body holds the push `strain` s. Each bite throws
+// `specks` of sawdust off the kerf, the last `lastSpecks`.
+export const AFTER_SAW_HEFT = { back: 0.22, push: 0.08, bite: 0.2, pull: 0.16, travel: 3.5, lean: 1, gripHalf: 0.5,
+                                strain: 0.6, specks: 5, lastSpecks: 8 };
+// Sawdust (the owner, 2026-10-30: "just have them fade out when they fall. no
+// by product"): each speck flung out of the kerf's far mouth at `vx` px/s out
+// and `vy` px/s up, each a share of its range by its hash, falling under
+// `grav` px/s^2 and faded to nothing over `life` s, before it could reach the
+// floor.
+export const AFTER_SAWDUST = { vx: [25, 120], vy: [45, 130], grav: 760, life: 0.6 };
+// The smear a fast stroke leaves (the animation feel: visible smears): the
+// saw where the slide began, at this ink.
+export const AFTER_SAW_SMEAR = 0.35;
+// The saw carried at a body's side between jobs, tilted this far (radians).
+export const AFTER_SAW_CARRY = 0.35;
+// The saw lying across a standing trunk fades in as the tree stands grown and
+// out as it goes over, or while a woodcutter saws that tree with its own.
+export const AFTER_SAW_FADE_S = 0.4;

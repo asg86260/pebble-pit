@@ -5,14 +5,14 @@
 // not the soil's greys), and every cell round the tree and the stump is
 // asked of the hit tests: painted, it is the plot's; paper, it is nobody's.
 // A press through the hand's own call (`gestureDown`) on the crown's tip
-// puts the saw on that tree (the grove's board is the forestry shack's), as
-// one on the saw icon over it does. The plots' shapes are the setup these checks are not about,
+// takes that tree's saw (the grove's board is the forestry shack's), as one
+// on the saw lying across its trunk does. The plots' shapes are the setup these checks are not about,
 // set on the act's state.
 import { group, ok, run, yard, P } from './helpers.mjs';
 import { GREY, AFTER_PLOT_GAP, AFTER_ART_SCALE } from '../src/config.js';
 import { groundOf, plotX, treeRows } from '../src/after/place.js';
 import { treeAt, stumpAt } from '../src/after/grove.js';
-import { gestureDown, gestureUp, gestureView, groveIcons } from '../src/after/gestures.js';
+import { gestureDown, gestureUp, gestureView, handSawAt } from '../src/after/gestures.js';
 import { stationAt } from '../src/stations.js';
 import { paintOn } from '../src/render/ctx.js';
 import { drawAfterGrove } from '../src/render/after.js';
@@ -75,19 +75,20 @@ group('a press lands on a tree and a stump exactly where they are drawn', async 
   const tx = tip[0] * P + P / 2, ty = tip[1] * P + P / 2;
   const asked = gestureDown(tx, ty) ? null : stationAt(tx, ty);
   gestureUp();
-  const tipSaws = gestureView().find(r => r.key === 'tree').i;
+  const tipSaws = gestureView().find(r => r.key === 'tree').on;
   run(0.5);
-  // the saw is on the first tree now: the second's icon moves it there
-  const icon = groveIcons().find(c => c.kind === 'saw' && c.i === 1);
-  gestureDown(icon.x, icon.y - 2);
+  // the hand has the first tree's saw now: a press on the saw lying across
+  // the second's trunk takes that one
+  const grip = handSawAt(1).grip;
+  gestureDown(grip.x, grip.y);
   gestureUp();
-  const on = gestureView().find(r => r.key === 'tree').i;
+  const on = gestureView().find(r => r.key === 'tree').on;
   window.__actsOn(null);
   return [
     ok(ink.size > 100, 'the grove drew its trees and its stump', `${ink.size} cells`),
     ok(gap >= AFTER_PLOT_GAP, 'two grown trees stand clear of each other', `${gap} clear columns between them, ${AFTER_PLOT_GAP} at least`),
     ok(!wrong.length, 'every painted cell is its plot\'s, and every paper cell round it nobody\'s', wrong.slice(0, 6).join('; ')),
-    ok(asked === null && tipSaws === 0, 'a press on the crown\'s tip puts the saw on that tree, no board asked for', JSON.stringify([asked, tipSaws])),
-    ok(on === 1, 'and one on another tree\'s saw icon puts the saw on that tree', String(on))
+    ok(asked === null && tipSaws === 0, 'a press on the crown\'s tip takes that tree\'s saw, no board asked for', JSON.stringify([asked, tipSaws])),
+    ok(on === 1, 'and one on the saw across another tree\'s trunk takes that one', String(on))
   ];
 }, { reload: false });

@@ -505,14 +505,12 @@ function handTurn(key, ring, rev, frames) {
   window.__gesture('down', ...at(0));
   for (let f = 1; f <= frames; f++) { window.__gesture('move', ...at(f / 60 * rev * 2 * Math.PI)); window.__fast(1 / 60); }
 }
-// The grove's first tree with the saw put on it by its icon, sawn back and
+// The grove's first tree, the saw lying across its trunk taken and sawn back and
 // forth `strokes` times at a stroke a `per` seconds, the press held at the
 // end of the last; framed on the plot.
 function handSaw(strokes, per = 0.5) {
   window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
   window.__afterSaw(); window.__fast(0.5);
-  const icon = window.__groveIcons().find(c => c.kind === 'saw');
-  window.__gesture('down', icon.x, icon.y - 4); window.__gesture('up');
   const b = window.__gestureParts('tree', 0).sawBox, x0 = b.x + P * 2, y = b.y + b.h / 2;
   window.__gesture('down', x0, y);
   const frames = Math.round(strokes * per * 60);
@@ -3738,8 +3736,6 @@ Object.assign(SCENES, {
   'after-grove-fell': { about: 'the acts', say: "an oak sawn down by hand, landed: its crown breaking into clumps that scatter and fade, its trunk's four logs hopping apart",
     run: () => {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
-      const icon = window.__groveIcons().find(c => c.kind === 'saw');
-      window.__gesture('down', icon.x, icon.y - 4); window.__gesture('up');
       const b = window.__gestureParts('tree', 0).sawBox, x0 = b.x + P * 2, y = b.y + b.h / 2;
       window.__gesture('down', x0, y);
       for (let f = 1; f <= 600 && S.after.plots[0].fall == null; f++) { window.__gesture('move', x0 + Math.sin(f / 30 * Math.PI) * P * 6, y); window.__fast(1 / 60); }
@@ -3747,4 +3743,77 @@ Object.assign(SCENES, {
       for (let f = 0; f < 600 && !(S.after.plots[0].fell != null && S.after.t - S.after.plots[0].fell >= 0.62); f++) window.__fast(1 / 60);
       groveAt(520); window.__holdShot();
     } }
+});
+
+// track B: the saw (DESIGN.md, "Act 3's grove, rebuilt", calls 7 to 9): the
+// woodcutter felling the first oak with the hand saw, W-2 with heft, and the
+// hand doing it itself, F1, the saw lying across the trunk and no icon. Framed
+// as the signed-off mock's scenes were (after-grove-mock-w2h and -f1, the
+// first plot's line 520 px in), so the two shoot side by side. Each has a
+// `-start` twin stopped where the work begins, for a take of the whole felling.
+import { handSawAt, gestureView as sawView } from './after/gestures.js';
+import { GESTURE_SAW_AMP } from './config.js';
+const handRec = () => (sawView() || []).find(q => q.key === 'tree');
+// The woodcutter put on through its roster with the saw handed over, run
+// until it stands at the tree (`start`), or on until a bite has just landed
+// with the cut half through.
+function woodcutterStage(start) {
+  window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+  window.__afterCrowd((i, v) => (i < 2 ? 8 : v));
+  for (let k = 0; k < 90 && window.__afterRead().walking > 0; k++) window.__fast(1);
+  window.__afterGrant({ rebel: 2000 }); yardPurse();
+  window.__afterSaw();
+  staffAfter([AFTER_JOB.CUT]);
+  const w = () => S.after.bodies.find(b => b.job === AFTER_JOB.CUT);
+  const bit = () => !!w()?.bite && S.after.t - w().bite.at >= 0.05 && S.after.t - w().bite.at < 0.07;
+  for (let k = 0; k < 60 * 90 && !(w()?.sawing && (start || (S.after.plots[0].chops >= 4 && bit()))); k++) window.__fast(1 / 60);
+  groveAt(520);
+  window.__still(true); window.__holdShot();
+}
+// F1 played by the hand a player has, on the game's own clock: the ghost hand
+// teaches the stroke on the saw's grip, then the hand reaches it, presses and
+// drags it end to end until the tree goes over, lets go and watches it break.
+function sawHandDemo() {
+  const mine = S.after;
+  let ph = 'teach', t = 0, at = null;
+  const goTo = (p, pose) => { demoHand.x = p.x; demoHand.y = p.y; demoHand.pose = pose; S.mouse = { x: p.x, y: p.y }; };
+  const go = next => { ph = next; t = 0; };
+  const idx = STEPS.findIndex(q => q.name === 'sawhand');
+  if (idx >= 0) STEPS.splice(idx, 1);
+  STEPS.push({ name: 'sawhand', step: c => {
+    if (!S.after || S.after !== mine) { demoHand.pose = null; STEPS.splice(STEPS.findIndex(q => q.name === 'sawhand'), 1); return; }
+    const dt = c.dt / 1000, p = S.after.plots[0], g = handSawAt(0, 0).grip;
+    t += dt;
+    if (ph === 'teach') { if (t >= 1.6) { at = { x: g.x + P * 4, y: g.y - P * 4 }; go('reach'); } }
+    else if (ph === 'reach') {
+      const k = Math.min(1, t / 0.4), e = k * k * (3 - 2 * k);
+      goTo({ x: at.x + (g.x - at.x) * e, y: at.y + (g.y - at.y) * e }, k < 1 ? 'point' : 'grab');
+      if (k >= 1) { gestureDown(g.x, g.y); go('saw'); }
+    } else if (ph === 'saw') {
+      // end to end and back each second, a little past the saw's swing (the
+      // mock's pace: an end each half second)
+      const x = g.x + Math.sin(t * 2 * Math.PI) * GESTURE_SAW_AMP * 1.1;
+      gestureMove(x, g.y);
+      goTo(handSawAt(0, handRec()?.s || 0).grip, 'grab');
+      if (p.fall != null) { gestureUp(x, g.y); goTo({ x: demoHand.x, y: demoHand.y - P * 3 }, 'point'); go('watch'); }
+    } else if (ph === 'watch' && t >= 0.4) demoHand.pose = null;
+  } });
+}
+function sawStage(start) {
+  window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+  groveAt(520);
+  sawHandDemo();
+  const bit = () => { const d = handRec()?.dust?.at(-1); return !!d && S.after.t - d.at >= 0.05 && S.after.t - d.at < 0.07; };
+  if (!start) for (let k = 0; k < 60 * 30 && !(S.after.plots[0].chops >= 5 && bit()); k++) window.__fast(1 / 60);
+  window.__still(true); window.__holdShot();
+}
+Object.assign(SCENES, {
+  'after-grove-woodcutter': { about: 'the acts', say: "the woodcutter sawing the oak down with the hand saw: the push bitten home, the body leant in, sawdust thrown from the kerf and fading as it falls",
+    run: () => { woodcutterStage(false); } },
+  'after-grove-woodcutter-start': { about: 'the acts', say: "the woodcutter just come to the oak with the hand saw, about to fell it, for a take of the whole felling",
+    run: () => { woodcutterStage(true); } },
+  'after-grove-saw': { about: 'the acts', say: "you saw the oak down yourself: the hand saw dragged across the trunk a log's height up, sawdust flying from the cut",
+    run: () => { sawStage(false); } },
+  'after-grove-saw-start': { about: 'the acts', say: "the hand saw lying across the grown oak, the faint hand showing the stroke, for a take of the whole felling by hand",
+    run: () => { sawStage(true); } }
 });

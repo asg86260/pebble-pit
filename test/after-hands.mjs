@@ -5,7 +5,7 @@
 // each motion are test/after-gestures.test.mjs's.
 import { run, yard, P } from './helpers.mjs';
 import { GESTURE_SAW_AMP, GESTURE_STUMP_DRAG, GESTURE_NAILS, GESTURE_NAIL_TAPS, GESTURE_SWING_S } from '../src/config.js';
-import { gestureDown, gestureMove, gestureUp, groveIcons, partsOf } from '../src/after/gestures.js';
+import { gestureDown, gestureMove, gestureUp, gestureUnder, handSawAt, partsOf } from '../src/after/gestures.js';
 import { stationAt } from '../src/stations.js';
 import { shopBoxOf, rosterHit, rosterUp } from '../src/roster.js';
 import { AFTER_MILL, AFTER_BLOCK } from '../src/config.js';
@@ -50,16 +50,16 @@ export function timeTo(motion, done, limit = 40) {
   return Infinity;
 }
 
-// The saw put on plot i's tree by its icon: true if the icon was there.
+// Whether the hand saw lies across plot i's trunk, ready to take (F1: no
+// icon, nothing bought; the saw is there on every grown tree).
 export function sawOn(i = 0) {
-  const icon = groveIcons().find(c => c.kind === 'saw' && c.i === i);
-  if (!icon) return false;
-  return click({ x: icon.box.x + icon.box.w / 2, y: icon.box.y + icon.box.h / 2 });
+  const g = handSawAt(i).grip;
+  return gestureUnder(g.x, g.y);
 }
-// The saw on plot i dragged back and forth, a stroke every `period` / 2
-// seconds, until `done` or `limit`; the seconds it took.
+// The saw on plot i taken by its grip and dragged back and forth, a stroke
+// every `period` / 2 seconds, until `done` or `limit`; the seconds it took.
 export function saw(i, done, period = 0.6, limit = 60) {
-  const b = partsOf('tree', i).sawBox, x0 = b.x + P * 2, y = b.y + b.h / 2;
+  const { x: x0, y } = handSawAt(i).grip;
   gestureDown(x0, y);
   const secs = timeTo(t => gestureMove(x0 + Math.sin(t / period * 2 * Math.PI) * GESTURE_SAW_AMP * 1.2, y), done, limit);
   gestureUp(x0, y);
