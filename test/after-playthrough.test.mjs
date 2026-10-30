@@ -77,6 +77,8 @@ function sawTree(i) {
 }
 // A stump taken hold of where it stands and held up until the roots give.
 function pullStump(i) {
+  // the tree's crown done breaking first: till then the stump is not to hand
+  until(() => S.after.plots[i].fell == null, 10, 0.25);
   const g = partsOf('stump', i).stump, p0 = { x: g.x + g.w / 2, y: g.y + g.h / 2 }, p1 = { x: p0.x, y: p0.y - 3 * P / GESTURE_STUMP_DRAG };
   gestureDown(p0.x, p0.y); gestureMove(p1.x, p1.y);
   let f = 0;

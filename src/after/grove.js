@@ -32,7 +32,7 @@ import { P, TREE_CHOPS, AFTER_FALL_S, AFTER_FALL_BOUNCE_S, AFTER_DIG_CLICKS, AFT
          AFTER_TREE, AFTER_BREAK_S, AFTER_BREAK_SPREAD, AFTER_CROWN_S, KINDS } from '../config.js';
 import { secs, arand } from './util.js';
 import { growS } from './levels.js';
-import { stationParts, plotX, groundOf, treeHas, AP } from './place.js';
+import { stationParts, plotX, plotSpan, groundOf, treeHas, AP } from './place.js';
 import { putSomewhere, tag, fallTag, lying, treeCol } from './ground.js';
 import { afterGround as G } from '../state.js';
 import { cellOf } from '../grid.js';
@@ -57,16 +57,16 @@ export const standing = p => p.grow != null && p.grow >= 1 && p.fall == null;
 export const falling = p => p.fall != null;
 // A stump left standing, blocking its plot.
 export const stumped = p => p.stump && p.fall == null;
-// A bare plot an acorn may go into: nothing lying on its trunk's columns.
+// A bare plot an acorn may go into: nothing lying on its own ground
+// (`plotSpan`). Not its trunk's columns alone: a tree felled over its last
+// tree's logs would heap its own on them and roll the last off the plot,
+// so the plot is cleared before it is planted, and every felled tree's logs
+// come to rest on their own plot.
 export function plantable(i) {
   const p = S.after?.plots[i];
   if (!p || !bare(p) || !G.grid) return false;
-  const c0 = Math.round((plotX(i) - G.x) / AP) + AFTER_TREE.c0;
-  for (const q of lying()) {
-    const qc = Math.round((q.x - G.x) / AP), qw = Math.round(q.w / AP);
-    if (qc < c0 + AFTER_TREE.w && qc + qw > c0) return false;
-  }
-  return true;
+  const [x0, x1] = plotSpan(i);
+  return !lying().some(q => q.x < x1 && q.x + q.w > x0);
 }
 
 // The plot of a grown tree under a world point: on the tree as drawn, cell

@@ -706,7 +706,10 @@ export const STUMP_HOLD_EASE = 6;
 export const AFTER_SEED_BILLS = [[['dust', 4000]], [['dust', 8000]], [['dust', 15000], ['spore', 3000]],
                                  [['dust', 25000], ['spore', 6000]], [['dust', 40000], ['spore', 10000], ['shard', 8000]],
                                  [['dust', 60000], ['spore', 15000], ['shard', 15000]]];
-export const AFTER_SEED_RATE = 1.15;
+// The design wrote 1.15; the pace run (tools/node/act3-pace.mjs, seed 1,
+// 2026-10-30) struck at 109:32 with it and at 42:52 with 1.05, against
+// 41:54 before the rebuild.
+export const AFTER_SEED_RATE = 1.05;
 // The chance a felled crown drops an acorn, by self-seeding's rung. Kept as a
 // debt (`S.after.selfSeed`): each fall adds the chance, and an acorn drops
 // when it reaches one, so 25% is exactly every fourth tree.
@@ -714,8 +717,8 @@ export const AFTER_SELF_SEED = [0.25, 0.5, 0.75, 1];
 // A seed fetched from heaven's gates: the beat the hands take to close on it.
 export const AFTER_SEED_TAKE_S = 0.6;
 // Where a crown's acorn comes to rest, cells off the trunk's pivot toward
-// the fall: past the last log's end, on its own plot.
-export const AFTER_SEED_DROP = AFTER_TREE.logs * AFTER_TREE.log + 3;
+// the fall: on the middle of the trunk's logs, on its own plot.
+export const AFTER_SEED_DROP = AFTER_TREE.logs * AFTER_TREE.log / 2;
 // A woodcutter's planting, the mock's beats (a1): the reach into the basket,
 // then the kneel and the set-down at the bed.
 export const AFTER_SEED_REACH_S = 0.7;

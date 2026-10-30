@@ -62,7 +62,7 @@ const { goodsRead } = await import('../../src/after/piles.js');
 
 
 const wall0 = Date.now();
-const { marks, bought, longest, blocked, yardPaid, handDid, LATE_YARD, YARD_COINS, BANK_S } =
+const { marks, bought, longest, blocked, yardPaid, handDid, grove, LATE_YARD, YARD_COINS, BANK_S } =
   playAct3({ minutes: MINUTES, seed: SEED, pop: POP, hand: HAND, human: HUMAN, yard: YARD, bank: BANK, carry: CARRY, log: LOG });
 const a = S.after;
 
@@ -75,6 +75,7 @@ console.log('');
 console.log(`longest stretch with nothing bought: ${mm(longest.s)} (from ${mm(longest.from)}, ended by ${longest.by})`);
 console.log(`the plan's next row waited ${mm(blocked.act)} short of the act's coins, ${mm(blocked.yard)} short of the yard's alone`);
 console.log(`the yard paid up: ${YARD_COINS.map(c => `${c} ${Math.round(yardPaid[c])} (${(yardPaid[c] / (LATE_YARD[c] * YARD) / 60).toFixed(1)} min of it)`).join(', ')}`);
+console.log(`the grove: ${grove.felled} trees felled, ${grove.seeds} seeds bought, ${grove.selfSeeded} acorns self-seeded, the longest wait on an empty basket ${mm(grove.emptyBasket)}`);
 console.log(`the hand: ${Object.entries(handDid).map(([k, n]) => `${k} ${n}`).join(', ')}`);
 console.log(`at the end: rebel ${Math.round(a.rebel)}, stock ${JSON.stringify(goodsRead())}, camp ${a.camp}, union ${union()}, ` +
             `signs ${a.signs.length}`);

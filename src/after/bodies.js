@@ -524,7 +524,9 @@ const JOB_STEP = {
     // Not while it has hold of a stump (`w.dig`, track C): a log landing
     // mid-pull must not take the body off it.
     if (!w.sawing && w.plant == null && !w.dig && gather(w, dt)) return;
-    if (!w.sawing && (pullStep(w, dt) || plantStep(w, dt))) return;
+    // A pull is not begun with an acorn already being fetched for a plot, nor
+    // the planting carried on with anything else in its arms.
+    if (!w.sawing && ((w.plant == null && pullStep(w, dt)) || plantStep(w, dt))) return;
     const a = S.after, saws = !!a.sawHanded;
     const p = w.target != null ? a.plots[w.target] : null;
     if (!(p && saws && standing(p))) {

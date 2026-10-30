@@ -21,8 +21,8 @@ import { AFTER_PUT_S, AFTER_SEED_PLANT_S, AFTER_SEED_REACH_S, AFTER_SEED_TAKE_S,
          AFTER_SELF_SEED, AFTER_SEED_DROP, AFTER_FALL_BOUNCE_S, AFTER_TREE, ACT_GATES_CELL, P, KINDS } from '../config.js';
 import { plantable, plantAcorn, layGood } from './grove.js';
 import { pileCount, pileBrim, takeBlock, setBlock } from './piles.js';
-import { pileMid, plotX, plotSpan, floorAt, afterX0, bedSpan, AP } from './place.js';
-import { putSomewhere, tag, slotNear, slotTop, rowY } from './ground.js';
+import { pileMid, plotX, floorAt, afterX0, bedSpan, AP } from './place.js';
+import { putSomewhere, tag, slotNear, slotTop, rowY, lying } from './ground.js';
 import { isEmpty, push, pop, count, loadKind } from '../carry.js';
 import { upCount } from './levels.js';
 import { cellOf, colOf } from '../grid.js';
@@ -88,6 +88,8 @@ export function fetchStep(w, dt) {
 // has the body this frame (after/bodies.js calls it each frame).
 export function plantStep(w, dt) {
   const a = S.after;
+  // Only ever an acorn in its arms: anything else and the planting is let go.
+  if (w.plant != null && count(w) && loadKind(w) !== 'acorn') w.plant = null;
   if (w.plant == null) {
     if (!isEmpty(w) || pileCount('seeds') <= 0) return false;
     const i = a.plots.findIndex((p, k) => plantable(k) && !a.bodies.some(o => o !== w && o.plant === k));
@@ -130,12 +132,15 @@ function crownDrop(i) {
   const a = S.after, chance = selfSeedChance();
   if (!(chance > 0)) return false;
   a.selfSeed = (a.selfSeed || 0) + chance;
-  if (a.selfSeed < 1 - 1e-9) return false;
+  // Owed but the basket full: the debt is kept and a later crown drops it,
+  // so an acorn never lies with no room at home to carry it to (it would
+  // hold the logs under it, and the plot, with it).
+  if (a.selfSeed < 1 - 1e-9 || seedsRoom() - lying().filter(q => q.kind === 'acorn').length <= 0) return false;
   a.selfSeed -= 1;
   const pivot = plotX(i) + AFTER_TREE.c0 * AP, half = KINDS.acorn.size * AP / 2;
-  // kept inside its own plot, a cell clear of its far edge: the grove's last
-  // plot stands at the slope's foot, where the full drop would be past it
-  const at = Math.max(pivot - AFTER_SEED_DROP * AP, plotSpan(i)[0] + half + AP), ai = putSomewhere(cellOf('acorn'), at);
+  // On the trunk's logs, just laid: the ground past the last log is the
+  // next plot's, and an acorn's lattice may not fit the gap before it.
+  const at = pivot - AFTER_SEED_DROP * AP, ai = putSomewhere(cellOf('acorn'), at);
   if (ai < 0) { a.selfSeed += 1; return false; }
   source('acorn', 1, 'crown');
   tag(ai, { i, x0: at - half, at: a.t + AFTER_FALL_BOUNCE_S, hop: true });
