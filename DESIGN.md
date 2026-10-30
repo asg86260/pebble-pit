@@ -24017,7 +24017,16 @@ extends.
   - `speck`: 1x1, sawdust, in timber's three deeper tones, no home.
   - `clod`: 1x1, dirt off a snapped root, in the soil's tones, no home.
   The stump needs no kind of its own: it is a `log` (the owner's calls 3 and
-  10), with its own stored tone, made at its own door.
+  10), with its own stored tone, made at its own door. The three kinds join
+  rule 23's census (`CENSUS_KINDS`, src/conserve.js).
+- **A tree claims its ground.** A growing tree, a standing one and a stump
+  are facts on the plot, not units, so today nothing on the ground knows
+  they are there: a thrown log would fall through a stump, and a tree would
+  grow up through a log lying at its foot. Their columns, the trunk's four,
+  are `blocked` on act 3's ground for as long as the plot holds any of them,
+  as the saw mill's heap columns are. A good that lands there rests on the
+  stump's top or rolls off it by the heap rule. A plot is bare for planting
+  only when nothing lies on its trunk's columns.
 - **Sawdust and dirt are units, not decoration.** A speck is a grain, as
   act 1's dust is, and the goods' rule 1 already names sawdust "the one loose
   material". The alternative, a cosmetic list, fails three ways: it is not
@@ -24179,7 +24188,9 @@ The save-shape-change skill's steps, `SAVE_V` 34 to 35, one migration
   `grow` 0 to 1 (null on a bare bed), `seed` when its acorn went in (for the
   sink's drawing), `tones` its four logs' and its stump's. A tree
   mid-growth keeps its progress: old stage 1 or 2 with `grow` seconds becomes
-  ((stage - 1) * TREE_GROW_S + grow) / (2 * TREE_GROW_S). A grown tree is 1.
+  ((stage - 1) * T + grow) / (2 * T), where T is the stage time the save was
+  growing at (`TREE_GROW_S`, or `AFTER_GROW_S_UP` with faster growth
+  bought). A grown tree is 1.
   A stump stays a stump with its `dug`. A tree mid-fall keeps `fall` and
   lands as the new break. `big`, `chip` and `logs` go. Tones are picked on
   read.
@@ -24233,6 +24244,16 @@ The save-shape-change skill's steps, `SAVE_V` 34 to 35, one migration
   acorn and 1 is taken off. So at 25% exactly every fourth tree seeds. It is
   the chance on average, it never runs dry by bad luck, and a check can say
   exactly when an acorn falls.
+- **Calls 13 and 14 lean on each other.** The run below made 130 signs:
+  520 planks, about 130 logs, so 26 to 33 trees at 4 or 5 logs a tree. Less
+  the 5 acorns the basket starts with and what self-seeding gives back, that
+  is 15 to 25 seeds bought. The six-bill table alone is 152,000 dust, and at
+  1.15 a purchase past it a single bill passes 100,000 dust within a few
+  more, against the 612,000 dust the yard paid over the whole act. So as
+  written the act runs on time only if self-seeding is bought early and
+  climbed; a player who buys seeds alone stalls. If the pace run says so,
+  the seed table is the first knob (gentler bills, or a slower rate), before
+  the basket's start or the growth time.
 - **The pace tool.** `node tools/node/act3-pace.mjs` before the rebuild
   (seed 1, run 2026-10-30): the axe in hand 0:44, first sign 2:09, first
   soul 6:29, the meeting 6:40, the slowdown 29:17, the strike 41:54; 267 hand
@@ -24243,7 +24264,7 @@ The save-shape-change skill's steps, `SAVE_V` 34 to 35, one migration
   to pull stumps the F3a way, and to buy seeds and self-seeding in its plan;
   the report gains trees felled, seeds bought, acorns self-seeded and the
   longest wait on an empty basket (the target: under a minute). If the act
-  runs long, the knobs are the basket's start, the seed table and the growth
+  runs long, the knobs are the seed table, the basket's start and the growth
   time, in that order. The woodcutter's beats are the owner's and are not
   tuned.
 
@@ -24302,8 +24323,10 @@ C and D run at once.
   after/place.js and after/art.js (the shelf, the derived grove and shack,
   the mirror, the `seeds` pile), after/levels.js, footprints.js's act 3
   part, render/after/pine.js (soil bed, tree, growth, fall, break) and
-  render/after/ground.js (the lip), config/blocks.js (the three kinds) and
-  grid.js (the block height, if question 2 keeps 3x4), the migration,
+  render/after/ground.js (the lip), config/blocks.js (the three kinds),
+  src/conserve.js (`CENSUS_KINDS`), after/ground.js (the trees' blocked
+  columns) and grid.js (the block height, if question 2 keeps 3x4), the
+  migration,
   state.js's lists, config/saves.js, and verify.js's grove rules. It leaves
   named anchors: pine.js calls `drawSaw()`, `drawStumpPull()` and
   `drawBasket()` from B's, C's and D's new files (stubs until they land),
@@ -24319,7 +24342,9 @@ C and D run at once.
 - **C: the stump, F3a-1.** Owns a new after/stump.js (`pullStep` for the
   woodcutter, the strain-to-root rule shared with the gesture, the stump-log
   into the hand or the arms), a new render/after/stump.js (roots, cracks,
-  the held jerk, the clods), and the `clod` door. Check: the stump shot; the
+  the held jerk, the clods), and the `clod` door. hands.js has no way today
+  to put a unit into the hand except a sweep, so C adds one export there
+  (`holdUnit(v)`, one additive block; the rest of hands.js is untouched). Check: the stump shot; the
   F3a browser group; the stump-pull node check.
 - **D: seeds.** Owns a new after/seeds.js (the basket pile's brim, the seed
   order and `seedsOwed`, the gates fetch, `plantStep`, the self-seed debt
@@ -24360,12 +24385,17 @@ hands-off check come last, on the integrated branch.
 3. **The sawdust and dirt lie where they fall: then what?** About 43 specks
    and 21 clods a tree, 30 or more trees an act. (a) They stay as litter for
    good: about two thousand units by the strike, heaped by the heap rule,
-   raising the beds and growing the save. (b) They are thrown only within
-   the soil bed and lie there, and when the bed is next planted the planting
-   turns them into the soil: each moved down a cell into it, never faded,
-   and unmade at the `soil` sink. The cause is a body (or the hand)
-   planting, so the count never passes one tree's worth a plot. A speck the
-   hand carries off the bed lies wherever it is let go. (c) A worker sweeps
+   raising the beds and growing the save. (b) Your "settle into the soil",
+   tied to a cause rather than a timer: they are thrown only within the soil
+   bed and lie there, and when the bed is next planted the planting turns
+   them into the soil: each moved down a cell into it, never faded, and
+   unmade at the `soil` sink. The cause is a body (or the hand) planting, so
+   the count stays near one tree's worth a plot. Two costs: the throw is
+   shorter than the mock's (it flew well past the bed, which reaches about 6
+   cells a side), and the logs lie on the fall side of the bed on top of
+   some specks, so a planting turns in only the specks with nothing on them
+   and the rest wait for the next one. A speck the hand carries off the bed
+   lies wherever it is let go. (c) A worker sweeps
    them up and carries them off the cloud's edge: a new errand, more
    walking, and the old sawdust sweep back in another form.
    **Recommended: (b).**
