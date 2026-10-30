@@ -644,6 +644,14 @@ export const AFTER_SEED_DROP = AFTER_TREE.logs * AFTER_TREE.log + 3;
 // then the kneel and the set-down at the bed.
 export const AFTER_SEED_REACH_S = 0.7;
 export const AFTER_SEED_PLANT_S = 0.75;
-// The seed basket drawn over the acorns' feet: `rows` high (a rim over the
-// nuts, a body under it), the body `wing` cells wider than the heap each side.
-export const AFTER_BASKET = { rows: 2, wing: 2 };
+// The seed basket (render/after/basket.js), its rows up off the floor, each
+// [cells it starts past the heap's left edge, cells it ends past the right
+// edge, its part, front or back]: the woven body and the near rim over the
+// bottom row's nuts, then behind the acorns the inside, showing round their
+// caps and stalks, and the far rim a cell in from each end behind the top
+// row's tips, so the top row sits in the basket and a part-filled one is a
+// basket with acorns in it. Each part one of timber's tones, the body woven of two.
+export const AFTER_BASKET = {
+  rows: [[0, 0, 'body', 'front'], [-1, 1, 'rim', 'front'], [-1, 1, 'inside', 'back'], [0, 0, 'inside', 'back'], [1, -1, 'lip', 'back']],
+  tone: { rim: 3, inside: 2, lip: 0, body: 1, weave: 2 }
+};

@@ -3728,6 +3728,12 @@ const groveAt = at => { const x = plotX(0) - at; pinCamera(x); window.__look(x);
 Object.assign(SCENES, {
   'after-grove-rest': { about: 'the acts', say: "the grove at rest: a grown oak beside the forestry shack, its seed basket on the shack's far side with five acorns in it",
     run: () => { window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1); groveAt(300); window.__fast(0.5); window.__holdShot(); } },
+  'after-grove-basket-3': { about: 'the acts', say: 'the seed basket by the forestry shack holding three acorns, the bottom row alone',
+    run: () => { window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1); window.__afterGrant({ seeds: -2 }); groveAt(300); window.__fast(0.5); window.__holdShot(); } },
+  'after-grove-basket-1': { about: 'the acts', say: 'the seed basket by the forestry shack holding its last acorn',
+    run: () => { window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1); window.__afterGrant({ seeds: -4 }); groveAt(300); window.__fast(0.5); window.__holdShot(); } },
+  'after-grove-basket-0': { about: 'the acts', say: 'the seed basket by the forestry shack, empty',
+    run: () => { window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1); window.__afterGrant({ seeds: -5 }); groveAt(300); window.__fast(0.5); window.__holdShot(); } },
   'after-grove-grow': { about: 'the acts', say: "a second plot's oak growing row by row from the ground up, the trunk first and then the crown, beside a grown one",
     run: () => {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
