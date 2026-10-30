@@ -6,8 +6,9 @@
 // 8 to 23), since the grove mock lays the first plot off that box; height
 // is free. Act 3's language: flat squares of one tone, no outlines; the
 // leaves the grove's OAK-2 clumps in its oak-leaf green (lit edge on top,
-// each clump's underside in shadow, the body two close tones), the wood the
-// log's and the timber's browns.
+// each clump's underside in shadow, the body two close tones) and the trunks
+// the log's browns; the house itself the stations' black cells (round 2,
+// the owner: "stick to the game style established. black cell designs").
 
 import { P } from '../../config.js';
 import { darkPage, raw } from '../../ink.js';
@@ -22,7 +23,6 @@ held('cabin-mock', () => { globalThis.__cabinMock = null; });
 const LEAF = { light: ['#4c7f3c', '#406d33', '#38602c', '#2a4920'], dark: ['#64a052', '#568c46', '#4b7c3d', '#3a612f'] };
 const leaf = i => (darkPage ? raw(LEAF.dark[i]) : LEAF.light[i]);
 const LOG = i => goodTone('log', i);      // bark and beams, lightest first
-const WOOD = i => goodTone('plank', i);   // sawn wood: a cut face, boards
 
 // --- clumps -------------------------------------------------------------------------
 // A crown of round clumps [cx, cy, r] in the drawing's cells, cy up off the
@@ -96,23 +96,45 @@ function trunk(b, i, h0, h1, w = 4) {
   for (let h = h0; h <= h1; h++) for (let c = 0; c < w; c++) b.cell(i + c, h, LOG(c < w / 2 ? 1 : 2));
 }
 
+// The house itself in the stations' style (render/after/stations.js: the
+// shack, the workshop, the log cabin): one ink mass, its openings and trim
+// cut out of it in paper, a grain or face in the mid and pale greys inset
+// two px inside its rim; only the trees on it keep their colour. `cut` is
+// the stations' own: paper (or a tone) cut out of a mass two px in from
+// its cells' edges.
+const cut = (b, i, h, w, n, tone = W) => b.d.px((b.X + i) * P + 2, -(h + n) * P + 2, w * P - 4, n * P - 4, tone);
+// A strip of trim two px high along the top of row h, columns a to z.
+const trim = (b, h, a, z, tone = W) => b.d.px((b.X + a) * P, -(h + 1) * P, (z - a + 1) * P, 2, tone);
+// Walls as the log cabin draws them: an ink rim a cell wide round courses of
+// mid and paper a row each, the foot row ink.
+function walls(b, i, h, w, n) {
+  b.box(i, h, w, n, K);
+  for (let r = h + 1; r < h + n; r++) b.row(r, i + 1, i + w - 2, (r - h) % 2 ? MID : W);
+}
+// A door (`foot`, open to the floor) or a window in a wall: an ink frame a
+// cell wide, paper inside.
+function opening(b, i, h, w, n, foot = false) {
+  b.box(i, h, w, n, K);
+  b.box(i + 1, foot ? h : h + 1, w - 2, foot ? n - 1 : n - 2, W);
+}
+
 // --- A: the oak through the roof ------------------------------------------------------
 // A plain cabin an oak has grown up through: the trunk out of the roof's
 // ridge, the shingles round it heaved up, an OAK-2 crown over the whole
 // house, and a twig in leaf poking out of the window.
 const A_CROWN = [[8, 22, 3.6], [4.8, 19, 3.2], [11.2, 19, 3.2], [3, 15.5, 2.6], [13, 15.5, 2.6], [8, 15, 2.8]];
 function optA(b, t) {
-  b.box(1, 0, 14, 7, WOOD(0));                    // the walls, plain sawn boards (a good's tone, so they read on either page)
-  b.box(10, 0, 3, 4, K);                          // the door
-  b.box(2, 3, 3, 2, K);                           // the window
-  b.box(2, 3, 3, 1, LOG(3));                      // the twig out through it
-  b.cell(1, 3, LOG(3)); b.cell(0, 4, LOG(3));
+  walls(b, 1, 0, 14, 7);
+  opening(b, 9, 0, 4, 6, true);                   // the door
+  opening(b, 2, 2, 4, 4);                         // the window
+  b.box(1, 3, 4, 1, LOG(3));                      // the twig out through it
+  b.cell(0, 4, LOG(3));
   clumps(b, [[0.5, 5.5, 1.3]], t);               // its leaves outside
-  gable(b, 0, 7, 16, 4, LOG(3));                  // the roof
+  gable(b, 0, 7, 16, 4, K);                       // the roof
+  trim(b, 6, 0, 15);                              // the trim under the eaves
   trunk(b, 6, 7, 17);                             // up through the ridge
-  b.cell(5, 10, LOG(2)); b.cell(10, 10, LOG(2));  // shingles heaved up beside it
-  b.cell(4, 9, LOG(3)); b.cell(11, 9, LOG(3));
-  b.box(5, 7, 1, 3, LOG(3)); b.box(10, 7, 1, 3, LOG(3));
+  b.cell(5, 10, K); b.cell(10, 10, K); b.cell(4, 9, K); b.cell(11, 9, K);   // shingles heaved up beside it
+  b.cell(5, 9, W); b.cell(10, 9, W);              // the split they leave
   for (const [i, h] of [[5, 15], [4, 16], [3, 16], [10, 15], [11, 16], [12, 16], [5, 13], [10, 13]]) b.cell(i, h, LOG(3));   // boughs out to the side clumps
   clumps(b, A_CROWN, t);
 }
@@ -127,39 +149,40 @@ function optB(b, t) {
   b.row(0, 5, 10, LOG(2));                        // the roots' flare
   trunk(b, 6, 1, 21);
   clumps(b, B_BACK, t);                           // the crown behind the hut
-  b.box(1, 12, 14, 1, LOG(3));                    // the platform
-  b.box(3, 13, 10, 6, WOOD(1));                   // the hut's walls, boards
-  for (let h = 14; h < 19; h += 2) b.row(h, 3, 12, WOOD(2));
-  b.box(9, 13, 2, 4, K);                          // its door, onto the ladder
-  b.box(4, 15, 2, 2, W);                          // its window
-  gable(b, 2, 19, 12, 4, LOG(3));                 // its roof
+  b.box(1, 12, 14, 1, K);                         // the platform
+  walls(b, 3, 13, 10, 6);                         // the hut
+  opening(b, 9, 13, 4, 5, true);                  // its door, onto the ladder
+  opening(b, 4, 14, 4, 4);                        // its window
+  gable(b, 2, 19, 12, 4, K);                      // its roof
+  trim(b, 18, 2, 13);                             // the trim under its eaves
   clumps(b, B_FRONT, t);                          // two clumps in front of its foot
-  for (let h = 0; h < 12; h++) { b.cell(11, h, LOG(0)); b.cell(13, h, LOG(0)); }   // the ladder: rails
-  for (let h = 1; h < 12; h += 2) b.cell(12, h, LOG(0));                          // and rungs
+  for (let h = 0; h < 12; h++) { b.cell(11, h, K); b.cell(13, h, K); }   // the ladder: rails
+  for (let h = 1; h < 12; h += 2) b.cell(12, h, K);                     // and rungs
   // the swing: two ropes off the platform's underside, the seat at their
   // foot, the whole swung about the platform at its true angle
   const th = b.d.sinking ? 0 : Math.sin(t * 1.6) * 0.16, len = 7, px = 3.5, py = 12;
   const sx = px + Math.sin(th) * len, sy = py - Math.cos(th) * len;
   for (const o of [-1, 1]) b.d.line(b.X + px + o, -py, b.X + sx + o, -sy, 2, K);
-  b.d.px((b.X + sx - 1.5) * P, -sy * P, 3 * P, P, LOG(3));
+  b.d.px((b.X + sx - 1.5) * P, -sy * P, 3 * P, P, K);
 }
 
 // --- C: the stump house ---------------------------------------------------------------
-// A giant sawn stump hollowed into a house: bark down its sides, the cut
-// face on top, an arched door and a round window in it, a stovepipe
+// A giant sawn stump hollowed into a house: bark seams down its sides, the
+// cut face on top, an arched door and a round window in it, a stovepipe
 // smoking, a shoot in leaf off the cut and a shelf fungus on the bark.
-const BARK = [1, 2, 1, 1, 2, 3, 1, 2, 2, 1, 3, 1, 2, 1, 2, 1];
+const FISSURES = [[3, 2, 4], [5, 7, 3], [12, 1, 3], [13, 7, 4], [10, 9, 2]];   // bark seams: column, foot, rows
 function optC(b, t) {
-  b.row(0, 0, 15, LOG(2)); b.row(1, 0, 1, LOG(2)); b.row(1, 14, 15, LOG(2));   // the roots' flare
-  for (let i = 1; i <= 14; i++) for (let h = 1; h <= 11; h++) b.cell(i, h, LOG(BARK[i] === 3 && (h + i) % 4 === 0 ? 2 : BARK[i]));
-  b.row(12, 1, 14, WOOD(0));                       // the cut face
-  for (const i of [3, 7, 8, 12]) b.cell(i, 12, WOOD(2));   // its rings
-  b.box(6, 0, 4, 6, K); b.row(6, 7, 8, K);         // the arched door
-  b.cell(8, 2, WOOD(0));                           // its knob
-  b.row(7, 3, 3, WOOD(0)); b.row(8, 2, 4, WOOD(0)); b.row(9, 3, 3, WOOD(0));   // the round window, framed
-  b.cell(3, 8, PALE);
-  b.box(11, 4, 2, 2, PALE);                        // a small window
-  b.box(14, 5, 2, 1, WOOD(1)); b.cell(15, 6, WOOD(1));   // the shelf fungus
+  b.row(0, 0, 15, K); b.row(1, 0, 1, K); b.row(1, 14, 15, K);   // the roots' flare
+  b.box(1, 1, 14, 12, K);                          // the stump
+  for (const [i, h, n] of FISSURES) cut(b, i, h, 1, n, W);   // its bark's seams, cut in paper
+  cut(b, 1, 12, 14, 1, PALE);                      // the cut face, edge-on
+  for (const i of [4, 8, 11]) b.d.px((b.X + i) * P, -13 * P + 2, 2, P - 4, MID);   // its rings
+  b.box(6, 0, 4, 6, W); b.row(6, 7, 8, W);         // the arched door, cut out
+  b.cell(8, 2, K);                                 // its knob
+  b.row(7, 3, 3, W); b.row(8, 2, 4, W); b.row(9, 3, 3, W);   // the round window
+  b.cell(3, 8, K);                                 // its cross
+  b.box(11, 4, 2, 2, W);                           // a small window
+  b.box(14, 5, 2, 1, K); b.cell(15, 6, K);         // the shelf fungus
   b.box(11, 13, 2, 4, K); b.row(17, 10, 13, K);    // the stovepipe and its cap
   b.box(4, 13, 1, 3, LOG(3));                      // the shoot off the cut
   clumps(b, [[4.5, 17.5, 1.8], [3.0, 16.0, 1.2], [6.0, 16.2, 1.2]], t);
@@ -167,20 +190,20 @@ function optC(b, t) {
 }
 
 // --- D: the turf roof and its sapling ------------------------------------------------
-// A low pale-boarded cottage under a thick roof of turf in the oak's green,
-// grass tufts along its ridge and a few flowers, a stone chimney smoking,
-// and an oak sapling growing out of the turf, its crown swaying.
+// A low cottage under a thick roof of turf, grass tufts along its ridge and
+// a few flowers cut out of it, a stone chimney smoking, and an oak sapling
+// growing out of the turf, its crown swaying.
 function optD(b, t) {
-  b.box(2, 0, 12, 6, WOOD(0));                     // the walls, pale boards
-  b.box(6, 0, 3, 4, K);                            // the door
-  b.box(10, 2, 2, 2, W); b.box(3, 2, 2, 2, W);     // two windows
-  b.row(6, 0, 15, LOG(3));                         // the sod's cut edge under the turf
-  const turf = [[7, 0, 15], [8, 0, 15], [9, 1, 14], [10, 2, 13], [11, 4, 11]];
-  turf.forEach(([h, a, z], k) => { for (let i = a; i <= z; i++) b.cell(i, h, leaf(k === 0 ? 3 : hash(i * 9.1 + h * 3.3) < 0.5 ? 1 : 2)); });
-  for (const [i, h] of [[0, 9], [1, 10], [2, 11], [3, 11], [12, 11], [13, 11], [14, 10], [15, 9], [5, 12], [10, 12]]) b.cell(i, h, leaf(0));   // grass tufts
-  for (const [i, h] of [[3, 9], [12, 9], [6, 10]]) b.cell(i, h, W);   // flowers
-  b.box(11, 10, 2, 5, MID); b.row(15, 10, 13, MID); b.cell(11, 13, PALE); b.cell(12, 11, PALE);   // the stone chimney and its cap
-  smoke(b, 12, 16, t);
+  walls(b, 2, 0, 12, 6);
+  opening(b, 6, 0, 4, 5, true);                    // the door
+  opening(b, 2, 1, 4, 4); opening(b, 10, 1, 4, 4); // two windows
+  const turf = [[6, 0, 15], [7, 0, 15], [8, 0, 15], [9, 1, 14], [10, 2, 13], [11, 4, 11]];
+  for (const [h, a, z] of turf) b.row(h, a, z, K);
+  trim(b, 5, 0, 15);                               // the sod's cut edge under the turf
+  cut(b, 1, 7, 14, 1, MID);                        // the sod's layer
+  for (const [i, h] of [[0, 9], [1, 10], [2, 11], [3, 11], [12, 11], [13, 11], [14, 10], [15, 9], [5, 12], [10, 12]]) b.cell(i, h, K);   // grass tufts
+  for (const [i, h] of [[3, 9], [12, 9], [6, 10], [9, 9]]) b.cell(i, h, W);   // flowers, cut out a cell each
+  b.box(11, 10, 2, 5, K); b.row(15, 10, 13, K);    // the stone chimney and its cap  smoke(b, 12, 16, t);
   // the sapling: a thin trunk off the ridge, its crown swaying as one piece
   const dx = b.d.sinking ? 0 : Math.sin(t * 1.3) * 2;
   b.box(7, 12, 1, 3, LOG(2));
