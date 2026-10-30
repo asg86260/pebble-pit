@@ -1,6 +1,6 @@
-// Act 3's fallen logs (after/grove.js, `groundLogs`; after/bodies.js,
-// `gather`): a tree sawn down by hand splits into its logs, which roll a
-// little off the fall and come to rest on the grove's floor; idle members
+// Act 3's fallen logs (after/grove.js; after/bodies.js, `gather`): a tree
+// sawn down by hand breaks into its four logs, which hop apart off the
+// trunk and come to rest on the grove's floor, on its own plot; idle members
 // walk to each on an errand and carry it to the forestry shack's pile, and
 // the saw mill's sawyer fetches them from there to its own (DESIGN.md, "Act
 // 3: one job a station"). Nothing lands in a pile without a body carrying
@@ -9,8 +9,10 @@
 import { group, ok, run, runUntil, yard } from './helpers.mjs';
 import { lying } from '../src/after/ground.js';
 import { loadKind } from '../src/carry.js';
-import { AFTER_LOGS_A_TREE, AFTER_LOG_ROLL_S, AFTER_FALL_S, AFTER_FALL_BOUNCE_S } from '../src/config.js';
-import { plotX } from '../src/after/place.js';
+import { AFTER_TREE, AFTER_BREAK_S, AFTER_FALL_S, AFTER_FALL_BOUNCE_S } from '../src/config.js';
+import { plotSpan } from '../src/after/place.js';
+
+const AFTER_LOGS_A_TREE = AFTER_TREE.logs;
 import { sawOn, saw } from './after-hands.mjs';
 
 const S = yard.S;
@@ -26,16 +28,16 @@ group('a felled tree\'s logs roll to rest, idle hands carry each to the forestry
   run(1);
   window.__afterCrowd((i, v) => (i < 6 ? 8 : v));
   runUntil(() => read().walking === 0 && read().camp >= 4, 120);
-  window.__afterAxe();
+  window.__afterSaw();
   run(0.5);
   // Sawn down by hand.
   sawOn(0);
   saw(0, () => S.after.plots[0].fall != null);
   runUntil(() => S.after.plots[0].fall == null, AFTER_FALL_S + 1);
   const split = lying().filter(q => q.i === 0);
-  const fell = S.after.plots[0].fell, rolling = split.length && split.every(q => q.x > q.x0 && q.at > fell);
-  run(AFTER_FALL_BOUNCE_S + AFTER_LOG_ROLL_S + 0.5);
-  const nLying = lying().length, inGrove = lying().every(q => q.x > plotX(0) && q.x < plotX(1));
+  const fell = S.after.plots[0].fell, rolling = split.length && split.every(q => q.hop && q.at > fell);
+  run(AFTER_FALL_BOUNCE_S + AFTER_BREAK_S + 0.5);
+  const [x0, x1] = plotSpan(0), nLying = lying().length, inGrove = lying().every(q => q.x >= x0 && q.x + q.w <= x1);
   // Nobody on a job: the idle at the podium go for them.
   let carried = false;
   const all = runUntil(() => {
@@ -49,7 +51,7 @@ group('a felled tree\'s logs roll to rest, idle hands carry each to the forestry
   const fed = runUntil(() => read().logs > 0 || read().timber > 0, 600);
   window.__actsOn(null);
   return [
-    ok(split.length === AFTER_LOGS_A_TREE && rolling, 'down, the trunk splits into its logs, each rolling on along the ground', `${split.length} logs`),
+    ok(split.length === AFTER_LOGS_A_TREE && rolling, 'down, the trunk breaks into its logs, each hopping apart off it', `${split.length} logs`),
     ok(nLying === AFTER_LOGS_A_TREE && inGrove, 'they come to rest on the grove\'s floor, inside the plot', `${nLying} lying`),
     ok(carried && all < Infinity, 'idle hands carry every one to the forestry shack\'s pile', `carried ${carried} in ${all} s, pile ${read().grovelogs}`),
     ok(sawyer && fed < Infinity && read().grovelogs < AFTER_LOGS_A_TREE, 'the sawyer fetches them from that pile to the saw mill', `${read().logs} at the mill, ${read().grovelogs} at the shack`)

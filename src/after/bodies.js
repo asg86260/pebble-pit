@@ -27,7 +27,7 @@
 import { S } from '../state.js';
 import { sink } from '../flow.js';
 import { AFTER_JOB } from '../jobs.js';
-import { P, AFTER_SLOT_GAP, AFTER_JOBS, AFTER_JOB_POST, AFTER_AGITATE_S, AFTER_FELL_S, AFTER_DIG_S, AFTER_PLANT_S,
+import { P, AFTER_SLOT_GAP, AFTER_JOBS, AFTER_JOB_POST, AFTER_AGITATE_S, AFTER_FELL_S, AFTER_DIG_S, AFTER_DIG_CLICKS, AFTER_PLANT_S,
          AFTER_PUT_S, AFTER_SAW_S, AFTER_CHOP_HOLD_S,
          AFTER_JOIN_FADE_S, AFTER_GOODS_HOME, AFTER_GOODS_FOOT, AFTER_WALK,
          AFTER_PILES, AFTER_SIGN_TIMBER, AFTER_SIGN_S, KINDS } from '../config.js';
@@ -37,6 +37,11 @@ import { kindOf as cellKind } from '../grid.js';
 import { count, push, isEmpty, loadKind, holds, clear, pop, pickUp as takeUp, putDown as setUp, dump } from '../carry.js';
 import { deepAt } from './sky.js';
 import { built, stumpsOn, seatsOf, bladeLogs, benchSigns } from './levels.js';
+// track A: the anchors tracks C and D fill: a woodcutter's pull at a stump
+// and its planting of a bare plot from the basket, each true while it has
+// the body this frame.
+import { pullStep } from './stump.js';
+import { plantStep } from './seeds.js';
 import { afterX0, afterX1, afterFloor, floorAt, stationDoor, stationBox, signFetchX, pileMid, pileOwner, plotX, soulX, soulY, groveX1, campSpot, idleX, idleSpots, podiumMid, overCrowd, crowdEdge, AP } from './place.js';
 import { agitate } from './rebel.js';
 import { standing, stumped, chopTree, digStump, settled, layGood } from './grove.js';
@@ -208,12 +213,12 @@ function toPile(w, dt, what) {
 // A body put on a job, from where it stands: it forgets what it was doing
 // and walks to the job (the job's own frame takes it there).
 function takeJob(w, job) {
-  Object.assign(w, { job, errand: null, order: null, on: false, at: null, target: null, to: null, log: null, out: false, t: 0, n: 0, swing: null, dig: false, pick: false });
+  Object.assign(w, { job, errand: null, order: null, on: false, at: null, target: null, to: null, log: null, out: false, t: 0, n: 0, swing: null, dig: false, pick: false, plant: null });
   clear(w);
 }
 // A body taken off its job, back to the podium on foot.
 function dropJob(w) {
-  Object.assign(w, { job: null, on: false, at: null, target: null, to: null, log: null, out: false, t: 0, n: 0, swing: null, dig: false, pick: false });
+  Object.assign(w, { job: null, on: false, at: null, target: null, to: null, log: null, out: false, t: 0, n: 0, swing: null, dig: false, pick: false, plant: null });
 }
 // A member out of the crowd, who steps out of its front at the camp's edge
 // by the pedestal, fading in: put on `job`, or (null) to stand at the podium.
@@ -434,20 +439,25 @@ function nearestPlot(w, test) {
 const JOB_STEP = {
   woodcutter(w, dt) {
     // Logs lying first, so a felled tree is carried in before the next is
-    // felled; then a grown tree; a stump only with stump removal bought.
-    if (gather(w, dt)) return;
-    const a = S.after;
+    // felled; then the stump pull and the planting (tracks C and D); then a
+    // grown tree, once the saw is handed over (the hand saws without it); a
+    // stump only with stump removal bought.
+    if (w.plant == null && gather(w, dt)) return;
+    if (pullStep(w, dt) || plantStep(w, dt)) return;
+    const a = S.after, saws = !!a.sawHanded;
     const p = w.target != null ? a.plots[w.target] : null;
-    const ok = p && (w.dig ? stumpsOn() && stumped(p) : standing(p));
+    const ok = p && (w.dig ? stumpsOn() && stumped(p) : saws && standing(p));
     if (!ok) {
-      let i = nearestPlot(w, standing), dig = false;
+      let i = saws ? nearestPlot(w, standing) : null, dig = false;
       if (i == null && stumpsOn()) { i = nearestPlot(w, stumped); dig = i != null; }
       w.target = i; w.dig = dig; w.t = 0;
     }
     if (w.target == null) { idle(w, dt); return; }
     if (!go(w, plotX(w.target) + AP * 3, floorY(), dt)) return;
     w.t += dt;
-    if (w.dig) { if (w.t >= AFTER_DIG_S) { digStump(w.target); w.target = null; w.t = 0; w.swing = a.t; } }
+    // Placeholders until the strokes and pulls are beats (tracks B and C):
+    // a pull a root, the last one handing the stump-log into its arms.
+    if (w.dig) { if (w.t >= AFTER_DIG_S / AFTER_DIG_CLICKS) { digStump(w.target, false, v => push(w, v)); w.t = 0; w.swing = a.t; if (!stumped(a.plots[w.target])) w.target = null; } }
     else if (w.t >= AFTER_FELL_S) { chopTree(w.target); w.t = 0; w.swing = a.t; }
   },
   // An idle member's errand only: a woodcutter gathers as part of its own.

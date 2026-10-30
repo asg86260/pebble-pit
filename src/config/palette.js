@@ -83,6 +83,14 @@ export const AFTER_GOODS_DARK = {
   sign:    ['#8793a1', '#707b88', '#667180', '#4f5a67']
 };
 
+// track A: the grove's crown, oak-leaf green (DESIGN.md, "Act 3's grove,
+// rebuilt", call 4; the owner's pick of the mock's greens): each of the four
+// a role, in this order -- the lit top edges, the body, the body's darker
+// half, the undersides and seams -- light, and lifted a step for the dark
+// page, drawn raw there as the goods are.
+export const AFTER_LEAVES = ['#4c7f3c', '#406d33', '#38602c', '#2a4920'];
+export const AFTER_LEAVES_DARK = ['#64a052', '#568c46', '#4b7c3d', '#3a612f'];
+
 // Act 3 on the dark page (DESIGN.md, "The sky, redrawn flat"): the same order
 // turned, each of the four tones where it lands there (src/ink.js, the
 // 'after' map) -- the paper darkest, the ink lightest, a clear step between

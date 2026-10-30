@@ -1503,14 +1503,15 @@ import { setCrowd, hireAll, support as afterSupport, union as afterUnion, ready 
 import { pairBox } from './after/rebel.js';
 import { campCount, walkingOut, idleBodies } from './after/bodies.js';
 import { rosterReport, rosterHit, shopBoxOf } from './roster.js';
-import { plotX, afterFloor, stationBox as afterStationBox } from './after/place.js';
+import { plotX, groundOf, stationBox as afterStationBox } from './after/place.js';
 import { drawnSpan } from './footprints.js';
 import { isPiled, setBlock, takeBlock, goodsRead } from './after/piles.js';
 import { stripBox, lying } from './after/ground.js';
 import { source, sink } from './flow.js';
 import { AFTER_PILES } from './config.js';
 import { track, heldGoods } from './hands.js';
-import { bottomY } from './grid.js';
+import { bottomY, cellOf } from './grid.js';
+import { plantAcorn } from './after/grove.js';
 import { afterGate, strikeDue } from './after/strike.js';
 import { gestureDown, gestureMove, gestureUp, partsOf as gestureParts, gestureView, groveIcons } from './after/gestures.js';
 // A click up there as input.js makes it: the hand work's first (a part, a
@@ -1549,17 +1550,17 @@ HANDLES.__afterCrowd = (fn, waiting = false) => {
 };
 // Where to click: the pair on the pedestal, each plot's trunk and stump.
 HANDLES.__afterPair = () => { const b = pairBox(); return { x: b.x + b.w / 2, y: b.y + b.h / 2 }; };
-HANDLES.__afterTrees = () => (S.after ? S.after.plots.map((p, i) => ({ i, stage: p.stage, logs: lying().filter(q => q.i === i).length, falling: p.fall != null,
-  stump: p.stump, x: plotX(i) + AP / 2, y: afterFloor() - AP * 5, sx: plotX(i) + AP / 2, sy: afterFloor() - AP / 2 })) : []);
+HANDLES.__afterTrees = () => (S.after ? S.after.plots.map((p, i) => ({ i, grow: p.grow, logs: lying().filter(q => q.i === i).length, falling: p.fall != null,
+  stump: p.stump, x: plotX(i) + AP / 2, y: groundOf('grove') - AP * 8, sx: plotX(i) + AP / 2, sy: groundOf('grove') - AP * 2 })) : []);
 HANDLES.__afterRows = () => AFTER_ROWS.map(u => ({ key: u.key, card: u.card, shown: !!S.after && u.show(),
   bill: afterBill(u), rung: u.rung ? u.rung() : u.from ? u.from() : 0, done: afterMaxed(u) }));
 HANDLES.__afterRead = () => (S.after ? { rebel: S.after.rebel, ...goodsRead(), gate: S.after.gate,
-  axe: S.after.axe, support: afterSupport(), union: afterUnion(), ready: afterReady(), camp: campCount() + idleBodies().length, walking: walkingOut(),
+  sawHanded: S.after.sawHanded, support: afterSupport(), union: afterUnion(), ready: afterReady(), camp: campCount() + idleBodies().length, walking: walkingOut(),
   size: crowdSize(), signs: S.after.signs.length, bodies: S.after.bodies.length,
   posted: S.after.bodies.filter(b => b.job && b.job !== AFTER_JOB.BUILD).length, motes: S.after.motes.length,
   built: [...S.after.built], camped: S.after.camp,
   due: afterGate(), strike: strikeDue() } : null);
-// The axe in hand without buying it: a scene's setup.
+// The saw handed to the woodcutter without buying it: a scene's setup.
 // The hand emptied for a setup that is not about it: whatever blocks it held
 // are unmade at a named door, so the conservation rule (verify.js, rule 23)
 // is not told they walked off.
@@ -1567,7 +1568,18 @@ HANDLES.__emptyHand = () => {
   for (const m of S.motes) if (m.kind) sink(m.kind, 1, 'emptied hand');
   S.held = 0; S.motes = [];
 };
-HANDLES.__afterAxe = () => { if (S.after) S.after.axe = true; return !!S.after?.axe; };
+HANDLES.__afterSaw = () => { if (S.after) S.after.sawHanded = true; return !!S.after?.sawHanded; };
+// A tree stood in plot i for a setup that is not about planting: an acorn
+// made at a named door and planted through the grove's own (after/grove.js,
+// `plantAcorn`), so the books and the plot rule (verify.js) hold, then grown
+// to `grow` (1 a standing tree). True if it went in.
+HANDLES.__afterPlant = (i, grow = 1) => {
+  if (!S.after) return false;
+  source('acorn', 1, 'grant');
+  if (!plantAcorn(i, cellOf('acorn'))) { sink('acorn', 1, 'grant'); return false; }
+  Object.assign(S.after.plots[i], { grow, seed: null });
+  return true;
+};
 // The rosters under act 3's stations (after/roster.js, on the yard's
 // roster.js) as the checks read them; and a press on one's + (`d` 1) or -
 // (-1), made as a click there makes it: `rosterHit` at the button's middle,

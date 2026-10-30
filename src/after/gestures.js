@@ -107,7 +107,9 @@ const DEFS = {
   tree: {
     // `i` the tree the saw is on (its icon clicked), null with the saw put up.
     init: () => ({ i: null, s: 0, target: 0, s0: 0, gx: 0, from: 0, v: 0, grab: false }),
-    open: () => !!S.after.axe && trees().some(standing),
+    // The hand saws a tree down from the start (the owner, 2026-10-30): the
+    // saw bought is the woodcutter's, not the hand's.
+    open: () => trees().some(standing),
     grab(g, x, y) { const p = g.i != null && trees()[g.i]; return p && standing(p) && inBox(x, y, sawBox(g.i, g.s), G_S) ? g.i : null; },
     down(g, i, x) { g.grab = true; g.gx = x; g.s0 = g.target; return true; },
     move(g, x) { g.target = clamp(g.s0 + (x - g.gx), -GESTURE_SAW_AMP, GESTURE_SAW_AMP); },
@@ -271,14 +273,14 @@ function recs() {
 const live = () => afterlifeOn() && !!S.after;
 
 // --- the icons over the grove ----------------------------------------------------------
-// The saw icon over each grown tree the saw is not on, while the axe is in
-// hand; the shovel over each stump. Where each is and whether it shows: read
+// The saw icon over each grown tree the saw is not on (the hand's placeholder
+// until the saw lies across the trunk, track B); the shovel over each stump. Where each is and whether it shows: read
 // by the drawing (render/after/pine.js) and the click alike.
 export function groveIcons() {
   if (!live()) return [];
   const g = recs(), out = [];
   trees().forEach((p, i) => {
-    if (standing(p) && S.after.axe && g.tree.i !== i) out.push({ kind: 'saw', i, ...stationParts('tree', i).icon });
+    if (standing(p) && g.tree.i !== i) out.push({ kind: 'saw', i, ...stationParts('tree', i).icon });
     if (stumped(p)) out.push({ kind: 'shovel', i, held: g.stump.i === i && g.stump.grab, ...stationParts('stump', i).icon });
   });
   return out;

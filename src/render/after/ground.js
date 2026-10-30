@@ -9,7 +9,8 @@
 
 import { P, GREY, AFTER_LIP } from '../../config.js';
 import { S } from '../../state.js';
-import { afterX0, afterFloor, floorProfile } from '../../after/place.js';
+import { afterX0, afterFloor, floorProfile, bedSpan, pileAt, pileOwner, AP } from '../../after/place.js';
+import { pileCells } from '../../after/art.js';
 import { ctx } from '../ctx.js';
 import { fillOnPixels } from '../frame.js';
 import { W, PALE, MID } from './kit.js';
@@ -42,13 +43,22 @@ function shape(cols) {
   hangs = row(L.seed + 1, L.round / 2);
 }
 
+// The spans the lip is held down under, no higher than the shelf's top: every
+// plot's soil bed and the seed basket, so a plot and its seeds read above
+// the cloud line (the owner, 2026-10-28).
+function clear() {
+  const spans = S.after.plots.map((p, i) => bedSpan(i)), key = pileOwner('seeds');
+  if (key) { const x = pileAt(key, 'seeds'); spans.push([x, x + pileCells('seeds') * AP]); }
+  return x => spans.some(([a, b]) => x >= a && x < b);
+}
 export function drawFrontLip() {
   if (!ctx || !S.after) return;
-  const el = floorProfile(), L = AFTER_LIP;
+  const el = floorProfile(), L = AFTER_LIP, low = clear();
   shape(el.length);
   const j0 = Math.max(0, Math.floor((S.camX - afterX0()) / P) - 1);
   const j1 = Math.min(el.length, Math.ceil((S.camX + S.viewW - afterX0()) / P) + 2);
-  const foot = j => afterFloor() + (L.drop - (el[j] || 0)) * P, top = j => foot(j) - tops[j] * P;
+  const foot = j => afterFloor() + (L.drop - (el[j] || 0)) * P;
+  const top = j => (low(afterX0() + j * P) ? Math.max(foot(j) - tops[j] * P, afterFloor() - (el[j] || 0) * P) : foot(j) - tops[j] * P);
   for (let j = j0; j < j1; j++) {
     const x = afterX0() + j * P, y = top(j), bot = foot(j) + (L.hang + hangs[j]) * P;
     fr(x, y, P, bot - y, PALE);

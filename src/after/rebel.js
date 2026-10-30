@@ -74,10 +74,10 @@ export function clickPlace(x, y) {
   return false;
 }
 
-// The axe: bought on the grove's card, owed until the beat hands it over
-// (story.js). Track C's actbeats.js reads `axeDue`.
-export const axeDue = () => !!S.after && !!S.after.axeBought && !S.after.axe;
-export const giveAxe = () => { if (S.after) S.after.axe = true; };
+// The saw: bought on the grove's card, owed to the woodcutter until the beat
+// hands it over (story.js); the hand saws without it. actbeats.js reads `sawDue`.
+export const sawDue = () => !!S.after && !!S.after.sawBought && !S.after.sawHanded;
+export const giveSaw = () => { if (S.after) S.after.sawHanded = true; };
 
 // One frame of the air over the place.
 export function stepRebel(c) {
@@ -95,7 +95,7 @@ export function stepRebel(c) {
     m.y += step;
     if (m.y >= land) { a.rebel += m.v; motes.splice(i, 1); }
   }
-  // A save from after the axe's beat, with the axe not yet in hand.
-  if (axeDue() && S.beatsDone.includes('axe')) giveAxe();
+  // A save from after the saw's beat, with the saw not yet handed over.
+  if (sawDue() && S.beatsDone.includes('saw')) giveSaw();
 }
 

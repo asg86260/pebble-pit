@@ -23945,10 +23945,13 @@ worker to slowly cut the tree down."
    into its clumps, which scatter and fade. The trunk breaks along its seams
    into its 4 logs, which hop apart and lie as real logs for workers to
    carry. No bucking step.
-7. **One saw, bought.** The longer hand saw: a closed grip, a 9-cell blade
-   tapering from 3 cells deep to 1, teeth under it. There is no axe. The saw
-   is a purchase on the grove's board that lets the woodcutter slowly saw a
-   tree down; until it is bought nothing fells a tree.
+7. **One saw; bought, it automates.** The longer hand saw: a closed grip, a
+   9-cell blade tapering from 3 cells deep to 1, teeth under it. There is no
+   axe. The hand saws a tree down from the start, with nothing bought (the
+   owner, 2026-10-30: "no the player can always cut the tree down, the saw
+   unlocks worker automation"). The saw is a purchase on the grove's board
+   that lets the woodcutter slowly saw a tree down; until it is bought the
+   woodcutter fells nothing.
 8. **The woodcutter** fells with the hand saw from the side away from the
    fall, W-2 with heft. A 3.5-cell stroke. The beats: pull back held 0.22 s;
    push fast (0.08 s) with a smear; the bite held 0.2 s with the body leant
@@ -24111,7 +24114,7 @@ extends.
   plot's bed and opening; the mill's pile-to-bed cue is the precedent). No
   icons over trees or stumps.
 - **The gestures system** (after/gestures.js). The `tree` DEF loses its icon
-  step: once the saw is bought, `grab` finds a standing tree whose saw box
+  step: from the start, nothing bought, `grab` finds a standing tree whose saw box
   (across the trunk at the stump's top) is under the press, and takes it. The stroke, a `chopTree`
   per end-to-end stroke, and `TREE_CHOPS` stay. The `stump` DEF's grab zone
   is the stump block itself. Its lift, strain and `digStump` per root stay;
@@ -24124,7 +24127,8 @@ extends.
   is a four-bill row like the podium.
 - **Jobs.** No new job. The woodcutter's round (bodies.js) grows to: carry
   lying logs home; carry a lying acorn to the basket; plant a bare plot from
-  the basket; saw a grown tree down once the saw is bought; pull a stump
+  the basket; saw a grown tree down once the saw is bought (the hand never
+  waits on it); pull a stump
   once stump removal is bought.
   Idle members' errands grow by two: carry a lying acorn home, and fetch a
   seed owed from the gates. Planting is the woodcutter's alone (it is work at
@@ -24197,9 +24201,11 @@ Taken cell for cell from the mock (`src/render/after/grovemock.js` and
 - Every stump fade, and the chip pose (`p.chip`, `AFTER_CHOP_HOLD_S`).
 - The axe, everywhere (the owner, 2026-10-30: "theres no axe, it should
   just be a saw purchase to allow a worker to slowly cut the tree down").
-  The saw is a purchase of its own: it lets
-  the woodcutter saw a tree down (and puts the saw across each standing
-  trunk for the hand), and without it nothing fells a tree. The game today
+  The saw is a purchase of its own: it lets the woodcutter saw a tree down,
+  and without it the woodcutter fells nothing; the hand saws from the start,
+  the saw lying across each standing trunk whether or not it is bought (the
+  owner, 2026-10-30: "the player can always cut the tree down, the saw
+  unlocks worker automation"). The game today
   carries the axe in these places, and each is **renamed** to the saw, not
   kept beside it: the row `after-axe` becomes `after-saw` (its bill, rebel
   50 and dust 8000, unchanged), with its glyph entry; `S.after.axe` and
@@ -24324,7 +24330,9 @@ The save-shape-change skill's steps, `SAVE_V` 34 to 35, one migration
     `fall` is set or its crown break is within its 1.7 s. A check makes a
     resting log on a neighbor's footprint go red, and a falling crown over
     one stay green.
-  - No tree is felled without the saw bought.
+  - No tree is felled by the woodcutter without the saw bought. A fall from
+    the hand is always legal (the plot names who sawed the last stroke,
+    `by`).
 - **Node tier, the player's way**, a new file `test/after-grove.test.mjs`:
   - The seed row bought with `__buy`: a member walks to the gates, and the
     basket's count goes up by one only on the frame the acorn is set down.
@@ -24426,7 +24434,9 @@ hands-off check come last, on the integrated branch.
    the self-seed chance builds up as a debt; bigger trees retires into
    self-seeding's first rung; the basket's acorns lie on their lattice. The
    saw is a bought row: "theres no axe, it should just be a saw purchase to
-   allow a worker to slowly cut the tree down." No axe exists anywhere; the
+   allow a worker to slowly cut the tree down"; and, the same day, "no the
+   player can always cut the tree down, the saw unlocks worker automation":
+   the hand saws freely and the row automates felling. No axe exists anywhere; the
    game's axe row, fields, beat, line and hook are renamed to the saw, and
    the migration to `SAVE_V` 35 renames them in a save.
 

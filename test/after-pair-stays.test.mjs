@@ -37,7 +37,7 @@ group('an owner who buys early: every member put on a job, the stations still ra
   window.__actsOn(true);
   window.__actsAt('fallen');
   window.__goPlace('after');
-  const ROWS = ['after-axe', 'after-seat-sawyer', 'after-seat-woodcutter', 'after-seat-joiner',
+  const ROWS = ['after-saw', 'after-seat-sawyer', 'after-seat-woodcutter', 'after-seat-joiner',
                 'after-build-mill', 'after-build-workshop'];
   const JOBS = ['sawyer', 'woodcutter', 'joiner'];
   const idle = () => S.after.camp + S.after.bodies.filter(b => b.job == null && b.state === 'work' && b.pair == null).length;

@@ -54,6 +54,9 @@ import { blockProblems } from './grid.js';              // one ground
 import { millView } from './after/mill.js';   // track A: saw mill
 import { AFTER_BLOCK } from './config.js';   // track A: saw mill
 import { HELL_STORY } from './hell/story.js';
+import { AFTER_TREE } from './config.js';                       // track A: the grove
+import { treeCol, tagOf } from './after/ground.js';             // track A: the grove
+import { plotSpan, AP } from './after/place.js';              // track A: the grove
 import { allOverlaps, offGround } from './footprints.js';
 
 // The pairs allowed to share ground, each with what it is: none. The list is
@@ -740,12 +743,14 @@ export function verifyWorld() {
       for (let c = u.c0; c < u.c0 + u.z; c++) {
         if (u.r0 > 0 && g.grid[(u.r0 - 1) * g.cols + c]) under = true;
         if (awake && awake[c]) stirring = true;
-        for (let r = u.r0; r < u.r0 + u.z; r++) if (g.fixed && g.fixed(c, r)) { bad.push(`the ${u.kind} at ${u.c0},${u.r0} stands in the ground`); r = 1e9; c = 1e9; }
+        for (let r = u.r0; r < u.r0 + u.h; r++) if (g.fixed && g.fixed(c, r)) { bad.push(`the ${u.kind} at ${u.c0},${u.r0} stands in the ground`); r = 1e9; c = 1e9; }
       }
       if (!under && !stirring) bad.push(`the ${u.kind} at ${u.c0},${u.r0} hangs in the air`);
     }
     if (bad.length) fail("act 3's ground holds a unit wrong", bad.slice(0, 6).join('; '));
   }
+
+  verifyGrove();
 
   // track C: one carry
   // --- rule 27: an act 3 body's arms hold cells, counted ---------------------
@@ -775,6 +780,60 @@ export function verifyWorld() {
   }
 
   verifyParty();
+}
+
+// --- track A: the grove ---------------------------------------------------------
+// --- rule 28: the grove's plots (DESIGN.md, "Act 3's grove, rebuilt", "Checks") ---
+// A plot is exactly one of bare, growing, standing, falling and stumped; a
+// tree grows only where an acorn went in (the `planted` sink the only way
+// its growth leaves null); a felled trunk breaks into exactly its logs (the
+// `tree` door, AFTER_TREE.logs a landing) and a stump pulled is one log (the
+// `stump` door); no tree comes down by the woodcutter without the saw bought
+// (the hand's fall is always legal: the owner, 2026-10-30); no unit rests on
+// a tree's columns; and a felled tree's logs come to rest on their own plot,
+// never on the next one's footprint. The falling drawing and the crown's
+// clumps are the one thing exempt from the no-overlap rule (footprints.js
+// claims a felled tree by its standing footprint, never its sweep).
+// Read against the frame before, started over when the act's state is replaced.
+let groveWas = null; // held: the plots and the grove's doors last frame, for the rule's books
+export function verifyGrove() {
+  if (!afterlifeOn() || !S.after) { groveWas = null; return; }
+  const a = S.after, by = flowBy();
+  const now = { a, reads: yardReads, plots: a.plots.map(p => ({ grow: p.grow, stump: p.stump, fell: p.fell })),
+                planted: -(by['acorn:planted'] || 0), tree: by['log:tree'] || 0, stump: by['log:stump'] || 0 };
+  const was = groveWas;
+  groveWas = now;
+  a.plots.forEach((p, i) => {
+    const states = [p.grow == null && !p.stump && p.fall == null, p.grow != null && p.grow < 1 && p.fall == null,
+                    p.grow != null && p.grow >= 1 && p.fall == null, p.fall != null, p.stump && p.fall == null];
+    if (states.filter(Boolean).length !== 1 || (p.grow != null && (p.stump || !(p.grow >= 0 && p.grow <= 1))) || (p.fall != null && p.grow !== 1))
+      fail('a plot is not exactly one of bare, growing, standing, falling, stumped', `plot ${i}: ${JSON.stringify(p)}`);
+    if (p.fall != null && p.by === 'worker' && !a.sawBought)
+      fail('the woodcutter felled a tree without the saw bought', `plot ${i}`);
+  });
+  if (was && was.a === a && was.reads === now.reads) {
+    let sprouted = 0, landed = 0, pulled = 0;
+    a.plots.forEach((p, i) => {
+      const q = was.plots[i];
+      if (!q) return;
+      if (q.grow == null && p.grow != null) sprouted++;
+      if (q.fell == null && p.fell != null && p.stump) landed++;
+      if (q.stump && !p.stump) pulled++;
+    });
+    if (sprouted > now.planted - was.planted) fail('a tree grew where no acorn went in', `${sprouted} sprouted, ${now.planted - was.planted} planted`);
+    if (now.tree - was.tree !== landed * AFTER_TREE.logs) fail('a felled trunk did not break into its logs', `${landed} landed, ${now.tree - was.tree} logs made`);
+    if (now.stump - was.stump !== pulled) fail('a stump pulled is not one log', `${pulled} pulled, ${now.stump - was.stump} logs made`);
+  }
+  if (S.tick % LEDGER_EVERY !== 0 || !afterGround.grid) return;
+  const g = afterGround, plots = a.plots;
+  for (const u of units()) {
+    for (let c = u.c0; c < u.c0 + u.z; c++) if (treeCol(c)) { fail('a unit rests on a tree\'s ground', `the ${u.kind} at ${u.c0},${u.r0}`); break; }
+    const t = tagOf(u.ai);
+    if (t && t.hop && t.i != null && plots[t.i] && a.t >= t.at) {
+      const [x0, x1] = plotSpan(t.i), x = g.x + u.c0 * AP;
+      if (x < x0 || x + u.z * AP > x1) fail('a felled tree\'s log came to rest off its own plot', `plot ${t.i}: the log at ${x} to ${x + u.z * AP}, the plot ${x0} to ${x1}`);
+    }
+  }
 }
 
 // --- wave party: STATE -----------------------------------------------------------

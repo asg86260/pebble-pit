@@ -65,14 +65,14 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
   const handS = k => Math.max(0.25, HAND_S[k] / HUMAN);
 
   // --- the plan: what a sensible player buys, in order -------------------------------
-  // The axe and the saw mill first, a woodcutter carrying the felled logs to
+  // The saw and the saw mill first, a woodcutter carrying the felled logs to
   // the forestry shack and a sawyer fetching them on, the workshop and its
   // joiner to get signs into the crowd, then more posts and the upgrades.
   // A post is a member put on that job
   // through the roster under its station (`row`, below), its seat bought
   // first where the job's seats are full; a post named twice is two members.
   const PLAN = [
-    'after-axe', 'after-build-mill', 'after-post-woodcutter', 'after-post-sawyer', 'after-build-workshop',
+    'after-saw', 'after-build-mill', 'after-post-woodcutter', 'after-post-sawyer', 'after-build-workshop',
     'after-post-joiner', 'after-podium', 'after-post-woodcutter', 'after-plot',
     'after-post-joiner', 'after-blade', 'after-plot',
     'after-stumps', 'after-grow', 'after-post-sawyer', 'after-post-woodcutter',
@@ -124,7 +124,7 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
     const logs = lying().length + st.grovelogs;
     const open = j => row(`after-post-${j}`).show();
     const pick = (st.timber >= 8 * C.AFTER_SIGN_TIMBER + planNeeds('timber') && open('joiner') ? 'joiner'
-      : st.timber < 10 * C.AFTER_SIGN_TIMBER && logs > 3 * C.AFTER_LOGS_A_TREE * Math.max(1, n('sawyer')) ? 'sawyer'
+      : st.timber < 10 * C.AFTER_SIGN_TIMBER && logs > 3 * C.AFTER_TREE.logs * Math.max(1, n('sawyer')) ? 'sawyer'
       : st.timber < 10 * C.AFTER_SIGN_TIMBER && a.plots.filter(standing).length > n('woodcutter') ? 'woodcutter'
       : 'joiner');
     return open(pick) ? `after-post-${pick}` : null;
@@ -188,7 +188,7 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
   }
   function watch() {
     const a = S.after;
-    if (a.axe) mark('axe', 'axe in hand');
+    if (a.sawHanded) mark('saw', 'saw handed over');
     const raised = a.built.filter(k => !C.AFTER_START_BUILT.includes(k));
     if (raised.length) mark('first', `first station (${raised[0]})`);
     for (const k of Object.keys(C.AFTER_BUILDS)) if (built(k)) mark(`b-${k}`, `${k} stands`);
@@ -214,7 +214,7 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
       if (millView().log) return 'mill';
       if (st.logs > 0 && !a.bodies.some(b => b.at === 'mill') && !S.chips.some(c => c.place === 'after' && c.kind === 'log')) return 'load';
     }
-    if (a.axe && a.plots.some(standing)) return 'chop';
+    if (a.sawHanded && a.plots.some(standing)) return 'chop';
     if (a.plots.some(stumped)) return 'dig';
     return null;
   }

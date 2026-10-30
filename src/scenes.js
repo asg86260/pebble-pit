@@ -40,7 +40,7 @@ import { lay } from './deep/statuses.js';
 import { worksAt, progressOf, markDoneSeen } from './works.js';
 import { SAVE as CREW_SAVE } from './crew/records.js';
 import { goDeep, goUp, poseGlide } from './view.js';
-import { floorAt, stationX0, stationBox, signBox, soulX, afterFloor, afterOpenX, workshopsX1, unionJoinAt, campEdges, AP } from './after/place.js';
+import { floorAt, stationX0, stationBox, signBox, soulX, afterFloor, afterOpenX, workshopsX1, unionJoinAt, campEdges, plotX, AP } from './after/place.js';
 import { godFront } from './after/sky.js';
 // The window's middle at the camera's last window over act 3: God in it,
 // his stage square under him.
@@ -510,7 +510,7 @@ function handTurn(key, ring, rev, frames) {
 // end of the last; framed on the plot.
 function handSaw(strokes, per = 0.5) {
   window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
-  window.__afterAxe(); window.__fast(0.5);
+  window.__afterSaw(); window.__fast(0.5);
   const icon = window.__groveIcons().find(c => c.kind === 'saw');
   window.__gesture('down', icon.x, icon.y - 4); window.__gesture('up');
   const b = window.__gestureParts('tree', 0).sawBox, x0 = b.x + P * 2, y = b.y + b.h / 2;
@@ -2881,14 +2881,11 @@ export const SCENES = {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
       window.__afterGrant({ rebel: 2000, timber: 300 }); yardPurse();
       for (let k = 0; k < 3; k++) buyAfter('after-plot');
-      buyAfter('after-tree');
-      window.__afterAxe();
-      // The plots stood at their stages, the setup the shot is not about:
-      // a grown tree, a big one, a pole, and a stump with its logs.
-      const plots = S.after.plots;
-      Object.assign(plots[1], { stage: 3, big: true });
-      Object.assign(plots[2], { stage: 2 });
-      Object.assign(plots[3], { stage: 0, stump: true, logs: 3 });
+      window.__afterSaw();
+      // The plots stood, the setup the shot is not about: a grown tree, one
+      // half grown, and a stump.
+      window.__afterPlant(1, 1); window.__afterPlant(2, 0.5);
+      Object.assign(S.after.plots[3], { stump: true });
       window.__fast(3);
       const t = window.__afterTrees()[0];
       for (let k = 0; k < 8; k++) window.__afterClick(t.x, t.y);
@@ -2904,7 +2901,7 @@ export const SCENES = {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
       for (const k of ['mill', 'workshop']) if (!S.after.built.includes(k)) S.after.built.push(k);
       window.__afterGrant({ logs: 6, timber: 8 });
-      window.__afterAxe();
+      window.__afterSaw();
       window.__look(stationX0('mill') - P * 20);
       window.__fast(0.5);
       handTurn('mill', 'wheel', 1.6, 90);
@@ -2915,7 +2912,7 @@ export const SCENES = {
   // on it and mid-cut, its kerf half open; a stump lifted half out by hand,
   // its shovel faded under the hand.
   'after-saw-icon': { about: 'the acts', say: "the grove's grown tree with its saw icon over it, waiting to be clicked",
-    run: () => { window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1); window.__afterAxe(); window.__fast(0.6);
+    run: () => { window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1); window.__afterSaw(); window.__fast(0.6);
                  window.__look(0); window.__holdShot(); } },
   'after-saw': { about: 'the acts', say: "the handsaw on the grove's tree, dragged back and forth, its kerf half open",
     run: () => handSaw(6) },
@@ -2924,7 +2921,7 @@ export const SCENES = {
   'after-dig': { about: 'the acts', say: "a stump with its shovel icon, dragged half up out of the ground by hand, its roots showing",
     run: () => {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
-      Object.assign(S.after.plots[0], { stage: 0, stump: true, dug: 0 });
+      Object.assign(S.after.plots[0], { grow: null, stump: true, dug: 0 });
       window.__look(0); window.__fast(0.5);
       const g = window.__gestureParts('stump', 0).stump, x = g.x + g.w / 2, y = g.y + g.h / 2;
       window.__gesture('down', x, y);
@@ -2937,7 +2934,7 @@ export const SCENES = {
   'after-pull': { about: 'the acts', say: "a stump pulled by hand and held, straining root by root until it rips out",
     run: () => {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
-      Object.assign(S.after.plots[0], { stage: 0, stump: true, dug: 0 });
+      Object.assign(S.after.plots[0], { grow: null, stump: true, dug: 0 });
       window.__look(0); window.__fast(0.5);
       const g = window.__gestureParts('stump', 0).stump, x = g.x + g.w / 2, y = g.y + g.h / 2;
       window.__gesture('down', x, y);
@@ -3105,14 +3102,14 @@ export const SCENES = {
       for (let k = 0; k < 80 && !(S.after.raising.mill && S.after.raising.mill.n >= 2); k++) window.__fast(0.5);
       window.__look(stationX0('shack') - S.viewW / 2); window.__holdShot();
     } },
-  // The yard paying (DESIGN.md, "The yard pays too"): the axe bought on the
+  // The yard paying (DESIGN.md, "The yard pays too"): the saw bought on the
   // grove's card, its dust come up out of the thin patch as motes and arcing
   // over to the grove.
   'after-coins': { about: 'the acts', say: "the yard's coins up through the thin patch in the cloud floor, arcing to the station bought",
     run: () => {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
       window.__afterGrant({ rebel: 400 }); yardPurse();
-      window.__buy('after-axe');
+      window.__buy('after-saw');
       window.__fast(AFTER_COIN_UNDER_S + 0.5);
       window.__look(stationX0('pedestal') - S.viewW / 2); window.__holdShot();
     } },
@@ -3397,7 +3394,7 @@ export const SCENES = {
       window.__fast(0.6);
       window.__holdShot();
     } },
-  'act3-mid': { about: 'the acts', say: 'act 3 mid: the camp built (saw mill, workshop, posts filled), a fifth of God\'s yard walked out, the axe in hand',
+  'act3-mid': { about: 'the acts', say: 'act 3 mid: the camp built (saw mill, workshop, posts filled), a fifth of God\'s yard walked out, the saw handed over',
     run: act3Mid },
   // Track C: each of act 3's boards open in the yard's sheet over the act-3-mid
   // camp, as a plain click on its station opens it, the station framed so
@@ -3454,7 +3451,7 @@ function actsYard(point, pieces = 0) {
 }
 
 // Act 3 half way: the opening played (`__actsAt('fallen')`, the two of them
-// up on the pedestal), the axe in hand and its beat had, the saw mill and
+// up on the pedestal), the saw handed over and its beat had, the saw mill and
 // the workshop raised off the shack, posts bought and filled, a fifth of the
 // crowd made members and walked out to the camp (the setup the scene is not
 // about), the yard rich for the bills still to come.
@@ -3489,8 +3486,8 @@ function topBlock(what) {
 }
 function act3Mid() {
   actsYard('fallen');
-  if (!S.beatsDone.includes('axe')) S.beatsDone.push('axe');
-  S.after.axeBought = true; window.__afterAxe();
+  if (!S.beatsDone.includes('saw')) S.beatsDone.push('saw');
+  S.after.sawBought = true; window.__afterSaw();
   window.__afterCrowd((i, v) => (i % CROWD_FILES < 8 && i < CROWD_FILES * 30 ? 8 : v));
   for (let k = 0; k < 120 && window.__afterRead().walking > 0; k++) window.__fast(1);
   window.__afterGrant({ rebel: 600, timber: 20, logs: 6 });
@@ -3719,4 +3716,35 @@ Object.assign(SCENES, {
     } },
   'after-mill-brim': { about: 'the acts', say: "a cut block tossed off the chute's foot onto a timber mound nearly at its brim",
     run: () => millStage(() => millSaw().out.some(o => { const p = millBlockAt(o.a); return p.x > AFTER_MILL.chute.x1 - 0.5; }), { timber: 15 }) }
+});
+
+// track A: the grove rebuilt (DESIGN.md, "Act 3's grove, rebuilt"): the
+// real game's grove at rest beside the forestry shack and its seed basket,
+// a tree growing row by row, and a tree sawn down by hand caught as its crown
+// breaks and its trunk's logs hop apart. Framed as the signed-off mock's
+// scenes were (after-grove-mock-*, the first plot's line less `at`), so the
+// two shoot side by side.
+const groveAt = at => { const x = plotX(0) - at; pinCamera(x); window.__look(x); };
+Object.assign(SCENES, {
+  'after-grove-rest': { about: 'the acts', say: "the grove at rest: a grown oak beside the forestry shack, its seed basket on the shack's far side with five acorns in it",
+    run: () => { window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1); groveAt(300); window.__fast(0.5); window.__holdShot(); } },
+  'after-grove-grow': { about: 'the acts', say: "a second plot's oak growing row by row from the ground up, the trunk first and then the crown, beside a grown one",
+    run: () => {
+      window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+      window.__afterGrant({ rebel: 2000 }); yardPurse(); buyAfter('after-plot');
+      window.__afterPlant(1, 0.72);
+      groveAt(420); window.__fast(0.5); window.__holdShot();
+    } },
+  'after-grove-fell': { about: 'the acts', say: "an oak sawn down by hand, landed: its crown breaking into clumps that scatter and fade, its trunk's four logs hopping apart",
+    run: () => {
+      window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+      const icon = window.__groveIcons().find(c => c.kind === 'saw');
+      window.__gesture('down', icon.x, icon.y - 4); window.__gesture('up');
+      const b = window.__gestureParts('tree', 0).sawBox, x0 = b.x + P * 2, y = b.y + b.h / 2;
+      window.__gesture('down', x0, y);
+      for (let f = 1; f <= 600 && S.after.plots[0].fall == null; f++) { window.__gesture('move', x0 + Math.sin(f / 30 * Math.PI) * P * 6, y); window.__fast(1 / 60); }
+      window.__gesture('up', x0, y);
+      for (let f = 0; f < 600 && !(S.after.plots[0].fell != null && S.after.t - S.after.plots[0].fell >= 0.62); f++) window.__fast(1 / 60);
+      groveAt(520); window.__holdShot();
+    } }
 });

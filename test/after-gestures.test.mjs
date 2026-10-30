@@ -6,7 +6,7 @@
 // moves and a release through the very calls input.js makes, at the world
 // points where the part is drawn, a frame of the act's clock between moves
 // (test/after-hands.mjs); the pad's through `__pad`. The setup each check
-// is not about (the act up, a station standing, stock on its pile, the axe
+// is not about (the act up, a station standing, stock on its pile, the saw
 // in hand) goes through the act's hooks.
 //
 // Every group follows a hand's motion across more than five seconds, and the
@@ -107,7 +107,7 @@ group('the workshop: four nails a sign, two taps each; a miss does nothing; the 
 group('a tree: its saw icon clicked puts the handsaw on it; dragged back and forth, a stroke a chop, faster fells it sooner', async () => {
   const trial = period => {
     up();
-    window.__afterAxe();
+    window.__afterSaw();
     run(0.5);
     const icon = groveIcons().some(c => c.kind === 'saw' && c.i === 0);
     const on = sawOn(0) && rec('tree').i === 0;
@@ -119,7 +119,7 @@ group('a tree: its saw icon clicked puts the handsaw on it; dragged back and for
   // board is the forestry shack's, opened from the UPGRADES button over the
   // woodcutters' roster and not from the shack's drawing.
   up();
-  window.__afterAxe();
+  window.__afterSaw();
   const t = window.__afterTrees()[0];
   const asked = asks({ x: t.x, y: t.y }), sawing = rec('tree').i === 0;
   const board = frameAsks('forestry'), button = pressShop('after-grove');
@@ -191,19 +191,19 @@ group('the pedestal: a popped bubble\'s rebel starts at the bubble and is counte
 
 group('a stump: its shovel shows; dragged up and held, a root gives at a time until it is out, no crit', async () => {
   up();
-  Object.assign(S.after.plots[0], { stage: 0, stump: true, dug: 0 });
+  Object.assign(S.after.plots[0], { grow: null, stump: true, dug: 0 });
   run(0.2);
   const shovel = groveIcons().some(c => c.kind === 'shovel' && c.i === 0);
   lift(0, 3, GESTURE_STRAIN_S * 1.5);
   const oneRoot = S.after.plots[0].dug, stillIn = S.after.plots[0].stump;
   lift(0, 3, GESTURE_STRAIN_S * (AFTER_DIG_CLICKS + 1));
-  const out = !S.after.plots[0].stump && S.after.plots[0].stage === 1;
+  const out = !S.after.plots[0].stump && S.after.plots[0].grow == null;
   const marks = rec('stump').marks.length, gone = !groveIcons().some(c => c.kind === 'shovel');
   window.__actsOn(null);
   return [
     ok(shovel, 'a stump shows its shovel icon'),
     ok(oneRoot === 1 && stillIn, 'held up a moment, one root gives and the stump stays', `dug ${oneRoot}`),
-    ok(out && gone, 'held long enough it comes out, a sapling is set, and the shovel goes'),
+    ok(out && gone, 'held long enough it comes out, the plot left bare for an acorn, and the shovel goes'),
     ok(marks === 0, 'and no crit is marked', `${marks}`)
   ];
 }, NO_RELOAD);

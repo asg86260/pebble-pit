@@ -100,17 +100,17 @@ const ACT_ROW = { coinOrder: AFTER_TAG_ORDER, place: 'after', flyFrom: () => pat
 
 // --- the named upgrades ----------------------------------------------------------------------
 const UP_NAMES = {
-  'after-podium': () => msg('after-row-podium'), 'after-axe': () => msg('after-row-axe'),
+  'after-podium': () => msg('after-row-podium'), 'after-saw': () => msg('after-row-saw'),
   'after-plot': () => msg('after-row-plot'), 'after-grow': () => msg('after-row-grow'),
   'after-tree': () => msg('after-row-tree'), 'after-stumps': () => msg('after-row-stumps'),
   'after-blade': () => msg('after-row-blade'),
   'after-bench': () => msg('after-row-bench'), 'after-signreach': () => msg('after-row-signreach')
 };
-// What a purchase does beyond counting itself: a plot cleared and a sapling
-// set in it; the axe owed to its beat (rebel.js, `axeDue`).
+// What a purchase does beyond counting itself: a plot cleared, its bed bare
+// for an acorn; the saw owed to its beat (rebel.js, `sawDue`).
 const UP_DOES = {
   'after-plot': () => clearPlot(),
-  'after-axe': () => { S.after.axeBought = true; }
+  'after-saw': () => { S.after.sawBought = true; }
 };
 // A row with `marks` (the podium ladder) opens each rung when the union's
 // support reaches its mark, a share of the strike's: dead until then, saying

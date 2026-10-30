@@ -14,10 +14,13 @@ log; a seed basket, a seeds row and self-seeding. The owner settled the
 three questions on 2026-10-30: plots about 28 cells apart, with the falling
 crown a named exception to the no-overlap rule; blocks taught a height, so
 the acorn stays 3x4; sawdust and dirt are particles that fall and fade. The
-saw is a bought row that lets the woodcutter saw trees down, and the axe is
-renamed to the saw everywhere, the save included. Blocker: none in the
-design; the build is a wave of four tracks, track A (layout, ground, the
-tree, block height, the axe's rename, the migration to SAVE_V 35) first.
+hand saws a tree down from the start; the saw is a bought row that automates
+felling, letting the woodcutter saw trees down, and the axe is renamed to the
+saw everywhere, the save included. Track A (layout, ground, the tree, block
+height, the axe's rename, the migration to SAVE_V 35) is built on branch
+`grove-a`, not on main yet. Blocker: tracks B (the woodcutter's saw, F1), C
+(the stump, F3a-1) and D (seeds) build on it; until B lands the hand still
+puts the saw on a tree by its icon and the woodcutter chops on its old timer.
 
 ## The yard joins the conservation rule (2026-10-28)
 

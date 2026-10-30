@@ -5887,6 +5887,13 @@
   "text": "sign pile"
  },
  {
+  "id": "hover-pile-seeds",
+  "group": "Hover",
+  "where": "src/after/stations.js",
+  "context": "the hover over a counted pile in act 3 (the grove's seed basket by the forestry shack)",
+  "text": "seed basket"
+ },
+ {
   "id": "hover-log",
   "group": "Hover",
   "where": "src/input.js",
@@ -7805,11 +7812,11 @@
   "text": "they set the pick down"
  },
  {
-  "id": "act-axe",
+  "id": "act-saw",
   "group": "The shell",
   "where": "src/actbeats.js",
-  "context": "act beat line, placeholder: the axe handed over",
-  "text": "an axe"
+  "context": "act beat line, placeholder: the saw handed to the woodcutter",
+  "text": "a saw"
  },
  {
   "id": "act-strike",
@@ -8106,11 +8113,11 @@
   "text": "no souls won yet: plant signs"
  },
  {
-  "id": "after-row-axe",
+  "id": "after-row-saw",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 card row (placeholder): the axe, bought: a click on a grown tree chops it",
-  "text": "axe"
+  "context": "act 3 card row (placeholder): the saw, bought: the woodcutter saws grown trees down",
+  "text": "saw"
  },
  {
   "id": "after-row-plot",
@@ -8312,7 +8319,7 @@
   "id": "after-board-grove",
   "group": "Act 3 boards (track C, placeholder)",
   "where": "src/after/stations.js",
-  "context": "act 3 board title (placeholder): the grove's board, the axe and the trees",
+  "context": "act 3 board title (placeholder): the grove's board, the saw and the trees",
   "text": "grove"
  },
  {

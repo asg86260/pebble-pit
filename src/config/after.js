@@ -6,7 +6,7 @@
 // to stand the act up, marked so in its comment, for the pace tool to move.
 import { P } from './yard.js';
 import { AFTER_JOB as J } from '../jobs.js';
-import { campLayout, ART as CAMP_ART, CAMP_ORDER, SIGN as CAMP_SIGN } from '../after/art.js';
+import { campLayout, rampRun, ART as CAMP_ART, CAMP_ORDER, SIGN as CAMP_SIGN } from '../after/art.js';
 import { AFTER_ZONE_GAP, AFTER_UNION_W } from './aftercrowd.js';
 import { ACT_GATES_CELL, ACT_GATES_REACH } from './acts.js';
 import { AFTER_BLOCK } from './afterpiles.js';
@@ -59,17 +59,18 @@ export const AFTER_PUFF_LEAST = 4;        // cells: a run of billow narrower tha
 // cells under the path's edge, a lit crest `crest` cells deep, the body
 // hanging `hang` cells and a half-height billow more under that.
 export const AFTER_LIP = { seed: 17, r: [5, 8], round: 0.45, step: 0.8, drop: 2, crest: 2, hang: 2 };
-export const AFTER_SHELF = { forestry: 0, mill: 9, workshop: 18, shack: 6, pedestal: 0 };
+// The grove and the forestry shack stand on a floor raised 3 cells, so a
+// plot's soil bed reads above the cloud's lip (DESIGN.md, "Act 3's grove,
+// rebuilt", call 2).
+export const AFTER_SHELF = { grove: 3, forestry: 3, mill: 9, workshop: 18, shack: 6, pedestal: 0 };
 
 // --- the click: the pair's speech, and rebel ------------------------------------
 // The act's coin is rebel (the owner, 2026-10-18; a working name, the label
 // the owner's): the pair on a pedestal in the camp, facing God's yard, and
 // every click on them a line of a speech that knocks rebel off as motes,
-// counted where they land on the pile. The axe is bought on the pedestal's
-// card (call 15, settled), and a tree then takes TREE_CHOPS chops. Defaults.
+// counted where they land on the pile. A tree takes TREE_CHOPS strokes of
+// the saw to come down. Defaults.
 export const TREE_CHOPS = 8;               // default
-// A tree's three held stages, sapling to pole to crown, seconds a stage. Default.
-export const TREE_GROW_S = 30;
 
 // --- how support spreads ---------------------------------------------------------
 // Signs are the only way a soul is won. A soul's lean is the eight cells
@@ -92,7 +93,7 @@ export const AFTER_GATES = ['meeting', 'slowdown', 'strike'];
 
 // --- the camp's cards and the chain ----------------------------------------------
 // The five cards: the pedestal (the speech and the agitators), the
-// construction shack (every station that can be built), the grove (the axe
+// construction shack (every station that can be built), the grove (the saw
 // and the trees), the saw mill and the workshop. Keys, not words: every
 // name a player reads is the owner's, in locales/en.ftl.
 export const AFTER_CARDS = ['pedestal', 'shack', 'grove', 'mill', 'workshop'];
@@ -112,29 +113,49 @@ export const AFTER_CARDS = ['pedestal', 'shack', 'grove', 'mill', 'workshop'];
 export const AFTER_CAMP_GAP = 12;
 export const AFTER_GROVE_X0 = P * (ACT_GATES_CELL + AFTER_CAMP_GAP) + ACT_GATES_REACH;
 export const AFTER_PLOTS0 = 1;             // plots the grove starts with, a grown tree in it (call 10, the owner's)
+export const AFTER_SEEDS0 = 5;             // acorns in the seed basket at the act's start, and in a save the rebuild reaches (the owner, 2026-10-30)
 export const AFTER_PLOT_MAX = 4;           // ...and the most its card clears
-// The grove's pine, a stage a row (render/after/pine.js draws it, after/grove.js
-// clicks it, after/place.js lays it out): its trunk [width, height] in cells,
-// and its tiers { v0, h, s }: a tier's foot v0 cells over the top of the
-// trunk, h rows tall, its top row 2s+1 wide. The big pine (the grove's bigger
-// trees) is the grown one with a tier more under it. A grown trunk stands ten
-// cells (the owner, 2026-10-18), so the handsaw works in open air under the
-// skirt with wood above and below its cut.
-export const AFTER_PINE = {
-  1: { trunk: [1, 1], tiers: [{ v0: 0, h: 3, s: 0 }] },
-  2: { trunk: [1, 1], tiers: [{ v0: 0, h: 4, s: 1 }, { v0: 4, h: 3, s: 0 }] },
-  3: { trunk: [3, 10], tiers: [{ v0: 0, h: 6, s: 2 }, { v0: 6, h: 5, s: 1 }, { v0: 11, h: 4, s: 0 }] },
-  big: { trunk: [3, 11], tiers: [{ v0: 0, h: 7, s: 3 }, { v0: 7, h: 6, s: 2 }, { v0: 13, h: 5, s: 1 }, { v0: 18, h: 4, s: 0 }] }
-};
-// A plot is as wide as the big pine's foot, its widest row (the bottom
-// tier's bottom row, h - 1 + s cells either side of the trunk), and a gap,
-// so the biggest trees stand clear of each other.
-const BIG_FOOT = (t => 2 * (t.h - 1 + t.s) + 1)(AFTER_PINE.big.tiers[0]);
-export const AFTER_PLOT_GAP = 2;           // cells of floor between two big pines' feet
-export const AFTER_PLOT_STEP = P * AFTER_ART_SCALE * (BIG_FOOT + AFTER_PLOT_GAP);
-// The grove's end, in cells: everything right of it is laid off it, so a
-// wider grove moves the camp, God's yard and the stair along with it.
-const GROVE_END = AFTER_GROVE_X0 / P + AFTER_PLOT_MAX * AFTER_PLOT_STEP / P;
+// track A: the grove's tree (DESIGN.md, "Act 3's grove, rebuilt", "The tree,
+// drawn"; the signed-off mock, OAK-2), in cells off a plot's line (the
+// boundary between its trunk's two middle columns, so every row is an even
+// width with no half cell), rows up from the floor (row -1 the bottom):
+//   c0, w    the trunk's first column and its width: a log's
+//   stump    rows of the stump, itself one whole log block
+//   logs     logs end to end above it, `log` cells each: the trunk is
+//            exactly the logs it breaks into
+export const AFTER_TREE = { c0: -2, w: 4, stump: 4, logs: 4, log: 4 };
+// The crown, OAK-2: clumps [x, y, r] in cells off the trunk's middle and up
+// from its top, each off the middle mirrored, within AFTER_OAK_HALF a side.
+export const AFTER_OAK = [[0, 7.5, 4.4], [3.8, 3.5, 3.8], [6, -1.5, 3], [0, -2.5, 3.4]];
+export const AFTER_OAK_HALF = 9;
+// A plot's soil bed, the columns it spans off the plot's line, one row deep.
+export const AFTER_BED = [-6, 5];
+// The trunk landed breaks along its seams into its logs: each hops a cell
+// and comes down AFTER_BREAK_SPREAD px further from the trunk's middle over
+// AFTER_BREAK_S, then lies as a log; the crown's clumps scatter under
+// AFTER_CROWN_GRAV px/s^2 and fade over AFTER_CROWN_S, held whole for
+// AFTER_CROWN_HOLD_S first (the mock's numbers).
+export const AFTER_BREAK_S = 0.55;
+export const AFTER_BREAK_SPREAD = 3;
+export const AFTER_CROWN_S = 1.7;
+export const AFTER_CROWN_HOLD_S = 0.3;
+export const AFTER_CROWN_GRAV = 620;
+export const AFTER_PLOT_GAP = 2;           // cells of floor between a plot's footprint and the shack's nearest claim
+// A plot's step, derived (the owner, 2026-10-30: "~28 cells a plot"): the
+// trunk's half on the fall side, its logs end to end with their spread, the
+// stump-log's landing beside them, the gap, and the neighbor's soil bed
+// reaching back toward it, so the logs and the stump always come to rest on
+// their own plot.
+const PLOT_CELLS = -AFTER_TREE.c0 + AFTER_TREE.logs * AFTER_TREE.log
+  + Math.ceil(AFTER_BREAK_SPREAD * (AFTER_TREE.logs - 1) / 2 / P) + AFTER_TREE.log + AFTER_PLOT_GAP + AFTER_BED[1] + 1;
+export const AFTER_PLOT_STEP = P * AFTER_ART_SCALE * PLOT_CELLS;
+// Where the grove's raised floor starts, cells: past the gates' reach and the
+// camp's gap, and the slope up to the grove's shelf.
+export const AFTER_GROVE_START = AFTER_GROVE_X0 / P + rampRun(AFTER_SHELF.grove);
+// The grove's end, in cells: its plots count from the shack's end, and
+// everything right of it is laid off it, so a wider grove moves the camp,
+// God's yard and the stair along with it.
+const GROVE_END = AFTER_GROVE_START + AFTER_PLOT_MAX * AFTER_PLOT_STEP / P;
 // The members waiting are our crowd behind the camp (render/aftercrowd.js,
 // OURS_X0 to the pedestal): a member walking out of God's yard walks into its
 // front at the end nearest God's yard, and one going to a post steps out of
@@ -155,7 +176,9 @@ export const AFTER_COUNT_PAD = 2;
 // left edge of its ground in cells off the place's left (`at`); its piles
 // and its drawing are laid off that.
 export const AFTER_STATION_GAP = 16;
-const CAMP = campLayout(GROVE_END, AFTER_STATION_GAP, AFTER_ART_SCALE, AFTER_SHELF);
+// The forestry shack's ground starts at the grove's end itself: the plot
+// nearest it keeps the grove's own gap off it (after/place.js, `plotX`).
+const CAMP = campLayout(GROVE_END, AFTER_STATION_GAP, AFTER_ART_SCALE, AFTER_SHELF, 0);
 // The level's three zones (DESIGN.md, "The level, the two crowds and the
 // flags"): the workshops -- the grove and every station but the pedestal --
 // then AFTER_ZONE_GAP cells of open floor, the union's camp AFTER_UNION_W
@@ -267,33 +290,32 @@ export const AFTER_RECRUIT_COST0 = 10;
 export const AFTER_RECRUIT_RATE = 1.15;
 
 // --- the grove ---
-// A tree's logs, and a big one's (planted after the grove's "bigger trees");
-// its shape is AFTER_PINE, above.
-export const AFTER_LOGS_A_TREE = 6;
-export const AFTER_LOGS_BIG_TREE = 9;
-export const AFTER_GROW_S_UP = 15;         // seconds a growth stage with the grove's "faster growth"
+// A tree grows from the acorn planted in its plot, row by row, over
+// AFTER_TREE_GROW_S, or AFTER_TREE_GROW_S_UP with the grove's "faster
+// growth" (DESIGN.md, "Act 3's grove, rebuilt": the same total growth as the
+// two held stages it replaces); the acorn is first seen sinking into the
+// soil over AFTER_SEED_SINK_S, and the growth starts once it is in.
+export const AFTER_TREE_GROW_S = 60;
+export const AFTER_TREE_GROW_S_UP = 30;
+export const AFTER_SEED_SINK_S = 0.9;
 // A tree sawn through tips over as one drawing turned by its true angle,
 // quicker as it goes (the motion rule, the owner 2026-10-20), and hits the
 // ground in AFTER_FALL_S; it rocks back off the ground and settles over
-// AFTER_FALL_BOUNCE_S, AFTER_FALL_BOUNCE radians at most, the dust coming up
-// under it; then its trunk splits into its logs, which roll off along the
-// ground a little, AFTER_LOG_ROLL art cells at least and at most, slowing
-// to rest over AFTER_LOG_ROLL_S, where they wait for a gatherer. The logs
-// lie across AFTER_LOG_SPAN art cells of the fallen tree, off its trunk.
+// AFTER_FALL_BOUNCE_S, AFTER_FALL_BOUNCE radians at most; then its trunk
+// breaks into its logs (AFTER_BREAK_S, above) and its crown into clumps.
 export const AFTER_FALL_S = 1.6;
 export const AFTER_FALL_BOUNCE_S = 0.35;
 export const AFTER_FALL_BOUNCE = 0.06;
-export const AFTER_LOG_ROLL = [0.5, 1.5];
-export const AFTER_LOG_ROLL_S = 1.2;
-export const AFTER_LOG_SPAN = [2, 9];
-export const AFTER_CROWN_FADE_S = 2.5;     // the fallen crown's cells fading off
-export const AFTER_CHOP_HOLD_S = 0.25;     // a swing held on the blow
-export const AFTER_FELL_S = 1.5;           // a woodcutter's swing at a tree
-// A stump blocks its plot until it is dug out; dug, a sapling is set in it,
-// free (the owner, 2026-10-18). The hand digs one in a few clicks, each a held
-// swing; a woodcutter digs one only once the grove's stump removal is bought.
+// track A: placeholders until the woodcutter's strokes and pulls are beats
+// (tracks B and C): a swing held on the blow, a woodcutter's swing at a tree,
+// and its pull at a stump.
+export const AFTER_CHOP_HOLD_S = 0.25;
+export const AFTER_FELL_S = 1.5;
+// A stump's roots: each snaps on a strain held (the hand) or a pull (a
+// woodcutter, once stump removal is bought), and with the last the stump
+// comes out as a log.
 export const AFTER_DIG_CLICKS = 3;
-export const AFTER_DIG_S = 4;              // a woodcutter digging a stump out
+export const AFTER_DIG_S = 4;              // placeholder: a woodcutter's pull at a stump, until track C's beats
 
 // --- the saw mill and the workshop ---
 // Every station is worked by the click first (the owner, 2026-10-18): a
@@ -310,14 +332,14 @@ export const AFTER_PUT_S = 0.3;
 // --- goods on the floor ---
 // The pile a good lying on the floor is carried back to by a gatherer: the
 // one its station makes it onto.
-export const AFTER_GOODS_HOME = { log: 'grovelogs', plank: 'timber', sign: 'signs' };
+export const AFTER_GOODS_HOME = { log: 'grovelogs', plank: 'timber', sign: 'signs', acorn: 'seeds' };
 // A pile's reach for the hover and its footprint, art cells up off the
 // floor: its tallest stack (a sign on its post) and a cell over.
 export const AFTER_PILE_REACH = 10;
 // A good lying on the floor, art cells across where the hover finds it (a
 // log and a plank their blocks, config/afterpiles.js), and the art cells
 // between two let go from one load.
-export const AFTER_GOODS_FOOT = { log: AFTER_BLOCK.log, plank: AFTER_BLOCK.plank, sign: 4 };
+export const AFTER_GOODS_FOOT = { log: AFTER_BLOCK.log, plank: AFTER_BLOCK.plank, sign: 4, acorn: AFTER_BLOCK.acorn };
 export const AFTER_LAY_GAP = 1;
 // The most of a load drawn stacked over a head: past it the stack would
 // stand taller than the camp's stations.
@@ -427,7 +449,7 @@ export const AFTER_UPGRADES = {
   'after-podium':      { card: 'pedestal',  bills: [[['rebel', 30], ['timber', 2]], [['rebel', 80], ['timber', 6]],
                                                     [['rebel', 200], ['timber', 15]], [['rebel', 500], ['timber', 18]]],
                          marks: [0.1, 0.25, 0.45, 0.7] },
-  'after-axe':         { card: 'grove',     bills: [[['rebel', 50], ['dust', 8000]]] },                  // the axe (call 15)
+  'after-saw':         { card: 'grove',     bills: [[['rebel', 50], ['dust', 8000]]] },                  // the saw: the woodcutter fells (the owner, 2026-10-30)
   'after-plot':        { card: 'grove',     bills: [[['rebel', 60], ['dust', 15000]],
                                                     [['rebel', 200], ['timber', 5], ['dust', 40000], ['spore', 10000]],
                                                     [['rebel', 400], ['timber', 18], ['dust', 80000], ['spore', 20000], ['shard', 20000], ['scale', 800]]] },   // a plot cleared, AFTER_PLOT_MAX in all
