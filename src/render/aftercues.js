@@ -16,17 +16,19 @@ import { P, GREY, GESTURE_CUE_ALPHA, GESTURE_CUE_HOVER, GESTURE_CUE_DOT, GESTURE
          GESTURE_MARK_HOLD_S, GESTURE_MARK_FADE_S, GESTURE_SAW_AMP } from '../config.js';
 import { ctx } from './ctx.js';
 import { S } from '../state.js';
-import { gestureView, partsOf, lowestBubble, groveIcons } from '../after/gestures.js';
+import { gestureView, partsOf, lowestBubble } from '../after/gestures.js';
 import { AP } from '../after/place.js';
 import { bedWants } from '../after/mill.js';
 import { stripBox } from '../after/ground.js';
-import { drawGroveIcons } from './after/pine.js';
 // track B: the trunk's cue on the hand saw, and the woodcutter's saw drawn
 // over the members, in its hand
 import { handSawAt } from '../after/gestures.js';
 import { trees, standing } from '../after/grove.js';
 import { drawHeldSaws, workedBy } from './after/saw.js';
 import { K, W, MID } from './after/kit.js';
+// track C: the stump's cue finds its stump itself (trees, imported above)
+import { pullable, PULL_HOLDS } from '../after/stump.js';
+const pulledBy = i => S.after.bodies.some(b => b.dig && b.target === i && b.pull && PULL_HOLDS.includes(b.pull.ph));
 
 const D = GESTURE_CUE_DOT;
 const snap = v => Math.round(v / P) * P;
@@ -105,11 +107,14 @@ function cueAt(key, r) {
     const s = Math.sin(turn) * GESTURE_SAW_AMP, g = handSawAt(i, s).grip;
     return { x: g.x, y: g.y, pose: 'grab' };
   }
+  // track C: the stump's cue, a grab on its top drawn up three cells (the
+  // signed-off F3a-1's), on the first stump that can be pulled and that no
+  // woodcutter has its hands on; no icon
   if (key === 'stump') {
-    const c = groveIcons().find(k => k.kind === 'shovel');
-    if (!c) return null;
-    const b = partsOf('stump', c.i).stump;
-    return { x: b.x + b.w / 2, y: b.y - Math.round(u * 3) * P, pose: 'grab' };
+    const i = trees().findIndex((p, k) => pullable(p) && !pulledBy(k));
+    if (i < 0) return null;
+    const b = partsOf('stump', i).stump;
+    return { x: b.x + b.w / 2, y: b.y + AP / 2 - Math.round(u * 3) * P, pose: 'grab' };
   }
   if (key === 'mill') {
     // With the bed bare and nobody at the saw, a log first: the hand pressed
@@ -145,7 +150,6 @@ export function drawAfterCues() {
   if (!view) return;
   const t = now();
   drawHeldSaws();   // track B
-  drawGroveIcons();
   shown = {};
   for (const r of view) {
     // One hand: the first uses' cue, or the same hand faint while the

@@ -208,6 +208,33 @@ export function sweep(mx, my) {
   if (taken && !S.seenDrag) { S.seenDrag = true; S.shopStale = true; }
 }
 
+// --- track C: a unit put straight into the hand (DESIGN.md, "Act 3's grove,
+// rebuilt": the stump pulled out comes into the hand that holds it) ---------------
+// A unit of value `v` taken into the hand from where it is now, world point
+// `at`: one kind in a hand and no more than it holds, as a sweep keeps it,
+// and held as a sweep holds, so the moves and the let-go after are the
+// hand's own. Its mote starts where the unit is, off the pointer, its
+// spin still, with the distance a held unit of its kind would hang at kept
+// as `home` for the caller to swing it in to; nothing jumps. The mote, or
+// null when the hand cannot take it.
+export function holdUnit(v, at) {
+  const g = groundAt(at.x, at.y), place = g ? g.place || null : null, k = kindOf(v), key = k ? k.key : null;
+  const had = S.held ? S.motes[0] : null;
+  if (had && ((had.kind || null) !== key || (had.place || null) !== place)) return null;
+  if (S.held >= handHolds(key)) return null;
+  const m = mote(v, place), mx = S.mouse ? S.mouse.x : at.x, my = S.mouse ? S.mouse.y : at.y;
+  Object.assign(m, { home: m.d, a: Math.atan2(at.y - my, at.x - mx), d: Math.hypot(at.x - mx, at.y - my), spin: 0 });
+  S.motes.push(m);
+  S.held++;
+  if (!S.dragging) {
+    S.dragging = true;
+    S.nextToss = now() + TOSS_DELAY;
+    S.trail = [];
+    track(mx, my);
+  }
+  return m;
+}
+
 // A flick lets the hand go: a chip a unit, its value kept, thrown with the
 // flick's velocity and tagged with its place, which lands it on that place's
 // ground (game.js, `stepChips`).

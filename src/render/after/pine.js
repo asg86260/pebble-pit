@@ -22,11 +22,10 @@
 
 import { P, GREY, TREE_CHOPS, AFTER_FALL_S, AFTER_FALL_BOUNCE_S, AFTER_FALL_BOUNCE, AFTER_TREE, AFTER_BED, AFTER_SEED_SINK_S,
          AFTER_CROWN_S, AFTER_CROWN_HOLD_S, AFTER_CROWN_GRAV, AFTER_LEAVES, AFTER_LEAVES_DARK, AFTER_BUILD_FADE_S,
-         AFTER_PILE_FADE_S, AFTER_BLOCK, AFTER_BLOCK_H } from '../../config.js';
-import { plotX, groundOf, treeCells, growOrder, TRUNK_TOP, SAW_ROWS, ICON_DOT, AP } from '../../after/place.js';
-import { trees, stumped } from '../../after/grove.js';
-import { K, W, PALE, SOIL, toneOf, now, inView, clamp01, hash } from './kit.js';
-import { gestureView, groveIcons } from '../../after/gestures.js';
+         AFTER_BLOCK, AFTER_BLOCK_H } from '../../config.js';
+import { plotX, groundOf, treeCells, growOrder, TRUNK_TOP, AP } from '../../after/place.js';
+import { trees } from '../../after/grove.js';
+import { K, SOIL, toneOf, now, inView, clamp01, hash } from './kit.js';
 import { goodTone } from './piles.js';
 import { ctx } from '../ctx.js';
 import { themed, darkPage, raw } from '../../ink.js';
@@ -191,50 +190,9 @@ function kerf(p, bx) {
   const n = Math.ceil(Math.min(1, p.chops / TREE_CHOPS) * TW);
   if (n > 0) fill(K, bx + (C0 + TW - n) * AP, fl() - SH * AP - 1, n * AP, 1);
 }
-// The stump: one whole log block, lifted a little by each root snapped (the
-// pull itself is track C's, `drawStumpPull`).
-const stumpBlock = (p, bx, up = 0) => fill(stumpTone(p), bx + C0 * AP, fl() - SH * AP - up, TW * AP, SH * AP);
-
-// The handsaw across a grown trunk where the hand has put it: the hand's
-// placeholder until track B's saw lies across the trunk, its kerf showing
-// the blade. A grip of ink round a paper hole, a pale blade with its back
-// and teeth in ink, off the saw's offset `o` cells.
-function placeholderSaw(bx, o, cutting) {
-  const [r0, r1] = SAW_ROWS, t0 = C0, inTrunk = c => c >= t0 && c < t0 + TW;
-  for (let r = r0; r <= r1; r++) for (let u = -15; u <= -12; u++) cellAt(bx, u + o, r, (u === -14 || u === -13) && r > r0 && r < r1 ? W : K);
-  for (let u = -11; u <= 9; u++) {
-    if (inTrunk(u + o) && !cutting) continue;
-    cellAt(bx, u + o, r0, K);
-    for (let r = r0 + 1; r <= r1; r++) cellAt(bx, u + o, r, u & 1 && r === r1 ? K : PALE);
-  }
-}
-
-// --- the grove's icons -------------------------------------------------------------------
-// The hand's placeholder until tracks B and C retire them: the saw over a
-// grown tree and the shovel over a stump, each a pointer's mark drawn in its
-// own dots, faded in and out. Drawn with the cues (render/aftercues.js).
-const ICONS = {
-  saw: ['.###.........', '#...#########', '#.#.#.......#', '#...#......#.', '.####.....#..', '....#.#.#.#..', '.....#.#.#...', '.............'],
-  shovel: ['.###.', '.#.#.', '..#..', '..#..', '..#..', '..#..', '..#..', '.###.', '#...#', '#...#', '#...#', '.#.#.', '..#..']
-};
-const iconSeen = new Map();
-export function drawGroveIcons() {
-  const t = now(), shown = new Set();
-  for (const c of groveIcons()) {
-    const id = `${c.kind}${c.i}`;
-    shown.add(id);
-    let st = iconSeen.get(id);
-    if (!st || t < st.at) iconSeen.set(id, st = { at: t, gone: null });
-    if (st.gone != null) { st.at = t - Math.max(0, AFTER_PILE_FADE_S - (t - st.gone)); st.gone = null; }
-    const a = clamp01((t - st.at) / AFTER_PILE_FADE_S) * (c.held ? 0.35 : 1);
-    const was = ctx.globalAlpha;
-    ctx.globalAlpha = was * a;
-    ctx.fillStyle = GREY[K];
-    ICONS[c.kind].forEach((row, j) => [...row].forEach((ch, k) => { if (ch === '#') ctx.fillRect(c.box.x + k * ICON_DOT, c.box.y + j * ICON_DOT, ICON_DOT, ICON_DOT); }));
-    ctx.globalAlpha = was;
-  }
-  for (const [id, st] of iconSeen) if (!shown.has(id) && st.gone == null) st.gone = t;
-}
+// The stump under a falling tree: one whole log block (standing on its own
+// once the tree is down, it is track C's to draw, `drawStumpPull`).
+const stumpBlock = (p, bx) => fill(stumpTone(p), bx + C0 * AP, fl() - SH * AP, TW * AP, SH * AP);
 
 // A plot cleared while the page watches fades its bed in; one there when the
 // page first saw the act is simply there. Drawing state only.
@@ -249,7 +207,6 @@ function bedAlpha(i, t) {
 
 export function drawGrove() {
   const t = now();
-  const view = gestureView() || [], hand = view.find(r => r.key === 'tree');
   trees().forEach((p, i) => {
     const bx = plotX(i);
     if (!inView(bx - AP * 40, AP * 60)) return;
@@ -266,13 +223,11 @@ export function drawGrove() {
       if (p.fall != null || t - p.fell < AFTER_FALL_BOUNCE_S) lay(sprite(`trunk|${p.tones}|${darkPage}`, trunkCells(p)), o.x, o.y, th);
       if (p.fall != null) lay(sprite(`crown|${darkPage}`, crownCells()), o.x, o.y, th);
       else crownBreak(p, bx, t);
-    } else if (stumped(p)) stumpBlock(p, bx, Math.round((p.dug || 0) * AP / 2));
-    else if (p.grow != null) {
+    } else if (p.grow != null) {
       if (p.seed != null) sinking(p, bx, t);
       if (p.grow >= 1) {
         for (const q of treeCells()) cellAt(bx, q[0], q[1], toneAt(p, q));
         kerf(p, bx);
-        if (hand && hand.i === i) placeholderSaw(bx, Math.round(hand.s / AP), p.chops > 0);
       } else {
         const all = growOrder(), n = Math.floor(p.grow * all.length);
         for (let k = 0; k < n; k++) cellAt(bx, all[k][0], all[k][1], toneAt(p, all[k]));

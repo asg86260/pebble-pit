@@ -65,13 +65,16 @@ export function saw(i, done, period = 0.6, limit = 60) {
   gestureUp(x0, y);
   return secs;
 }
-// Plot i's stump taken hold of and dragged up `cells` cells, held there `secs`.
+// Plot i's stump taken hold of and dragged up `cells` cells, held there
+// `secs`, and let go there as input.js lets go (`endDrag`): the gesture's
+// release, then the one hand's, which throws whatever came out into it.
 export function lift(i, cells, secs) {
-  const g = mid(partsOf('stump', i).stump);
+  const g = mid(partsOf('stump', i).stump), y = g.y - cells * P / GESTURE_STUMP_DRAG;
   gestureDown(g.x, g.y);
-  gestureMove(g.x, g.y - cells * P / GESTURE_STUMP_DRAG);
+  gestureMove(g.x, y);
   run(secs);
-  gestureUp(g.x, g.y);
+  gestureUp(g.x, y);
+  if (S.dragging) { S.dragging = false; S.trail = []; release(g.x, y); }
 }
 // Station `key`'s round part (the saw mill's wheel) turned at `rev` turns a
 // second until `done`; the seconds it took.

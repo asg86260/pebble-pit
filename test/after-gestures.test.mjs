@@ -16,8 +16,8 @@ import { group, ok, run, yard, P } from './helpers.mjs';
 import { goodCount } from '../src/after/piles.js';
 import { AFTER_PODIUM_REBEL, AFTER_DIG_CLICKS, TREE_CHOPS, GESTURE_BUBBLE_CRIT, GESTURE_CUE_USES,
          GESTURE_CUE_FADE_S, GESTURE_CUE_IDLE_S, GESTURE_STRAIN_S,
-         GESTURE_JOINER_WAIT_S, GESTURE_NAIL_TAPS } from '../src/config.js';
-import { gestureDown, gestureMove, gestureUp, gestureView, gestureHover, gestureUnder, partsOf, useBubbles, groveIcons } from '../src/after/gestures.js';
+         GESTURE_JOINER_WAIT_S, GESTURE_NAIL_TAPS, GESTURE_STUMP_DRAG } from '../src/config.js';
+import { gestureDown, gestureMove, gestureUp, gestureView, gestureHover, gestureUnder, partsOf, useBubbles } from '../src/after/gestures.js';
 import { stationBox } from '../src/after/place.js';
 import { GESTURE_HOVER_S } from '../src/config.js';
 import { godMid, faceY } from '../src/after/sky.js';
@@ -108,9 +108,8 @@ group('a tree: the hand saw lies across its trunk, no icon; taken and dragged ba
   const trial = period => {
     up();
     run(0.5);
-    const icon = groveIcons().some(c => c.kind !== 'shovel');
     const on = sawOn(0);
-    return { icon, on, secs: saw(0, () => S.after.plots[0].fall != null, period), by: S.after.plots[0].by };
+    return { on, secs: saw(0, () => S.after.plots[0].fall != null, period), by: S.after.plots[0].by };
   };
   const slow = trial(3), fast = trial(0.6);
   // A plain click on the tree takes the saw lying across it (the owner,
@@ -123,7 +122,7 @@ group('a tree: the hand saw lies across its trunk, no icon; taken and dragged ba
   const board = frameAsks('forestry'), button = pressShop('after-grove');
   window.__actsOn(null);
   return [
-    ok(!slow.icon && slow.on && slow.by === 'hand', 'no icon over the grown tree; the saw lies across its trunk, nothing bought, and the hand fells it', JSON.stringify(slow)),
+    ok(slow.on && slow.by === 'hand', 'the saw lies across the grown trunk, nothing bought, and the hand fells it', JSON.stringify(slow)),
     ok(fast.secs < slow.secs && Number.isFinite(slow.secs), `sawn faster, it falls sooner (${TREE_CHOPS} strokes)`, `${slow.secs.toFixed(2)} s -> ${fast.secs.toFixed(2)} s`),
     ok(asked === null && sawing, 'a plain click on the tree takes its saw, no board asked for', JSON.stringify([asked, sawing])),
     ok(board.spots > 0 && JSON.stringify(board.asks) === '[null]', 'a click on the forestry shack opens no board', JSON.stringify(board)),
@@ -187,21 +186,27 @@ group('the pedestal: a popped bubble\'s rebel starts at the bubble and is counte
   ];
 }, NO_RELOAD);
 
-group('a stump: its shovel shows; dragged up and held, a root gives at a time until it is out, no crit', async () => {
+// track C: the stump is its own handle (DESIGN.md, "Act 3's grove, rebuilt",
+// call 10): no icon over it, and out it comes into the hand that holds it.
+group('a stump: the block itself is the handle, no icon; dragged up and held, a root gives at a time until it is out in the hand, no crit', async () => {
   up();
   Object.assign(S.after.plots[0], { grow: null, stump: true, dug: 0 });
   run(0.2);
-  const shovel = groveIcons().some(c => c.kind === 'shovel' && c.i === 0);
+  const g = mid(partsOf('stump', 0).stump), handle = gestureUnder(g.x, g.y);
   lift(0, 3, GESTURE_STRAIN_S * 1.5);
   const oneRoot = S.after.plots[0].dug, stillIn = S.after.plots[0].stump;
-  lift(0, 3, GESTURE_STRAIN_S * (AFTER_DIG_CLICKS + 1));
+  // held on through the rest: out, the stump is in the hand, held as a sweep holds
+  gestureDown(g.x, g.y); gestureMove(g.x, g.y - 3 * P / GESTURE_STUMP_DRAG);
+  run(GESTURE_STRAIN_S * (AFTER_DIG_CLICKS + 1));
   const out = !S.after.plots[0].stump && S.after.plots[0].grow == null;
-  const marks = rec('stump').marks.length, gone = !groveIcons().some(c => c.kind === 'shovel');
+  const held = S.held, inHand = held === 1 && S.motes[0]?.kind === 'log' && S.motes[0]?.place === 'after' && S.dragging;
+  const marks = rec('stump').marks.length;
+  window.__emptyHand(); S.dragging = false;
   window.__actsOn(null);
   return [
-    ok(shovel, 'a stump shows its shovel icon'),
+    ok(handle, 'a press on the stump block takes hold of it', JSON.stringify({ handle })),
     ok(oneRoot === 1 && stillIn, 'held up a moment, one root gives and the stump stays', `dug ${oneRoot}`),
-    ok(out && gone, 'held long enough it comes out, the plot left bare for an acorn, and the shovel goes'),
+    ok(out && inHand, 'held long enough it comes out, the plot left bare for an acorn, the stump a log in the hand', JSON.stringify({ out, held })),
     ok(marks === 0, 'and no crit is marked', `${marks}`)
   ];
 }, NO_RELOAD);

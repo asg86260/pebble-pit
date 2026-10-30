@@ -9,7 +9,7 @@
 import { S } from '../state.js';
 import { newRun, settle, raf, ok, point } from './kit.js';
 import { GESTURE_SAW_AMP, AFTER_TREE, AFTER_FALL_S, AFTER_FALL_BOUNCE_S, AFTER_BREAK_S } from '../config.js';
-import { handSawAt, groveIcons, gestureHeld } from '../after/gestures.js';
+import { handSawAt, gestureHeld } from '../after/gestures.js';
 import { plotX } from '../after/place.js';
 import { lying } from '../after/ground.js';
 import { toScreen } from '../world.js';
@@ -30,7 +30,7 @@ export const TESTS = [
     window.__fast(1);
     window.__look(plotX(0) - S.viewW / 2);
     await settle(0.2);
-    const icon = groveIcons().some(c => c.kind !== 'shovel'), bought = !!S.after.sawBought;
+    const bought = !!S.after.sawBought;
     const g = handSawAt(0).grip;
     point('pointermove', ...glass(g.x, g.y), 0);
     point('pointerdown', ...glass(g.x, g.y));
@@ -50,7 +50,7 @@ export const TESTS = [
     const logs = lying().filter(q => q.i === 0).length;
     window.__actsOn(null);
     return [
-      ok(!icon && !bought, 'no icon over the grown tree, and the saw not bought', JSON.stringify({ icon, bought })),
+      ok(!bought, 'the saw not bought', JSON.stringify({ bought })),
       ok(took === 'tree', 'a press on the saw lying across the trunk takes it', String(took)),
       ok(fell && by === 'hand', 'dragged end to end, it saws the tree down', JSON.stringify({ fell, by })),
       ok(logs === AFTER_TREE.logs, 'which breaks into its four logs', `${logs}`)

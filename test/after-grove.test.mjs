@@ -4,7 +4,7 @@
 // about goes through the act's hooks: the yard's coins and rebel granted, the
 // crowd's rims set, the dev travel up with the act's opening beats played.
 // Each track's checks are their own block below.
-import { group, ok, run, runUntil, yard } from './helpers.mjs';
+import { group, ok, run, runUntil, until, yard } from './helpers.mjs';
 import { AFTER_UPGRADES, AFTER_BUILDS, AFTER_SEAT_BILLS, AFTER_PILES, AFTER_TREE, TREE_CHOPS, RIM_PIECES, ACT_CAPTION_S } from '../src/config.js';
 import { lying } from '../src/after/ground.js';
 
@@ -83,5 +83,45 @@ group('the woodcutter waits by a grown tree until the saw is bought, then saws i
     ok(moved != null && moved <= AFTER_WALK / 60 + 1, 'taken up mid-stroke and set down a way off, it walks back to the tree, never put back', `${moved} px in a frame`),
     ok(seen.length === 1 && seen[0][0] === 0 && seen[0][1] === AFTER_TREE.logs, 'its four logs appear together, on the one frame the trunk breaks', JSON.stringify(seen)),
     ok(carried, 'and they are carried to the forestry shack\'s pile', `${g0} -> ${read().grovelogs}`)
+  ];
+});
+
+// --- track C: the stump (DESIGN.md, "Act 3's grove, rebuilt", call 10) ----------------
+import { AFTER_DIG_CLICKS, GESTURE_STRAIN_S } from '../src/config.js';
+import { pileCount } from '../src/after/piles.js';
+import { cellOf } from '../src/grid.js';
+
+group('track C: with stump removal bought, the woodcutter pulls the stump, a beat a root, and carries the stump-log to the pile', async () => {
+  up();
+  runUntil(() => read().walking === 0, 120);
+  window.__afterGrant({ rebel: 3000 });
+  // a stump on the first plot and nothing lying, the setup the pull is not about
+  Object.assign(S.after.plots[0], { grow: null, stump: true, dug: 0 });
+  const tone = S.after.plots[0].tones[AFTER_TREE.logs], none = lying().length === 0;
+  const post = window.__afterPress('woodcutter');
+  run(20);
+  const waited = S.after.plots[0].stump && S.after.plots[0].dug === 0;
+  const bought = window.__buy('after-stumps');
+  // each root's snap, on the act's clock, until the stump is out
+  const beats = [];
+  let last = 0;
+  const out = await until(() => {
+    const p = S.after.plots[0], dug = p.stump ? p.dug : AFTER_DIG_CLICKS;
+    if (dug > last) { beats.push(S.after.t); last = dug; }
+    return !p.stump;
+  }, 120 * 60);
+  const gaps = beats.slice(1).map((t, k) => t - beats[k]);
+  const w = S.after.bodies.find(b => b.job === 'woodcutter');
+  const carried = !!w && w.load.length === 1 && w.load[0] === cellOf('log', tone);
+  const pile0 = pileCount('grovelogs');
+  const home = runUntil(() => pileCount('grovelogs') > pile0, 120);
+  const emptied = !!w && w.load.length === 0;
+  window.__actsOn(null);
+  return [
+    ok(none && post && waited, 'put on, the woodcutter leaves the stump until stump removal is bought', JSON.stringify({ none, post, waited })),
+    ok(bought && out, 'bought, it pulls the stump out', JSON.stringify({ bought, out })),
+    ok(beats.length === AFTER_DIG_CLICKS && gaps.every(g => g >= GESTURE_STRAIN_S), `its ${AFTER_DIG_CLICKS} roots give a beat each, a strain apart`, JSON.stringify(gaps)),
+    ok(carried, 'the stump comes out straight into its arms, a log in the stump\'s own tone', JSON.stringify(w && w.load)),
+    ok(home && emptied, 'and it carries the stump-log to the forestry shack\'s pile', JSON.stringify({ home, pile0 }))
   ];
 });

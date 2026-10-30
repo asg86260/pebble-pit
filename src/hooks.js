@@ -1513,7 +1513,7 @@ import { track, heldGoods } from './hands.js';
 import { bottomY, cellOf } from './grid.js';
 import { plantAcorn } from './after/grove.js';
 import { afterGate, strikeDue } from './after/strike.js';
-import { gestureDown, gestureMove, gestureUp, partsOf as gestureParts, gestureView, groveIcons } from './after/gestures.js';
+import { gestureDown, gestureMove, gestureUp, partsOf as gestureParts, gestureView } from './after/gestures.js';
 // A click up there as input.js makes it: the hand work's first (a part, a
 // bubble, an icon, a station's board), then the place's.
 HANDLES.__afterClick = (x, y) => { if (gestureDown(x, y)) { gestureUp(x, y); return true; } return clickAfter(x, y); };
@@ -1629,7 +1629,6 @@ HANDLES.__afterDrawnSpan = key => drawnSpan(key);
 HANDLES.__gesture = (what, x, y) => (what === 'down' ? gestureDown(x, y) : what === 'move' ? gestureMove(x, y) : gestureUp(x, y));
 HANDLES.__gestureParts = (key, i = 0) => gestureParts(key, i);
 HANDLES.__gestureView = () => gestureView();
-HANDLES.__groveIcons = () => groveIcons();
 
 // --- the two of them (wardrobe.js) ---
 // Who they are and what they wear, read for a check: each one's uid, the

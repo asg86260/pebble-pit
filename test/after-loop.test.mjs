@@ -20,7 +20,6 @@ import { speechTarget } from '../src/after/union.js';
 import { stepAfter } from '../src/after/index.js';
 import { crowdSpan } from '../src/render/after.js';
 import { pileAt, stationBox, plotX, speakerAt, afterFloor, idleSpots, AP } from '../src/after/place.js';
-import { groveIcons } from '../src/after/gestures.js';
 import { sawSpot } from '../src/after/bodies.js';
 import { sawOn, saw, lift, spin, loadBed } from './after-hands.mjs';
 import { millView } from '../src/after/mill.js';
@@ -183,7 +182,6 @@ group('the hand saws a tree from the start; the saw is bought on the grove\'s ca
   up();
   // The hand needs nothing bought (the owner, 2026-10-30: "the player can
   // always cut the tree down, the saw unlocks worker automation").
-  const early = !groveIcons().some(c => c.kind !== 'shovel');
   const on = sawOn(0);
   saw(0, () => S.after.plots[0].chops >= 1);
   const chopped = S.after.plots[0].chops;
@@ -194,7 +192,7 @@ group('the hand saws a tree from the start; the saw is bought on the grove\'s ca
   const told = runUntil(() => S.beatsDone.includes('saw'), 4 * ACT_CAPTION_S);
   window.__actsOn(null);
   return [
-    ok(early && on && chopped === 1, 'before the saw is bought, the hand saw lies across the tree, no icon, and a stroke is a chop', String(chopped)),
+    ok(on && chopped === 1, 'before the saw is bought, the hand saw lies across the tree and a stroke is a chop', String(chopped)),
     ok(!before && bought && card === 'grove', 'the saw is a row on the grove\'s card, paid in rebel', card),
     ok(told && read().sawHanded, 'its beat plays and hands the saw to the woodcutter')
   ];
