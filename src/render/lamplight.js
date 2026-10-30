@@ -3,21 +3,19 @@
 // flicker. Worn by the two of them as a head item (render/wardrobe.js,
 // `dressBehind`) and by a quarrier in its station's lamp (render/crew.js).
 //
-// The wedge is drawn before the body, and it only ever tints the paper: on
-// the light page it is laid with `darken`, so a pale grey over the white
-// ground and nothing over a rock, a heap or a body that is already darker;
-// on the dark page, where the paper is the dark end, with `lighten`. The
-// deep is drawn as the yard is and turned over after (render/deep.js), so
-// there the same rule leaves a faint wedge lighter than the black water.
+// The wedge is drawn before the body, a plain fill and never a blend (the
+// owner, 2026-10-29: Firefox's card has no `darken`, and a blend there takes
+// the whole canvas off it): see-through, so the light lies over a rock or a
+// heap in its reach as well as the paper, a world pixel a column so its
+// edges climb smoothly, and fading with the distance to nothing at its end.
 // Its numbers are LAMP_CONE.
 //
 // It comes and goes by opacity (docs/design-language/canvas.md, "Fades")
 // as the lamp goes on and comes off, remembered per body and per source,
 // keyed as the body's walk is (`motionOf`).
 
-import { P, GREY, WARD_UNIT as U, LAMP_CONE as C } from '../config.js';
+import { P, GREY, LAMP_CONE as C } from '../config.js';
 import { GREYS } from './deeptones.js';
-import { turnedOver } from '../ink.js';
 import { fill } from './wardrobe.js';
 
 const SEEN = { head: new WeakMap(), hat: new WeakMap() };
@@ -44,13 +42,11 @@ export function lampCone(g, x, y, dir, { on, key = null, t = 0, deep = false, sr
   // the lamp is the middle cell of the hat's top row (sprites.js, HATS.lamp)
   const cy = y - P - P / 2, front = dir > 0 ? x + 2 * P : x + P;
   const tone = deep ? GREYS[C.deepRung] : GREY[C.rung];
-  const was = g.globalAlpha, op = g.globalCompositeOperation;
-  g.globalAlpha = was * a;
-  g.globalCompositeOperation = turnedOver() ? 'lighten' : 'darken';
-  for (let d = 0; d < C.reach; d += U) {
-    const half = Math.round((C.from + d * C.spread) / U) * U, mid = cy + Math.round(d * C.tilt / U) * U;
-    fill(g, dir > 0 ? front + d : front - d - U, mid - half, U, 2 * half, tone);
+  const was = g.globalAlpha;
+  for (let d = 0; d < C.reach; d++) {
+    g.globalAlpha = was * a * C.glow * (1 - d / C.reach) ** C.falloff;
+    const half = C.from + d * C.spread, mid = cy + d * C.tilt;
+    fill(g, dir > 0 ? front + d : front - d - 1, mid - half, 1, 2 * half, tone);
   }
-  g.globalCompositeOperation = op;
   g.globalAlpha = was;
 }

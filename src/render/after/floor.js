@@ -9,13 +9,13 @@
 // Each convex corner of a puff is cut by one 2 px step. The path is static:
 // nothing on it moves but what is built on it.
 
-import { P, GREY, AFTER_BUILD_FADE_S, GROUND_PATH, AFTER_MILL } from '../../config.js';
+import { P, GREY, AFTER_BUILD_FADE_S, GROUND_PATH } from '../../config.js';
 import { darkPage } from '../../ink.js';
 import { S } from '../../state.js';
-import { afterX0, afterFloor, groundOf, floorProfile, stationX0, crowdLip, sitesKey, sited, AP } from '../../after/place.js';
+import { afterX0, afterFloor, floorProfile, crowdLip, sitesKey } from '../../after/place.js';
 import { ctx } from '../ctx.js';
 import { fillOnPixels } from '../frame.js';
-import { K, W, PALE, MID, now, clamp01 } from './kit.js';
+import { K, W, MID, now, clamp01 } from './kit.js';
 import { pathTone } from './cloudsky.js';
 import { held } from '../../reset.js';
 
@@ -57,23 +57,13 @@ export function drawFloor() {
   const f = clamp01((now() - changedAt) / AFTER_BUILD_FADE_S);
   if (f >= 1 || now() < changedAt) was = el.slice();
   const moving = j => f < 1 && (was[j] || 0) !== (el[j] || 0);
-  // The hatch under the sawdust heap at the saw's foot (after/mill.js): a
-  // gap in the line two cells wide, there once the saw mill's ground is taken.
-  const hatchX = () => stationX0('mill') + AFTER_MILL.heap.hatch * AP;
-  const n0 = sited('mill') ? Math.round((hatchX() - afterX0()) / P) : -9, inNotch = j => j >= n0 && j < n0 + 2;
-  edge(el, j0, j1, afterX0(), top, MID, true, bot, j => inNotch(j) || moving(j) || moving(j - 1));
+  edge(el, j0, j1, afterX0(), top, MID, true, bot, j => moving(j) || moving(j - 1));
   if (f < 1) {
-    const g = ctx.globalAlpha, near = j => !(moving(j) || moving(j - 1)) || inNotch(j);
+    const g = ctx.globalAlpha, near = j => !(moving(j) || moving(j - 1));
     ctx.globalAlpha = g * f; edge(el, j0, j1, afterX0(), top, MID, false, bot, near);
     ctx.globalAlpha = g * (1 - f); edge(was, j0, j1, afterX0(), top, MID, false, bot, near);
     ctx.globalAlpha = g;
   }
-  // The notch's walls: the line turned down a cell, then the cloud's depth in
-  // pale steps either side, the gap left white.
-  if (!sited('mill')) return;
-  const nx = hatchX(), nt = groundOf('mill');
-  fr(nx - 2, nt, 2, P + 2, K); fr(nx + 2 * P, nt, 2, P + 2, K);
-  for (let r = 1; r < 4; r++) { fr(nx - 2, nt + r * P, 2, P, PALE); fr(nx + 2 * P, nt + r * P, 2, P, PALE); }
 }
 
 // The puffs again over God's crowd, drawn after its front row (render/

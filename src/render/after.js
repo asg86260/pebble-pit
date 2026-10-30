@@ -15,7 +15,7 @@
 // block is brought and taken by a body or the hand, so none ever fades.
 
 import { P, GREY, AFTER_BLOCK, AFTER_CARRY_SHOWN, AFTER_STATIONS, AFTER_START_BUILT, AFTER_SIGN_FLAG_U, AFTER_ART_SCALE, AFTER_CARDS, AFTER_BUILD_FADE_S, AFTER_BUILD_PIECES,
-         AFTER_TIP_HOLD_S, AFTER_SPILL_S, AFTER_ART_WORK_S,
+         AFTER_ART_WORK_S,
          AFTER_SAW_S, AFTER_SIGN_S, SHELF_GLYPH_CELLS,
          NUM_FONT_PX, AFTER_COUNT_PAD } from '../config.js';
 import { S } from '../state.js';
@@ -24,10 +24,9 @@ import { fillDots } from './dots.js';
 import { buildingGlyph } from './bars.js';
 import { writeCount, widthOf, drawable, GH } from './numfont.js';
 import { screenAt } from './frame.js';
-import { stationBox, stationX0, heapMid, notchX, fileAt, rankAtY, groundOf, ART, AP } from '../after/place.js';
+import { stationBox, stationX0, fileAt, rankAtY, groundOf, ART, AP } from '../after/place.js';
 import { airMotes } from '../after/rebel.js';
-import { built, heapBrim } from '../after/levels.js';
-import { airSpills } from '../after/mill.js';
+import { built } from '../after/levels.js';
 import { atStation, bodyInk, carried as carryOf } from '../after/bodies.js';
 import { gestureView } from '../after/gestures.js';
 import { loadKind } from '../carry.js';
@@ -37,7 +36,7 @@ import { deepAt } from '../after/sky.js';
 import { drawCloudSky } from './after/cloudsky.js';
 import { drawGrove } from './after/pine.js';
 import { drawGroveMockBodies, groveMockOn } from './after/grovemock.js'; // MOCK grove
-import { DRAW, workerPose, GLYPHS, backOf, drawMillHeap } from './after/stations.js';
+import { DRAW, workerPose, GLYPHS, backOf } from './after/stations.js';
 import { drawFistFlag } from './aftercrowd.js';
 import { heap, heapCells, drawGround, goodBlock } from './after/piles.js';
 import { drawBody } from './crew.js';
@@ -181,8 +180,6 @@ function drawShackOrder() {
   const last = r.at.length ? fadeIn(r.at[r.at.length - 1]) : 1;
   glyphOver(b, GLYPHS[key], (r.n - 1 + last) / AFTER_BUILD_PIECES);
 }
-// The saw mill's sawdust heap is its machine's, drawn with it under its bed
-// (render/after/stations.js), a grain a cell.
 // Each station's counted piles, on its own ground, the workshop's signs and
 // timber among them: drawn over the lip of billows along the path's front
 // (render.js), so a pile stands on the floor as a body does, its bottom row
@@ -191,7 +188,6 @@ export function drawAfterPiles() {
   const a = A();
   if (!a) return;
   drawGround(a.t);
-  if (built('mill')) drawMillHeap(frameOf('mill'));
 }
 export function drawAfterCamp() {
   const a = A();
@@ -276,7 +272,6 @@ function drawMember(w) {
     drawBody(x, y);
     ctx.fillStyle = GREY[K];
     drawLoad(x, y, loadKind(w), carryOf(w), w.load);
-    if (w.tipping) { ctx.fillRect(x + 2, y - 10, 14, 10); ctx.fillStyle = GREY[PALE]; ctx.fillRect(x + 4, y - 8, 10, 6); }
     if (w.swing != null) {
       if (w.job == null) shoutMark(x, y);
       else for (let k = 1; k <= 2; k++) cell(x + (w.face > 0 ? 2 + k : -k) * P, y - k * P, K);

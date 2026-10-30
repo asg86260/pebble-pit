@@ -10,10 +10,10 @@ import { bestMs, group, ok, run, runUntil, yard, P } from './helpers.mjs';
 import { goodCount } from '../src/after/piles.js';
 import { siteLoads } from '../src/after/build.js';
 import { lying } from '../src/after/ground.js';
-import { TREE_CHOPS, AFTER_LOGS_A_TREE, AFTER_SAWDUST_BRIM, CROWD_FILES, RIM_PIECES, MEET_MEMBERS, AFTER_GATES,
+import { TREE_CHOPS, AFTER_LOGS_A_TREE, CROWD_FILES, RIM_PIECES, MEET_MEMBERS, AFTER_GATES,
          ACT_CAPTION_S, AFTER_DIG_CLICKS, AFTER_PODIUM_REBEL, AFTER_PODIUM_CLIMB, AFTER_PODIUM_TOPS, AFTER_PODIUM_U, AFTER_PLOTS0, AFTER_PLOT_MAX,
          AFTER_UPGRADES, AFTER_CARDS, AFTER_YARD_COINS, AFTER_FIRST_MEMBERS, STRIKE_SHARE, AFTER_AGITATE_REBEL, AFTER_AGITATE_S,
-         AFTER_BUILD_PIECES, AFTER_LOG_TIMBER, AFTER_KERF_GRAINS, AFTER_MILL, AFTER_SAW_S, AFTER_TIP_LOAD,
+         AFTER_BUILD_PIECES, AFTER_LOG_TIMBER, AFTER_MILL, AFTER_SAW_S,
          AFTER_BUILDS, AFTER_SEAT_BILLS, AFTER_WALK, AFTER_SIGN_INK_S, AFTER_BURN_S,
          GESTURE_STRAIN_S, AFTER_PILES } from '../src/config.js';
 import { speechTarget } from '../src/after/union.js';
@@ -21,8 +21,8 @@ import { stepAfter } from '../src/after/index.js';
 import { crowdSpan } from '../src/render/after.js';
 import { pileAt, stationBox, plotX, speakerAt, afterFloor, idleSpots, AP } from '../src/after/place.js';
 import { groveIcons } from '../src/after/gestures.js';
-import { sawOn, saw, lift, spin, tipHeap, loadBed } from './after-hands.mjs';
-import { millView, grainsLanded } from '../src/after/mill.js';
+import { sawOn, saw, lift, spin, loadBed } from './after-hands.mjs';
+import { millView } from '../src/after/mill.js';
 
 const S = yard.S;
 const read = () => window.__afterRead();
@@ -382,28 +382,6 @@ group('a station is worked by hand before any member, and a post works it slower
   ];
 });
 
-group('the heap at its brim stops the saw, and a load dragged off it tips through the notch', async () => {
-  up();
-  window.__afterGrant({ rebel: 2000, logs: 4 });
-  raise('mill');
-  window.__afterGrant({ sawdust: AFTER_SAWDUST_BRIM });
-  loadBed();
-  spin('mill', 2, () => false, 4);
-  run(12);                                   // the wheel let go coasts to a stop
-  const stopped = !!millView().log && millView().log.eaten === 0;
-  const d0 = read().sawdust;
-  const tipped = tipHeap();
-  const d1 = read().sawdust;
-  spin('mill', 2, () => millView().log == null || millView().log.eaten > 0, 10);
-  const sawn = millView().log == null || millView().log.eaten > 0;
-  window.__actsOn(null);
-  return [
-    ok(stopped, 'the heap at its brim stops the saw'),
-    ok(tipped && d0 - d1 === AFTER_TIP_LOAD, 'a load carried off the heap to the notch tips through', `${d0} -> ${d1}`),
-    ok(sawn, 'and the saw runs again')
-  ];
-});
-
 // The chain, bought row by row: the stations raised off the shack, then the
 // posts, from a camp of members. Shared by the chain, the support and the
 // reload groups.
@@ -420,24 +398,16 @@ function buildChain() {
   return bought;
 }
 
-group('the chain makes timber and sawdust, then signs, and the heap is tipped', async () => {
+group('the chain makes timber, then signs', async () => {
   const bought = buildChain();
-  let brim = false, tipped = false;
   for (let k = 0; k < 960; k++) {
     run(0.25);
-    // A sweeper tips a load short of the brim (bodies.js `tipReady`), so the
-    // heap only has to come within a load of it.
-    if (goodCount('sawdust') >= AFTER_SAWDUST_BRIM - AFTER_TIP_LOAD) brim = true;
-    // A sawyer carrying a load to the notch, or an idle member standing at
-    // it tipping (bodies.js, the sweep): nobody clicks here.
-    if (S.after.bodies.some(b => b.tipping) || (S.after.tipAt != null && S.after.bodies.some(b => b.errand === 'sweeper'))) tipped = true;
   }
   const mid = read();
   window.__actsOn(null);
   return [
     ok(bought.every(([, b]) => b), 'the stations bought through their rows, the members put on through the rosters', JSON.stringify(bought.filter(([, b]) => !b))),
     ok(mid.timber > 0 || mid.signs > 0 || S.after.signs.length > 0, 'logs reach the mill and are sawn into timber', JSON.stringify(mid)),
-    ok(brim && tipped, 'the sawdust heaps up and a body tips a load through the notch', `brim ${brim} tipped ${tipped}`),
     ok(S.after.signs.length > 0, 'the workshop makes signs and its joiner plants them in the crowd', `${S.after.signs.length}`)
   ];
 });
@@ -524,27 +494,25 @@ group('the mill\'s second blade cuts a log in half the strokes, at the fixed spl
   putOn('sawyer');
   const blade = window.__buy('after-blade');
   landed();
-  // The pile emptied, so all six logs' timber has room on it.
-  window.__afterGrant({ logs: 6, timber: -goodCount('timber') });
-  const t0 = read().timber, d0 = read().sawdust;
+  // The pile emptied, so all five logs' timber (the mound's brim) has room on it.
+  window.__afterGrant({ logs: 5, timber: -goodCount('timber') });
+  const t0 = read().timber;
   runUntil(() => S.after.bodies.some(b => b.at === 'mill'), 90);
   // the strokes each log takes on the bed, from set down to its last column
   const strokes = [];
   let on = null;
-  const g0 = grainsLanded();
   runUntil(() => {
     const s = S.after.saw, bed = !!(s && s.bed);
     if (bed && on == null) on = s.n;
     if (!bed && on != null) { strokes.push(s.n - on); on = null; }
-    return read().logs === 0 && !bed && s && !s.out.length && !s.dust.length && !s.trip;
+    return read().logs === 0 && !bed && s && !s.out.length && !s.trip;
   }, 180);
   // a log's strokes with one blade: carried up to the blade, then each column's
   const one = 1 + AFTER_MILL.strokes.reduce((n, k) => n + k, 0);
   window.__actsOn(null);
   return [
-    ok(blade && strokes.length === 6 && strokes.every(n => n <= Math.ceil(one / 2) + 1), 'with the second blade every log is cut in about half the strokes', `${strokes.join(' ')} of ${one}`),
-    ok(read().timber - t0 === 6 * AFTER_LOG_TIMBER && grainsLanded() - g0 === 6 * AFTER_KERF_GRAINS,
-       'a log saws into the fixed timber and sawdust', `${read().timber - t0} timber, ${grainsLanded() - g0} grains onto the heap (an idle hand tips it meanwhile)`)
+    ok(blade && strokes.length === 5 && strokes.every(n => n <= Math.ceil(one / 2) + 1), 'with the second blade every log is cut in about half the strokes', `${strokes.join(' ')} of ${one}`),
+    ok(read().timber - t0 === 5 * AFTER_LOG_TIMBER, 'a log saws into the fixed timber', `${read().timber - t0} timber`)
   ];
 });
 

@@ -6,17 +6,15 @@
 // dragged by the hand, drives the blade a stroke a turn and the bed carries
 // the log into it; each column the blade eats comes out the far side as one
 // 2x2 timber block that rides the bed out, slides down the chute and drops
-// onto the timber mound, and the last column is the kerf, a grain a
-// down-stroke falling under the blade onto the heap at the saw's foot.
+// onto the timber mound: a log of four columns saws into four blocks and
+// nothing else (the owner, 2026-10-29: no sawdust).
 //
 // Everything in the machine is the act's state (`S.after.saw`, saved): the
 // wheel's turn, the log on the bed and how far it is through the blade, the
-// blocks on their way out, the grains in the air and the sawyer's trip, so a
-// reload stands the machine back exactly where it was. Each count changes
-// only at a hand-off: the log pile at the lift, the timber mound when a
-// block lands on it (`setBlock`), the heap when a grain lands on it. The
-// heap is the machine's own plot of grains, under the bed: its count is its
-// cells, saved as the act's ground is (`heapRecord`).
+// blocks on their way out and the sawyer's trip, so a reload stands the
+// machine back exactly where it was. Each count changes only at a hand-off:
+// the log pile at the lift, the timber mound when a block lands on it
+// (`setBlock`).
 //
 // Two doors turn the wheel and one eats the log: `turnWheel`, called by the
 // hand (after/gestures.js) and by the sawyer's walk (`stepMill`). A member
@@ -25,17 +23,15 @@
 // `millWorked`); it never cuts.
 
 import { S } from '../state.js';
-import { rand } from '../rng.js';
 import { source, sink } from '../flow.js';
-import { P, AFTER_GOODS, AFTER_MILL, AFTER_LOG_TIMBER, AFTER_KERF_GRAINS, AFTER_BLOCK, AFTER_TIP_LOAD, AFTER_SWEEP_WAIT_S, AFTER_SPILL_S,
-         AFTER_PUT_S, AFTER_WALK, AFTER_HEAP_SETTLE_S } from '../config.js';
-import { bladeLogs, heapBrim, built } from './levels.js';
+import { P, AFTER_MILL, AFTER_LOG_TIMBER, AFTER_BLOCK, AFTER_PUT_S, AFTER_WALK } from '../config.js';
+import { bladeLogs, built } from './levels.js';
 import { secs } from './util.js';
-import { heapMid, groundOf, stationX0, floorAt, AP } from './place.js';
+import { groundOf, stationX0, floorAt, AP } from './place.js';
 import { takeBlock, setBlock, pileRoom, pileCount, topBlock, dropSpot } from './piles.js';
-import { colX, rowY, runsOf, cellsOfRuns } from './ground.js';
+import { colX, rowY } from './ground.js';
 import { layGood } from './grove.js';
-import { addGrain, put, at, topRow, settleSome, count, colOf, recount, wakeGrid, cellOf, kindOf } from '../grid.js';
+import { cellOf, kindOf } from '../grid.js';
 
 const M = AFTER_MILL, F = M.frame, LOG = AFTER_BLOCK.log, PLANK = AFTER_BLOCK.plank;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -48,77 +44,9 @@ const cy = y => (y - groundOf('mill')) / AP;
 
 // The machine's state, made the first time it is asked (a save from before
 // it reads back as none).
-const blankSaw = () => ({ turn: 0, hi: 0, sk: 0, sf: 0, driving: false, handAt: null, bed: null, out: [], dust: [], trip: null,
-                          hitAt: null, setAt: null, n: 0, landed: 0, grains: 0, busyAt: null });
+const blankSaw = () => ({ turn: 0, hi: 0, sk: 0, sf: 0, driving: false, handAt: null, bed: null, out: [], trip: null,
+                          hitAt: null, setAt: null, n: 0, landed: 0, busyAt: null });
 export const saw = () => S.after.saw || (S.after.saw = blankSaw());
-
-// --- the heap ----------------------------------------------------------------------------
-// The heap is at its brim while nobody has tipped it: the saw stops. The
-// brim is the heap's `pile` on the one station table (after/stations.js), so
-// the pile-full mark, its hover and its cursor are the yard's
-// (render/pilemarks.js, input.js).
-export const heapFull = () => !!S.after && sawdustCount() >= heapBrim();
-
-// The row's key, and the box the shared mark is placed from: `pileMarkAt`
-// hangs a pile row's mark five cells above its ground's top, so the box's top
-// is ten cells under the saw mill's floor to hang it five under the heap.
-export const HEAP_PILE = 'after-sawdust';
-export const heapMarkBox = () => ({ x: heapMid() - P, y: groundOf('mill') + P * 10, w: P * 2, h: P * 2 });
-
-// The heap's plot, a grain a cell, under the bed between the legs, kept per
-// act state (a read save is a new one, and its heap is read back from the
-// cells the save kept, `S.after.heap`).
-const HEAPS = new WeakMap(); // cache: each act state's heap plot, read from its saved cells
-export function heapPlot() {
-  const a = S.after;
-  let b = HEAPS.get(a);
-  if (!b) {
-    const h = M.heap;
-    b = { x: wx(h.x), y: groundOf('mill') - h.rows * AP, cols: h.cols, rows: h.rows, p: AP, grid: new Uint8Array(h.cols * h.rows),
-          n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null, repose: false, t: 0 };
-    HEAPS.set(a, b);
-    const cells = cellsOfRuns(a.heap, b.cols * b.rows);
-    if (cells) { b.grid.set(cells); recount(b); wakeGrid(b); }
-    a.heap = null;
-  }
-  return b;
-}
-// The grains on the heap: its cells, the only count there is.
-export const sawdustCount = () => (S.after ? count(heapPlot()) : 0);
-// The heap as the act's saver writes it, run-length as the ground is, or
-// null while it is bare.
-export function heapRecord() {
-  const a = S.after;
-  if (!a) return null;
-  const b = HEAPS.get(a);
-  if (!b) return a.heap || null;
-  return count(b) ? runsOf(b.grid) : null;
-}
-// `n` grains set on the heap at once and let come to rest, as a save read
-// stands them (the older save's count, a grant): how many fit.
-export function pourSawdust(n) {
-  const b = heapPlot();
-  let k = 0;
-  while (k < n && addGrain(b, wx(F.bx) + AP / 2, undefined, grainTone(b), true)) { k++; while (settleSome(b, b.cols * b.rows)) { /* to rest */ } }
-  return k;
-}
-// `n` grains taken off the heap's top, a grant's: how many came.
-export function takeSawdust(n) {
-  const b = heapPlot();
-  let k = 0;
-  while (k < n && takeTop(b)) k++;
-  return k;
-}
-// A grain's value names it, a byte's worth (the grid's cells): the drawing
-// picks its tone off it (render/after/stations.js), so it keeps it as it rolls.
-const grainTone = () => 1 + Math.floor(rand() * AFTER_GOODS.sawdust.length);
-function takeTop(b) {
-  let col = -1, hi = -1;
-  for (let c = 0; c < b.cols; c++) { const r = topRow(b, c); if (r > hi) { hi = r; col = c; } }
-  if (col < 0) return false;
-  put(b, col, hi, 0);
-  return true;
-}
 
 // --- the stroke --------------------------------------------------------------------------
 // A turn of the wheel is a stroke. Over a turn, the bed carries the log in
@@ -135,24 +63,21 @@ const walkF = g => (g < G0 ? 0.15 * g / G0 : g < G1 ? 0.15 + 0.15 * Math.sqrt((g
 // The log on the bed: `at` its left column as it was set down, carried right
 // by the strokes; the blade eats what has passed its column. `k` the stroke
 // whose down-swing feeds it next, `f` how far that one has fed, `d` the cells
-// it carries the log, `to` where it leaves the log; `cut` blocks and `dust`
-// grains made of it so far.
+// it carries the log, `to` where it leaves the log; `cut` blocks made of it
+// so far.
 const eatenOf = bed => clamp(bed.at + LOG - F.bx, 0, LOG);
 const colAt = bed => Math.min(LOG - 1, Math.floor(eatenOf(bed) + EPS));
-const kerf = col => col >= AFTER_LOG_TIMBER;
-function newBed(at, hi, v) { return { at, k: Math.floor(hi - G0) + 1, f: 0, d: 0, from: at, to: at, cut: 0, dust: 0, v: kindOf(v) && kindOf(v).key === 'log' ? v : cellOf('log') }; }
+function newBed(at, hi, v) { return { at, k: Math.floor(hi - G0) + 1, f: 0, d: 0, from: at, to: at, cut: 0, v: kindOf(v) && kindOf(v).key === 'log' ? v : cellOf('log') }; }
 const plankV = (bed, col) => ((bed.pv = bed.pv || [])[col] ??= cellOf('plank'));
 
-// Whether the stroke about to begin can go: the heap full stops the saw, a
-// new column of timber waits for room on the mound for a whole cut (as the
-// pile-full mark says: after/piles.js, `pileFull`), the kerf for room on the
-// heap. Carrying the log up to the blade always can.
+// Whether the stroke about to begin can go: a new log waits for room on the
+// mound for a whole cut (as the pile-full mark says: after/piles.js,
+// `pileFull`), and each column after it for the blocks it has left to make.
+// Carrying the log up to the blade always can.
 function stalled(s, bed) {
-  if (heapFull()) return true;
   if (bed.at + LOG < F.bx - EPS) return false;
   const e = eatenOf(bed), col = colAt(bed);
-  if (!kerf(col)) return e - col < EPS && pileRoom('timber') - s.out.length < AFTER_LOG_TIMBER;
-  return sawdustCount() + s.dust.length >= heapBrim();
+  return e - col < EPS && pileRoom('timber') - s.out.length < AFTER_LOG_TIMBER - col;
 }
 // How far the stroke about to begin carries the log: up to the blade in whole
 // strokes of at most `approach`, or a column's share, the mill's second blade
@@ -172,8 +97,7 @@ function land(s, bed, hand) {
     s.hitAt = S.after.t;
     if (hand) S.after.workAt.mill = S.after.t;
     const col = Math.min(LOG - 1, Math.floor(e0 + EPS));
-    if (!kerf(col)) { if (e >= col + 1 - EPS) { s.out.push({ a: 0, v: plankV(bed, col) }); bed.cut++; source('plank', 1, 'saw'); } }
-    else for (let k = Math.round((e - e0) * AFTER_KERF_GRAINS); k > 0; k--) { s.dust.push({ a: 0, v: grainTone(heapPlot()) }); bed.dust++; source('sawdust', 1, 'saw'); }
+    if (e >= col + 1 - EPS) { s.out.push({ a: 0, v: plankV(bed, col) }); bed.cut++; source('plank', 1, 'saw'); }
   }
   if (e >= LOG - EPS) { s.bed = null; sink('log', 1, 'saw'); }
 }
@@ -217,9 +141,8 @@ export function turnWheel(d, hand = false) {
 export const wheelAngle = () => (S.after ? Math.PI / 2 + saw().turn * 2 * Math.PI : Math.PI / 2);
 // How many strokes have landed, ever: the hand work counts its motions by it.
 export const strokesLanded = () => (S.after ? saw().n : 0);
-// Timber blocks landed on the mound off the chute, and grains on the heap, ever.
+// Timber blocks landed on the mound off the chute, ever.
 export const millLanded = () => (S.after ? saw().landed : 0);
-export const grainsLanded = () => (S.after ? saw().grains || 0 : 0);
 const handTurning = s => s.handAt != null && S.after.t - s.handAt < 0.15;
 
 // --- the log onto the bed ----------------------------------------------------------------
@@ -322,7 +245,7 @@ function topLog() {
 }
 // Whether the sawyer should go for a log: the bed bare, one on the pile, and
 // a saw that could cut it.
-const wantLog = s => !s.bed && pileCount('logs') > 0 && !heapFull() && pileRoom('timber') - s.out.length >= AFTER_LOG_TIMBER;
+const wantLog = s => !s.bed && pileCount('logs') > 0 && pileRoom('timber') - s.out.length >= AFTER_LOG_TIMBER;
 
 function stepSawyer(s, dt) {
   // the first body through the mill's door (after/bodies.js, `atStation`)
@@ -397,14 +320,6 @@ export function blockAt(age) {
   const vy = (t.y - CH.y1 - 0.5 * M.fall * T * T) / T;
   return { x: CH.x1 + EXIT_VX * a, y: CH.y1 + vy * a + 0.5 * M.fall * a * a, down: age >= T };
 }
-// A grain in the air under the blade, by its age: its top left, and whether
-// it has come down on the heap.
-export function grainAt(age) {
-  const y = F.bed - 1 + 0.5 * M.fall * age * age, b = heapPlot(), c = colOf(b, wx(F.bx) + AP / 2);
-  const top = -(topRow(b, c) + 2);
-  return { x: F.bx, y: Math.min(y, top), down: y >= top };
-}
-
 function stepOut(s, dt) {
   for (let i = 0; i < s.out.length; i++) {
     const o = s.out[i];
@@ -417,60 +332,15 @@ function stepOut(s, dt) {
     s.landed++;
     s.out.splice(i--, 1);
   }
-  const b = heapPlot();
-  for (let i = 0; i < s.dust.length; i++) {
-    const g = s.dust[i];
-    g.a += dt;
-    if (!grainAt(g.a).down) continue;
-    addGrain(b, wx(F.bx) + AP / 2, undefined, g.v || grainTone(b), true);
-    s.grains = (s.grains || 0) + 1;
-    s.dust.splice(i--, 1);
-  }
 }
 
-// --- tipping the heap --------------------------------------------------------------------
-// The grains of a tip falling through the hatch: this session's drawing only,
-// a load already gone.
-const spills = [];
-export const airSpills = () => spills;
-export const forgetSpills = () => { spills.length = 0; };
-// A load off the heap through the hatch in the floor under it: the grains
-// over the hatch drop out from the bottom, then those beside it, and the heap
-// slumps into the gap by the sand rules. What was taken.
-export function tipSawdust() {
-  const a = S.after, b = heapPlot(), have = count(b);
-  if (have <= 0) return 0;
-  const h0 = M.heap.hatch - M.heap.x, n = Math.min(AFTER_TIP_LOAD, have);
-  let k = 0;
-  for (let d = 0; k < n && d < b.cols; d++) {
-    for (const c of [h0 - d, h0 + 1 + d]) {
-      if (c < 0 || c >= b.cols) continue;
-      for (let r = 0; k < n && r < b.rows; r++) if (at(b, c, r)) { put(b, c, r, 0); spills.push({ c: M.heap.x + c, r, age: 0 }); k++; }
-    }
-  }
-  sink('sawdust', k, 'hatch');
-  a.tipAt = a.t;
-  return k;
-}
-
-// A sawyer tips once the heap has stood at its brim AFTER_SWEEP_WAIT_S, so the
-// stopped saw and its mark are seen first.
-export const sweepDue = () => heapFull() && S.after.brimAt != null && S.after.t - S.after.brimAt >= AFTER_SWEEP_WAIT_S;
-
-// One frame of the saw mill: the sawyer, the blocks and grains on their way,
-// the heap's sand and its clock, and the falling grains of a tip.
+// One frame of the saw mill: the sawyer and the blocks on their way.
 export function stepMill(c) {
-  const a = S.after, dt = secs(c);
-  if (!heapFull()) a.brimAt = null;
-  else if (a.brimAt == null) a.brimAt = a.t;
-  for (let i = spills.length - 1; i >= 0; i--) if ((spills[i].age += dt) > AFTER_SPILL_S) spills.splice(i, 1);
+  const dt = secs(c);
   if (!built('mill') || dt <= 0) return;
   const s = saw();
   stepSawyer(s, dt);
   stepOut(s, dt);
-  const b = heapPlot();
-  if (!b.awakeN) b.t = 0;
-  else for (b.t += dt; b.t >= AFTER_HEAP_SETTLE_S; b.t -= AFTER_HEAP_SETTLE_S) settleSome(b, b.cols * b.rows);
 }
 
 // Whether the sawyer is at its work now, walking the wheel or on its way with
@@ -480,21 +350,17 @@ export const millWorked = () => !!S.after && S.after.saw != null && S.after.saw.
 // --- for the drawing (render/after/stations.js) ------------------------------------------
 // The machine as it stands this frame, in the drawing's cells: the log on
 // the bed (its left column and how much of it the blade has eaten), the
-// block growing past the blade, the kerf in the teeth not yet spat out as
-// grains (cells), the blocks and grains on their way out, and when the last
-// stroke landed and the last log was set down.
+// block growing past the blade, the blocks on their way out, and when the
+// last stroke landed and the last log was set down.
 export function millView() {
   if (!S.after) return null;
   const s = saw(), bed = s.bed;
-  let log = null, grow = 0, teeth = 0;
+  let log = null, grow = 0;
   if (bed) {
     const e = eatenOf(bed), col = Math.min(LOG - 1, Math.floor(e + EPS));
-    log = { x: bed.at, left: LOG - e, eaten: e, v: bed.v, pv: kerf(col) ? undefined : plankV(bed, col) };
-    if (!kerf(col) && e > col + EPS) grow = e - col;
-    if (kerf(col)) teeth = (e - AFTER_LOG_TIMBER) * AFTER_KERF_GRAINS - bed.dust;
+    log = { x: bed.at, left: LOG - e, eaten: e, v: bed.v, pv: plankV(bed, col) };
+    if (e > col + EPS) grow = e - col;
   }
-  return { log, grow, teeth, out: s.out.map(o => ({ ...blockAt(o.a), v: o.v })),
-           dust: s.dust.map(g => ({ ...grainAt(g.a), v: g.v })),
-           hitAt: s.hitAt, setAt: s.setAt, hv: s.trip ? s.trip.v : undefined,
-           heap: heapPlot(), spills };
+  return { log, grow, out: s.out.map(o => ({ ...blockAt(o.a), v: o.v })),
+           hitAt: s.hitAt, setAt: s.setAt, hv: s.trip ? s.trip.v : undefined };
 }

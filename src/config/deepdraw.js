@@ -274,14 +274,6 @@ export const STUN_RING_STEP_MS = 70; // the bright cell moves on a cell this oft
 export const STUN_RING_TONES = [0, 1, 2];
 export const STUN_RING_DIM = 4;
 
-// The scrap the invert filter is tried on before the frame is turned over
-// with it (render/invert.js): big enough that Firefox puts it on the graphics
-// card as it does the window (smaller, it is drawn in software, where the
-// filter is a step off), and a side of cells for every channel value. The
-// grit's turned-over patch (render/buildsites.js) is sized in the same steps,
-// to stay on the card.
-export const INVERT_PROBE = 256;
-export const INVERT_PROBE_SIDE = 16;
 
 
 // --- the snatch, from the yard -----------------------------------------------------
@@ -653,7 +645,7 @@ export const EXPOSED_LIFT_HZ = 1.5;  // how often a lifted scale lifts or settle
 // sinking and carried like a scale: a root three cells across narrowing to
 // its point. '#' white, '+' a grey a step down.
 export const FANG_SPRITE = ['###', '.#+', '.#.'];
-// Its mark on the build button is FANG_MARK (config/deepboard.js).
+// Its mark on the deep's build sign is FANG_MARK (config/deepboard.js).
 // The fangs held, on a plate set into the furnace's brick over the door (the
 // owner, 2026-10-16, option B of docs/mocks/fang-counter-2026-10-16), in
 // place of the counter card's fang row: the purse for fangs is the furnace

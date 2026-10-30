@@ -10,7 +10,7 @@
 
 import { msg } from './lang.js';
 import { S, bench, lab, filter, tower, shack, outhouse } from './state.js';
-import { P, HOUSE_CUBE, WORK_BASE, WORK_STEP, BUILD_EFFORT, PARTY_IDS } from './config.js';
+import { P, HOUSE_CUBE, RUNGS, BUILD_BANDS, BUILD_ALONE, BUILD_CAP_S, BUILD_REPEAT_HALF, BUILD_EFFORT, PARTY_IDS } from './config.js';
 import { JOB } from './jobs.js';
 import { sfx } from './audio.js';
 
@@ -203,18 +203,36 @@ export const SAVE = {
 };
 
 // --- what a thing takes -------------------------------------------------------
-// One table off the kind of thing a row sells, climbing with the rung the way
-// the price does. Read it as "how long with one pair of hands on it".
+// One rule: where the row sits along its own progression (0 the foot, 1 the
+// top) picks a time on the band its kind sells in (`BUILD_BANDS`), so no row
+// carries seconds of its own and none can run past `BUILD_CAP_S`. Read it as
+// "how long with one pair of hands on it".
 //
-// A row may carry its own `work: () => seconds` instead: the house has a rung
-// in all but name (how many rooms already stand) and no rung of its own to
-// read it off.
+// A ladder's place is its rung out of its rungs, counting from the ladder's
+// first rung (`first`, for a card that carries only the top of a ladder). A
+// row with no rung of its own but a position (the house, by rooms; a shield,
+// by its order) says it with `along: () => 0..1`.
 //
-// A ladder's next copy is priced, and timed, at the rung it will be when it
-// lands: the rungs landed plus the copies already paid for (`ahead`).
-export const workFor = u =>
-  u.work ? Math.round(u.work()) :
-  Math.round((WORK_BASE[u.kind] || 0) * Math.pow(WORK_STEP, u.rung ? u.rung() + ahead(u.key) : 0));
+// A ladder's next copy is timed at the rung it will be when it lands: the
+// rungs landed plus the copies already paid for (`ahead`).
+export const alongRepeat = n => n / (n + BUILD_REPEAT_HALF);
+export const alongOf = u => {
+  if (u.along) return u.along();
+  if (u.rung) {
+    const first = u.first || 0, top = first + (u.rungs ? u.rungs() : RUNGS) - 1;
+    return top > 0 ? Math.min(1, (first + u.rung() + ahead(u.key)) / top) : 0;
+  }
+  return BUILD_ALONE[u.kind] ?? 0;
+};
+// A row may still say its own `work` (act 4's stand-in cards say nought: they
+// are placeholders that build instantly), but never past the cap.
+export const workFor = u => {
+  if (u.work) return Math.min(BUILD_CAP_S, Math.round(u.work()));
+  const band = BUILD_BANDS[u.kind];
+  if (!band) return 0;
+  const [lo, hi] = band;
+  return Math.min(BUILD_CAP_S, Math.round(lo + (hi - lo) * alongOf(u)));
+};
 
 // A row with no `kind` is bought and had: the bench's own ladders, the
 // casino's decisions, a dial.

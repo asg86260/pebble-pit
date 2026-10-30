@@ -30,6 +30,7 @@ import { doneName } from './works.js';
 import { fadeIn, fadeOut } from './fade.js';
 import { rosterHit, overRoster, rosterSays, shopAt, shopBoxOf, rosterUp } from './roster.js';
 import { buildMockPress, buildMockSays, buildMockOver } from './buildmock.js'; // MOCK build-button-in-the-world
+import { signAt, signSays, signPress } from './buildsign.js';
 import { overCount, countRect } from './render/counter.js';
 import { potPick, potHover } from './potpick.js';
 import { shutOpts } from './shop.js';
@@ -57,7 +58,7 @@ import { sayGoOn } from './actbeats.js';
 import { onGoOn } from './render/portals.js';
 import * as AFTER_PLACE from './after/index.js';
 import { gestureDown, gestureMove, gestureUp, gestureHeld, gestureUnder, gestureHover, pressTaken } from './after/gestures.js';
-import { stationParts, pileOwner, pileBox } from './after/place.js';
+import { pileOwner, pileBox } from './after/place.js';
 import { built } from './after/levels.js';
 import { lyingAt, kindOf } from './after/grove.js';
 import { JOB_NAMES } from './after/rows.js';
@@ -216,6 +217,9 @@ canvas.addEventListener('pointerdown', e => {
   if (way && throughPortal(way)) return;
   if (onGoOn(p.x, p.y) && sayGoOn()) return;
   if (buildMockPress(p.x, p.y)) return; // MOCK build-button-in-the-world  a lot's build button, in either act
+  // A build sign staked in an empty lot, in any place: a press is its row's
+  // press on the board, before anything the lot stands in front of.
+  if (signPress(p.x, p.y)) return;
   // The acts' places: a click up there is the afterlife's (after/index.js,
   // `clickAfter`), down in hell hell's (hell/index.js, `clickHell`), each
   // asked only once its act's track exports it; nothing of the yard's stands
@@ -583,7 +587,6 @@ function afterAt(x, y) {
     const owner = pileOwner(what);
     if (owner && built(owner) && inRect(pileBox(owner, what, AFTER_PILE_REACH), x, y)) return msg(key);
   }
-  if (S.after && built('mill') && inRect(stationParts('heap').heap, x, y)) return msg('hover-heap');
   for (const r of STATIONS) {
     if (r.place !== 'after' || !r.name || !r.stand || !r.open()) continue;
     if (nearStation(r.key, x, y) || inRect(standRect(r.key), x, y)) return r.name;
@@ -673,6 +676,13 @@ function askedAbout(x, y, cx, cy) {
 
   const bm = buildMockSays(x, y); // MOCK build-button-in-the-world
   if (bm) { showTip(bm.text, bm.at); return true; } // MOCK build-button-in-the-world
+  // A build sign: what it builds and its price, or what it waits on.
+  const sign = signSays(x, y);
+  if (sign) {
+    showTip(sign.text, sign.at);
+    return true;
+  }
+
   const roster = rosterSays(x, y);
   if (roster) {
     showTip(roster.text, roster.at);
@@ -737,6 +747,9 @@ const CURSORS = [
   [() => S.crewSight != null, 'grab'],
   // the counts under a station, and the places with a board on them
   [(x, y) => overRoster(x, y) || buildMockOver(x, y), 'pointer'], // MOCK build-button-in-the-world  or a lot's build button
+  // a build sign: one that waits on something tells you why
+  [(x, y) => signAt(x, y)?.state === 'locked', 'help'],
+  [(x, y) => !!signAt(x, y), 'pointer'],
   // the way through the surface, from either side, and the serpent to hit
   [(x, y) => onShaftArrow(x, y) || onPortal(x, y) || onCoil(x, y) || overOrb(x, y), 'pointer'],
   // the acts' portals and their hands, asked as the press is (heaven's gates

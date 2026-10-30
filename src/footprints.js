@@ -47,6 +47,7 @@ import { DRAW } from './render/after/stations.js';
 import { silhouette } from './render/after/kit.js';
 import { furnaceBox, barrierBox } from './hell/place.js';
 import { riftOpen } from './rift.js';
+import { signRects } from './buildsign.js';
 
 export const PLACES = ['yard', 'deep', 'after', 'hell'];
 
@@ -292,8 +293,6 @@ function afterParts() {
   for (let i = 0; i < AFTER_PLOT_MAX; i++)
     out.push({ id: `pine:${i}`, rects: [rect(plotX(i) + a * AP, fl + top * AP, (z - a + 1) * AP, -top * AP)] });
   if (globalThis.__groveMock) { const k = basketBox(); out.push({ id: 'seed-basket', rects: [rect(k.x, k.y - 4 * AP, k.w, k.h + 4 * AP)] }); } // MOCK grove  the seed basket and the acorns heaped in it
-  // The sawdust heap stands under the saw mill's bed, inside its drawing
-  // (after/mill.js), so it is the mill's footprint and claims none of its own.
   out.push({ id: 'throne-stair', rects: [rect(stairFoot(), fl - AFTER_STAIR_RISE, AFTER_STAIR_W, AFTER_STAIR_RISE)] });
   if (portalStands('heaven')) {
     const e = portalEnd('heaven', 'after');
@@ -318,9 +317,22 @@ function hellParts() {
 }
 
 const PARTS = { yard: yardParts, deep: deepParts, after: afterParts, hell: hellParts };
+// Everything standing in `place` but the build signs, which are placed
+// against it (buildsign.js).
+export const standingIn = place => PARTS[place]();
 
-// Every object standing in `place` and the ground it takes.
-export const footprints = place => PARTS[place]();
+// Every object standing in `place` and the ground it takes. A build sign
+// standing in an empty lot (buildsign.js) is the lot's, under its id: what is
+// built there is the same object, so the two may share ground and nothing
+// else may touch either.
+export const footprints = place => {
+  const out = PARTS[place]();
+  for (const s of signRects(place)) {
+    const lot = out.find(o => o.id === s.id);
+    if (lot) lot.rects = [...lot.rects, ...s.rects]; else out.push(s);
+  }
+  return out;
+};
 
 const meet = (a, b) => {
   const w = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);

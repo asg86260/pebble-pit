@@ -4,6 +4,21 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
+## Act 3's grove, rebuilt -- DESIGNED, QUESTIONS SETTLED, READY TO BUILD (2026-10-30)
+
+The owner's fifteen calls from the live grove review (mock branch
+`a3-review-both`, never merged) are designed onto the shared systems in
+DESIGN.md, "Act 3's grove, rebuilt": oaks planted from acorns, grown row by
+row, sawn down and broken into their four logs; the stump pulled as a fifth
+log; a seed basket, a seeds row and self-seeding. The owner settled the
+three questions on 2026-10-30: plots about 28 cells apart, with the falling
+crown a named exception to the no-overlap rule; blocks taught a height, so
+the acorn stays 3x4; sawdust and dirt are particles that fall and fade. The
+saw is a bought row that lets the woodcutter saw trees down, and the axe is
+renamed to the saw everywhere, the save included. Blocker: none in the
+design; the build is a wave of four tracks, track A (layout, ground, the
+tree, block height, the axe's rename, the migration to SAVE_V 35) first.
+
 ## The yard joins the conservation rule (2026-10-28)
 
 "One resource system for every act" is built (DESIGN.md, `(built)`). Its one

@@ -28,7 +28,7 @@ import { drawActsAfter } from '../src/render/portals.js';
 const S = yard.S;
 const LAYERS = [drawAfterBackdrop, drawSkyCrowd, drawAfterSky, drawAfterGrove, drawAfterCamp, drawAfterCrowd,
                 drawAfterPiles, drawAfterMembers, drawAfterCoins, drawAfterCues, drawAfterCounts, drawActsAfter];
-const SCENE_NAMES = ['after-camp-art', 'after-camp-art-2', 'after-heap-full', 'after-goods', 'after-nails', 'after-grove', 'after-saw',
+const SCENE_NAMES = ['after-camp-art', 'after-camp-art-2', 'after-goods', 'after-nails', 'after-grove', 'after-saw',
                      'after-dig', 'after-site-carry', 'after-coins', 'after-bubbles', 'after-pedestal',
                      'after-crowd', 'heaven-10', 'heaven-50', 'heaven-zoom', 'heaven-rally', 'heaven-roar', 'portal-heaven-up'];
 
@@ -42,7 +42,7 @@ const hex6 = c => {
 // four tones a good, each family the one role named here -- the tones a
 // unit is born with, light to dark, as one of act 1's coins is a run of four.
 const GOODS_ROLES = { log: 'the felled log, bark brown', plank: 'timber, sawn pale wood',
-                      sign: 'the sign, a painted slate board', sawdust: "the heap's grains, the timber's wood a step paler" };
+                      sign: 'the sign, a painted slate board' };
 const FOUR = new Set([...Object.values(AFTER_TONES).map(i => hex6(GREY[i])), ...Object.values(CLOUDS_PALETTE.light).map(hex6),
                       ...Object.values(AFTER_GOODS).flat().map(hex6)]);
 const toHex = (r, g, b) => '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('');

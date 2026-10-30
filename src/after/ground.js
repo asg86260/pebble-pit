@@ -28,9 +28,9 @@
 // unit comes back where it lay, its kind and tone in its value.
 
 import { S, afterGround as G } from '../state.js';
-import { AFTER_W, AFTER_H, AFTER_PILES, AFTER_MILL, TERRAIN_CELL, KINDS, GRAV } from '../config.js';
+import { AFTER_W, AFTER_H, AFTER_PILES, TERRAIN_CELL, KINDS, GRAV } from '../config.js';
 import { at, topRow, colOf, bottomY, landed, addBlock, putBlock, takeUnit, blockAt, kindOf, sizeOfCell, recount, settle } from '../grid.js';
-import { afterX0, afterTop, floorProfile, sitesKey, pileAt, pileOwner, heapX, AP } from './place.js';
+import { afterX0, afterTop, floorProfile, sitesKey, pileAt, pileOwner, AP } from './place.js';
 import { pileGrid, pileCells } from './art.js';
 
 // The stock keys that are strips.
@@ -95,14 +95,6 @@ function layColumns() {
   }
 }
 
-// The sawdust heap under the saw's bed is the mill's own plot (mill.js): its
-// columns are no ground a good comes to rest on, so nothing lands drawn
-// through it.
-const heapCol = c => {
-  const h0 = Math.round((heapX() - afterX0()) / AP);
-  return c >= h0 && c < h0 + AFTER_MILL.heap.cols;
-};
-
 // The plot wired: its size off the place, its rules off the columns.
 function wire() {
   layColumns();
@@ -115,7 +107,6 @@ function wire() {
   G.region = c => regionOf[c];
   G.lattice = (c, z) => { const s = c - ((c - startOf[c]) % z); return s + z <= endOf[c] ? s : -1; };
   G.ceiling = c => (capOf[c] >= 0 ? terrain[c] + capOf[c] : G.rows);
-  G.blocked = heapCol;
   G.onPut = () => { version++; };
   G.onMove = (from, to) => { const t = tags(); if (t.has(from)) { t.set(to, t.get(from)); t.delete(from); } };
 }
@@ -332,7 +323,7 @@ export function heapAt(v, x, n) {
   const near = [];
   for (let k = -n; k <= n; k++) {
     const s = mid + k * z;
-    if (s >= 0 && s + z <= G.cols && G.lattice(s, z) === s && G.region(s) === G.region(mid) && !G.blocked(s) && !G.blocked(s + z - 1)) near.push(s);
+    if (s >= 0 && s + z <= G.cols && G.lattice(s, z) === s && G.region(s) === G.region(mid)) near.push(s);
   }
   for (let i = 0; i < n; i++) {
     let best = -1, score = Infinity;

@@ -23,7 +23,6 @@ const KIND_DEFS = [
   { key: 'log',     size: AFTER_BLOCK.log,   palette: AFTER_GOODS.log,                      home: 'grovelogs' },
   { key: 'plank',   size: AFTER_BLOCK.plank, palette: AFTER_GOODS.plank,                    home: 'timber' },
   { key: 'sign',    size: AFTER_BLOCK.sign,  palette: AFTER_GOODS.sign,                     home: 'signs' },
-  { key: 'sawdust', size: 1,                 palette: AFTER_GOODS.sawdust,                  home: 'sawdust' },
   // a construction site's load (after/build.js): made at the shack's door,
   // laid in a band, carried by nobody home, so no pile is its home
   { key: 'load',    size: AFTER_BLOCK.load, palette: [GREY[AFTER_TONES.mid]],         home: null }

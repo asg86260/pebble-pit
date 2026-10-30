@@ -3,7 +3,7 @@
 // been done a few times, and again, faint, while the pointer is over the part
 // (DESIGN.md, "Act 3's goods are blocks", rule 3: one hand, and the material
 // is the progress, so no strip, tag or path); a big bubble's held star and
-// figure, and the heap's load in the hand or flying into the notch. One layer
+// figure. One layer
 // of render.js's LAYERS, over the place, drawn only with the camera up there.
 //
 // The hand is drawn at its own pixel, finer than a cell (GESTURE_CUE_DOT): it
@@ -13,11 +13,11 @@
 // is a held star.
 
 import { P, GREY, GESTURE_CUE_ALPHA, GESTURE_CUE_HOVER, GESTURE_CUE_DOT, GESTURE_CUE_TAP_S, GESTURE_CUE_LOOP_S, GESTURE_STAR_HOLD_S, GESTURE_STAR_FADE_S,
-         GESTURE_MARK_HOLD_S, GESTURE_MARK_FADE_S, GESTURE_LOAD_FADE_S, GESTURE_SAW_AMP } from '../config.js';
+         GESTURE_MARK_HOLD_S, GESTURE_MARK_FADE_S, GESTURE_SAW_AMP } from '../config.js';
 import { ctx } from './ctx.js';
 import { S } from '../state.js';
 import { gestureView, partsOf, lowestBubble, groveIcons } from '../after/gestures.js';
-import { stationParts, groundOf, AP } from '../after/place.js';
+import { AP } from '../after/place.js';
 import { bedWants } from '../after/mill.js';
 import { stripBox } from '../after/ground.js';
 import { drawGroveIcons } from './after/pine.js';
@@ -27,7 +27,6 @@ import { drawGroveMockCues, groveMockOn } from './after/grovemock.js'; // MOCK g
 const D = GESTURE_CUE_DOT;
 const snap = v => Math.round(v / P) * P;
 const dsnap = v => Math.round(v / D) * D;
-const cell = (x, y, tone) => { ctx.fillStyle = GREY[tone]; ctx.fillRect(snap(x), snap(y), P, P); };
 const now = () => S.after.t;
 
 // The ghost hand: a pointing mitten (its point the fingertip) and a fist (its
@@ -82,19 +81,6 @@ export function markOn(g, m, t, cellPx) {
 
 const tapDown = () => (now() % GESTURE_CUE_TAP_S) < GESTURE_CUE_TAP_S * 0.4;
 const loop = () => (now() % GESTURE_CUE_LOOP_S) / GESTURE_CUE_LOOP_S;
-const mid = b => ({ x: b.x + b.w / 2, y: b.y + b.h / 2 });
-
-// The heap's load where the hand has it, flying, or falling through the
-// notch and fading.
-function drawLoad(ld, t) {
-  const edge = stationParts('heap').edge;
-  let x = ld.x, y = ld.y, a = 1;
-  if (ld.mode === 'gone') { x = edge; y = groundOf('mill') + (t - ld.at) * P * 12; a = Math.max(0, 1 - (t - ld.at) / GESTURE_LOAD_FADE_S); }
-  else if (ld.mode === 'back') a = Math.max(0, 1 - (t - ld.at) / GESTURE_LOAD_FADE_S);
-  ctx.globalAlpha = a;
-  for (let k = 0; k < Math.min(4, ld.n * 2); k++) cell(x + (k % 2) * P, y - Math.floor(k / 2) * P, k % 3 ? PALE : MID);
-}
-
 
 // Where each station's ghost hand is now and how it is held, acting its
 // motion out on the part; null where there is nothing to show it on.
@@ -133,10 +119,6 @@ function cueAt(key, r) {
     const n = nails[Math.max(0, k)];
     return { x: n.x + n.w / 2, y: n.y + (tapDown() ? D * 2 : 0), pose: 'point' };
   }
-  if (key === 'heap') {
-    const p = partsOf('heap'), a = mid(p.heap);
-    return { x: a.x + (p.edge - a.x) * u, y: p.heap.y, pose: 'grab' };
-  }
   return null;
 }
 
@@ -163,7 +145,6 @@ export function drawAfterCues() {
     shown[r.key] = at ? ink : 0;
     if (at && at.x >= S.camX - P * 4 && at.x <= S.camX + S.viewW + P * 4) { ctx.globalAlpha = ink; handOn(ctx, at.x, at.y, at.pose); }
     for (const m of r.marks) markOn(ctx, m, t, P);
-    if (r.key === 'heap' && r.load) drawLoad(r.load, t);
   }
   ctx.globalAlpha = 1;
   if (demoHand.pose) handOn(ctx, demoHand.x, demoHand.y, demoHand.pose, P / 2, '#000');

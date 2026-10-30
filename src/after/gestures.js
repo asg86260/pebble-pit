@@ -12,7 +12,6 @@
 //              ground and held there, a root a strain
 //   saw mill   the flywheel spun: each turn a stroke of the blade, capped
 //   workshop   a tap on a nail a blow: two drive it, four nail a sign
-//   heap       a click on it tips a load through the hatch under it
 //
 // The parts stand where the drawing draws them (place.js, `stationParts`),
 // and every grab zone is a cell or two wider than the part, so a part is
@@ -21,7 +20,7 @@
 // The work itself is the sim's and is reached only the way the click reached
 // it: `workAfter` for the stations, the saw mill's wheel (mill.js,
 // `turnWheel`, the one door its sawyer walks too), the grove's own chop and
-// dig, the heap's tip. A member at a post works the same station alongside the hand. What is
+// dig. A member at a post works the same station alongside the hand. What is
 // kept here is the hand's own motion -- where the saw is, how fast the wheel
 // turns, how far the stump is up -- and it is this session's: a reload
 // stands every station still, and the ghost hand shows again until the
@@ -46,7 +45,7 @@ import { secs } from './util.js';
 import { built } from './levels.js';
 import { stationParts } from './place.js';
 import { standing, stumped, chopTree, digStump, trees, treeAt } from './grove.js';
-import { tipSawdust, turnWheel, strokesLanded } from './mill.js';
+import { turnWheel, strokesLanded } from './mill.js';
 import { pairBuilding } from './build.js';
 import { pileCount } from './piles.js';
 import { workAfter } from './work.js';
@@ -83,14 +82,6 @@ function used(g) { g.uses++; g.lastUse = T(); }
 function crit(g, x, y, n) { g.marks.push({ x, y, n, at: T() }); }
 
 const revOf = g => Math.abs(g.w) / (2 * Math.PI);
-// A load tipped through the notch, `n` of them: what went.
-function tip(g, n) {
-  let k = 0;
-  while (k < n && tipSawdust() > 0) k++;
-  if (k) used(g);
-  return k;
-}
-
 // The saw on plot i's trunk, drawn at offset `s` px along: the box a press
 // takes it by.
 const sawBox = (i, s) => { const b = stationParts('tree', i).sawBox; return { ...b, x: b.x + s }; };
@@ -237,16 +228,6 @@ const DEFS = {
       g.auto = t; g.strike = t; g.hit = k; g.nails[k] += 1;
       settleSign(g);
     },
-  },
-  heap: {
-    // The heap under the saw mill's bed (mill.js): a click on it tips a load
-    // through the hatch under it, the grains over the hatch dropping out and
-    // the heap slumping into the gap. Its room under the bed is the hand's
-    // even bare, so a click there never opens the board.
-    init: () => ({}),
-    open: () => built('mill'),
-    grab: (g, x, y) => (inBox(x, y, stationParts('heap').heap, G_S) ? true : null),
-    down(g) { tip(g, 1); return 'tap'; },
   }
 };
 // The timber a blank is cut from: the workshop's own bench pile where it has
@@ -448,8 +429,6 @@ export function padGesture(key, p) {
     if (!r.grab) { d.down(r, true, x, y); held = key; } else d.move(r, x, y);
   } else if (key === 'workshop') {            // A taps the next nail
     if (p.pressed) d.down(r, r.nails.findIndex(n => n < GESTURE_NAIL_TAPS));
-  } else if (key === 'heap') {                // A tips a load, as a click does
-    if (p.pressed) d.down(r);
   }
 }
 

@@ -29,10 +29,9 @@ const reading = key => boardOf('after-crowd').rows().find(u => u.key === key).pr
 
 group('each board lists its rows on its shelves: seats, then upgrades; the shack one shelf in camp order', async () => {
   up();
-  // An unbuilt station stands closed and its board is its rebuild; built,
-  // it is the spec's shelves.
+  // Built, each station's board is the spec's shelves; one not yet built has
+  // no board (its build sign sells it: test/build-sign.test.mjs).
   const unbuilt = Object.keys(AFTER_BUILDS);
-  const closedOff = unbuilt.filter(k => JSON.stringify(shelves(k)) !== JSON.stringify([[msg('after-sect-rebuild'), [`after-build-${k}`]]]));
   for (const k of unbuilt) S.after.built.push(k);
   const all = Object.fromEntries([...AFTER_CARDS, 'crowd'].map(k => [k, shelves(k)]));
   const seats = msg('after-sect-seats'), ups = msg('after-sect-card');
@@ -40,14 +39,13 @@ group('each board lists its rows on its shelves: seats, then upgrades; the shack
     shack: [[msg('after-sect-build'), ['mill', 'workshop'].map(s => `after-build-${s}`)]],
     pedestal: [[ups, ['after-recruit', 'after-podium']]],
     grove: [[seats, ['after-seat-woodcutter']], [ups, ['after-axe', 'after-plot', 'after-grow', 'after-tree', 'after-stumps']]],
-    mill: [[seats, ['after-seat-sawyer']], [ups, ['after-blade', 'after-heap']]],
+    mill: [[seats, ['after-seat-sawyer']], [ups, ['after-blade']]],
     workshop: [[seats, ['after-seat-joiner']], [ups, ['after-bench', 'after-signreach']]]
   };
   const off = Object.entries(want).filter(([k, v]) => JSON.stringify(all[k]) !== JSON.stringify(v)).map(([k]) => k);
   const crowdBuys = boardOf('after-crowd').rows().filter(u => !u.read);
   window.__actsOn(null);
   return [
-    ok(closedOff.length === 0, 'a closed station offers its rebuild on its board', closedOff.join(' ')),
     ok(off.length === 0, 'every station\'s board is the spec\'s rows, in its order, on its shelves', off.map(k => `${k}: ${JSON.stringify(all[k])}`).join(' | ')),
     ok(boardOf('after-crowd').ledger && crowdBuys.length === 0, 'the crowd\'s board is readings, nothing to buy', crowdBuys.map(u => u.key).join(' ')),
     ok(Object.keys(AFTER_BUILDS).join() === 'mill,workshop', 'the stations are listed in camp order', Object.keys(AFTER_BUILDS).join())

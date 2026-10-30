@@ -18,6 +18,7 @@ import { TESTS as boardwords } from './selftest/boardwords.js';
 import { TESTS as contrast } from './selftest/contrast.js';
 import { TESTS as wind } from './selftest/wind.js';
 import { TESTS as crew } from './selftest/crew.js';
+import { TESTS as rosterhats } from './selftest/rosterhats.js';
 import { TESTS as stations } from './selftest/stations.js';
 import { TESTS as view } from './selftest/view.js';
 import { TESTS as dust } from './selftest/dust.js';
@@ -29,6 +30,7 @@ import { TESTS as house } from './selftest/house.js';
 import { TESTS as sky } from './selftest/sky.js';
 import { TESTS as input } from './selftest/input.js';
 import { TESTS as settings } from './selftest/settings.js';
+import { TESTS as savemark } from './selftest/savemark.js';
 import { TESTS as index } from './selftest/index.js';
 import { TESTS as scenes } from './selftest/scenes.js';
 import { TESTS as queue } from './selftest/queue.js';
@@ -49,6 +51,7 @@ import { TESTS as afterboards } from './selftest/afterboards.js';   // track C: 
 import { TESTS as afterhover } from './selftest/afterhover.js';   // track a3-shared: act 3 on the shared hover and pile marks
 import { TESTS as playcheck } from './selftest/playcheck.js';   // a play check for each place, by the pointer
 import { TESTS as cutbench } from './selftest/cutbench.js';   // the cutscene bench (cutscenes.html)
+import { TESTS as buildsign } from './selftest/buildsign.js';   // the build sign under a real pointer
 
 // Every group there is, in file order.
 const TESTS = [
@@ -58,6 +61,7 @@ const TESTS = [
   ...contrast,
   ...wind,
   ...crew,
+  ...rosterhats,
   ...stations,
   ...view,
   ...dust,
@@ -69,6 +73,7 @@ const TESTS = [
   ...sky,
   ...input,
   ...settings,
+  ...savemark,
   ...index,
   ...scenes,
   ...queue,
@@ -89,6 +94,7 @@ const TESTS = [
   ...afterhover,
   ...playcheck,
   ...cutbench,
+  ...buildsign,
 ];
 
 // `__test()` runs the lot. `__test('casino')` runs the groups whose name says

@@ -19,7 +19,6 @@ export const WIZ_DUST = 1000;
 export const WIZ_SHARDS = 200;
 export const WIZ_SPORES = 200;
 export const WIZ_RATE = 1.7;         // and each one after the first
-export const WIZ_BREW_MS = 120000;   // how long the tower is at it
 // A bolt at the star, this often. A fresh wizard should feel like the bottom
 // of a ladder: the speed ladder ends near ~850 ms, so every rung bought is a
 // change you can watch.

@@ -21,7 +21,7 @@ import { draw, asPicture } from './render.js';
 import { hud, remeasure } from './board.js';
 import { fillQueue } from './queue.js';
 import { buildShop } from './shop.js';
-import { persist, restore, claimSave, reset } from './persist.js';
+import { persist, restore, claimAtBoot, setSeen, reset } from './persist.js';
 import { crew as hire, fast } from './hooks.js';
 import { reducedMotion } from './prefs.js';
 import { TITLE_COLUMN, DEMO_HEAD_START_S, PICTURE_UP, THEME_TURN } from './config.js';
@@ -31,6 +31,7 @@ import { refreshHop } from './hop.js';                     // and the two arrows
 import { refreshFullscreen } from './fullscreen.js';        // and the whole screen, where there is one to be had
 import { refreshPause, refreshHeldSeat } from './pause.js';  // and the pause button on a phone
 import { refreshCorner } from './corner.js';                // and the row they stand in, with the crew switch
+import { refreshSaveMark } from './savemark.js';           // and the save mark at the row's end
 
 // The veil comes off one frame after the first, so the frame is painted under
 // it before it starts to go.
@@ -42,7 +43,7 @@ function unveil() {
 // nought in one rule; settings.js toggles it again when the switch is pressed.
 document.body.classList.toggle('still', reducedMotion());
 
-import { OWNER_KEY, TAB, primeStore } from './save.js';
+import { OWNER_KEY, TAB, claimOf, primeStore } from './save.js';
 import { hold, stepPan } from './input.js';   // the mouse, the wheel and the keyboard -- and the hold the boot stops on
 import { offerDress } from './settings.js';   // the held sheet's shelf, and the picker offered at a new yard
 import { paintWardrobe } from './wardrobepage.js';   // the two of them, walking on the picker while it is up
@@ -112,6 +113,7 @@ function frame() {
     refreshFullscreen();
     refreshPause();
     refreshCorner();
+    refreshSaveMark();
     refreshHeldSeat();
     fillQueue();
     stepToast();
@@ -189,17 +191,23 @@ setInterval(() => {
   const w = document.documentElement.clientWidth, h = document.documentElement.clientHeight;
   if (w !== S.W || h !== S.H) relayout();        // in case a resize event is missed
 }, 500);
+// Two tabs on one save: this page names itself as the writer, with the stamp
+// of each save it writes; a page that finds another page's name there stands
+// aside (`persist`) while that page's save is newer than its own yard, and
+// says so on the save mark rather than stopping the game -- the player keeps
+// playing, and pressing the mark reloads onto the newest save. A page on
+// screen whose yard is as new as anything written takes the slot back by
+// itself. A page booted unseen writes nothing until it is looked at
+// (`claimAtBoot`); the desk's window is its own and can boot before it is
+// shown. Before the first write, so an unseen page writes nothing.
+setSeen(() => document.visibilityState === 'visible');
+if (!demo && !bench) claimAtBoot(document.visibilityState === 'hidden' && !window.desk);
 document.addEventListener('visibilitychange', persist);
 addEventListener('pagehide', persist);
 setInterval(persist, 1000);
-// Two tabs on one save: this page names itself as the writer; a page that
-// sees the name change under it has been overtaken, stops writing (`persist`
-// yields), and reloads when next looked at, which is the moment it would
-// otherwise have written an hour-old yard over the hour just played.
-if (!demo && !bench) claimSave();
-addEventListener('storage', e => { if (!demo && !bench && e.key === OWNER_KEY() && e.newValue && e.newValue !== TAB) S.yielded = true; });
-document.addEventListener('visibilitychange', () => {
-  if (S.yielded && document.visibilityState === 'visible') location.reload();
+addEventListener('storage', e => {
+  if (demo || bench || e.key !== OWNER_KEY() || !e.newValue) return;
+  if (claimOf(e.newValue)?.tab !== TAB) S.yielded = true;
 });
 
 // A build-time constant, so a build drops these imports and everything under

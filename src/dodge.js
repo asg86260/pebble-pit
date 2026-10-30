@@ -7,6 +7,11 @@
 const topleft = document.getElementById('topleft');
 const corner = document.getElementById('corner');
 
+// The save mark stands in the row but is laid out whether it is up or not, so
+// it is no card's to dodge: a card that stopped short of an empty square would
+// sit a square off the corner and push the tags and toast about with it.
+const held = el => el.hidden || el.id === 'savemark';
+
 // The page's own spacing, read once: the gap between two cards and under a
 // card one ducks below is the gap every floating card here keeps.
 export const GAP = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gap')) || 0;
@@ -15,7 +20,7 @@ export const GAP = parseFloat(getComputedStyle(document.documentElement).getProp
 export function cornerCards() {
   const out = [];
   const add = el => {
-    if (!el || el.hidden || el.classList.contains('off')) return;
+    if (!el || held(el) || el.classList.contains('off')) return;
     const r = el.getBoundingClientRect();
     if (r.width && r.height) out.push(r);
   };
@@ -30,7 +35,7 @@ export function cornerCards() {
 export function cornerLeft() {
   let x = null;
   if (corner) for (const el of corner.children) {
-    if (el.hidden) continue;
+    if (held(el)) continue;
     const r = el.getBoundingClientRect();
     if (r.width && (x === null || r.left < x)) x = r.left;
   }

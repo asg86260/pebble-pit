@@ -196,17 +196,15 @@ function backToYard() {
 }
 
 // The glide under way: the farther of its two places (the one drawn through
-// the ring), the portal it goes by (null: the wizards'), and a count of
-// glides, so the picture frozen for one (render.js) is never another's. This
+// the ring) and the portal it goes by (null: the wizards'). This
 // session's only: a reload mid-glide lands in the nearer place, where
 // `S.view` already is.
-let through = null, via = null, glides = 0, landX = null;  // held: the glide under way; `glides` only counts up, so a frozen picture is never another's
+let through = null, via = null, landX = null;  // held: the glide under way
 // The window the player was looking at in the place being left, coming back
 // out: the picture the ring closes is that window, not the place framed
 // afresh on its portal, which from a corner square pressed anywhere else
 // was a cut before the ring had moved.
 let leftCam = null;  // held: the camera of the place being left by an outward glide
-export const glideNo = () => glides;
 // The act portal the glide under way goes by, or null (heaven's gates stand
 // open for it, portals.js).
 export const glidingBy = () => (gliding() ? via : null);
@@ -243,7 +241,7 @@ function start(v, how = null, x = null) {
   // (render/shaftway.js); an act portal's hands are portals.js's.
   if (!how) { if (inward) S.portalDown = true; else if (S.portalDown) S.portalRound = true; }
   posed = false;
-  through = inner; via = how; glides++; landX = x;
+  through = inner; via = how; landX = x;
   const at = place => (place === v && x != null ? x : ringIn(place).x);
   if (inward && S.view === 'yard') keepYard();
   if (reducedMotion()) {
@@ -272,8 +270,7 @@ export const travel = (v, key, x = null) => start(v, key, x);
 let arrivedVia = null;  // held: an arrival not yet read
 export function arrivedThrough() { const was = arrivedVia; arrivedVia = null; return was; }
 // What a page opened fresh has: no glide, no arrival waiting to be read and
-// no yard window kept. `glides` is left counting up, so a frozen picture is
-// never taken for a later glide's.
+// no yard window kept.
 heldState('view', () => {
   landed = false; posed = false;
   through = null; via = null; landX = null; leftCam = null;
@@ -356,7 +353,7 @@ function glide(dt) {
 // was pressed. Null when there is no glide.
 // `inner` is the place shown through the ring and `cam` its camera, framed
 // where the glide lands in it, so the picture in the ring is the one the view
-// arrives on; `no` says which glide it is.
+// arrives on.
 export function ripple() {
   if (!gliding()) return null;
   // A glide with no record of its far place (a scene's, or a caller from
@@ -370,5 +367,5 @@ export function ripple() {
   const far = Math.max(...[[0, 0], [S.W, 0], [0, S.H], [S.W, S.H]]
     .map(([x, y]) => Math.hypot(x - cx, y - cy))) + P * 8;
   const e = ease(S.viewFade);
-  return { cx, cy, r: far * (down ? e : 1 - e), inner: through, cam: inner, no: glides };
+  return { cx, cy, r: far * (down ? e : 1 - e), inner: through, cam: inner };
 }

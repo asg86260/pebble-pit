@@ -5,19 +5,35 @@ import { P } from './yard.js';
 // See works.js and DESIGN.md, "Time is a price".
 //
 // Worker-seconds, not seconds: "how long with one pair of hands on it", so
-// three quarriers take a bench out in a third of it. One table off the kind of
-// thing a row sells, rather than a number on each row. Weighted light at the
-// end the opening touches: at the start of a game nothing else is going on
-// while a build runs, which is what makes a number here feel long.
-export const WORK_BASE = {
-  rung: 5,          // one step up a ladder
-  place: 18,        // a bench in the cut, a furrow, a hat off the stand
-  building: 45,     // the lab, the casino, the outhouse, the tower
-  machine: 90       // the ram, the belt, the jaw, the tiller
+// three quarriers take a bench out in a third of it. One rule off where a row
+// sits in its own progression, never a number on each row (the owner,
+// 2026-10-29: "30 seconds should be the absolute max... most things should
+// just cost 10-20 seconds"): a row's `along` is 0 at the foot of its ladder
+// and 1 at the top, and its time is a line across the band its kind sells in.
+// Nothing is shorter than the floor, which is long enough to see hands on it
+// and the walk that feeds it, and nothing is longer than the cap, one body.
+export const BUILD_MIN_S = 10;     // the shortest any build runs
+export const BUILD_MAX_S = 20;     // the top of an ordinary ladder: most builds sit between these
+export const BUILD_CAP_S = 30;     // nothing takes longer, one body, anywhere
+// The band each kind of thing runs along, [foot, top]. A rung is the ordinary
+// 10-20; a place (a bench, a plot) may end a little higher; a building ends at
+// the cap, and a machine starts where an ordinary ladder ends.
+export const BUILD_BANDS = {
+  rung: [BUILD_MIN_S, BUILD_MAX_S],
+  place: [BUILD_MIN_S, 25],
+  building: [BUILD_MIN_S, BUILD_CAP_S],
+  machine: [BUILD_MAX_S, BUILD_CAP_S]
 };
-// and it climbs with the rung the way the price does, so the first bench in the
-// cut is half a minute and the fifth is nearer two
-export const WORK_STEP = 1.35;
+// Where a row with no ladder of its own sits: a bare rung is a foot, and the
+// first of a place, a building or a machine is a big build, so the top.
+export const BUILD_ALONE = { rung: 0, place: 1, building: 1, machine: 1 };
+// Named spots on the band for the odd row that is one of a short list (the
+// shield rows, the first bench): the foot, the middle, the top.
+export const ALONG = { first: 0, middle: 0.5, last: 1 };
+// A row sold again and again with no end (a house, a pod) climbs this many
+// copies to the middle of its band, then eases toward the top and never
+// passes it: n / (n + this).
+export const BUILD_REPEAT_HALF = 12;
 // a body does one second of building a second -- the lab's own figure, because
 // it is the same kind of work
 export const BUILD_EFFORT = 1;
@@ -89,13 +105,3 @@ export const GRIT_SEA_LIFE = 2.0;    // seconds -- several bursts hang at once
 // for a rock landing (`SHAKE_LAND` in rock.js, which this is half of).
 export const BUILD_SHAKE = 7.5;
 
-// --- the house's own curve ------------------------------------------------------
-// The house row has no rung, so `workFor` would give it a flat figure forever;
-// its rung in all but name is how many rooms already stand. See the `work`
-// override on `HOUSE_ROW` in upgrades.js, and `workFor` in works.js. Short at
-// the near end: the first house is built by one body with nothing else going
-// on, and eight seconds gets the settlement moving while you are still reading
-// the yard.
-export const HOUSE_WORK0 = 8;        // the first house, in worker-seconds
-export const HOUSE_WORK_STEP = 1.15; // and each one after it
-export const HOUSE_WORK_MAX = 120;   // never worse than the machines

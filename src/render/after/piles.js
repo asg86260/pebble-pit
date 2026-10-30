@@ -1,8 +1,8 @@
 // The camp's piles, yard style (docs/mocks/act3-stations-2026-10-18): the
 // things themselves, stacked; the counted piles, the workshop's sign rack
 // among them, as plots of blocks, each brought and taken by a body or the
-// hand and never faded. The sawdust heap takes a frame (kit.js) and the
-// pile's state (`pileState`: what it shows, what it showed, since when).
+// hand and never faded. A pile's state (`pileState`: what it shows, what it
+// showed, since when) is kept in kit.js.
 // Cells off the frame's ground.
 
 import { P, AFTER_COUNT_LIFT, AFTER_BLOCK, KINDS, AFTER_GOODS_DARK } from '../../config.js';
@@ -82,7 +82,7 @@ export function drawGround(t) {
   }
 }
 
-// A heap of grains, in the sawdust's tones a cell, growing as a triangle from
+// A heap of grains, in the dust's tones a cell, growing as a triangle from
 // its middle column `cx`, `R` cells high at its brim. `st` counts cells.
 const HEAPS = {};
 export function heapCells(R) {

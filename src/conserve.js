@@ -12,15 +12,14 @@
 import { S, afterGround as G, deepBed } from './state.js';
 import { kindOf } from './grid.js';
 import { isDeepType } from './jobs.js';
-import { sawdustCount, sawyerHolds } from './after/mill.js';
+import { sawyerHolds } from './after/mill.js';
 
 // The kinds the census counts, act 3's.
-export const CENSUS_KINDS = ['log', 'plank', 'sign', 'sawdust', 'load', 'scale'];
+export const CENSUS_KINDS = ['log', 'plank', 'sign', 'load', 'scale'];
 
 // How many units of each kind exist now in act 3: lying on its ground, in the
 // hand, in the air, in its bodies' arms, and inside the saw mill (the log on
-// its bed or in the sawyer's arms, the blocks on their way out of it, the
-// grains falling to and lying on the heap).
+// its bed or in the sawyer's arms, the blocks on their way out of it).
 export function census() {
   const n = Object.fromEntries(CENSUS_KINDS.map(k => [k, 0]));
   deepCensus(n);
@@ -35,9 +34,7 @@ export function census() {
     if (saw.bed) n.log++;
     if (sawyerHolds()) n.log++;
     n.plank += saw.out.length;
-    n.sawdust += saw.dust.length;
   }
-  n.sawdust += sawdustCount();
   return n;
 }
 

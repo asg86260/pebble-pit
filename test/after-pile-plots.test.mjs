@@ -29,8 +29,8 @@ const S = yard.S;
 const read = () => window.__afterRead();
 const OPENING = ['house-fall', 'arrive', 'meet-god', 'refuse'];
 const KEY = 'boulder-clicker/v4';
-// The saw mill's bigger heap, a bill paid in timber.
-const HEAP_TIMBER = AFTER_UPGRADES['after-heap'].bills[0].find(([c]) => c === 'timber')[1];
+// The saw mill's second blade, a bill paid in timber.
+const BILL_TIMBER = AFTER_UPGRADES['after-blade'].bills[0].find(([c]) => c === 'timber')[1];
 
 // The act begun, `n` members walked out, the saw mill ordered off the shack
 // and raised, a sawyer put on.
@@ -65,10 +65,11 @@ group('each pile holds exactly its stock in blocks through a played run, a timbe
   // A bill paid in timber, bought the player's way: an order, its blocks
   // spoken for on the pile and carried off it by bodies, a block at a time,
   // the row landing with the last (after/build.js).
-  const t0 = goodCount('timber'), bill = HEAP_TIMBER;
-  const bought = window.__buy('after-heap');
+  window.__afterGrant({ timber: Math.max(0, BILL_TIMBER + 1 - goodCount('timber')) });
+  const t0 = goodCount('timber'), bill = BILL_TIMBER;
+  const bought = window.__buy('after-blade');
   const atOnce = goodCount('timber') === t0;
-  const landed = runUntil(() => (S.after.ups['after-heap'] || 0) > 0, 120);
+  const landed = runUntil(() => (S.after.ups['after-blade'] || 0) > 0, 120);
   run(5);
   const sizes = PILED.every(w => stripOf(w).z === AFTER_BLOCK[AFTER_PILES[w].good]);
   window.__actsOn(null);
@@ -87,7 +88,7 @@ group('a timber pile at its brim stops the saw and wears the pile-full mark', as
   window.__afterGrant({ grovelogs: 99 });
   // Out to the post, the haul set going, and the saw cutting until the pile fills.
   const full = runUntil(() => pileFull('timber'), 240);
-  run(2);
+  run(8);                                    // the cut under way lands its blocks first
   const logs0 = goodCount('logs') + goodCount('grovelogs'), t0 = goodCount('timber'), mark = !!S.pileFull['after-pile-timber'];
   const sawyer = S.after.bodies.find(b => b.job === AFTER_JOB.SAW);
   run(30);
@@ -95,9 +96,9 @@ group('a timber pile at its brim stops the saw and wears the pile-full mark', as
   const says = jobSays('sawyer').includes(msg('hover-pile-full'));
   // Room made by a bill bought the player's way, its blocks carried off the
   // pile by bodies: the mark comes off and the saw cuts again.
-  const t1 = goodCount('timber'), bought = window.__buy('after-heap');
+  const t1 = goodCount('timber'), bought = window.__buy('after-blade');
   const cleared = runUntil(() => !S.pileFull['after-pile-timber'], 60);
-  const cutAgain = runUntil(() => goodCount('timber') > t1 - HEAP_TIMBER, 60);
+  const cutAgain = runUntil(() => goodCount('timber') > t1 - BILL_TIMBER, 60);
   window.__actsOn(null);
   return [
     ok(staffed && !!sawyer, 'a sawyer put on through the roster'),

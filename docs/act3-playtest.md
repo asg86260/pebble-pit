@@ -44,7 +44,7 @@ your own yard back.
 | grove (tree) | drag the saw back and forth (axe needed) | tree into logs; the stump stays | the axe, plots, faster growth, bigger trees, stump removal, woodcutter and hauler posts |
 | grove (stump) | hold the grip up for one root at a time, or yank it as it wobbles | stump out, sapling in | |
 | shack | none | builds every other station; a member raises it piece by piece, or the pair do if the camp is empty | the five stations |
-| saw mill | spin the flywheel | log into timber and sawdust | second blade, bigger heap, sawyer posts |
+| saw mill | spin the flywheel | log into four timber | second blade, sawyer posts |
 | sawdust heap | drag a load to the edge (a fling tips up to three) | tips sawdust through the notch while there's no paper mill | |
 | chipper | hold the feed down | log into sawdust | second drum, wider spout, feeder posts |
 | paper mill | stir the vat | sawdust into paper | bigger vat, drying line, pulper posts |

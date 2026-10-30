@@ -55,7 +55,7 @@ export const SCALE_MARK = [
 // `.`, a blank outside the edge. A solid fang hanging from its root, its tip
 // hooked back as a snake's is (the owner's A, docs/mocks/fang-mark-2026-09-28.html):
 // a hollow tooth read as a triangle at nine pixels.
-// The floating build button wears it (deep/buildbutton.js).
+// The deep's build sign wears it on its price line (buildsign.js).
 export const FANG_MARK = [
   ' #####   ',
   ' ######  ',
@@ -73,12 +73,6 @@ export const FANG_MARK = [
 // hand gathers until it stands.
 export const POD_SCALES0 = 10;
 export const POD_RATE = 1.3;
-// Built like a house, short and climbing (HOUSE_WORK0): a pod is one body's
-// bed, not a station, and the building's 45 seconds held a new hand back
-// longer than it took to earn the scales for it.
-export const POD_WORK0 = 3;        // the first pod past the sqwife's, in worker-seconds
-export const POD_WORK_STEP = 1.1;  // and each one after it
-export const POD_WORK_MAX = 8;
 
 // --- the party's floor (docs/wave-party.md, "Floor slots") -------------------
 // Where a station may stand: one share of the floor a station, from the
@@ -104,12 +98,6 @@ export const FIGHT_STATIONS_MAX = DEEP_SLOTS.length;
 // build, a flag -- keyed by the id rather than the kind, since a kind can
 // stand twice.
 export const PARTY_IDS = Array.from({ length: FIGHT_STATIONS_MAX }, (_, i) => `s${i + 1}`);
-
-// The floating build button: how high over the deep's floor its foot stands,
-// above the slot the station will go up on, and how long it takes to fade in
-// or out.
-export const BUILD_BUTTON_UP = P * 30;
-export const BUILD_FADE_MS = 200;
 // A rail folding away: its height and ink go in this many steps over this
 // long, and at once under reduced motion.
 export const RAIL_FOLD_MS = 200;

@@ -9,10 +9,9 @@
 import { CREW_FADE, P, MAGIC_TONES, RIPPLE_RINGS, RIPPLE_GAP, GREY, AFTER_TONES } from './config.js';
 import { crewView } from './prefs.js';
 import { ctx, canvas, paintOn } from './render/ctx.js';
-import { inkMode, onTheme } from './ink.js';
+import { inkMode } from './ink.js';
 import { drawAir, drawAirNear } from './air.js';
 import { drawBirds, drawClouds } from './weather.js';
-import { held as heldState } from './reset.js';
 
 import { drawApothecary, drawBrewSteam, drawPotLabels } from './render/apothecary.js';
 import { drawBalloonPosts } from './render/balloon.js';
@@ -27,6 +26,7 @@ import { drawCount } from './render/counter.js';
 import { drawBench, drawDroppedHats, drawBuried, drawIntro, drawKitStands,
          drawPointed, drawRosterBodies, drawSays, drawWorkers, drawForklifts, drawGarage, drawHeld, drawSightVeil, drawDeepSight, drawPlaceSight } from './render/crew.js';
 import { drawCursor } from './render/cursor.js';
+import { drawBuildSigns } from './render/buildsign.js';
 import { drawPadMark } from './render/padmark.js';
 import { clearPage, clipToHalf, enterScreen, enterSky, enterWorld, leaveWorld, pressFrame } from './render/frame.js';
 import { deepTop } from './deep/place.js';
@@ -50,7 +50,7 @@ import { drawOuthouse, drawTower, drawTowerWaves } from './render/tower.js';
 import { drawRoombaDock, drawRoombas } from './render/roomba.js';
 import { drawShack } from './render/shack.js';
 import { drawDeepWater, drawDeepFloor, drawDeepBed, drawDeepStations, drawDeepMotes,
-         drawSwimmers, drawDeepInvert } from './render/deep.js';
+         drawSwimmers } from './render/deep.js';
 import { ripple, deepCamera, canGoDown, gliding, glidingBy } from './view.js';
 import { drawThrough, warmRipple } from './render/ripple.js';
 import { drawSerpent, drawSerpentDiving, drawSnatch, drawFreed, drawOrb, drawBarrier, drawFocusLines, drawMeal, drawMealUnder } from './render/serpent.js';
@@ -306,6 +306,7 @@ const LAYERS = [
   { name: 'sight veil', draw: drawSightVeil },   // the right button held: the yard behind the crew veiled pale
   { name: 'roster', in: YARD_DEEP, draw: drawRosterBodies },    // who is working here, under the place they work
   { name: 'buildmock', in: ['yard', 'after'], draw: drawBuildMock }, // MOCK build-button-in-the-world  a lot's build button
+  { name: 'build signs', in: ['yard', 'deep', 'after'], draw: drawBuildSigns }, // staked in each empty lot, behind the crew who walk past
   { name: 'intro', draw: drawIntro },            // the two of them, or whoever is under the rock
   { name: 'forklifts', draw: drawForklifts },   // behind the crew, who walk in front of the machines
   { name: 'workers', draw: drawWorkers, dim: 1 },
@@ -335,8 +336,8 @@ const LAYERS = [
   // (render/recede.js). Before the deep is turned over, so its background
   // settles toward the liquid as the yard's does toward the page.
   { name: 'recede', in: ALL, draw: wash },
-  // Last in the world, over everything the deep drew: the negative of it.
-  { name: 'deep invert', in: 'deep', draw: drawDeepInvert },
+  // Everything of the deep up to here is drawn in its negative on the light
+  // page (ink.js, 'deep'); what follows stands over it as written.
   // What the blows did and what the heal took back, over the finished deep
   // and not turned over with it: their tones are written as seen, so each
   // fades against the picture actually behind it, whichever way the deep was
@@ -385,7 +386,7 @@ const FISH = new Set(['deep fauna', 'meal gulped', 'meal']);
 const AFTER_WASH = new Set(['fight numbers', 'status posts', 'air near', 'pot labels']);
 // The yard's reading, which is in no scene: faded right out while one holds,
 // on the recede's own number (render/recede.js, `hudInk`).
-const HUD = new Set(['pile marks', 'after pile marks','roster', 'after roster', 'roster counts', 'kit counts', 'stock count', 'after counts', 'counter']);
+const HUD = new Set(['pile marks', 'after pile marks','roster', 'build signs','after roster', 'roster counts', 'kit counts', 'stock count', 'after counts', 'counter']);
 // Bodies of either kind in one layer: drawn behind the wash and again over
 // it, each body sorted by `bodyInk`.
 const MIXED = new Set(['workers', 'says', 'swimmers', 'party']);
@@ -393,7 +394,7 @@ const MIXED = new Set(['workers', 'says', 'swimmers', 'party']);
 // The landing page's picture (main.js, `demo`) is the yard to be looked at
 // and not read: the layers a player reads off the picture are left out of it.
 const READING = new Set(['pad focus', 'offer flags', 'paid', 'pile marks', 'after pile marks', 'auras', 'work bars', 'done marks',
-                         'casino mark', 'roster', 'after roster', 'pointed', 'cursor', 'roster counts', 'kit counts',
+                         'casino mark', 'roster', 'build signs', 'after roster', 'pointed', 'cursor', 'roster counts', 'kit counts',
                          'stock count', 'after counts', 'pot labels', 'counter', 'fight numbers', 'status posts', 'serpent bar']);
 let picture = false;            // page: the landing page draws the yard as a picture
 export const asPicture = on => { picture = on; };
@@ -457,11 +458,14 @@ function drawHalf(place, from = 0, to = LAYERS.length, skip = null) {
   }
 }
 
-// The dark page's map a layer is drawn in (ink.js): the deep's whole half in
-// the deep's own, act 3's own layers in its own spread, and the rest turned
-// over between the dark page's paper and ink. On the light page every map is
-// the identity.
-const mapOf = (layer, place) => place === 'deep' ? 'deep' : READING.has(layer.name) ? 'line' : layer.in === 'after' ? 'after' : 'yard';
+// The map a layer is drawn in (ink.js): the deep's half in the deep's own --
+// the negative on the light page -- up to and with the scene's wash, and what
+// stands over the finished deep (the fight numbers, the posts, the glass) in
+// 'deep-over'; act 3's own layers in its own spread; the rest turned over
+// between the dark page's paper and ink, and as written on the light page.
+const DEEP_DONE = LAYERS.findIndex(l => l.name === 'recede');
+const mapOf = (layer, i, place) => place === 'deep' ? (i > DEEP_DONE ? 'deep-over' : 'deep')
+  : READING.has(layer.name) ? 'line' : layer.in === 'after' ? 'after' : 'yard';
 
 function drawLayer(layer, i, place) {
   // A `dim` layer is the crew's own plane, and the corner's crew switch
@@ -471,7 +475,7 @@ function drawLayer(layer, i, place) {
   // The alpha is put back the same frame: nothing else is ever drawn faint.
   const view = layer.dim ? crewView() : 'show';
   if (view === 'hide') return;
-  inkMode(mapOf(layer, place));
+  inkMode(mapOf(layer, i, place));
   const faint = view === 'fade';
   // Cut at the shaft's middle in the yard and the deep; an act's place draws
   // none of the layers the cut is for (`inHalf`).
@@ -492,11 +496,10 @@ function drawLayer(layer, i, place) {
 // both. With no glide, the ripple is readied while the page is idle -- not on
 // the landing page's picture, which never goes down.
 //
-// The far place is not drawn a frame at a time: it is painted once, on the
-// glide's first frame, with its own camera onto a sheet the window's size,
-// and the ring shows that frozen picture (the owner's portals review,
-// 2026-10-17): one pass of the layers a frame, whichever two places the
-// ripple joins (view.js, `ripple`: the deep or an act's place).
+// The far place is painted every frame of the glide with its own camera onto
+// a sheet the window's size, and the ring shows it live (`farPicture`),
+// whichever two places the ripple joins (view.js, `ripple`: the deep or an
+// act's place).
 //
 // The frame is drawn in two stretches of the list. The world, at the drawn
 // zoom (`S.zoom`, always a whole cell): straight onto the glass when that is
@@ -597,16 +600,18 @@ function scaledWorld(fn) {
   ctx.restore();
 }
 
-// The far place's picture for glide `rip.no`, painted once. The yard's knock
-// is the yard's (world.js, `stepShake`): the far place is drawn still.
-let frozen = null;              // held: the far place painted for glide `no`; the glide count is no key across yards
-heldState('render-frozen', () => { frozen = null; });
-onTheme(() => { frozen = null; });   // and painted in the page's inks
+// The far place's picture, painted every frame of the glide, live (the owner,
+// 2026-10-29: "make it live"; it was painted once and held, when a second pass
+// of the layers cost the frame in Firefox, PERF.md "The ripple in Firefox").
+// The yard's knock is the yard's (world.js, `stepShake`): the far place is
+// drawn still.
+let far = null;                 // cache: the sheet the far place is painted on, sized to the window on use
 function farPicture(rip) {
-  const c = frozen ? frozen.c : document.createElement('canvas');
-  if (frozen && frozen.no === rip.no && c.width === canvas.width && c.height === canvas.height) return c;
-  c.width = canvas.width;
-  c.height = canvas.height;
+  const c = far || (far = document.createElement('canvas'));
+  if (c.width !== canvas.width || c.height !== canvas.height) {
+    c.width = canvas.width;
+    c.height = canvas.height;
+  }
   paintOn(c, () => {
     ctx.save();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -615,7 +620,6 @@ function farPicture(rip) {
     asPlace(rip.inner, rip.cam, () => drawHalf(rip.inner, 0, LAYERS.length, GLASS));
     ctx.restore();
   });
-  frozen = { no: rip.no, c };
   return c;
 }
 
@@ -675,18 +679,14 @@ function drawRipples(rip) {
 }
 
 // --- the party wave, track BOARD (docs/wave-party.md) -----------------------------
-// Two things that stand in the deep rather than on a board, seated every frame
-// after the picture, in whichever half is up: the open station's rails, laid
-// into its board and filled, and the floating button over the next free floor
-// slot. Page elements, not paint, and last, so the camera they are seated by
-// is the one the frame was drawn with.
+// The open station's rails, laid into its board and filled: they stand in the
+// deep rather than on a board, seated every frame after the picture, in
+// whichever half is up. A page element, not paint, and last, so the camera it
+// is seated by is the one the frame was drawn with.
 //
-// Both are seated in every place, not only the deep: each decides for itself
-// whether it shows, and the one place it must hear that it does not is
-// whichever place is up when it should fade out. A layer naming no place
-// draws in the yard alone, which kept the button from ever showing in the
-// deep it is for.
+// Seated in every place, not only the deep: it decides for itself whether it
+// shows, and the one place it must hear that it does not is whichever place
+// is up when it should fade out.
 import { seatRails } from './deep/rails.js';
-import { seatBuildButton } from './deep/buildbutton.js';
 import { drawBuildMock } from './buildmock.js'; // MOCK build-button-in-the-world
-LAYERS.push({ name: 'rails', in: ALL, draw: seatRails }, { name: 'build button', in: ALL, draw: seatBuildButton });
+LAYERS.push({ name: 'rails', in: ALL, draw: seatRails });

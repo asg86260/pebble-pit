@@ -8,7 +8,7 @@
 import { group, ok, run, yard } from './helpers.mjs';
 import { rungOf, rungsOf } from '../src/words.js';
 import { workFor } from '../src/works.js';
-import { QUARRY_BENCH0, QUARRY_BENCH_MAX, FARM_PLOTS0, FARM_PLOTS_MAX, WORK_STEP } from '../src/config.js';
+import { QUARRY_BENCH0, QUARRY_BENCH_MAX, FARM_PLOTS0, FARM_PLOTS_MAX, BUILD_CAP_S } from '../src/config.js';
 import { QUARRY_UPGRADES } from '../src/quarry.js';
 import { FARM_UPGRADES } from '../src/farm.js';
 
@@ -38,9 +38,9 @@ group('the shovel and plot rows climb a ladder of their own', async () => {
        'a fresh farm has none lit, one a plot it can break', JSON.stringify(plotFirst)),
     ok(boughtBench && boughtPlot, 'both rows are bought'),
     ok(benchNext.at === 1 && plotNext.at === 1, 'and each lights a pip', `${benchNext.at}, ${plotNext.at}`),
-    ok(Math.abs(benchNext.work / benchFirst.work - WORK_STEP) < 0.1,
-       'the next bench takes a step longer, as WORK_BASE says', `${benchFirst.work}s -> ${benchNext.work}s`),
-    ok(Math.abs(plotNext.work / plotFirst.work - WORK_STEP) < 0.1,
+    ok(benchNext.work > benchFirst.work && benchNext.work <= BUILD_CAP_S,
+       'the next bench takes a step longer, inside the cap', `${benchFirst.work}s -> ${benchNext.work}s`),
+    ok(plotNext.work > plotFirst.work && plotNext.work <= BUILD_CAP_S,
        'and so does the next plot', `${plotFirst.work}s -> ${plotNext.work}s`)
   ];
 });

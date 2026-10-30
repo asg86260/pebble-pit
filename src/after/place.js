@@ -18,7 +18,6 @@ import { P, AFTER_GAP, AFTER_H, AFTER_W, AFTER_FLOOR_MARGIN, AFTER_PINE,
          AFTER_SIGN_BOARD, AFTER_PEDESTAL_SIGN_GAP } from '../config.js';
 
 import { S } from '../state.js';
-import { AFTER_MILL } from '../config.js';
 import { AFTER_PLOT_GAP, AFTER_PILE_GAP } from '../config.js'; // MOCK grove
 import { CAMP_ORDER } from './art.js'; // MOCK grove
 import { ART as BASE_ART, standCol, rampRun, pileLeft, pileCells, pileHigh, pileGrid } from './art.js';
@@ -179,14 +178,6 @@ export const pileMid = (key, what) => {
   const art = ART[key], s = standCol(art, what);
   return stationX0(key) + (art.flip ? art.flip - s : s) * AP;
 };
-// The saw mill's sawdust heap at the saw's foot, under the bed between its
-// legs, where the kerf falls (config, AFTER_MILL.heap; after/mill.js):
-// `heapMid` the blade's column it is fed at, `heapX` its left edge, and
-// `notchX` where a body stands to tip it through the hatch under it, clear
-// of the frame's right foot.
-export const heapMid = () => stationX0('mill') + AFTER_MILL.frame.bx * AP;
-export const heapX = () => stationX0('mill') + AFTER_MILL.heap.x * AP;
-export const notchX = () => stationX0('mill') + AFTER_MILL.heap.tipAt * AP;
 // Where the pair stand to speak: on the pillar's top, their feet on it, two
 // cells apart. A speaker's spot is its left edge.
 // The podium the pair stand on, 0 the soapbox: the rungs bought (the ladder's
@@ -338,7 +329,6 @@ export function floorFlats() {
     on(span(stationDoor(key) - P, 3));
     on(span(signBox(key).x, AFTER_SIGN_BOARD.w * AFTER_ART_SCALE));
   }
-  if (sited('mill')) out.push([...span(heapX(), AFTER_MILL.heap.cols * AFTER_ART_SCALE), shelfOf('mill')], [...span(notchX(), 2 * AFTER_ART_SCALE), shelfOf('mill')]);
   // The rebel pile at the pillar's foot.
   out.push(span(pileX(), 8));
   // Where a body steps from the floor into God's crowd's rows (`overCrowd`),
@@ -438,12 +428,11 @@ export const ICON = { saw: [13, 8], shovel: [5, 13] };
 // `partsOf`), in world px, read off the numbers the drawing uses
 // (render/after/stations.js, pine.js, pedestal.js). Every key has `box`, the
 // area a press works;
-// besides it: the mill's `wheel` {x, y, r}, the heap's `edge` (the notch's
-// x), a tree's `saw` {x, y}
+// besides it: the mill's `wheel` {x, y, r}, a tree's `saw` {x, y}
 // (the middle of its cut) and a stump's `at` {x, y} (its foot) for plot `i`;
 // and the rest of each moving part for the cues to point at.
 export function stationParts(key, i = 0) {
-  const fl = groundOf(key === 'heap' ? 'mill' : key);
+  const fl = groundOf(key);
   const at = (x0, x, y) => ({ x: x0 + x * AP, y: fl + y * AP });
   const box = (x0, x, y, w, h) => ({ x: x0 + x * AP, y: fl + y * AP, w: w * AP, h: h * AP });
   if (key === 'tree') {
@@ -467,13 +456,6 @@ export function stationParts(key, i = 0) {
     const iy = fl - (STUMP[2] + 2) * AP;
     return { box: box(bx, -2, -4, 5, 4), at: { x: bx + AP / 2, y: fl }, stump: box(bx, STUMP[0], -STUMP[2], STUMP[1], STUMP[2]),
              grip: box(bx, -2, -6, 5, 7), icon: { x: bx + P / 2, y: iy, box: { x: snap(bx + P / 2 - ic.w / 2), y: iy - ic.h, w: ic.w, h: ic.h } } };
-  }
-  if (key === 'heap') {
-    // under the saw mill's bed: the heap's plot (a click tips it), and the
-    // hatch in the floor under it
-    const H = AFTER_MILL.heap, x0 = heapX(), hatch = stationX0('mill') + H.hatch * AP;
-    const heap = { x: x0, y: fl - H.rows * AP, w: H.cols * AP, h: H.rows * AP };
-    return { box: heap, edge: hatch, heap, notch: { x: hatch, y: fl, w: AP * 2, h: AP * 3 } };
   }
   if (key === 'pedestal') {
     const a = speakerAt(0), b = speakerAt(1);

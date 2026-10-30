@@ -37,7 +37,7 @@ let pending = Promise.resolve(); // page: the database write behind the last set
 const CLOUD_KEY = 'boulder-clicker/cloud';
 const OURS = () => {
   const keys = [SLOT_KEY, CLOUD_KEY];
-  for (let n = 1; n <= SLOTS; n++) keys.push(keyOf(n), keyOf(n, '.prev'), keyOf(n, '.broken'));
+  for (let n = 1; n <= SLOTS; n++) keys.push(keyOf(n), keyOf(n, '.prev'), keyOf(n, '.broken'), keyOf(n, '.premig'));
   return keys;
 };
 export async function primeStore(open = openKv) {
@@ -65,6 +65,16 @@ export async function primeStore(open = openKv) {
   const n = +web.get(SLOT_KEY);
   slot = n >= 1 && n <= SLOTS ? n : 1;
 }
+// The database again, after a write found the connection gone: the cache is
+// the truth this page holds, so nothing is read back, and the next write goes
+// to the new connection.
+let reopening = null;           // page: a reopen under way
+function reopen(open = openKv) {
+  if (reopening) return;
+  reopening = Promise.resolve().then(() => open()).then(k => { if (k) kv = k; }, () => {})
+    .finally(() => { reopening = null; });
+}
+
 // For a check: the database write behind the last `set`, settled.
 export const storeSettled = () => pending;
 
@@ -103,8 +113,20 @@ const web = {
     if (kv) {
       cache.set(k, raw);
       const took = dbTook;
-      pending = kv.set(k, raw).then(() => { dbTook = true; trouble = null; },
-                                    err => { dbTook = false; refused(err); });
+      // A connection the browser has closed under the page (storage cleared,
+      // the database closing) throws here rather than refusing later. That
+      // is a refused write like any other -- said on the save mark, the game
+      // playing on -- and the database is opened again for the next one;
+      // thrown, it reached the interval and stopped the game.
+      try {
+        pending = kv.set(k, raw).then(() => { dbTook = true; trouble = null; },
+                                      err => { dbTook = false; refused(err); if (err?.name === 'InvalidStateError') reopen(); });
+      } catch (err) {
+        dbTook = false;
+        refused(err);
+        reopen();
+        return false;
+      }
       return took;
     }
     try { localStorage.setItem(k, raw); trouble = null; return true; } catch (err) { refused(err); return false; }
@@ -243,11 +265,17 @@ export const aboveFloor = s => !!s?.build && typeof s.build === 'object';
 // it over while `S.broken` says there is one.
 export const BROKEN_KEY = () => keyOf(slot, '.broken');
 
-// Which page last wrote the save. Every page names itself once, and a page
-// that finds another name there yields (`persist`, and the `storage` listener
+// Which page last wrote the save, and the stamp of what it wrote: "name
+// savedAt". A page that finds another name there yields unless what that page
+// wrote is no newer than its own yard (`persist`, and the `storage` listener
 // in main.js). The name follows the slot: two tabs on two slots are two yards.
+//
+// The name is the page's, not this module's: kept on the window, so a second
+// copy of this file in the same page -- the dev server serving it again after
+// an edit -- is the same writer, and cannot take the save from the game loop
+// that is actually running.
 export const OWNER_KEY = () => keyOf(slot, '.tab');
-export const TAB = Math.random().toString(36).slice(2, 10);
+export const TAB = globalThis.__boulderTab ||= Math.random().toString(36).slice(2, 10);
 
 // The blob as a save, or null, with the raw put aside under BROKEN_KEY when
 // there was one and it would not read.
@@ -299,11 +327,22 @@ export function save(state) {
 
 // This page's claim to be the one writing the save, and whose it is now. A
 // page that has never written holds no claim and defers to nobody.
-export function claimTab() {
-  try { localStorage.setItem(OWNER_KEY(), TAB); return true; } catch { return false; }
+export function claimTab(at = 0) {
+  try { localStorage.setItem(OWNER_KEY(), TAB + ' ' + (+at || 0)); return true; } catch { return false; }
+}
+// The claim as written: the name, and the stamp of the save that page last
+// wrote. A claim with no stamp (a build before the stamp, or a hand) is
+// treated as newer than anything, which is the old rule: stand aside.
+export function claimOf(raw) {
+  if (raw == null || raw === '') return null;
+  const [tab, at] = String(raw).split(' ');
+  return { tab, at: at == null ? Infinity : +at || 0 };
 }
 export function tabOwner() {
-  try { return localStorage.getItem(OWNER_KEY()); } catch { return null; }
+  try { return claimOf(localStorage.getItem(OWNER_KEY()))?.tab ?? null; } catch { return null; }
+}
+export function claimAt() {
+  try { return claimOf(localStorage.getItem(OWNER_KEY()))?.at ?? 0; } catch { return 0; }
 }
 
 export function clear() {
@@ -329,6 +368,22 @@ export function savePrev(raw) {
 export function loadPrev() {
   return web.get(PREV_KEY());
 }
+
+// The save as it stood before the migrations last rewrote it: written by
+// `restore` once per shape change, on the first load by a build whose
+// `SAVE_V` is past the save's, and never read by play. The autosave puts the
+// migrated yard over the only copy within a second, so a migration that
+// dropped something would otherwise leave nothing to roll back to. Its own
+// key, not `.prev`, which is the undo for an import. Only where there is room
+// for a second copy -- the database, or the desk -- never on the localStorage
+// fallback, whose few megabytes are shared with every game on the origin: a
+// late yard is most of a megabyte, and the copy meant to save the yard would
+// be the write that stopped it saving.
+export const PREMIG_KEY = () => keyOf(slot, '.premig');
+export function savePremig(raw) {
+  if (raw && (kv || desk())) web.set(PREMIG_KEY(), raw);
+}
+export const loadPremig = () => web.get(PREMIG_KEY());
 
 // Any slot's previous save, the way `savePrev` writes the open one's: where a
 // copy goes when the cloud's is taken over it, or it over the cloud's.

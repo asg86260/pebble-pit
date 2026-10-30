@@ -256,6 +256,9 @@ export const STEPS = [
   { name: 'core',         step: stepCore },
   { name: 'meteor',       step: c => stepMeteor(c.now) }, // and the sky, which has a rock in it now
   { name: 'summon',       step: c => stepSummon(c.dt) },  // and whatever the ring is pouring into it
+  // The pour that closes the sphere latches a restaff (`closeSphere`) after the
+  // drain above has run; left to the next frame, a save on this one lost it.
+  { name: 'restaffLate',  step: drainRestaff },
   { name: 'sparkle',      step: c => stepSparkle(c.dt) }, // and the magic they leave in the air
   { name: 'filter',        step: c => stepFilter(c.dt) },   // and the pumps on the air filter
   { name: 'apothecary',   step: c => stepApothecary(c.dt) },  // and the pot on the boil, minting its doses
@@ -680,7 +683,7 @@ STEPS.push({ name: 'played', step: c => { if (!S.staged) S.playedS += Math.max(0
 import { workPaused, stepFinaleAfter } from './finale.js';
 const HELD_STEPS = new Set(['core', 'machines', 'works', 'casino', 'table', 'apothecary', 'filter', 'meteor',
                             'summon', 'sparkle', 'house', 'breaks', 'balloons', 'craftair', 'glimpse', 'riftlife',
-                            'firstmuck', 'doses', 'dosemotes', 'mining', 'tossing', 'restaff']);
+                            'firstmuck', 'doses', 'dosemotes', 'mining', 'tossing', 'restaff', 'restaffLate']);
 for (const s of STEPS) {
   if (!HELD_STEPS.has(s.name)) continue;
   const go = s.step;

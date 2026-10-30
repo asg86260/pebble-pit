@@ -7,7 +7,7 @@
 // written a rung at a time in config/rungs.js.
 
 import { S } from '../state.js';
-import { TIER_BAND, TIER_RUNGS, LADDER_BANDS, BAND_COINS, SCALE_BAND_COINS, SCALE_RUNG_COINS, HELL_BAND_COINS, HELL_RUNG_COINS, WORK_BASE, WORK_STEP, rungDust, rungFoot } from '../config.js';
+import { TIER_BAND, TIER_RUNGS, LADDER_BANDS, BAND_COINS, SCALE_BAND_COINS, SCALE_RUNG_COINS, HELL_BAND_COINS, HELL_RUNG_COINS, rungDust, rungFoot } from '../config.js';
 import { DUST_PER, coinsOpen, coinNeeds } from './price.js';
 import { ahead } from '../works.js';
 
@@ -108,7 +108,6 @@ export function tierRows({ field, level: at, climb, unit, pct, does, value,
               ...coins.map(c => [c, bandCoin(lead, c, amount, lvl)]),
               ...(lead !== 'dust' && !coins.includes('dust') ? [['dust', 0]] : [])];
     },
-    work: () => Math.round(WORK_BASE.rung * Math.pow(WORK_STEP, next())),
     buy: () => { step(); after?.(); },
     // While the band's bill names a coin the yard cannot yet get, the card
     // stays (the rungs bought are on it), greyed, with its price up: `waits`

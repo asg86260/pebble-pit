@@ -3,7 +3,7 @@
 // place at a time -- a cell of a ground, the hand, the air, a body's arms, a
 // machine -- and moving it between those changes no count. Only a named door
 // makes one or unmakes one: a tree felled, a cut at the saw, a sign joined, a
-// tip through the hatch, a sign planted, a band laid, a scale crushed. The
+// sign planted, a band laid, a scale crushed. The
 // door says so here, with the kind, how many and why; verify.js (rule 23)
 // reads the units that exist against the net of these every frame, so a unit
 // written around the doors is the frame it goes red.

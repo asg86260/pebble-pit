@@ -1,15 +1,13 @@
 // The deep: the inside of the abyss the drowned pit holds (DESIGN.md, "The
 // deep is the inside of the abyss in the pit"). Its sky, its water, its motes,
-// its floor and the stations on it, the bodies swimming there, and the one
-// fill at the end that turns the whole of it over.
+// its floor and the stations on it, and the bodies swimming there.
 //
 // The palette is the yard's, inverted (docs/wave-serpent.md, "The palette"):
 // everything here draws in the ordinary inks on the paper, and on the light
-// page `deep invert` turns every channel of the deep over, so the
-// paper comes out as the liquid's black and every mark as its negative. The
-// dark page needs no turning over -- its paper is already dark and its map
-// already turns black to the light ink -- so there the fill is skipped and
-// the deep is dark on both pages. A tone this file names is the tone it will
+// page the deep's map (ink.js, 'deep') is the negative, every channel turned
+// over at the fill, so the paper comes out as the liquid's black and every
+// mark as its negative. The dark page's map already turns black to the light
+// ink, so the deep is dark on both pages. A tone this file names is the tone it will
 // be SEEN in, the abyss's own greys and purples, and is turned once at load
 // (`seen`) into what has to be drawn to come out that way. The bodies, the
 // serpent and the scales draw as they would in the yard and come out white.
@@ -18,7 +16,6 @@ import { now } from '../clock.js';
 import { bodyInk } from './recede.js';
 import { CRUSH_FIRE, CRUSH_STIR, CRUSH_HEAT, CRUSH_SPARKS, CRUSH_SPARK_MS,
          CRUSH_SPARK, SERPENT_PHASES } from '../config.js';
-import { invertByFilter } from './invert.js';
 import { P, WORKER, ABYSS_TONES, ABYSS_MAGIC_TONES, ABYSS_FLOW_MS, ABYSS_FLOW_COL, ABYSS_FLOW_ROW,
          ABYSS_FLOW_SHEAR, ABYSS_FLOW_ASPECT, ABYSS_FLOW_DRIFT, ABYSS_SHEAR_ROW, ABYSS_SHEAR_TURN,
          ABYSS_SHEAR_AMT2, ABYSS_SHEAR_COL, ABYSS_SHEAR_AMT_Y, ABYSS_FLOW_COL2, ABYSS_FLOW_ROW2,
@@ -40,7 +37,7 @@ import { CRUSHER_SPRITES } from '../deep/sprites.js';
 import { PROPS, propCells, brewCells, flameCells, clothCells } from '../deep/props.js';
 import { topRow } from '../grid.js';
 import { drawMark } from './marks.js';
-import { raw, turnedOver, perPage, onTheme, themed } from '../ink.js';
+import { perPage, onTheme, themed } from '../ink.js';
 import { ctx } from './ctx.js';
 import { swellAt } from './cores.js';
 import { hash } from './flicker.js';
@@ -585,36 +582,3 @@ export function drawSwimmers() {
   ctx.restore();
   ctx.fillStyle = '#000';
 }
-
-// --- the last of it --------------------------------------------------------------
-// Everything drawn over the deep, turned over: the paper to the liquid's
-// black and every mark to its negative. The frame so far is drawn back over
-// itself through an `invert` filter, over the deep's window in device
-// pixels, where the filter turns every channel over exactly (render/invert.js);
-// everywhere else a `difference` fill: raw white, so the dark page's map
-// does not turn the white it needs into its own paper.
-export function drawDeepInvert() {
-  if (turnedOver()) return;
-  const { x0, y0, x1, y1 } = deepWindow();
-  ctx.save();
-  if (invertByFilter(ctx)) {
-    const t = ctx.getTransform(), c = ctx.canvas;
-    const left = Math.max(0, Math.floor(t.a * (x0 - P) + t.e));
-    const top = Math.max(0, Math.floor(t.d * (y0 - P) + t.f));
-    const right = Math.min(c.width, Math.ceil(t.a * (x1 + P) + t.e));
-    const bottom = Math.min(c.height, Math.ceil(t.d * (y1 + P) + t.f));
-    if (right > left && bottom > top) {
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.globalAlpha = 1;
-      ctx.filter = 'invert(1)';
-      ctx.drawImage(c, left, top, right - left, bottom - top, left, top, right - left, bottom - top);
-    }
-  } else {
-    ctx.globalCompositeOperation = 'difference';
-    ctx.fillStyle = raw('#fff');
-    ctx.fillRect(x0 - P, y0 - P, x1 - x0 + P * 2, y1 - y0 + P * 2);
-  }
-  ctx.restore();
-  ctx.fillStyle = '#000';
-}
-

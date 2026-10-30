@@ -17,11 +17,11 @@
 // it instead: the hammer on the nail it struck. The saw mill is drawn off
 // its machine (after/mill.js) alone, whoever turns it.
 
-import { P, KINDS, AFTER_SAW_TEETH, AFTER_ART_SCALE, AFTER_MILL, AFTER_SPILL_S } from '../../config.js';
+import { P, AFTER_SAW_TEETH, AFTER_ART_SCALE, AFTER_MILL } from '../../config.js';
 import { K, W, PALE, MID, hash, silhouette } from './kit.js';
 import { held } from '../../reset.js';
 import { ctx } from '../ctx.js';
-import { goodBlock, goodColor, goodTone } from './piles.js';
+import { goodBlock, goodColor } from './piles.js';
 import { wheelAngle, millView, sawyerPose } from '../../after/mill.js';
 import { at } from '../../grid.js';
 import { cabinMockOn, drawCabinMock } from './cabinmock.js'; // MOCK act-3-the-cabin
@@ -94,7 +94,7 @@ function blockOn(d, x, y, kind, v) { const p = d.world(x, y); goodBlock(Math.rou
 // A good's block cut short, `w` cells of its width, in its own unit's tone: the
 // log in the blade, the timber block growing out of it.
 function partBlock(d, x, y, w, z, kind, v) { if (w <= 0) return; const p = d.world(x, y); ctx.fillStyle = goodColor(kind, v); ctx.fillRect(Math.round(p.x), Math.round(p.y), Math.round(w * S1), z * S1); }
-// The burst of chips off the kerf at a stroke's foot, thrown either side and
+// The burst of chips off the cut at a stroke's foot, thrown either side and
 // falling, gone in AFTER_MILL.chips_s.
 function chips(d, age, seed) {
   const life = AFTER_MILL.chips_s;
@@ -112,25 +112,6 @@ function puff(d, x, age) {
   if (k < 0 || k >= 1) return;
   d.fade(1 - k, () => { for (const sx of [-1 - k, LOG + k]) d.px((x + sx) * P, (bed - 1 - k) * P, P, P, MID); });
 }
-// The heap under the bed, a grain a cell where the sand rules have it, each
-// grain its own tone of the sawdust's (`v`, set as it lands).
-function heapOn(d, b) {
-  const x0 = AFTER_MILL.heap.x;
-  for (let c = 0; c < b.cols; c++) for (let r = 0; r < b.rows; r++) {
-    const v = at(b, c, r);
-    if (v) d.c(x0 + c, -1 - r, goodTone('sawdust', (v - 1) % KINDS.sawdust.tones));
-  }
-}
-// The heap and a tip's grains dropping out through the hatch, gone under
-// the floor: drawn with the counted piles, over the lip of billows along
-// the path's front (render/after.js, `drawAfterPiles`), so its bottom row
-// stands on the floor whole as every pile's does, not tucked behind a puff.
-export function drawMillHeap(d) {
-  const live = millView();
-  if (!live) return;
-  heapOn(d, live.heap);
-  for (const s of live.spills) d.fade(1 - s.age / AFTER_SPILL_S, () => d.px(s.c * P, (-1 - s.r + 0.5 * AFTER_MILL.fall * s.age * s.age) * P, P, P, MID));
-}
 function mill(d, work, t, h, body = false) {
   const live = !d.sinking && millView();
   const a = live ? wheelAngle() : Math.PI / 2, lk = rocker(a), o = strokeOf(lk);
@@ -145,14 +126,11 @@ function mill(d, work, t, h, body = false) {
   d.r(L, head, 2, bed - head, K); d.r(R, head, 2, bed - head, K);         // posts
   d.r(L - 1, head, R - L + 4, 3, K);                                      // the head
   d.r(L - 1, bed, FR.end - L + 1, FR.bedRows, K);                         // the bed, plain black
-  d.r(bx, bed, 1, FR.bedRows, W);                                         // the kerf's slot under the blade
   d.r(L, LEGS, 2, -1 - LEGS, K); d.r(R, LEGS, 2, -1 - LEGS, K);           // its legs
   d.r(L - 1, -1, 3, 1, K); d.r(R, -1, 3, 1, K);
   // the chute off the bed's end, a cell thick under the blocks' feet
   const C = AFTER_MILL.chute, sl = (C.y1 - C.y0) / (C.x1 - C.x0);
   d.line(C.x0, C.y0 + 0.5, C.x1 + 1, C.y1 + sl + 0.5, P, K);
-  // the heap's whole room is the mill's, for its backing and footprint
-  if (d.sinking) { const H = AFTER_MILL.heap; d.r(H.x, -H.rows, H.cols, H.rows, K); }
   if (live) {
     // the log on the bed: up to the blade it lies whole; in it, it is eaten
     // from its right end and the block it is becoming grows past the blade
@@ -162,9 +140,6 @@ function mill(d, work, t, h, body = false) {
       partBlock(d, bx + 2, bed - PL, PL * live.grow, PL, 'plank', lg.pv);
     }
     for (const b of live.out) blockOn(d, b.x - PL / 2, b.y - PL, 'plank', b.v);
-    for (const g of live.dust) {
-      if (g.v) { const p = d.world(g.x, g.y); ctx.fillStyle = goodTone('sawdust', (g.v - 1) % KINDS.sawdust.tones); ctx.fillRect(Math.round(p.x), Math.round(p.y), Math.round(S1), Math.round(S1)); } else d.px(g.x * P, g.y * P, P, P, MID);
-    }
     if (live.hitAt != null) chips(d, t - live.hitAt, Math.floor(live.hitAt * 7));
     if (live.setAt != null) puff(d, AFTER_MILL.seat.x, t - live.setAt);
   }

@@ -12,8 +12,29 @@
 
 import { raf, ok } from './kit.js';
 import { LANGS } from '../lang.js';
+import { SHELF_SLOT_LANG, SHELF_SLOT, SHELF_TAG_TALL } from '../config.js';
 import { YARD_BOARDS as BOARDS } from '../stations.js';
 import { UNFOLDING, overOf } from '../slotfit.js';
+
+// A frame that fails to load transiently becomes a chrome-error page, and its
+// contentWindow then throws a cross-origin SecurityError on any read. That is
+// the load failing, not the game: put the address back and wait out what is
+// left of the 20 s.
+async function bootFrame(f, needBuy, t0) {
+  const src = f.src;
+  const booted = () => {
+    try { const x = f.contentWindow; return !!(x?.__scene && x.__board && x.__fast && (!needBuy || x.__buy)); }
+    catch { return null; }
+  };
+  let last = 0;
+  while (performance.now() - t0 < 20000) {
+    const b = booted();
+    if (b) return true;
+    if (b === null && performance.now() - last > 1000) { last = performance.now(); f.src = "about:blank"; await raf(); f.src = src; }
+    await raf();
+  }
+  return false;
+}
 
 // The yards to read, and the boards in each: every board at its fullest, then
 // the strips -- a row queued again on the bench and the house, the bench's
@@ -123,10 +144,9 @@ export const TESTS = [
       try {
         const t0 = performance.now();
         // the dev handles come in by dynamic import, a moment after the page
-        const booted = () => { const x = f.contentWindow; return !!(x?.__scene && x.__board && x.__fast); };
-        while (!booted() && performance.now() - t0 < 20000) await raf();   // the frame's boot, not the yard's: no turning
+        const booted = await bootFrame(f, false, t0);
         const w = f.contentWindow;
-        if (!booted()) { checks.push(ok(false, `${lang}: the game boots in a frame`)); continue; }
+        if (!booted) { checks.push(ok(false, `${lang} (house type): the game boots in a frame`)); continue; }
         const said = w.document.documentElement.lang;
         const step = () => new Promise(r => { w.__fast(1 / 60); w.requestAnimationFrame(() => r()); });
         const found = [];
@@ -158,23 +178,23 @@ export const TESTS = [
   // box whether its words are wider than it, to the fraction of a pixel, in the house type and in the
   // readable face a size up, on every board at its fullest and on the strips
   // a row bought three times puts up.
-  ['no word on a tile is cut at its edge, in the house type and readable text', async () => {
+  ['no word on a tile is cut at its edge, in every language, in the house type and readable text', async () => {
     const checks = [];
-    for (const [mode, q] of [['house type', ''], ['readable text', '&readable']]) {
+    for (const lang of LANGS) for (const [mode, q] of [['house type', ''], ['readable text', '&readable']]) {
       const f = document.createElement('iframe');
-      f.src = `./play.html?bench&lang=en${q}`;
+      f.src = `./play.html?bench&lang=${encodeURIComponent(lang)}${q}`;
       f.style.cssText = 'position:fixed;left:0;top:0;width:800px;height:600px;border:0;opacity:0;pointer-events:none;z-index:-1';
       document.body.appendChild(f);
       try {
         const t0 = performance.now();
-        const booted = () => { const x = f.contentWindow; return !!(x?.__scene && x.__board && x.__fast); };
-        while (!booted() && performance.now() - t0 < 20000) await raf();   // the frame's boot, not the yard's: no turning
+        const booted = await bootFrame(f, false, t0);
         const w = f.contentWindow;
-        if (!booted()) { checks.push(ok(false, `${mode}: the game boots in a frame`)); continue; }
+        if (!booted) { checks.push(ok(false, `${lang} ${mode}: the game boots in a frame`)); continue; }
         await w.document.fonts.ready;
         const face = w.getComputedStyle(w.document.body).fontFamily;
         const step = () => new Promise(r => { w.__fast(1 / 60); w.requestAnimationFrame(() => r()); });
         const cut = [];
+        const slot = SHELF_SLOT_LANG[lang] ?? SHELF_SLOT;
         for (const [scene, boards] of SCENES) {
           w.__scene(scene);
           w.__fast(1);
@@ -184,15 +204,115 @@ export const TESTS = [
             for (const el of w.document.querySelectorAll('.rows.shelves .tile :is(' + UNFOLDING + ')'))
               if (el.offsetParent !== null && overOf(el) > 0.01)
                 cut.push(`${scene}/${b} "${el.textContent.trim()}" over by ${overOf(el).toFixed(2)}px`);
+            // The slot is the language's one width and the tag row's one height: a board
+            // never sets either, so a card past them is read here, not fitted.
+            if (w.getComputedStyle(w.document.documentElement).getPropertyValue('--shelf-slot').trim() !== `${slot}px`)
+              cut.push(`${scene}/${b} the board's slot is not the language's ${slot}px`);
+            for (const t of w.document.querySelectorAll('.rows.shelves > .tile .tag'))
+              if (t.offsetParent !== null && t.getBoundingClientRect().height > SHELF_TAG_TALL + 0.01)
+                cut.push(`${scene}/${b} a tag is ${t.getBoundingClientRect().height}px, past the ${SHELF_TAG_TALL}px its row keeps`);
           }
           w.__board(null);
         }
         const uniq = [...new Set(cut)];
-        checks.push(ok(uniq.length === 0 && /DM Mono/.test(face) === !!q,
-                       `${mode}: no word on a tile is cut at its edge`,
+        checks.push(ok(uniq.length === 0 && (/DM Mono/.test(face) === !!q || /^(ja|ko|zh)/.test(lang)),   // the readable face is Latin; a cut face stands in
+                       `${lang}, ${mode}: no word on a tile is cut at its edge`,
                        `${face}; ` + uniq.slice(0, 6).join('; ') + (uniq.length > 6 ? ` (+${uniq.length - 6})` : '')));
       } finally { f.remove(); }
     }
     return checks;
+  }],
+
+  // A card keeps its box (the owner, 2026-10-29: "i hate that they shift content
+  // around"): a rung bought, queued, built and the next bill read -- through
+  // every band the ladder has -- moves no tile on the open board by a pixel and
+  // changes none's size, measured against the shelf so the sheet re-centering
+  // on its station does not count. A tile that appears (a card unlocked by
+  // the rung) is new content, and the planks it lands on are not asked.
+  ['buying a rung up the whole ladder moves no tile and resizes none', async () => {
+    const f = document.createElement('iframe');
+    f.src = './play.html?bench&lang=en';
+    f.style.cssText = 'position:fixed;left:0;top:0;width:1440px;height:900px;border:0;opacity:0;pointer-events:none;z-index:-1';
+    document.body.appendChild(f);
+    try {
+      const t0 = performance.now();
+      const booted = await bootFrame(f, true, t0);
+      const w = f.contentWindow;
+      if (!booted) return [ok(false, 'en (house type): the game boots in a frame')];
+      await w.document.fonts.ready;
+      const step = n => new Promise(r => { w.__fast(n); w.requestAnimationFrame(() => w.requestAnimationFrame(() => r())); });
+      w.__scene('boards');
+      w.__fast(1);
+      w.__board('bench');
+      await step(0.5);
+      const S = w.__state();
+      Object.assign(S, { stored: 1e13, shards: 1e11, spores: 1e11, sparks: 1e9 });
+      const boxes = () => {
+        const shelf = w.document.querySelector('.sheet > .page:not([hidden]) .rows.shelves');
+        // Layout px, not the painted box: the sheet eases open by a scale and a
+        // tile lifts and sways under the pointer, and neither is a move.
+        const m = new Map();
+        for (const t of shelf.querySelectorAll(':scope > .tile'))
+          m.set(t.dataset.key, [t.offsetLeft, t.offsetTop, t.offsetWidth, t.offsetHeight]);
+        return m;
+      };
+      const moved = [];
+      let before = boxes(), rungs = 0;
+      for (let i = 0; i < 9; i++) {
+        w.__buy('carry');
+        await step(0.3);
+        const queued = boxes();
+        w.__finish();
+        await step(0.5);
+        const done = boxes();
+        for (const [name, was, now] of [['queued', before, queued], ['built', queued, done]])
+          for (const [key, a] of was) {
+            const b = now.get(key);
+            // a card unlocked above a plank lowers it by that plank's worth: new content
+            if (!b || now.size !== was.size) continue;
+            if (a.some((v, k) => Math.abs(v - b[k]) > 0.01))
+              moved.push(`rung ${i + 1} ${name}: ${key} ${a.map(v => v.toFixed(1))} -> ${b.map(v => v.toFixed(1))}`);
+          }
+        rungs++;
+        before = done;
+      }
+      return [ok(moved.length === 0, 'no tile moves or resizes while a ladder is bought up', moved.slice(0, 6).join('; ') + ` (${rungs} rungs)`)];
+    } finally { f.remove(); }
+  }],
+
+  // A tile being built draws the bodies at its site and no more (DESIGN.md,
+  // "A hand on the tile"): the bench builds one copy at a time, so a rung
+  // queued three times still shows one worker on the tile, frame after frame,
+  // through every copy's start and finish.
+  ['a building tile draws one worker animation, not several', async () => {
+    const f = document.createElement('iframe');
+    f.src = './play.html?bench&lang=en';
+    f.style.cssText = 'position:fixed;left:0;top:0;width:1440px;height:900px;border:0;opacity:0;pointer-events:none;z-index:-1';
+    document.body.appendChild(f);
+    try {
+      const t0 = performance.now();
+      const booted = await bootFrame(f, true, t0);
+      const w = f.contentWindow;
+      if (!booted) return [ok(false, 'en (house type): the game boots in a frame')];
+      await w.document.fonts.ready;
+      const step = n => new Promise(r => { w.__fast(n); w.requestAnimationFrame(() => w.requestAnimationFrame(() => r())); });
+      w.__scene('boards');
+      w.__fast(1);
+      w.__board('bench');
+      await step(0.5);
+      Object.assign(w.__state(), { stored: 1e13 });
+      for (let k = 0; k < 3; k++) w.__buy('carry');
+      let building = 0, most = 0;
+      for (let i = 0; i < 120; i++) {
+        await step(0.1);
+        const tile = w.document.querySelector('.sheet > .page:not([hidden]) .rows.shelves > button[data-key="carry"]');
+        if (!tile?.classList.contains('building')) continue;
+        // The poses a drawn tile is keyed by: one entry a hand, `|` between them.
+        const pose = (tile.querySelector('.pic')?.dataset.tint || '').split('/')[3] || '';
+        building++;
+        most = Math.max(most, pose ? pose.split('|').length : 0);
+      }
+      return [ok(building > 20 && most === 1, 'a tile being built draws one worker', `${building} frames building, most hands at once ${most}`)];
+    } finally { f.remove(); }
   }],
 ];

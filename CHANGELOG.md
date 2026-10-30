@@ -179,7 +179,13 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
-- Act 3's goods have their own colors: each log, timber block, sign and grain of sawdust is one of four tones of its good -- bark brown, pale wood, slate, pale sawdust -- picked when it is made and kept wherever it goes, so a pile reads as separate pieces (test/after-palette.test.mjs).
+- Every empty lot wears a sign, BUILD over the price, that builds it when pressed, and a station not yet built has no UPGRADES button (test/build-sign.test.mjs).
+- Going through a portal, the place on the other side shows live through the ring instead of a still picture (src/selftest/deep.js, "the ring going down shows the deep live").
+- The chips off a builder's hammer are the paper over buildings and ground and the ink over the sky, on either page (src/selftest/work.js, "a builder's grit is plain paper or ink").
+- A lamp's light is a soft see-through beam that fades out with distance, lying over whatever it reaches (src/selftest/wardrobe.js, "a lamp's light is plain fills").
+- A disk in the corner fades up for a moment as the game saves (src/selftest/savemark.js).
+- A log at the saw mill saws into four timber blocks and nothing else: the sawdust heap, its hatch, its tip and its upgrade row are gone (test/after-mill-machine.test.mjs, test/no-sawdust.test.mjs).
+- Act 3's goods have their own colors: each log, timber block and sign is one of four tones of its good -- bark brown, pale wood, slate -- picked when it is made and kept wherever it goes, so a pile reads as separate pieces (test/after-palette.test.mjs).
 - A scale falling through the deep's water is a chip of the one air, and one still in it when the page reloads is where it was; act 3's thrown goods and the deep's scales come down on the same landing chain the yard's dust does (test/one-landing.test.mjs).
 - Every box stands on the boards' dot ground: the cards, notices, buttons, signs, tabs and fields, the counter and the canvas's own cards, the black ones in the paper's dots (test/ui-tokens.test.mjs).
 - Act 3's UPGRADES button lifts and sways under the pointer as a shop tile does, and pressed again puts its shop away; every station has one, God's crowd too, and clicking or hovering a station opens nothing; a shop tile pressed now sinks halfway (test/after-gestures.test.mjs).
@@ -213,7 +219,16 @@ this section; the release that switches it on moves these under Unreleased.
 - Act 3's stations stand further apart, and a station worked by hand no longer puts its name up over the work (src/selftest/playcheck.js).
 - The recruit row, greyed while nobody is won, says so and how to win one instead of reading like a price you cannot pay (test/after-recruit.test.mjs).
 - Signs and posters no longer pile up unused in act 3 when nobody is on the carrier or the paster: idle workers take them out (test/after-roster.test.mjs).
+- Every build takes 10 to 20 seconds at one pair of hands, the biggest (a new station, a machine, the last shield) 30 at most, by one rule off a row's place in its ladder instead of a figure a row (test/build-times.test.mjs).
+- The sphere costs 1.75 times the dearest other machine in every coin, so it is the last machine you can afford (test/sphere.test.mjs).
 
+- A game tab that is not being saved -- another tab has the save, or the browser refused it -- shows a struck-through disk in the corner instead of playing on in silence, takes the save back by itself once its game is the newest, and a game tab opened in the background no longer takes the save from the one you are playing (test/save-alarm.test.mjs).
+- The browser closing the save's database under the page no longer stops the game; the save is retried on a fresh connection (src/selftest/savemark.js).
+- The save as it was before an update changed its shape is kept beside it, so a bad update can be rolled back (test/save-alarm.test.mjs).
+- In Firefox, a builder at work or a lamp on screen no longer drops the whole game to twenty-odd frames a second (src/selftest/work.js, "a builder's grit is plain paper or ink"; src/selftest/wardrobe.js, "a lamp's light is plain fills").
+- A worker's hat in a roster counter sits flush on its head instead of a pixel to one side with ragged seams (src/selftest/rosterhats.js).
+- Saving on the very frame the star's sphere closes no longer leaves the ring uncut after a reload (test/sphere.test.mjs).
+- Shop cards keep one width and one height, so buying a rung, a deeper bill or a card being built no longer shifts the board (src/selftest/boardwords.js).
 - In act 3 logs and timber stack, roll and settle the same way wherever they land, on a pile or on open floor, never one drawn through another, heap into a mound rather than a tower, and a press on a pile takes the block on top (test/after-ground.test.mjs).
 - In act 3 every member carries cells the way the yard's haulers do, by the hand's weights (a log sixteen grains, timber four), a station's loads come out of the shack's door, and a unit is held only if it was really taken (test/one-carry.test.mjs).
 - Dust, scales and act 3's logs and timber held on the cursor drift round it smoothly again instead of hopping a cell at a time (scenes hand-dust, after-hand-timber).
@@ -268,6 +283,10 @@ this section; the release that switches it on moves these under Unreleased.
 - The landing page's settings, the cloud section, the language tab and the feedback form work again: the title page no longer loads the board's page-only code through the UPGRADES button's drift (src/selftest/language.js, src/selftest/cloud.js).
 - The cinema's dot-ground bands no longer fail the deep's palette read, and the afterlife's play check opens each station's board by its UPGRADES button (src/selftest/deeppalette.js, src/selftest/playcheck.js).
 - Loading a save no longer shows the last yard's income rates and air trend in the books until they age out (test/held-state.test.mjs).
+- The diggers' counter stays under the rock after the shack is bought, instead of moving to the shack (test/digger-roster.test.mjs).
+- Switching saves no longer carries dust on the cursor, scales in the water or blocks lying in act 3 from the old game into the new one (test/save-switch.test.mjs).
+- A card's refund and another buttons stand one over the other with room round their words instead of touching side by side (src/selftest/boardwords.js).
+- A scene's camera pin no longer holds the view under the next check (src/selftest/view.js).
 
 ## v0.6.1 — 2026-10-19
 

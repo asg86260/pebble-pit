@@ -202,6 +202,10 @@ export const WARD_HEADS = {
 // A wedge out of the front of a lamp hat, the way the body faces: `reach`
 // world pixels long, `from` half its height at the lamp and `spread` more
 // a pixel out, leaning `tilt` down a pixel out; in the yard a rung of its
-// grey ramp, in the deep a rung of the deep's. It fades in and out over
-// `fade` seconds as the lamp goes on and comes off.
-export const LAMP_CONE = { reach: 36, from: 2, spread: 0.28, tilt: 0.12, rung: 2, deepRung: 4, fade: 0.6 };
+// grey ramp, in the deep a rung of the deep's. `glow` its opacity at the
+// lamp, falling off as the `falloff` power of what is left of the reach, to
+// nothing at its end (the owner, 2026-10-29, B2: a bright core and a long dim
+// tail). It fades in and out over `fade` seconds as the lamp goes on and
+// comes off.
+export const LAMP_CONE = { reach: 60, from: 2, spread: 0.28, tilt: 0.12, rung: 2, deepRung: 4,
+                           glow: 0.65, falloff: 2, fade: 0.6 };

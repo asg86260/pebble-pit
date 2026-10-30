@@ -16,6 +16,7 @@
 // The comments over the scenes say why each is set up as it is.
 
 import { S, floor } from './state.js';
+import { signMid } from './buildsign.js';
 import { addGrain, bottomY } from './grid.js';
 import { JOB, TYPE, AFTER_JOB } from './jobs.js';
 import { P, PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, DOME_WORK, DOME_RINGS, DOME_FADE_MS, LADDER, TIER_OWN, MACHINE_TUNE_RUNGS, LAND_HOP_MS, INTRO_CHAT_MS } from './config.js';
@@ -40,7 +41,7 @@ import { lay } from './deep/statuses.js';
 import { worksAt, progressOf, markDoneSeen } from './works.js';
 import { SAVE as CREW_SAVE } from './crew/records.js';
 import { goDeep, goUp, poseGlide } from './view.js';
-import { floorAt, stationX0, stationBox, signBox, soulX, heapMid, afterFloor, afterOpenX, workshopsX1, unionJoinAt, campEdges, AP } from './after/place.js';
+import { floorAt, stationX0, stationBox, signBox, soulX, afterFloor, afterOpenX, workshopsX1, unionJoinAt, campEdges, AP } from './after/place.js';
 import { godFront } from './after/sky.js';
 // The window's middle at the camera's last window over act 3: God in it,
 // his stage square under him.
@@ -155,12 +156,18 @@ const quarryGoingUp = () => {
 // on this one's spot, and in the node yard, where a frame is a timer, it kept
 // the process alive after its checks were done, so a sweep never finished.
 const PIN_FRAMES = 240;
+// A pin outlives the scene that set it by up to PIN_FRAMES, so a check that
+// stands a scene and goes on would have its camera held under it: the next
+// group's `newRun` lets go (`__unpin`).
+let pinned = 0; // page: a scene's camera pin, a dev handle's; no save or new game owns it
 function pinCamera(x) {
   if (typeof window.__scene !== 'function') return;     // the page's alone
   let left = PIN_FRAMES;
-  const pin = () => { window.__look(x); if (--left > 0) requestAnimationFrame(pin); };
+  const mine = ++pinned;
+  const pin = () => { if (mine !== pinned) return; window.__look(x); if (--left > 0) requestAnimationFrame(pin); };
   pin();
 }
+if (typeof window !== 'undefined') window.__unpin = () => { pinned++; };
 
 const sphereAt = secs => {
   rich();
@@ -401,7 +408,7 @@ function reactScene(find, click, at, again, kind = null) {
 const beltSeg = f => Math.round(f * (COIL_SEGS - 1));
 
 // A floor slot's middle, and the lowest slot no station stands on, as the
-// build button reads it.
+// build sign reads it.
 const slotAt = slotX;
 const freeSlot = () => Math.max(0, nextSlot());
 // The station a class is sold at, off the pairs table.
@@ -1217,7 +1224,7 @@ const deepScenes = {
       lookDeep((slotAt(0) + slotAt(3)) / 2);
     } }])),
   // A station going up down there: a delver at the first slot, the silt off
-  // each blow sinking back to the floor. The pick is the build button's.
+  // each blow sinking back to the floor. The pick is the build sign's.
   'deep-build': { about: 'the deep', say: 'a delver hammering at the altar going up, silt stirred up off each blow',
     run: () => {
       deepYard({ stage: 1, run: 2 });
@@ -1322,9 +1329,9 @@ const deepScenes = {
   // --- wave party: STATE ---
   // The party (docs/wave-party.md), each stood up by `__party` and run until
   // the fighters are at work.
-  // Just after the snatch: no station, the build button over the first slot
+  // Just after the snatch: no station, the build sign in the first slot
   // offering the three starting kinds, the sqwife treading water.
-  'party-start': { about: 'the deep', say: 'just after the snatch: no station yet, the build button over the first slot',
+  'party-start': { about: 'the deep', say: 'just after the snatch: no station yet, the build sign in the first slot',
     run: () => { deepYard({ run: 4 }); lookDeep(slotAt(freeSlot())); } },
   'party-one': { about: 'the deep', say: 'one station: a Brawler at the altar, four rungs up, her Haymaker open',
     run: () => { deepYard({ party: [cast('brawler', 4)] }); lookAtStation(0); } },
@@ -1374,7 +1381,7 @@ const deepScenes = {
       lookAtStation(0);
       window.__board(S.stations[0].id);
     } },
-  // The build button pressed: an empty lot staked out at the first slot and
+  // The build sign pressed: an empty lot staked out at the first slot and
   // its board asking what goes up there.
   'party-lot': { about: 'the deep', say: 'an empty lot, its board asking what goes up there',
     run: () => {
@@ -1382,7 +1389,7 @@ const deepScenes = {
       lookDeep(slotAt(freeSlot()));
       pressBuildButton();
     } },
-  'party-button': { about: 'the deep', say: 'a fang held: the build button over the next free slot, wearing the fang\'s mark',
+  'party-button': { about: 'the deep', say: 'a fang held: the build sign in the next free slot, wearing the fang\'s mark',
     run: () => { deepYard({ party: [cast('brawler', 2)], fangs: 1, run: 6 }); lookDeep(slotAt(freeSlot())); } },
   // The plate in the furnace's brick over the door: the fangs held (FANG_PLATE).
   'fang-plate': { about: 'the deep', say: 'two fangs held: the plate over the furnace\'s door reads fang x 2',
@@ -2866,7 +2873,7 @@ export const SCENES = {
   // Act 3's loop on its placeholder drawings (after/; track A): the chain
   // bought row by row and run, framed on the camp; the crowd half won, framed
   // on God's yard; the grove with a tree coming down.
-  'after-chain': { about: 'the acts', review: 'act 3: shops and block piles', stage: 'built: the real build on branches a3-station-shop and a3-pile-plots -- not on main yet; lands when you sign it off', option: 'the camp, nothing open: try it', say: "the afterlife's chain running: logs to the saw mill, timber and sawdust, signs going out",
+  'after-chain': { about: 'the acts', review: 'act 3: shops and block piles', stage: 'built: the real build on branches a3-station-shop and a3-pile-plots -- not on main yet; lands when you sign it off', option: 'the camp, nothing open: try it', say: "the afterlife's chain running: logs to the saw mill, timber, signs going out",
     run: () => { afterChain(false); window.__fast(90); window.__look(stationX0('mill') - P * 4); window.__holdShot(); } },
   'after-crowd': { about: 'the acts', say: "the afterlife's crowd half walked out: signs out, the rims inking round them",
     run: () => { afterChain(true); window.__fast(120); window.__look(soulX(0) - P * 20); window.__holdShot(); } },
@@ -2897,7 +2904,7 @@ export const SCENES = {
     run: () => {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
       for (const k of ['mill', 'workshop']) if (!S.after.built.includes(k)) S.after.built.push(k);
-      window.__afterGrant({ logs: 6, timber: 8, sawdust: 6 });
+      window.__afterGrant({ logs: 6, timber: 8 });
       window.__afterAxe();
       window.__look(stationX0('mill') - P * 20);
       window.__fast(0.5);
@@ -3083,7 +3090,7 @@ export const SCENES = {
   // docs/mocks/act3-place-2026-10-18 and act3-stations-2026-10-18): every
   // station standing and worked at its post, its piles counted, framed on
   // the left of the camp and then on the right.
-  'after-camp-art': { about: 'the acts', say: "the camp's stations polished and working: the grove's pines, the saw mill's wheel and its sawdust heap, piles counted",
+  'after-camp-art': { about: 'the acts', say: "the camp's stations polished and working: the grove's pines, the saw mill's wheel, piles counted",
     run: () => { afterChain(true); window.__afterGrant({ logs: 4, timber: 6 }); window.__fast(60); window.__look(stationX0('mill') - P * 30); window.__holdShot(); } },
   'after-camp-art-2': { about: 'the acts', say: "the camp's right half: the workshop's hammer, the shack, the cloud pillar and the pair's bubbles",
     run: () => { afterChain(true); window.__afterGrant({ timber: 12 }); window.__fast(60); window.__look(stationX0('workshop') - P * 4); window.__holdShot(); } },
@@ -3147,16 +3154,6 @@ export const SCENES = {
   'after-site-band': { about: 'the acts', say: 'the workshop going up a band at a time, the pile shrinking',
     run: () => afterSite(r => r.n >= 2) },
 
-  // The saw mill's sawdust heap at its brim: the shared pile-full mark under
-  // it (render/pilemarks.js), framed on the heap on the saw mill's ground.
-  'after-heap-full': { about: 'the acts', say: "the saw mill's sawdust heap at its brim, its pile-full mark under it",
-    run: () => {
-      window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
-      if (!S.after.built.includes('mill')) S.after.built.push('mill');
-      window.__afterGrant({ logs: 4 });
-      window.__afterGrant({ sawdust: 1e6 });
-      window.__look(heapMid() - S.viewW / 2); window.__fast(0.5); window.__holdShot();
-    } },
   // The UPGRADES buttons over the camp's rosters (roster.js), framed as the
   // review that chose them was: the chain bought, the saw mill four-fifths
   // across the window, the workshop's and the forestry shack's buttons in
@@ -3188,7 +3185,7 @@ export const SCENES = {
   // The chain run and every pile topped up, framed from the forestry shack's
   // log pile to the workshop's signs, a member carrying while it holds: every
   // good in the four tones its units were born with.
-  'after-goods': { about: 'the acts', say: "every good in its own colors: logs, timber, signs and sawdust, each unit one of its good's four tones",
+  'after-goods': { about: 'the acts', say: "every good in its own colors: logs, timber and signs, each unit one of its good's four tones",
     run: () => {
       afterChain(false);
       window.__fast(20);
@@ -3197,7 +3194,7 @@ export const SCENES = {
       const lo = window.__afterPile('forestry', 'grovelogs').x, hi = window.__afterPile('mill', 'timber').x;
       const carrying = () => S.after.bodies.some(w => loadKind(w) === 'log' && w.x > lo + P * 12 && w.x < hi - P * 30);
       for (let k = 0; k < 1800 && !carrying(); k++) window.__fast(1 / 30);
-      window.__afterGrant({ grovelogs: 20, logs: 4, timber: 40, sawdust: 30, signs: 4, benchtimber: 8 });   // room left for the load on its way
+      window.__afterGrant({ grovelogs: 20, logs: 4, timber: 40, signs: 4, benchtimber: 8 });   // room left for the load on its way
       window.__fast(1 / 60);
       const x = lo - P * 30;
       pinCamera(x); window.__look(x);
@@ -3637,7 +3634,7 @@ function millStage(done, grant = {}) {
   window.__afterCrowd((i, v) => (i < 2 ? 8 : v));
   for (let k = 0; k < 90 && window.__afterRead().walking > 0; k++) window.__fast(1);
   if (!S.after.built.includes('mill')) S.after.built.push('mill');
-  window.__afterGrant({ logs: 4, timber: 6, sawdust: 9, ...grant });
+  window.__afterGrant({ logs: 4, timber: 6, ...grant });
   window.__afterPress(AFTER_JOB.SAW);
   for (let k = 0; k < 60 * 90 && !done(); k++) window.__fast(1 / 60);
   const b = stationBox('mill'), x = b.x + b.w / 2 + P * 4 - S.viewW / 2;
@@ -3689,13 +3686,13 @@ function millHandDemo() {
     } else if (ph === 'tail') {
       const sw = millSaw(), p = rim(ang);
       goTo({ x: p.x + P * 6, y: p.y + P * 8 }, 'point');
-      if (t >= M.tail && !sw.out.length && !sw.dust.length) go('rest');
+      if (t >= M.tail && !sw.out.length) go('rest');
     } else if (ph === 'rest') {
       if (t >= M.rest) {
         // stood again: the pile and the mounds as they began
         S.after.saw = null;
         const r = window.__afterRead();
-        window.__afterGrant({ logs: 4 - r.logs, timber: 6 - r.timber, sawdust: 9 - r.sawdust });
+        window.__afterGrant({ logs: 4 - r.logs, timber: 6 - r.timber });
         go('look');
       }
     }
@@ -3709,17 +3706,13 @@ Object.assign(SCENES, {
     run: () => millStage(() => { const tr = millSaw().trip; return !!tr && tr.ph === 'set' && tr.down && tr.t >= AFTER_MILL.set_s - AFTER_MILL.held + 0.05; }) },
   'after-mill-cut': { about: 'the acts', branch: 'a3-mill-machine', review: 'act 3: the saw mill machine', stage: 'built: the real build on branch a3-mill-machine -- not on main yet; lands when you sign it off', option: 'C cut', say: "the saw mid-cut: the blade at its foot, chips thrown, the log shortened into it and a timber block growing past it",
     run: () => millStage(() => { const s = millSaw(); return !!s.bed && s.bed.cut === 1 && s.hitAt != null && S.after.t - s.hitAt > 0.08 && S.after.t - s.hitAt < 0.12; }) },
-  'after-mill-kerf': { about: 'the acts', say: "the kerf: the last column of the log falling a grain a stroke onto the heap under the bed",
-    run: () => millStage(() => { const s = millSaw(); return s.dust.length > 0 && s.dust[0].a > 0.1; }) },
   'after-mill-chute': { about: 'the acts', branch: 'a3-mill-machine', review: 'act 3: the saw mill machine', stage: 'built: the real build on branch a3-mill-machine -- not on main yet; lands when you sign it off', option: 'D chute', say: "cut blocks riding the bed out and down the chute onto the timber mound",
     run: () => millStage(() => millSaw().out.some(o => { const p = millBlockAt(o.a); return p.x > AFTER_MILL.chute.x0 + 2 && p.x < AFTER_MILL.chute.x1; })) },
-  'after-mill-full': { about: 'the acts', branch: 'a3-mill-machine', review: 'act 3: the saw mill machine', stage: 'built: the real build on branch a3-mill-machine -- not on main yet; lands when you sign it off', option: 'E full', say: "the saw mill's heap at its brim: the saw stopped with a log on its bed, the pile-full mark up",
-    run: () => millStage(() => !!millSaw().bed && window.__afterRead().sawdust >= 24 && !millSaw().out.length && !millSaw().dust.length, { sawdust: 15, timber: 14 }) },
   'after-mill-hand': { about: 'the acts', branch: 'a3-mill-machine', review: 'act 3: the saw mill machine', stage: 'built: the real build on branch a3-mill-machine -- not on main yet; lands when you sign it off', option: 'F by hand', say: "With nobody at the saw, you do it yourself: pick a log off the pile, drop it on the bed, then turn the wheel to cut it.",
     run: () => {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
       if (!S.after.built.includes('mill')) S.after.built.push('mill');
-      window.__afterGrant({ logs: 4, timber: 6, sawdust: 9 });
+      window.__afterGrant({ logs: 4, timber: 6 });
       window.__fast(0.5);
       const b = stationBox('mill'), x = b.x + b.w / 2 + P * 4 - S.viewW / 2;
       pinCamera(x); window.__look(x);
@@ -3849,3 +3842,35 @@ for (const [opt, option, say] of BUILD_MOCK) for (const [act, name, stand, view,
     swap: () => { if (S.view !== view) { window.__scene(name); return; } globalThis.__buildBtnMock = opt; globalThis.__buildMockHover?.(lot); },
     run: () => stand(opt) };
 }
+// The build sign (buildsign.js), in each place that has an empty lot: staked
+// in the lot, BUILD over the price, the pointer on it saying what it builds.
+// Act 1: the shack offered but short (120 of its 150). Act 3: the saw mill
+// payable beside the workshop, which waits on it. The deep: a fang held, the
+// next free slot's sign. The pointer is stood on the sign by the page
+// (`__signHover`, render/buildsign.js), which the node tier never loads.
+const SIGN_REVIEW = { about: 'the acts', review: 'build sign: built', stage: 'built: build-sign, not on main yet',
+                      branch: 'build-sign', supersedes: ['build button in the world'] };
+const standSign = (key, x) => { pinCamera(x); window.__look(x); window.__fast(1 / 60); globalThis.__signHover?.(key); };
+Object.assign(SCENES, {
+  'build-sign-yard': { ...SIGN_REVIEW, option: 'A act 1: the shack', say: "The shack's lot: a sign staked where the hut will stand, BUILD over its price, the pebbles you're short of greyed. Press it and a builder walks out.",
+    run: () => {
+      window.__reset(); window.__crew(2); S.seenBench = true; window.__give(120); window.__fast(2);
+      standSign('shack', signMid('shack', 'yard').x - S.viewW / 2);
+    } },
+  'build-sign-after': { ...SIGN_REVIEW, option: 'B act 3: the saw mill and the workshop', say: "The saw mill's sign payable, the workshop's greyed until the saw mill stands; no UPGRADES under either. The shack's board still sells both.",
+    run: () => {
+      window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+      for (let k = 0; k < 90 && window.__afterRead().walking > 0; k++) window.__fast(1);
+      window.__afterGrant({ rebel: 50 }); yardPurse();
+      // framed on the middle between the two lots, so both signs stand whole
+      const x = (signMid('after-mill', 'after').x + signMid('after-workshop', 'after').x) / 2 - S.viewW / 2;
+      window.__fast(2);
+      S.wonShown = S.wonSeq | 0;   // the yard's coins granted for the bills earn act 1 notices play never shows here
+      standSign('after-mill', x);
+    } },
+  'build-sign-deep': { ...SIGN_REVIEW, option: 'C the deep: the next slot', say: "A fang held: the sign staked in the next free slot, BUILD over the fang's mark. It replaces the floating build button.",
+    run: () => {
+      deepYard({ party: [cast('brawler', 2)], fangs: 1, run: 6 });
+      standSign('s2', signMid('s2', 'deep').x - S.viewW / 2);
+    } }
+});

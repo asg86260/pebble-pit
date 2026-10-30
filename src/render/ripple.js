@@ -13,16 +13,13 @@
 // taken once rather than a layer at a time.
 //
 // And the first frame of the ripple down used to be the deep's first frame:
-// its floor and stations painted into their images, its coil's code run for
-// the first time, and the invert probe's readback (render/invert.js) a frame
-// later -- tens of milliseconds in Firefox, a hundred or more in Chrome, in
-// the middle of the glide. The probe is asked the first time the page is
-// idle; the deep is drawn on the sheet a few times, unseen, the first times
+// its floor and stations painted into their images and its coil's code run
+// for the first time -- tens of milliseconds in Firefox, in the middle of the
+// glide. The deep is drawn on the sheet a few times, unseen, the first times
 // the page is idle with the portal standing, and again whenever the window
 // changes size.
 
 import { RIPPLE_WARM_PASSES, RIPPLE_WARM_WAIT_MS } from '../config.js';
-import { askInvert } from './invert.js';
 import { canvas, ctx, paintOn } from './ctx.js';
 
 // The sheet, the window's size, and remade only when the window is: a canvas
@@ -79,17 +76,16 @@ export function drawThrough(rip, dpr, drawFar) {
 
 // Called every frame with whether the ripple could run from here (the
 // portal stands, no glide is under way) and a pass of the far half to draw
-// unseen. Asks the probe at the first idle moment, then draws the passes one
-// idle moment apart, once for each size the window has been.
-let probed = false, warmFor = '', passes = 0, waiting = false;   // page: the browser's warm-up, done once a window size
+// unseen. Draws the passes one idle moment apart, once for each size the
+// window has been.
+let warmFor = '', passes = 0, waiting = false;   // page: the browser's warm-up, done once a window size
 export function warmRipple(ready, pass) {
   if (waiting) return;
   const key = `${canvas.width}x${canvas.height}`;
-  if (probed && (warmFor === key || !ready())) return;
+  if (warmFor === key || !ready()) return;
   waiting = true;
   idle(() => {
     waiting = false;
-    if (!probed) { probed = true; askInvert(); return; }
     // Stale by the time it ran: the glide started, or the window changed.
     if (!ready() || `${canvas.width}x${canvas.height}` !== key) return;
     paintOn(sheetOf(), () => { ctx.save(); pass(); ctx.restore(); });

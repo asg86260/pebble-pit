@@ -317,7 +317,7 @@
  {
   "id": "said-yielded",
   "group": "Sheets",
-  "where": "src/settings.js",
+  "where": "src/savemark.js",
   "context": "pause sheet reply, yard open elsewhere",
   "text": "this yard is open in another tab; that one is being saved"
  },
@@ -1729,10 +1729,24 @@
   "text": "fullscreen"
  },
  {
+  "id": "savemark-saved",
+  "group": "Other",
+  "where": "src/savemark.js",
+  "context": "crew-fade corner button label the save mark in the corner, a disk shown as a save lands",
+  "text": "saved"
+ },
+ {
+  "id": "savemark-take",
+  "group": "Other",
+  "where": "src/savemark.js",
+  "context": "the save mark struck through while another tab has the save: what a press does",
+  "text": "press to save this tab instead"
+ },
+ {
   "id": "other-corner-show",
   "group": "Other",
   "where": "src/corner.js",
-  "context": "crew-fade corner button label",
+  "context": "",
   "text": "show workers"
  },
  {
@@ -5315,7 +5329,7 @@
  {
   "id": "books-dust",
   "group": "The books",
-  "where": "src/stats.js",
+  "where": "src/selftest/buildsign.js",
   "context": "the books: a coin, before its rate",
   "text": "pebbles"
  },
@@ -5892,13 +5906,6 @@
   "where": "src/input.js",
   "context": "the hover over a sign in the hand's reach in act 3, lying on the floor",
   "text": "sign"
- },
- {
-  "id": "hover-heap",
-  "group": "Hover",
-  "where": "src/after/stations.js",
-  "context": "the hover over the sawdust heap on the saw mill's ground",
-  "text": "sawdust heap"
  },
  {
   "id": "hover-portal-up",
@@ -6904,15 +6911,15 @@
  {
   "id": "row-raise-station",
   "group": "The deep",
-  "where": "src/deep/party.js",
+  "where": "src/deep/buildbutton.js",
   "context": "the deep: the build of a new fighter's station (the queue card names it)",
   "text": "raise a station"
  },
  {
   "id": "build-free",
   "group": "The deep",
-  "where": "src/deep/buildbutton.js",
-  "context": "the deep's build button: the first station costs no fang",
+  "where": "src/buildsign.js",
+  "context": "a build sign's price when it asks nothing: the deep's first station costs no fang",
   "text": "free"
  },
  {
@@ -8155,13 +8162,6 @@
   "text": "second blade"
  },
  {
-  "id": "after-row-heap",
-  "group": "Act 4 (placeholder)",
-  "where": "src/after/rows.js",
-  "context": "act 3 card row (placeholder): the saw mill's bigger sawdust heap",
-  "text": "bigger heap"
- },
- {
   "id": "after-row-bench",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
@@ -8208,7 +8208,7 @@
   "group": "Act 4 (placeholder)",
   "where": "src/after/roster.js",
   "context": "act 3 job name (placeholder): a sawyer, named on its seat row",
-  "text": "fetches logs from the forestry shack and saws them into timber and sawdust"
+  "text": "fetches logs from the forestry shack and saws them into timber"
  },
  {
   "id": "after-job-joiner",
@@ -8244,13 +8244,6 @@
   "where": "src/selftest/afterboards.js",
   "context": "act 3 roster hover (placeholder): why a station's worker is standing still",
   "text": "waiting on logs"
- },
- {
-  "id": "after-stall-heap",
-  "group": "Act 4 (placeholder)",
-  "where": "src/after/stations.js",
-  "context": "act 3 roster hover (placeholder): why a station's worker is standing still",
-  "text": "the sawdust heap is full"
  },
  {
   "id": "after-stall-timber",
@@ -8300,13 +8293,6 @@
   "where": "src/after/rows.js",
   "context": "act 3 shack heading (placeholder): the stations to build",
   "text": "build"
- },
- {
-  "id": "after-sect-rebuild",
-  "group": "Act 4 (placeholder)",
-  "where": "src/after/rows.js",
-  "context": "act 3 ruined station's card heading (placeholder): its rebuild",
-  "text": "rebuild"
  },
  {
   "id": "after-sect-card",
@@ -8468,5 +8454,47 @@
   "where": "src/buildmock.js",
   "context": "",
   "text": "${n} ${coin}"
+ },
+ {
+  "id": "build-sign-word",
+  "group": "Act 3 boards (track C, placeholder)",
+  "where": "src/buildsign.js",
+  "context": "The sign staked in an empty lot that builds it, in every act: the word on its board.",
+  "text": "build"
+ },
+ {
+  "id": "build-sign-call",
+  "group": "Act 3 boards (track C, placeholder)",
+  "where": "src/after/stations.js",
+  "context": "The sign's hover, naming what it builds: \"build the saw mill\".",
+  "text": "build the ${name}"
+ },
+ {
+  "id": "build-sign-say",
+  "group": "Act 3 boards (track C, placeholder)",
+  "where": "src/buildsign.js",
+  "context": "The sign's hover: what it builds and its price, \"build the shack: 150 pebbles\".",
+  "text": "${call}: ${bill}"
+ },
+ {
+  "id": "build-sign-wait",
+  "group": "Act 3 boards (track C, placeholder)",
+  "where": "src/buildsign.js",
+  "context": "The sign's hover while its build waits on something: \"build the workshop: needs the saw mill\".",
+  "text": "${call}: ${why}"
+ },
+ {
+  "id": "build-sign-coin",
+  "group": "Act 3 boards (track C, placeholder)",
+  "where": "src/buildsign.js",
+  "context": "One coin of the sign's price, in its hover: \"150 pebbles\".",
+  "text": "${n} ${coin}"
+ },
+ {
+  "id": "build-sign-fang",
+  "group": "Act 3 boards (track C, placeholder)",
+  "where": "src/buildsign.js",
+  "context": "The deep's coin on its build sign, in the hover: \"1 fang\".",
+  "text": "fang"
  }
 ]
