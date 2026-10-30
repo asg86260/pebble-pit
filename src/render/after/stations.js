@@ -24,6 +24,7 @@ import { ctx } from '../ctx.js';
 import { goodBlock, goodColor, goodTone } from './piles.js';
 import { wheelAngle, millView, sawyerPose } from '../../after/mill.js';
 import { at } from '../../grid.js';
+import { cabinMockOn, drawCabinMock } from './cabinmock.js'; // MOCK act-3-the-cabin
 
 // White cut out of a mass a cell or more, 2 px in from its edge.
 const cut = (d, x, y, w, h, tone = W) => d.px(x * P + 2, y * P + 2, w * P - 4, h * P - 4, tone);
@@ -292,7 +293,8 @@ const FORESTRY = [
   ' #####..####### ',
 ];
 const FOREST_X = 8;
-function forestry(d) {
+function forestry(d, work, t) {
+  if (cabinMockOn()) { drawCabinMock(d, t, FOREST_X); return; } // MOCK act-3-the-cabin
   const rows = FORESTRY;
   rows.forEach((row, j) => [...row].forEach((ch, i) => {
     const tone = ch === '#' ? K : ch === 'm' ? MID : ch === '.' ? W : null;
@@ -306,7 +308,8 @@ export const DRAW = { mill, workshop, shack, forestry };
 // drawing once: the moving parts swing inside it, and what they carry is
 // solid ink of its own.
 const BACKS = {};
-export const backOf = key => BACKS[key] || (BACKS[key] = silhouette(d => DRAW[key](d, false, 0, null)));
+const backKey = key => (key === 'forestry' && globalThis.__cabinMock ? `${key}|${globalThis.__cabinMock}` : key); // MOCK act-3-the-cabin  each option its own backing
+export const backOf = key => BACKS[backKey(key)] || (BACKS[backKey(key)] = silhouette(d => DRAW[key](d, false, 0, null)));
 
 // Where the worker at a working station stands and how, in its frame's
 // cells: its left column and top row, a lean in px, and whether it squats.

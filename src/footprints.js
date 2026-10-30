@@ -193,8 +193,9 @@ function deepParts() {
 const FULLEST = {};
 const SHAPES = new Map();   // cache: each station's fullest silhouette, by key
 function drawnRows(key) {
-  if (!SHAPES.has(key)) SHAPES.set(key, DRAW[key] ? silhouette(d => DRAW[key](d, false, 0, null, false, FULLEST[key] || {})) : null);
-  return SHAPES.get(key);
+  const id = key === 'forestry' && globalThis.__cabinMock ? `${key}|${globalThis.__cabinMock}` : key; // MOCK act-3-the-cabin  each option its own silhouette
+  if (!SHAPES.has(id)) SHAPES.set(id, DRAW[key] ? silhouette(d => DRAW[key](d, false, 0, null, false, FULLEST[key] || {})) : null);
+  return SHAPES.get(id);
 }
 // Those rows in the world, turned with the drawing (`flip`).
 export function drawnRects(key) {
