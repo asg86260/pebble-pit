@@ -169,7 +169,7 @@ function optB(b, t) {
 // --- C: the stump house ---------------------------------------------------------------
 // A giant sawn stump hollowed into a house: bark seams down its sides, the
 // cut face on top, an arched door and a round window in it, a stovepipe
-// smoking, a shoot in leaf off the cut and a shelf fungus on the bark.
+// smoking and a shelf fungus on the bark (round 3: the shoot off the cut dropped).
 const FISSURES = [[3, 2, 4], [5, 7, 3], [12, 1, 3], [13, 7, 4], [10, 9, 2]];   // bark seams: column, foot, rows
 function optC(b, t) {
   b.row(0, 0, 15, K); b.row(1, 0, 1, K); b.row(1, 14, 15, K);   // the roots' flare
@@ -184,8 +184,6 @@ function optC(b, t) {
   b.box(11, 4, 2, 2, W);                           // a small window
   b.box(14, 5, 2, 1, K); b.cell(15, 6, K);         // the shelf fungus
   b.box(11, 13, 2, 4, K); b.row(17, 10, 13, K);    // the stovepipe and its cap
-  b.box(4, 13, 1, 3, LOG(3));                      // the shoot off the cut
-  clumps(b, [[4.5, 17.5, 1.8], [3.0, 16.0, 1.2], [6.0, 16.2, 1.2]], t);
   smoke(b, 11.5, 18, t);
 }
 

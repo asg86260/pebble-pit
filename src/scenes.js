@@ -3790,7 +3790,7 @@ Object.assign(SCENES, Object.fromEntries(GROVE_MOCK.map(([opt, option, at, say])
 const CABIN_MOCK = [
   ['a', 'A the oak through the roof', 'A plain cabin an oak has grown up through: the trunk out of the ridge, shingles heaved round it, the crown over the house, a twig in leaf out of the window.'],
   ['b', 'B the treehouse', "The shack up in an oak's crown: a hut on a platform among the clumps, a ladder down to the floor, a rope swing swaying under it."],
-  ['c', 'C the stump house', 'A giant sawn stump hollowed into a house: an arched door and a round window in the bark, a stovepipe smoking, a shoot in leaf off the cut.'],
+  ['c', 'C the stump house', 'A giant sawn stump hollowed into a house: an arched door and a round window in the bark, a stovepipe smoking, a shelf fungus on the bark.'],
   ['d', 'D the turf roof and its sapling', 'A low cottage under a thick roof of turf, grass and flowers on it, a stone chimney smoking, an oak sapling swaying on the ridge.'],
 ];
 Object.assign(SCENES, Object.fromEntries(CABIN_MOCK.map(([opt, option, say]) => [`after-cabin-mock-${opt}`, {
