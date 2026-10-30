@@ -29,8 +29,18 @@ const PAPER = () => GREY[0], INK = () => GREY[GREY.length - 1], MID = () => GREY
 const COIN_INK = { shard: () => COIN.ore, spore: () => COIN.crop, spark: () => COIN.spark };
 const font = () => `${SHOP_BTN_PX}px ${FACE}`;
 
+// A coin's mark is a pixel mask cut in the screen's own pixels, as the
+// roster's pips are: a cell of it is a whole number of device pixels, near
+// the size the layout gave it (`markScale`, in world pixels). At the deep's
+// zoom a world pixel is under a device pixel, and the fang's nine rows drawn
+// a world pixel a cell came out a grey smear that read as a coin short.
+const devPx = () => ctx.getTransform?.().a || 1;
+const markCell = g => { const z = devPx(); return Math.max(1, Math.round(markScale(g) * z)) / z; };
+const onDev = v => { const z = devPx(); return Math.round(v * z) / z; };
+const drawnW = p => p.lead + (p.kind === 'text' ? textW(p.s) : p.grid[0].length * markCell(p.grid));
+
 function drawParts(ps, x, y, h, ink) {
-  let at = x;
+  let at = x - (ps.reduce((s, p) => s + drawnW(p), 0) - rowW(ps)) / 2;
   for (const p of ps) {
     at += p.lead;
     const tone = p.short ? MID() : p.kind === 'mark' && COIN_INK[p.coin] ? COIN_INK[p.coin]() : ink;
@@ -38,9 +48,9 @@ function drawParts(ps, x, y, h, ink) {
       crispText(ctx, p.s, at, y + (h - SHOP_BTN_PX) / 2, font(), tone, 'left', PAPER(), GREY);
       at += textW(p.s);
     } else {
-      const s = markScale(p.grid), gh = p.grid.length * s, oy = Math.round(y + (h - gh) / 2);
+      const s = markCell(p.grid), ox = onDev(at), oy = onDev(y + (h - p.grid.length * s) / 2);
       ctx.fillStyle = tone;
-      p.grid.forEach((r, j) => { for (let i = 0; i < r.length; i++) if (r[i] === '#') ctx.fillRect(at + i * s, oy + j * s, s, s); });
+      p.grid.forEach((r, j) => { for (let i = 0; i < r.length; i++) if (r[i] === '#') ctx.fillRect(ox + i * s, oy + j * s, s, s); });
       at += p.grid[0].length * s;
     }
   }
