@@ -29,6 +29,7 @@ import { shownPiles, fullSays } from './render/pilemarks.js';
 import { doneName } from './works.js';
 import { fadeIn, fadeOut } from './fade.js';
 import { rosterHit, overRoster, rosterSays, shopAt, shopBoxOf, rosterUp } from './roster.js';
+import { signAt, signSays, signPress } from './buildsign.js';
 import { overCount, countRect } from './render/counter.js';
 import { potPick, potHover } from './potpick.js';
 import { shutOpts } from './shop.js';
@@ -214,6 +215,9 @@ canvas.addEventListener('pointerdown', e => {
   const way = portalAt(p.x, p.y) || handAt(p.x, p.y);
   if (way && throughPortal(way)) return;
   if (onGoOn(p.x, p.y) && sayGoOn()) return;
+  // A build sign staked in an empty lot, in any place: a press is its row's
+  // press on the board, before anything the lot stands in front of.
+  if (signPress(p.x, p.y)) return;
   // The acts' places: a click up there is the afterlife's (after/index.js,
   // `clickAfter`), down in hell hell's (hell/index.js, `clickHell`), each
   // asked only once its act's track exports it; nothing of the yard's stands
@@ -668,6 +672,13 @@ function askedAbout(x, y, cx, cy) {
     return true;
   }
 
+  // A build sign: what it builds and its price, or what it waits on.
+  const sign = signSays(x, y);
+  if (sign) {
+    showTip(sign.text, sign.at);
+    return true;
+  }
+
   const roster = rosterSays(x, y);
   if (roster) {
     showTip(roster.text, roster.at);
@@ -732,6 +743,9 @@ const CURSORS = [
   [() => S.crewSight != null, 'grab'],
   // the counts under a station, and the places with a board on them
   [(x, y) => overRoster(x, y), 'pointer'],
+  // a build sign: one that waits on something tells you why
+  [(x, y) => signAt(x, y)?.state === 'locked', 'help'],
+  [(x, y) => !!signAt(x, y), 'pointer'],
   // the way through the surface, from either side, and the serpent to hit
   [(x, y) => onShaftArrow(x, y) || onPortal(x, y) || onCoil(x, y) || overOrb(x, y), 'pointer'],
   // the acts' portals and their hands, asked as the press is (heaven's gates

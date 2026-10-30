@@ -24430,3 +24430,30 @@ hands-off check come last, on the integrated branch.
    game's axe row, fields, beat, line and hook are renamed to the saw, and
    the migration to `SAVE_V` 35 renames them in a save.
 
+## The build sign (built 2026-10-30)
+
+The owner, 2026-10-30: "lets also remove the upgrades button for shops that
+havent been built yet, and add a button in the world for the initial build."
+Voted D of four mocks (review "build button in the world"): a sign staked in
+the empty lot, BUILD over the price.
+
+- **Every act, one mechanism.** A station row with a `lot` (stations.js)
+  wears the sign: act 1's eight door rows, act 3's saw mill and workshop, and
+  the deep's next free slot, whose floating build button it replaces. Hell
+  builds nothing through rows, so it has none. The bench's call to build the
+  bench stays as it is: it has its own reveal (`canAfford`) and is a page
+  button over a bench no row sells.
+- **Gated as the board is.** It stands while its row is listed on its board,
+  asked through the board's own `revealed` (a sticky door's `once` comes with
+  it, so the shack's 70% reveal holds past a spend), and while that board is
+  up (the bench, in the yard); it goes once the row is in the works or done.
+  Greyed when the row is dead, its hover the row's `waits` line; a coin short
+  greyed on the price line alone. Its press is the tile's (`pressRow`).
+- **The sign is the way in.** Act 3's construction shack still sells both
+  builds. A station not yet built has no UPGRADES button and no board, and a
+  click on its outline opens nothing.
+- **Placed, not hand-put.** Centered on the lot, its post on the floor under
+  it; where that would stand on another object's ground (the workshop's price
+  is wider than the workshop, beside its sign pile), the nearest clear spot a
+  cell at a time either way. Its ground is the lot's in footprints.js.
+

@@ -16,6 +16,7 @@
 // The comments over the scenes say why each is set up as it is.
 
 import { S, floor } from './state.js';
+import { signMid } from './buildsign.js';
 import { addGrain, bottomY } from './grid.js';
 import { JOB, TYPE, AFTER_JOB } from './jobs.js';
 import { P, PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, DOME_WORK, DOME_RINGS, DOME_FADE_MS, LADDER, TIER_OWN, MACHINE_TUNE_RUNGS, LAND_HOP_MS, INTRO_CHAT_MS } from './config.js';
@@ -407,7 +408,7 @@ function reactScene(find, click, at, again, kind = null) {
 const beltSeg = f => Math.round(f * (COIL_SEGS - 1));
 
 // A floor slot's middle, and the lowest slot no station stands on, as the
-// build button reads it.
+// build sign reads it.
 const slotAt = slotX;
 const freeSlot = () => Math.max(0, nextSlot());
 // The station a class is sold at, off the pairs table.
@@ -1223,7 +1224,7 @@ const deepScenes = {
       lookDeep((slotAt(0) + slotAt(3)) / 2);
     } }])),
   // A station going up down there: a delver at the first slot, the silt off
-  // each blow sinking back to the floor. The pick is the build button's.
+  // each blow sinking back to the floor. The pick is the build sign's.
   'deep-build': { about: 'the deep', say: 'a delver hammering at the altar going up, silt stirred up off each blow',
     run: () => {
       deepYard({ stage: 1, run: 2 });
@@ -1328,9 +1329,9 @@ const deepScenes = {
   // --- wave party: STATE ---
   // The party (docs/wave-party.md), each stood up by `__party` and run until
   // the fighters are at work.
-  // Just after the snatch: no station, the build button over the first slot
+  // Just after the snatch: no station, the build sign in the first slot
   // offering the three starting kinds, the sqwife treading water.
-  'party-start': { about: 'the deep', say: 'just after the snatch: no station yet, the build button over the first slot',
+  'party-start': { about: 'the deep', say: 'just after the snatch: no station yet, the build sign in the first slot',
     run: () => { deepYard({ run: 4 }); lookDeep(slotAt(freeSlot())); } },
   'party-one': { about: 'the deep', say: 'one station: a Brawler at the altar, four rungs up, her Haymaker open',
     run: () => { deepYard({ party: [cast('brawler', 4)] }); lookAtStation(0); } },
@@ -1380,7 +1381,7 @@ const deepScenes = {
       lookAtStation(0);
       window.__board(S.stations[0].id);
     } },
-  // The build button pressed: an empty lot staked out at the first slot and
+  // The build sign pressed: an empty lot staked out at the first slot and
   // its board asking what goes up there.
   'party-lot': { about: 'the deep', say: 'an empty lot, its board asking what goes up there',
     run: () => {
@@ -1388,7 +1389,7 @@ const deepScenes = {
       lookDeep(slotAt(freeSlot()));
       pressBuildButton();
     } },
-  'party-button': { about: 'the deep', say: 'a fang held: the build button over the next free slot, wearing the fang\'s mark',
+  'party-button': { about: 'the deep', say: 'a fang held: the build sign in the next free slot, wearing the fang\'s mark',
     run: () => { deepYard({ party: [cast('brawler', 2)], fangs: 1, run: 6 }); lookDeep(slotAt(freeSlot())); } },
   // The plate in the furnace's brick over the door: the fangs held (FANG_PLATE).
   'fang-plate': { about: 'the deep', say: 'two fangs held: the plate over the furnace\'s door reads fang x 2',
@@ -3719,4 +3720,37 @@ Object.assign(SCENES, {
     } },
   'after-mill-brim': { about: 'the acts', say: "a cut block tossed off the chute's foot onto a timber mound nearly at its brim",
     run: () => millStage(() => millSaw().out.some(o => { const p = millBlockAt(o.a); return p.x > AFTER_MILL.chute.x1 - 0.5; }), { timber: 15 }) }
+});
+
+// The build sign (buildsign.js), in each place that has an empty lot: staked
+// in the lot, BUILD over the price, the pointer on it saying what it builds.
+// Act 1: the shack offered but short (120 of its 150). Act 3: the saw mill
+// payable beside the workshop, which waits on it. The deep: a fang held, the
+// next free slot's sign. The pointer is stood on the sign by the page
+// (`__signHover`, render/buildsign.js), which the node tier never loads.
+const SIGN_REVIEW = { about: 'the acts', review: 'build sign: built', stage: 'built: build-sign, not on main yet',
+                      branch: 'build-sign', supersedes: ['build button in the world'] };
+const standSign = (key, x) => { pinCamera(x); window.__look(x); window.__fast(1 / 60); globalThis.__signHover?.(key); };
+Object.assign(SCENES, {
+  'build-sign-yard': { ...SIGN_REVIEW, option: 'A act 1: the shack', say: "The shack's lot: a sign staked where the hut will stand, BUILD over its price, the pebbles you're short of greyed. Press it and a builder walks out.",
+    run: () => {
+      window.__reset(); window.__crew(2); S.seenBench = true; window.__give(120); window.__fast(2);
+      standSign('shack', signMid('shack', 'yard').x - S.viewW / 2);
+    } },
+  'build-sign-after': { ...SIGN_REVIEW, option: 'B act 3: the saw mill and the workshop', say: "The saw mill's sign payable, the workshop's greyed until the saw mill stands; no UPGRADES under either. The shack's board still sells both.",
+    run: () => {
+      window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+      for (let k = 0; k < 90 && window.__afterRead().walking > 0; k++) window.__fast(1);
+      window.__afterGrant({ rebel: 50 }); yardPurse();
+      // framed on the middle between the two lots, so both signs stand whole
+      const x = (signMid('after-mill', 'after').x + signMid('after-workshop', 'after').x) / 2 - S.viewW / 2;
+      window.__fast(2);
+      S.wonShown = S.wonSeq | 0;   // the yard's coins granted for the bills earn act 1 notices play never shows here
+      standSign('after-mill', x);
+    } },
+  'build-sign-deep': { ...SIGN_REVIEW, option: 'C the deep: the next slot', say: "A fang held: the sign staked in the next free slot, BUILD over the fang's mark. It replaces the floating build button.",
+    run: () => {
+      deepYard({ party: [cast('brawler', 2)], fangs: 1, run: 6 });
+      standSign('s2', signMid('s2', 'deep').x - S.viewW / 2);
+    } }
 });

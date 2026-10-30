@@ -6911,15 +6911,15 @@
  {
   "id": "row-raise-station",
   "group": "The deep",
-  "where": "src/deep/party.js",
+  "where": "src/deep/buildbutton.js",
   "context": "the deep: the build of a new fighter's station (the queue card names it)",
   "text": "raise a station"
  },
  {
   "id": "build-free",
   "group": "The deep",
-  "where": "src/deep/buildbutton.js",
-  "context": "the deep's build button: the first station costs no fang",
+  "where": "src/buildsign.js",
+  "context": "a build sign's price when it asks nothing: the deep's first station costs no fang",
   "text": "free"
  },
  {
@@ -8281,13 +8281,6 @@
   "text": "build"
  },
  {
-  "id": "after-sect-rebuild",
-  "group": "Act 4 (placeholder)",
-  "where": "src/after/rows.js",
-  "context": "act 3 ruined station's card heading (placeholder): its rebuild",
-  "text": "rebuild"
- },
- {
   "id": "after-sect-card",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
@@ -8412,5 +8405,47 @@
   "where": "src/roster.js",
   "context": "The button above a station's worker count that opens its upgrades (act 3).",
   "text": "upgrades"
+ },
+ {
+  "id": "build-sign-word",
+  "group": "Act 3 boards (track C, placeholder)",
+  "where": "src/buildsign.js",
+  "context": "The sign staked in an empty lot that builds it, in every act: the word on its board.",
+  "text": "build"
+ },
+ {
+  "id": "build-sign-call",
+  "group": "Act 3 boards (track C, placeholder)",
+  "where": "src/after/stations.js",
+  "context": "The sign's hover, naming what it builds: \"build the saw mill\".",
+  "text": "build the ${name}"
+ },
+ {
+  "id": "build-sign-say",
+  "group": "Act 3 boards (track C, placeholder)",
+  "where": "src/buildsign.js",
+  "context": "The sign's hover: what it builds and its price, \"build the shack: 150 pebbles\".",
+  "text": "${call}: ${bill}"
+ },
+ {
+  "id": "build-sign-wait",
+  "group": "Act 3 boards (track C, placeholder)",
+  "where": "src/buildsign.js",
+  "context": "The sign's hover while its build waits on something: \"build the workshop: needs the saw mill\".",
+  "text": "${call}: ${why}"
+ },
+ {
+  "id": "build-sign-coin",
+  "group": "Act 3 boards (track C, placeholder)",
+  "where": "src/buildsign.js",
+  "context": "One coin of the sign's price, in its hover: \"150 pebbles\".",
+  "text": "${n} ${coin}"
+ },
+ {
+  "id": "build-sign-fang",
+  "group": "Act 3 boards (track C, placeholder)",
+  "where": "src/buildsign.js",
+  "context": "The deep's coin on its build sign, in the hover: \"1 fang\".",
+  "text": "fang"
  }
 ]

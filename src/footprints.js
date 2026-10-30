@@ -46,6 +46,7 @@ import { DRAW } from './render/after/stations.js';
 import { silhouette } from './render/after/kit.js';
 import { furnaceBox, barrierBox } from './hell/place.js';
 import { riftOpen } from './rift.js';
+import { signRects } from './buildsign.js';
 
 export const PLACES = ['yard', 'deep', 'after', 'hell'];
 
@@ -313,9 +314,22 @@ function hellParts() {
 }
 
 const PARTS = { yard: yardParts, deep: deepParts, after: afterParts, hell: hellParts };
+// Everything standing in `place` but the build signs, which are placed
+// against it (buildsign.js).
+export const standingIn = place => PARTS[place]();
 
-// Every object standing in `place` and the ground it takes.
-export const footprints = place => PARTS[place]();
+// Every object standing in `place` and the ground it takes. A build sign
+// standing in an empty lot (buildsign.js) is the lot's, under its id: what is
+// built there is the same object, so the two may share ground and nothing
+// else may touch either.
+export const footprints = place => {
+  const out = PARTS[place]();
+  for (const s of signRects(place)) {
+    const lot = out.find(o => o.id === s.id);
+    if (lot) lot.rects = [...lot.rects, ...s.rects]; else out.push(s);
+  }
+  return out;
+};
 
 const meet = (a, b) => {
   const w = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);

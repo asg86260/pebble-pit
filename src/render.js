@@ -26,6 +26,7 @@ import { drawCount } from './render/counter.js';
 import { drawBench, drawDroppedHats, drawBuried, drawIntro, drawKitStands,
          drawPointed, drawRosterBodies, drawSays, drawWorkers, drawForklifts, drawGarage, drawHeld, drawSightVeil, drawDeepSight, drawPlaceSight } from './render/crew.js';
 import { drawCursor } from './render/cursor.js';
+import { drawBuildSigns } from './render/buildsign.js';
 import { drawPadMark } from './render/padmark.js';
 import { clearPage, clipToHalf, enterScreen, enterSky, enterWorld, leaveWorld, pressFrame } from './render/frame.js';
 import { deepTop } from './deep/place.js';
@@ -304,6 +305,7 @@ const LAYERS = [
   { name: 'done marks', in: YARD_DEEP, draw: drawDoneMarks },   // a tick over any station that finished something
   { name: 'sight veil', draw: drawSightVeil },   // the right button held: the yard behind the crew veiled pale
   { name: 'roster', in: YARD_DEEP, draw: drawRosterBodies },    // who is working here, under the place they work
+  { name: 'build signs', in: ['yard', 'deep', 'after'], draw: drawBuildSigns }, // staked in each empty lot, behind the crew who walk past
   { name: 'intro', draw: drawIntro },            // the two of them, or whoever is under the rock
   { name: 'forklifts', draw: drawForklifts },   // behind the crew, who walk in front of the machines
   { name: 'workers', draw: drawWorkers, dim: 1 },
@@ -383,7 +385,7 @@ const FISH = new Set(['deep fauna', 'meal gulped', 'meal']);
 const AFTER_WASH = new Set(['fight numbers', 'status posts', 'air near', 'pot labels']);
 // The yard's reading, which is in no scene: faded right out while one holds,
 // on the recede's own number (render/recede.js, `hudInk`).
-const HUD = new Set(['pile marks', 'after pile marks','roster', 'after roster', 'roster counts', 'kit counts', 'stock count', 'after counts', 'counter']);
+const HUD = new Set(['pile marks', 'after pile marks','roster', 'build signs','after roster', 'roster counts', 'kit counts', 'stock count', 'after counts', 'counter']);
 // Bodies of either kind in one layer: drawn behind the wash and again over
 // it, each body sorted by `bodyInk`.
 const MIXED = new Set(['workers', 'says', 'swimmers', 'party']);
@@ -391,7 +393,7 @@ const MIXED = new Set(['workers', 'says', 'swimmers', 'party']);
 // The landing page's picture (main.js, `demo`) is the yard to be looked at
 // and not read: the layers a player reads off the picture are left out of it.
 const READING = new Set(['pad focus', 'offer flags', 'paid', 'pile marks', 'after pile marks', 'auras', 'work bars', 'done marks',
-                         'casino mark', 'roster', 'after roster', 'pointed', 'cursor', 'roster counts', 'kit counts',
+                         'casino mark', 'roster', 'build signs', 'after roster', 'pointed', 'cursor', 'roster counts', 'kit counts',
                          'stock count', 'after counts', 'pot labels', 'counter', 'fight numbers', 'status posts', 'serpent bar']);
 let picture = false;            // page: the landing page draws the yard as a picture
 export const asPicture = on => { picture = on; };
@@ -676,17 +678,13 @@ function drawRipples(rip) {
 }
 
 // --- the party wave, track BOARD (docs/wave-party.md) -----------------------------
-// Two things that stand in the deep rather than on a board, seated every frame
-// after the picture, in whichever half is up: the open station's rails, laid
-// into its board and filled, and the floating button over the next free floor
-// slot. Page elements, not paint, and last, so the camera they are seated by
-// is the one the frame was drawn with.
+// The open station's rails, laid into its board and filled: they stand in the
+// deep rather than on a board, seated every frame after the picture, in
+// whichever half is up. A page element, not paint, and last, so the camera it
+// is seated by is the one the frame was drawn with.
 //
-// Both are seated in every place, not only the deep: each decides for itself
-// whether it shows, and the one place it must hear that it does not is
-// whichever place is up when it should fade out. A layer naming no place
-// draws in the yard alone, which kept the button from ever showing in the
-// deep it is for.
+// Seated in every place, not only the deep: it decides for itself whether it
+// shows, and the one place it must hear that it does not is whichever place
+// is up when it should fade out.
 import { seatRails } from './deep/rails.js';
-import { seatBuildButton } from './deep/buildbutton.js';
-LAYERS.push({ name: 'rails', in: ALL, draw: seatRails }, { name: 'build button', in: ALL, draw: seatBuildButton });
+LAYERS.push({ name: 'rails', in: ALL, draw: seatRails });

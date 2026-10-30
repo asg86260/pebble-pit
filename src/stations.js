@@ -16,7 +16,7 @@
 
 import { P, FARM_DUST, SHACK_DUST, PROP_FROM, LOO_MUCK, UNLOCK_SHOW, PARTY_IDS, CLASSES, BASES, RECRUIT } from './config.js';
 import { S, bench, casino, filter, tower, outhouse, shack } from './state.js';
-import { farmShedRoofed, quarryShed } from './world.js';
+import { farmShedRoofed, quarryShed, shackSpot } from './world.js';
 import { houseRect } from './house.js';
 import { apothHut } from './apothecary.js';
 import { shieldDone } from './shield.js';
@@ -24,7 +24,7 @@ import { demoOn } from './demo.js';
 import { beatDone } from './beats.js';
 import { MACHINES, running } from './machines.js';
 import { poopLeft } from './smog.js';
-import { canAfford } from './upgrades.js';
+import { canAfford, UPGRADES } from './upgrades.js';
 import { standOfStation, crusherRect, podsRect } from './deep/place.js';
 import { stationById } from './deep/party.js';
 import { bedAtBrim } from './deep/scales.js';
@@ -33,10 +33,22 @@ import { JOB } from './jobs.js';
 import { msg } from './lang.js';
 import { AFTER_STATION_ROWS } from './after/stations.js';
 import { HELL_STATION_ROWS } from './hell/stations.js';
+import { deepLot } from './deep/buildbutton.js';
 
 // A door is shown once you are within reach of affording it: a price you have
 // no idea is coming is a price you cannot save for.
 const nearly = n => S.stored >= n * UNLOCK_SHOW;
+
+// An empty lot in the yard, for its build sign (buildsign.js): the door row
+// on the bench that builds it, and the ground the yard has seated the site
+// into whether or not it is bought (world.js, `seatSites`), the hut where it
+// will settle off the rock (`shackSpot`), as footprints.js reads them.
+const yardLot = key => ({
+  row: () => UPGRADES.find(u => u.key === `unlock${key}`) || null,
+  board: 'bench',
+  box: () => { const s = S.placed?.[key]; return s && { x: key === 'shack' ? shackSpot() : s.x, w: s.w }; },
+  floor: () => S.groundY
+});
 
 // How far past a station's ground the pointer still counts as standing at it,
 // in cells: eight to either side and above, four below, unless a row says
@@ -92,7 +104,10 @@ function partyRow(id) {
     // stands where the station will.
     stand: () => { const s = st(); return s ? standOfStation(s) : null; },
     board: `${id}BoardOpen`,
-    after: [], needs: () => false
+    after: [], needs: () => false,
+    // The next free slot, while it is the next: the deep's build sign
+    // (deep/buildbutton.js).
+    lot: deepLot(id)
   };
 }
 for (const id of PARTY_IDS) {
@@ -119,7 +134,11 @@ for (const id of PARTY_IDS) {
 // board runs out to from it ('right' or 'left'): beside the station rather
 // than over it, where the board would hide the parts a hand works (act 3's
 // stations, after/stations.js); without one, the board stands centered over
-// its ground. So a new place is one row, and every system
+// its ground. A row with a `lot` is a place built on an empty lot that wears
+// a build sign until it is (buildsign.js): the row that builds it, the ground
+// the sign stands in (`box`, and a `mid` where the drawing's middle is not
+// the box's), the floor under it, and where they differ, the board the row
+// is listed on, the call its hover makes and its own press. So a new place is one row, and every system
 // that shows or staffs a place reads it off here.
 //
 // Which place a row stands in (`place`: 'yard', 'deep', 'after' or 'hell';
@@ -137,11 +156,11 @@ for (const id of PARTY_IDS) {
 // The shields come after, since they have no ground and answer to no pointer.
 export const STATIONS = [
   // No board: the casino's decisions are levers on the building (levers.js).
-  { key: 'casino', name: msg('station-casino'), glyph: 'die', open: () => S.casinoOpen, stand: () => casino, board: null,
+  { key: 'casino', name: msg('station-casino'), lot: yardLot('casino'), glyph: 'die', open: () => S.casinoOpen, stand: () => casino, board: null,
     after: ['quarry'],
     // The yard has been invested in: a second rock, not any one building.
     needs: () => S.boulderNo >= 2 },
-  { key: 'filter', name: msg('station-filter'), glyph: 'balloon',
+  { key: 'filter', name: msg('station-filter'), lot: yardLot('filter'), glyph: 'balloon',
     page: 'filter', empty: msg('station-filter-empty'), post: { key: 'filterjob', job: JOB.PURIFY },
     open: () => S.filterOpen, stand: () => filter, board: 'filterBoardOpen',
     after: [],
@@ -154,7 +173,7 @@ export const STATIONS = [
   // tight margin: `SHED_GAP` is much narrower than `BRIDGE_RUN`, so the usual
   // eight cells would reach from the shed onto the ramp and open the board
   // there.
-  { key: 'quarry', name: msg('station-quarry'), glyph: 'hoist',
+  { key: 'quarry', name: msg('station-quarry'), lot: yardLot('quarry'), glyph: 'hoist',
     empty: msg('station-quarry-empty'), post: { key: 'quarryjob', job: JOB.QUARRY, kit: true },
     open: () => S.quarryOpen, stand: () => quarryShed(), board: 'quarryBoardOpen',
     reach: { right: 1 },
@@ -162,7 +181,7 @@ export const STATIONS = [
     // the net failing opens it (DESIGN.md, "The barriers are the gates");
     // never in the demo, which ends there
     needs: () => shieldDone('net') && !demoOn() },
-  { key: 'farm', name: msg('station-farm'), glyph: 'furrow',
+  { key: 'farm', name: msg('station-farm'), lot: yardLot('farm'), glyph: 'furrow',
     empty: msg('station-farm-empty'), post: { key: 'farmjob', job: JOB.FARM, kit: true },
     open: () => S.farmOpen, stand: () => farmShedRoofed(), board: 'farmBoardOpen',
     after: [],
@@ -171,13 +190,13 @@ export const STATIONS = [
     needs: () => shieldDone('props') && nearly(FARM_DUST), sticky: true },
   // The hut, not the plot: a pot answers to its own picker (potpick.js), and
   // a pointer near a cauldron must not throw the shop menu over it.
-  { key: 'apothecary', name: msg('station-apothecary'), glyph: 'pot',
+  { key: 'apothecary', name: msg('station-apothecary'), lot: yardLot('apothecary'), glyph: 'pot',
     page: 'apothboard', shop: 'apothshop', empty: msg('station-apothecary-empty'), post: { key: 'stirjob', job: JOB.STIR },
     open: () => S.apothecaryOpen, stand: () => apothHut(), board: 'apothBoardOpen',
     after: ['farm'],
     // not in the demo: the farm is the last place it sells
     needs: () => S.seenSpore && !demoOn() },
-  { key: 'tower', name: msg('station-tower'), glyph: 'tower',
+  { key: 'tower', name: msg('station-tower'), lot: yardLot('tower'), glyph: 'tower',
     empty: msg('station-tower-empty'), post: { key: 'skyjob', job: JOB.WIZARD, kit: true, show: () => S.meteorOpen },
     open: () => S.towerOpen, stand: () => tower, board: 'towerBoardOpen',
     after: ['quarry'],
@@ -185,7 +204,7 @@ export const STATIONS = [
     needs: () => shieldDone('arch') },
   // The hut stands on ground the rock's own reach covers, so it is asked
   // before the rock in input.js's cascade.
-  { key: 'shack', name: msg('station-shack'), glyph: 'hut',
+  { key: 'shack', name: msg('station-shack'), lot: yardLot('shack'), glyph: 'hut',
     empty: msg('station-shack-empty'), post: { key: 'mine', job: JOB.ROCK, kit: true, show: () => S.crew > 0,
             at: () => S.cx },
     open: () => S.shackOpen, stand: () => shack, board: 'shackBoardOpen',
@@ -200,7 +219,7 @@ export const STATIONS = [
     open: () => S.seenBench, stand: () => bench, board: 'boardOpen',
     after: [],
     needs: () => canAfford() },
-  { key: 'outhouse', name: msg('station-outhouse'), glyph: 'bucket',
+  { key: 'outhouse', name: msg('station-outhouse'), lot: yardLot('outhouse'), glyph: 'bucket',
     page: 'looboard', shop: 'looshop', empty: msg('station-outhouse-empty'), post: { key: 'loojob', job: JOB.JANITOR, kit: true },
     open: () => S.outhouseOpen, stand: () => outhouse, board: 'looBoardOpen',
     after: [],

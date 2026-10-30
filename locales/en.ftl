@@ -3172,7 +3172,7 @@ rail-fighter = the fighter
 # the deep: the build of a new fighter's station (the queue card names it)
 row-raise-station = raise a station
 
-# the deep's build button: the first station costs no fang
+# a build sign's price when it asks nothing: the deep's first station costs no fang
 build-free = free
 
 # the serpent's level after the pips on its bar, from level 2 on; $n is the level.
@@ -3595,9 +3595,6 @@ after-sect-seats = seats
 # act 3 shack heading (placeholder): the stations to build
 after-sect-build = build
 
-# act 3 ruined station's card heading (placeholder): its rebuild
-after-sect-rebuild = rebuild
-
 # act 3 station card heading (placeholder)
 after-sect-card = upgrades
 
@@ -3653,3 +3650,16 @@ after-crowd-none = none due
 
 # The button above a station's worker count that opens its upgrades (act 3).
 roster-upgrades = upgrades
+
+# The sign staked in an empty lot that builds it, in every act: the word on its board.
+build-sign-word = build
+# The sign's hover, naming what it builds: "build the saw mill".
+build-sign-call = build the { $name }
+# The sign's hover: what it builds and its price, "build the shack: 150 pebbles".
+build-sign-say = { $call }: { $bill }
+# The sign's hover while its build waits on something: "build the workshop: needs the saw mill".
+build-sign-wait = { $call }: { $why }
+# One coin of the sign's price, in its hover: "150 pebbles".
+build-sign-coin = { $n } { $coin }
+# The deep's coin on its build sign, in the hover: "1 fang".
+build-sign-fang = fang

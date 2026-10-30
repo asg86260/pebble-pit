@@ -173,7 +173,8 @@ export const ROWS = [
   // --- the deep: the pods -----------------------------------------------------
   // The deep's one board of cards. A station of the party sells its ladders
   // on its rails, not as rows (deep/rails.js, test/rails.test.mjs), and is
-  // bought from the floating button, not a board (deep/buildbutton.js).
+  // bought from the build sign in the next free slot, not a board
+  // (deep/buildbutton.js, buildsign.js).
   { key: 'pod', part: 1, reach: deep },
 
   // --- act 3, the afterlife: no lines here --------------------------------------
