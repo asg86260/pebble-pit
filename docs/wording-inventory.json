@@ -8134,11 +8134,25 @@
   "text": "faster growth"
  },
  {
-  "id": "after-row-tree",
+  "id": "after-row-seeds",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 card row (placeholder): the grove's bigger trees, more logs a fall",
-  "text": "bigger trees"
+  "context": "act 3 card row (placeholder): the grove's seeds, one acorn a press, fetched from heaven's gates to the seed basket",
+  "text": "seeds"
+ },
+ {
+  "id": "after-seeds-full",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/rows.js",
+  "context": "the seeds row's words while it is greyed: the basket, the seeds owed and those on their way fill it",
+  "text": "full"
+ },
+ {
+  "id": "after-row-selfseed",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/rows.js",
+  "context": "act 3 card row (placeholder): the grove's self-seeding, a felled crown dropping an acorn more often a rung",
+  "text": "self-seeding"
  },
  {
   "id": "after-row-stumps",
@@ -8230,6 +8244,13 @@
   "where": "src/after/roster.js",
   "context": "act 3 roster hover (placeholder): why a station's worker is standing still",
   "text": "waiting on a tree to grow"
+ },
+ {
+  "id": "after-stall-seeds",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/roster.js",
+  "context": "act 3 roster hover (placeholder): why a station's worker is standing still",
+  "text": "waiting on seeds"
  },
  {
   "id": "after-stall-logs",

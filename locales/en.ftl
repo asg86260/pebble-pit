@@ -3537,8 +3537,14 @@ after-row-plot = plot
 # act 3 card row (placeholder): the grove's faster growth
 after-row-grow = faster growth
 
-# act 3 card row (placeholder): the grove's bigger trees, more logs a fall
-after-row-tree = bigger trees
+# act 3 card row (placeholder): the grove's seeds, one acorn a press, fetched from heaven's gates to the seed basket
+after-row-seeds = seeds
+
+# the seeds row's words while it is greyed: the basket, the seeds owed and those on their way fill it
+after-seeds-full = full
+
+# act 3 card row (placeholder): the grove's self-seeding, a felled crown dropping an acorn more often a rung
+after-row-selfseed = self-seeding
 
 # act 3 card row (placeholder): the grove's stump removal: woodcutters dig stumps too
 after-row-stumps = stump removal
@@ -3572,6 +3578,9 @@ after-roster-tip = { $job }: { $line }
 
 # act 3 roster hover (placeholder): why a station's worker is standing still
 after-stall-trees = waiting on a tree to grow
+
+# act 3 roster hover (placeholder): why a station's worker is standing still
+after-stall-seeds = waiting on seeds
 
 # act 3 roster hover (placeholder): why a station's worker is standing still
 after-stall-logs = waiting on logs

@@ -3748,3 +3748,53 @@ Object.assign(SCENES, {
       groveAt(520); window.__holdShot();
     } }
 });
+
+// Track D: seeds (DESIGN.md, "Act 3's grove, rebuilt"): a woodcutter planting
+// from the basket, a seed bought and carried in from heaven's gates, and a
+// felled crown dropping an acorn that a member carries home. Framed as the
+// signed-off mock's scenes were (after-grove-mock-a1, -s2, -s3a), so they
+// shoot side by side. Each is run as a player's yard would run it: the
+// members walked out, the rows bought through `__buy`.
+import { clearPlot, chopTree } from './after/grove.js';
+import { lying } from './after/ground.js';
+import { TREE_CHOPS } from './config.js';
+const grovePeople = n => {
+  window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+  window.__afterCrowd((i, v) => (i < n ? 8 : v));
+  for (let k = 0; k < 90 && window.__afterRead().walking > 0; k++) window.__fast(1);
+  yardPurse(); window.__afterGrant({ rebel: 2000 });
+};
+// Frames until a fact holds, at most `s` seconds of the game.
+const until = (fact, s = 90) => { for (let f = 0; f < s * 60 && !fact(); f++) window.__fast(1 / 60); };
+const basketAt = () => window.__afterPile('forestry', 'seeds');
+Object.assign(SCENES, {
+  'after-grove-plant': { about: 'the acts', say: "a woodcutter plants: it took an acorn out of the seed basket, carried it to the bare plot and set it in; the acorn is sinking into the soil and the basket is an acorn short",
+    run: () => {
+      grovePeople(3);
+      S.after.plots = []; clearPlot();   // the grove's one plot bare, for the woodcutter to plant
+      window.__afterPress(AFTER_JOB.CUT, 1);
+      until(() => S.after.plots[0].seed != null);
+      S.after.plots[0].seed = S.after.t;   // the sink begun: a still caught while the acorn is going in
+      window.__fast(0.3);
+      groveAt(300); window.__holdShot();
+    } },
+  'after-grove-seeds': { about: 'the acts', say: "a seed bought on the grove's board: a member has walked in from heaven's gates with the one acorn and stands at the seed basket, which is two acorns short",
+    run: () => {
+      grovePeople(3);
+      window.__afterGrant({ seeds: -3 });
+      window.__buy('after-seeds');
+      until(() => S.after.bodies.some(b => loadKind(b) === 'acorn' && Math.abs(b.x - basketAt().x) < P * 10));
+      groveAt(300); window.__holdShot();
+    } },
+  'after-grove-selfseed': { about: 'the acts', say: "self-seeding bought, an oak sawn down and its crown broken: an acorn fell out of it and lies past the last log, and a member is on its way to carry it to the seed basket",
+    run: () => {
+      grovePeople(3);
+      window.__afterGrant({ seeds: -4 });
+      buyAfter('after-selfseed');
+      S.after.ups['after-selfseed'] = 4;   // the last rung's chance, so the first fall drops one
+      for (let k = 0; k < TREE_CHOPS; k++) chopTree(0, true);
+      window.__fast(0.1);
+      until(() => lying().some(q => q.kind === 'acorn' && q.at != null && S.after.t - q.at > 0.7), 20);
+      groveAt(420); window.__holdShot();
+    } }
+});

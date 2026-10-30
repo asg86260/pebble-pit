@@ -178,7 +178,7 @@ export const GLYPH_OF = {
   'after-seat-sawyer': ['cap', 'plus'],
   'after-seat-joiner': ['cap', 'plus'], 'after-seat-carrier': ['cart', 'plus'],
   'after-podium': ['bell', 'up'], 'after-saw': ['blade'], 'after-plot': ['furrow', 'plus'], 'after-grow': ['ear', 'up'],
-  'after-tree': ['ear', 'plus'], 'after-stumps': ['shovel'], 'after-blade': ['blade', 'plus'],
+  'after-seeds': ['ear', 'plus'], 'after-selfseed': ['ear', 'crop'], 'after-stumps': ['shovel'], 'after-blade': ['blade', 'plus'],
   'after-bench': ['bench', 'plus'], 'after-signreach': ['planks', 'up'],
   'after-build-mill': ['blade'], 'after-build-workshop': ['bench'],
 };
