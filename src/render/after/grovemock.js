@@ -29,7 +29,7 @@ import { trees } from '../../after/grove.js';
 import { gestureView } from '../../after/gestures.js';
 import { AP, basketBox, GROVE_BASKET } from '../../after/place.js';
 import { M, MT, TRUNK_TOP, treeCells, grownShape, rowOrder, bx, fl, mx, pivotX, cutX, trunkTop, GRIP, SWING, ROLL_S, SAW_ANG, SAW_TIP,
-         STROKE, shovelAt, SHOVEL_H, basketSlot, TREE_ACORNS, TIP_S, OAKS, BREAK_S, BREAK_SPREAD, groveMockOn } from '../../after/grovemock.js';
+         STROKE, shovelAt, SHOVEL_H, basketSlot, TREE_ACORNS, TIP_S, OAKS, BREAK_S, BREAK_SPREAD, HEAVY, groveMockOn } from '../../after/grovemock.js';
 
 export { groveMockOn };
 const BODY = 3 * P;
@@ -315,6 +315,18 @@ function pulledStump(p, t, block) {
     if (s === 3 && age < 0.3) for (const [dx, dy] of [[1, 0], [-1, 0], [0, -1], [1, -1], [-1, -1]]) fill(K, Math.round(bx0 + dx * AP * 1.5), Math.round(fl() - AP + dy * AP * 1.5), AP / 2, AP / 2);
   }
 }
+// Sawdust off the kerf (W-2 with heft, F1): each speck a whole cell in the
+// timber's pale wood, flung up and out of the cut's far mouth, falling under
+// gravity to lie where it lands, on the soil bed or the floor; never faded.
+function sawdust(t) {
+  for (const d of M.dust || []) {
+    const h1 = hash(d.seed), h2 = hash(d.seed + 4.1), age = t - d.at;
+    const vx = 25 + h1 * 95, vy = -(45 + h2 * 85), x = d.x + vx * Math.min(age, 0.9);
+    const onBed = Math.abs(x - bx()) < 6 * AP, rest = fl() - (onBed ? AP : 0) - AP;
+    const y = Math.min(rest, d.y + vy * age + 380 * age * age);
+    fill(goodTone('plank', 1 + Math.floor(h2 * 3)), Math.round(x), Math.round(y), AP, AP);   // a whole cell, in the timber's deeper shades so it shows on the paper
+  }
+}
 // The trunk lying from the pivot along the floor, `n` logs of it, each in
 // its shade, and the cut at the far log opening down from the top.
 function lyingTrunk(n, cut, t) {
@@ -459,6 +471,7 @@ export function drawGroveMock() {
       } else acorn(Math.round(q.x), Math.round(y));
     }
     rolling(t);
+    sawdust(t);
     // standing whole, or growing
     if (p.stage && p.fall == null) {
       pineCells(treeCells());
@@ -563,7 +576,8 @@ function puff(x, y, since) {
 // yard's square reads the transform's scale for its rim); its load and tool
 // are drawn turned with the plot.
 function square(b) {
-  const x = Math.round(M.flip ? 2 * bx() - b.x - BODY : b.x), y = Math.round(b.y - BODY);
+  const bx0 = b.x + (b.lean || 0) * (b.face || 1);   // leant into the push
+  const x = Math.round(M.flip ? 2 * bx() - bx0 - BODY : bx0), y = Math.round(b.y - BODY);
   if (b.squat) drawSquat(x, y); else drawBody(x, y);
 }
 function body(b, t) {
@@ -607,10 +621,10 @@ function body(b, t) {
     }
     // held up at the felling cut, a log's height, an arm up to it: the blade
     // along the cut, `s` of its stroke in
-    const cutY = fl() - MT.stump * AP, hx = b.x + BODY + 1, hy = cutY - AP / 2;
-    fill(K, b.x + BODY - AP, hy, AP / 2, y - hy + 2);
-    const dx = (b.s || 0) * TRAVEL[b.tool] * AP;
-    if (b.smear) layMid(sp, hx + (b.smear === 'in' ? 0 : TRAVEL[b.tool] * AP), hy, 0, false, 0.35);
+    const lean = (b.lean || 0), travel = b.heavy ? HEAVY.travel : TRAVEL[b.tool], cutY = fl() - MT.stump * AP, hx = b.x + lean + BODY + 1, hy = cutY - AP / 2;
+    fill(K, b.x + lean + BODY - AP, hy, AP / 2, y - hy + 2);
+    const dx = (b.s || 0) * travel * AP;
+    if (b.smear) layMid(sp, hx + (b.smear === 'in' ? 0 : travel * AP), hy, 0, false, 0.35);
     layMid(sp, hx + dx, hy, 0, false);
   }
 }

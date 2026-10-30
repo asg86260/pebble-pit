@@ -3748,7 +3748,8 @@ const GROVE_MOCK = [ // MOCK grove
   ['cg1', 'C-green-1 deep pine green', 520, "The fall with the crown in a deep pine green, each cell one of four close shades, standing, going over and breaking."], // MOCK grove
   ['cg2', 'C-green-2 warm moss green', 520, "The fall with the crown in a lighter, warmer moss green, each cell one of four close shades."], // MOCK grove
   ['cg3', 'C-green-3 blue-green', 520, "The fall with the crown in a blue-green, each cell one of four close shades."], // MOCK grove
-  ['w2', 'W-2 the handsaw', 520, "The woodcutter fells the pine with the hand saw you use, held up at the cut; the tree lands and breaks along its seams into its four logs, which hop apart and lie as logs for the workers to carry."], // MOCK grove
+  ['w2h', 'W-2 the hand saw, with heft', 520, "The woodcutter fells with the hand saw in long push-pull strokes: each end held, the push smeared and biting home with the body leant in and sawdust thrown from the kerf, the cut deeper each stroke, a beat of strain before the last; the tree drops and breaks into its logs."], // MOCK grove
+  ['w2', 'W-2-old the handsaw', 520, "The woodcutter fells the pine with the hand saw you use, held up at the cut; the tree lands and breaks along its seams into its four logs, which hop apart and lie as logs for the workers to carry."], // MOCK grove
   ['cr1', 'CR-1 a tiered pine', 520, "Deep pine green, a classic pine: four tiers stepped evenly, widest at the foot, a point on top; grown row by row, then felled."], // MOCK grove
   ['cr2', 'CR-2 a tall spruce', 520, "Deep pine green, a tall narrow spruce tapering to a point; grown row by row, then felled."], // MOCK grove
   ['cr3', 'CR-3 a round crown', 520, "Deep pine green, a full round crown on the trunk, an acorn tree's; grown row by row, then felled."], // MOCK grove
@@ -3764,7 +3765,7 @@ const GROVE_REVIEW = { // MOCK grove  one card per question the owner is choosin
   r: 'grove: layout, growth, the fall', b1: 'grove: layout, growth, the fall', c: 'grove: layout, growth, the fall', // MOCK grove
   cg1: 'grove: layout, growth, the fall', cg2: 'grove: layout, growth, the fall', cg3: 'grove: layout, growth, the fall', // MOCK grove
   a1: 'grove: planting and seeds', a2: 'grove: planting and seeds', s2: 'grove: planting and seeds', s3a: 'grove: planting and seeds', s3b: 'grove: planting and seeds', // MOCK grove
-  w2: 'grove: the woodcutter', // MOCK grove
+  w2h: 'grove: the woodcutter', w2: 'grove: the woodcutter', // MOCK grove
   cr1: 'grove: layout, growth, the fall', cr2: 'grove: layout, growth, the fall', cr3: 'grove: layout, growth, the fall', // MOCK grove
   oak1: 'grove: layout, growth, the fall', oak2: 'grove: layout, growth, the fall', oak3: 'grove: layout, growth, the fall', // MOCK grove
   f1: 'grove: by hand', f3a1: 'grove: by hand', f3a2: 'grove: by hand', f3a3: 'grove: by hand', // MOCK grove

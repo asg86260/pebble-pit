@@ -389,16 +389,50 @@ function sawStroke(b, t0) {
   else { b.s = 1 - (t - 2 * held - slide) / slide; b.smear = 'out'; }
   return b.s >= 1 && !wasIn;
 }
+// The heavy stroke (W-2 with heft): pulled back and held, the push in two
+// frames' smear, the bite held at the end of the push (the saw in, the body
+// leant in a cell's worth), eased back. 'bite' on the frame the push lands.
+export const HEAVY = { back: 0.22, push: 0.08, bite: 0.2, pull: 0.16, travel: 3.5 };
+function heavyStroke(b, t0) {
+  const { back, push, bite, pull } = HEAVY, per = back + push + bite + pull, t = t0 % per, was = b.phase;
+  if (t < back) { b.s = 0; b.smear = null; b.lean = 0; b.phase = 'back'; }
+  else if (t < back + push) { b.s = (t - back) / push; b.smear = 'in'; b.lean = AP * b.s; b.phase = 'push'; }
+  else if (t < back + push + bite) { b.s = 1; b.smear = null; b.lean = AP; b.phase = 'bite'; }
+  else { const k = (t - back - push - bite) / pull; b.s = 1 - k; b.smear = 'out'; b.lean = AP * (1 - k); b.phase = 'pull'; }
+  if (b.phase === 'bite' && was !== 'bite') { b.biteAt = S.after.t; return 'bite'; }
+  return null;
+}
+// Sawdust thrown off the kerf, `n` specks: whole half-cells in the timber's
+// pale wood, flung out of the cut on the saw's far side and falling to lie on
+// the ground where they land (never faded), as the yard's dust lies.
+function sprayDust(b, n) {
+  const x = bx() + (MT.c0 + MT.w) * AP, y = fl() - MT.stump * AP;   // the kerf's far mouth, as the scripts have it
+  for (let k = 0; k < n; k++) M.dust.push({ x, y, at: S.after.t, seed: M.dust.length * 7.7 + k });
+}
 // W: felled with the saw, then bucked with it from the ground.
 const SAW_STROKES = 6;   // strokes to take a log off
-function makeW(tool) {
+function makeW(tool, heavy = false) {
   return {
     init() { takeBack(); standTree();
-             M.bodies = [{ x: bx() - AP * 40, y: floorM(bx() - AP * 40), face: 1, tool, pose: 'carry', s: 0 }]; go('walk'); },
+             M.bodies = [{ x: bx() - AP * 40, y: floorM(bx() - AP * 40), face: 1, tool, heavy, pose: 'carry', s: 0, lean: 0 }]; M.dust = []; go('walk'); },
     step(dt) {
       const b = M.bodies[0], p = plot(), stand = bx() + MT.c0 * AP - BODY - SAW_STAND[tool] * AP;
       if (M.ph === 'walk') { b.pose = 'carry'; if (walkTo(b, stand, dt)) { b.face = 1; b.pose = 'saw'; go('fell'); } }
-      else if (M.ph === 'fell') {
+      else if (M.ph === 'fell' && heavy) {
+        // the stroke with heft: a long push-pull, each end held, the push
+        // ending in a held bite with sawdust off the kerf and the body leaning
+        // into it; the last stroke held a beat of strain before it drops the tree
+        const ev = heavyStroke(b, M.t);
+        if (ev === 'bite') {
+          if (p.chops >= TREE_CHOPS - 1 && !b.strained) { b.strained = true; go('strain'); return; }
+          chopTree(0); M.notch = p.fall != null ? MT.w : Math.min(MT.w, Math.ceil(p.chops / TREE_CHOPS * MT.w)); sprayDust(b, 5);
+        }
+        if (p.fall != null) { b.pose = 'carry'; b.s = 0; b.smear = null; b.lean = 0; go('watch'); }
+      } else if (M.ph === 'strain') {
+        // the blade bound in the last of the cut: pushed and held, leant hard in
+        b.s = 1; b.smear = null; b.lean = AP; b.bite = null;
+        if (M.t >= 0.6) { chopTree(0); M.notch = MT.w; sprayDust(b, 8); b.lean = 0; b.pose = 'carry'; b.s = 0; go('watch'); }
+      } else if (M.ph === 'fell') {
         if (sawStroke(b, M.t)) { chopTree(0); M.notch = p.fall != null ? MT.w : Math.min(MT.w, Math.ceil(p.chops / TREE_CHOPS * MT.w)); }
         if (p.fall != null) { b.pose = 'carry'; b.s = 0; b.smear = null; go('watch'); }
       } else if (M.ph === 'watch') { if (M.landed != null && S.after.t - M.landed >= 3.2) go(tool === 'saw1' ? 'toend' : 'done'); }   // W-2: the trunk breaks into its logs itself
@@ -870,6 +904,8 @@ const SCRIPTS = {
   // cut deeper a stroke, each log carried to the stack. W-1 the two-man
   // crosscut; W-2 the handsaw the player uses (F1's), so the grove has one saw.
   w1: makeW('saw1'), w2: makeW('hand'),
+  // W-2 with heft (the owner: "a bit longer, give it some sauce, some particles, some heft")
+  w2h: makeW('hand', true),
   // CR-1..3: the crown's shapes in the deep pine green (C-green-1): grown
   // row by row from the acorn (B1), standing a beat, felled and broken (C).
   cr1: makeCR(1), cr2: makeCR(2), cr3: makeCR(3),
@@ -1011,7 +1047,7 @@ export const SHOVEL_H = 7 * AP;
 export const shovelTop = ang => { const s = shovelAt(); return { x: s.x + Math.sin(ang) * SHOVEL_H, y: s.y - Math.cos(ang) * SHOVEL_H }; };
 
 // The options with a fall, turned to fall away from the shack.
-const FLIP = new Set(['c', 'oak1', 'oak2', 'oak3', 'w1', 'w2', 'cr1', 'cr2', 'cr3', 'cg1', 'cg2', 'cg3', 'd2axe1', 'd2axe2', 's1', 's3a', 's3b', 'd1', 'd2', 'e', 'esaw1', 'esaw2', 'esaw3', 'f1', 'f2']);
+const FLIP = new Set(['c', 'w2h', 'oak1', 'oak2', 'oak3', 'w1', 'w2', 'cr1', 'cr2', 'cr3', 'cg1', 'cg2', 'cg3', 'd2axe1', 'd2axe2', 's1', 's3a', 's3b', 'd1', 'd2', 'e', 'esaw1', 'esaw2', 'esaw3', 'f1', 'f2']);
 
 // --- the scene's door --------------------------------------------------------------------
 // Stand option `opt` on the act now standing: the global set, the state
@@ -1021,7 +1057,7 @@ export function startGroveMock(opt, STEPS) {
   globalThis.__groveMock = opt;
   Object.assign(M, { opt, mine: S.after, ph: '', t: 0, T: 0, logs: 0, cut: 0, roll: null, grow: null, cone: null, bodies: [],
                      cursor: null, ghost: null, notch: 0, sawAt: null, stumpOut: null, landed: null, from: null,
-                     flip: FLIP.has(opt), stumpUp: 0, tilt: 0, shovel: null, dug: 0, basket: BASKET_FULL, taking: null, dropped: [], tip: null, bought: false, style: 0, strain: 0, snapAt: null, snapK: -1, chips: [], lastDug: 0, axe: 0, crownPal: 1, crown: 0, breakAt: null });   // the crown in the deep pine green everywhere: the owner's pick
+                     flip: FLIP.has(opt), stumpUp: 0, tilt: 0, shovel: null, dug: 0, basket: BASKET_FULL, taking: null, dropped: [], tip: null, bought: false, style: 0, strain: 0, snapAt: null, snapK: -1, chips: [], lastDug: 0, axe: 0, crownPal: 4, crown: 5, breakAt: null, dust: [], lastChops: 0 });   // the crown everywhere the owner's pick: OAK-2 in its oak-leaf green
   M.placed.length = 0;
   const idx = STEPS.findIndex(q => q.name === 'grovemock');
   if (idx >= 0) STEPS.splice(idx, 1);
@@ -1041,6 +1077,9 @@ export function startGroveMock(opt, STEPS) {
     // logs in it, and its crown breaks where it hit.
     const p = plot();
     if (p && p.fell != null && M.landed !== p.fell) { M.landed = p.fell; M.logs = MT.logs; M.notch = 0; M.breakAt = BUCKED.has(M.opt) ? null : p.fell + AFTER_FALL_BOUNCE_S; }
+    // F1: sawdust off the kerf each time a stroke of the hand's bites
+    if (M.opt === 'f1' && p && p.chops > M.lastChops) sprayDust(null, 5);
+    M.lastChops = p ? p.chops : 0;
     // the trunk broken along its log seams: once the logs have hopped apart, each a real log where it lies
     if (M.breakAt != null && M.logs > 0 && S.after.t >= M.breakAt + BREAK_S) { for (let j = M.logs - 1; j >= 0; j--) layLog(pivotX() + j * MT.log * AP + (j - (MT.logs - 1) / 2) * BREAK_SPREAD, M.tones[j]); M.logs = 0; M.breakAt = null; }
     SCRIPTS[M.opt].step(dt);
