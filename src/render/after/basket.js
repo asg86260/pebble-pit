@@ -2,31 +2,34 @@
 // call 12; the owner, 2026-10-30: "a little seed basket next to the cabin
 // that holds the seeds"). The acorns in it are units of the `seeds` pile
 // (after/seeds.js), drawn with every other good on the ground
-// (render/after/piles.js, `drawGround`), so the count is what is drawn; this
-// is the basket over their feet, in timber's wood: a rim row across the
-// pile's width, its palest tone, and a body row under it with the darker
-// shade's weave on its odd columns, a cell in at each end. The basket's own
-// foot row is the ground's: the acorns rest on the floor, so only the two rows
-// the mock showed over their nuts are drawn.
+// (render/after/piles.js, `drawGround`), so the count is what is drawn. This
+// is the basket over them: a woven body in timber's wood that hides the
+// bottom layer up to its stalks, a lip row on top a few cells wider than the
+// heap either side, and the body tapering to its foot. The top layer stands
+// over the lip whole. Each cell of the weave is one of timber's tones by a
+// hash of where it is, so it reads as woven, not painted.
 import { AFTER_BASKET } from '../../config.js';
 import { ctx } from '../ctx.js';
 import { goodTone } from './piles.js';
-import { inView } from './kit.js';
+import { inView, hash } from './kit.js';
 import { pileAt, pileOwner, groundOf, AP } from '../../after/place.js';
 import { pileCells } from '../../after/art.js';
 import { S } from '../../state.js';
 
-const fill = (tone, x, y, w, h) => { ctx.fillStyle = tone; ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
+const fill = (tone, x, y) => { ctx.fillStyle = tone; ctx.fillRect(Math.round(x), Math.round(y), Math.ceil(AP), Math.ceil(AP)); };
 
 export function drawBasket() {
   const key = pileOwner('seeds');
   if (!S.after || !key) return;
-  const n = pileCells('seeds'), x = pileAt(key, 'seeds');
-  if (!inView(x, n * AP)) return;
-  const rim = goodTone('plank', 3), body = goodTone('plank', 1), weave = goodTone('plank', 2);
+  const n = pileCells('seeds'), w = AFTER_BASKET.wing, x0 = pileAt(key, 'seeds') - w * AP, cols = n + 2 * w;
+  if (!inView(x0, cols * AP)) return;
   const top = groundOf(key) - AFTER_BASKET.rows * AP;
-  fill(rim, x, top, n * AP, AP);
-  const inset = AFTER_BASKET.inset;
-  fill(body, x + inset * AP, top + AP, (n - 2 * inset) * AP, AP);
-  for (let c = inset + 1; c < n - inset; c += 2) fill(weave, x + c * AP, top + AP, AP, AP);
+  for (let r = 0; r < AFTER_BASKET.rows; r++) {
+    // the lip first, palest; then the body, its two tones woven; the foot a cell in each end
+    const inset = r === AFTER_BASKET.rows - 1 ? 1 : 0;
+    for (let c = inset; c < cols - inset; c++) {
+      const tone = r === 0 ? goodTone('plank', 3) : goodTone('plank', hash((x0 / AP + c) * 7.3 + r * 3.1) < 0.5 ? 1 : 2);
+      fill(tone, x0 + c * AP, top + r * AP);
+    }
+  }
 }

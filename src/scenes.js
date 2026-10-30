@@ -3786,7 +3786,7 @@ Object.assign(SCENES, {
       until(() => S.after.bodies.some(b => loadKind(b) === 'acorn' && Math.abs(b.x - basketAt().x) < P * 10));
       groveAt(300); window.__holdShot();
     } },
-  'after-grove-selfseed': { about: 'the acts', say: "self-seeding bought, an oak sawn down and its crown broken: an acorn fell out of it and lies past the last log, and a member is on its way to carry it to the seed basket",
+  'after-grove-selfseed': { about: 'the acts', say: "self-seeding bought, an oak sawn down and its crown broken: an acorn fell out of it and lies past the last log until a member carries it to the seed basket",
     run: () => {
       grovePeople(3);
       window.__afterGrant({ seeds: -4 });

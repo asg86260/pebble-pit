@@ -32,7 +32,6 @@ import { ctx } from '../ctx.js';
 import { themed, darkPage, raw } from '../../ink.js';
 import { drawSaw } from './saw.js';
 import { drawStumpPull } from './stump.js';
-import { drawBasket } from './basket.js';
 
 const { c0: C0, w: TW, stump: SH, logs: LOGS, log: LOG_C } = AFTER_TREE;
 const ease = u => u * u * (3 - 2 * u);
@@ -281,5 +280,4 @@ export function drawGrove() {
   });
   drawSaw();
   drawStumpPull();
-  drawBasket();
 }

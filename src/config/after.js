@@ -645,5 +645,5 @@ export const AFTER_SEED_DROP = AFTER_TREE.logs * AFTER_TREE.log + 3;
 export const AFTER_SEED_REACH_S = 0.7;
 export const AFTER_SEED_PLANT_S = 0.75;
 // The seed basket drawn over the acorns' feet: `rows` high (a rim over the
-// nuts, a body under it), the body `inset` cells in at each end.
-export const AFTER_BASKET = { rows: 2, inset: 1 };
+// nuts, a body under it), the body `wing` cells wider than the heap each side.
+export const AFTER_BASKET = { rows: 2, wing: 2 };
