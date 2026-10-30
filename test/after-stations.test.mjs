@@ -11,6 +11,7 @@ import { stationAt, standRect, hitRect, STATIONS } from '../src/stations.js';
 import { stationBox, plotX, afterFloor } from '../src/after/place.js';
 import { godMid, faceY } from '../src/after/sky.js';
 import { gestureUnder } from '../src/after/gestures.js';
+import { drawnRects } from '../src/footprints.js';
 
 const S = yard.S;
 const OPENING = ['house-fall', 'arrive', 'meet-god', 'refuse'];
@@ -32,6 +33,23 @@ function onFrame(key) {
     for (let x = b.x + P / 2; x < b.x + b.w; x += P) if (!gestureUnder(x, y)) return { x, y };
   return null;
 }
+
+// The forestry shack's box is its drawing's own size (after/cabin.js), so
+// every cell the stump house inks, the stovepipe's cap the top, answers as
+// the grove's: none is drawing the hit test cannot see.
+group('every cell the forestry shack draws, its stovepipe too, answers the pointer as the grove', async () => {
+  up();
+  const miss = [];
+  let cells = 0;
+  for (const r of drawnRects('forestry'))
+    for (let x = r.x + P / 2; x < r.x + r.w; x += P) { cells++; const k = stationAt(x, r.y + r.h / 2); if (k !== 'after-grove') miss.push(`${x},${r.y}:${k}`); }
+  const top = Math.min(...drawnRects('forestry').map(r => r.y)), b = stationBox('forestry');
+  window.__actsOn(null);
+  return [
+    ok(cells > 0 && !miss.length, 'each inked cell is the grove\'s', `${miss.length} of ${cells}: ${miss.slice(0, 6).join(' ')}`),
+    ok(top === b.y, 'the box stands as tall as the drawing, the pipe\'s cap its top', `${top} vs ${b.y}`)
+  ];
+});
 
 group('act 3\'s stations answer the pointer\'s one hit test on their drawings, and only up there', async () => {
   up(['mill', 'workshop']);

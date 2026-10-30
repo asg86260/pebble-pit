@@ -734,3 +734,12 @@ export const AFTER_BASKET = {
   rows: [[0, 0, 'body', 'front'], [-1, 1, 'rim', 'front'], [-1, 1, 'inside', 'back'], [0, 0, 'inside', 'back'], [1, -1, 'lip', 'back']],
   tone: { rim: 3, inside: 2, lip: 0, body: 1, weave: 2 }
 };
+
+// --- the forestry shack's stump house (the owner's pick C, 2026-10-30) ----------
+// Its stovepipe's smoke (render/after/stations.js): `puffs` squares `size`
+// cells across, each `life` s from the pipe's top up `rise` cells and `drift`
+// across, swaying `sway` cells at `swayRate` rad/s, each puff `swayPhase` rad
+// behind the last; fading in over the first 1/`fadeIn` of its life to `peak`
+// and out over the rest, and from the mid grey to the pale over `greyFade` of
+// its life about `greyAt`: a fade, never a step (the mock's numbers).
+export const AFTER_CABIN_SMOKE = { puffs: 4, size: 2, life: 4.8, rise: 8, drift: 1.6, sway: 0.35, swayRate: 0.9, swayPhase: 2.1, fadeIn: 5, peak: 0.85, greyAt: 0.45, greyFade: 0.15 };

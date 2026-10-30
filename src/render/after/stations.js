@@ -17,14 +17,16 @@
 // it instead: the hammer on the nail it struck. The saw mill is drawn off
 // its machine (after/mill.js) alone, whoever turns it.
 
-import { P, AFTER_SAW_TEETH, AFTER_ART_SCALE, AFTER_MILL } from '../../config.js';
-import { K, W, PALE, MID, hash, silhouette } from './kit.js';
+// REVIEW act-3-the-cabin-built
+import { P, AFTER_SAW_TEETH, AFTER_ART_SCALE, AFTER_MILL, AFTER_CABIN_SMOKE } from '../../config.js';
+import { K, W, PALE, MID, hash, silhouette, clamp01 } from './kit.js';
+import { ART } from '../../after/art.js';
+import { CABIN } from '../../after/cabin.js';
 import { held } from '../../reset.js';
 import { ctx } from '../ctx.js';
 import { goodBlock, goodColor } from './piles.js';
 import { wheelAngle, millView, sawyerPose } from '../../after/mill.js';
 import { at } from '../../grid.js';
-import { cabinMockOn, drawCabinMock } from './cabinmock.js'; // MOCK act-3-the-cabin
 
 // White cut out of a mass a cell or more, 2 px in from its edge.
 const cut = (d, x, y, w, h, tone = W) => d.px(x * P + 2, y * P + 2, w * P - 4, h * P - 4, tone);
@@ -247,34 +249,53 @@ function shack(d) {
 }
 
 // --- the forestry shack: the grove's, in front of its trees ---------------------------
-// A log cabin (the owner's pick of two, 2026-10-20): a stepped gable over
-// walls of laid logs, a door and a window. '#' ink, 'm' mid, '.' paper, ' '
-// open, sixteen cells by thirteen, its box's left edge eight cells into its
-// ground (after/art.js), the logs' pile on its grove side. A cut-out: nothing
-// on it moves.
-const FORESTRY = [
-  '       ##       ',
-  '     ######     ',
-  '   ##########   ',
-  ' ############## ',
-  '################',
-  ' #mmmmmmmmmmmm# ',
-  ' #............# ',
-  ' #mmm####mmmmm# ',
-  ' #...#..#.###.# ',
-  ' #mmm#..#m#.#m# ',
-  ' #...#..#.###.# ',
-  ' #mmm#..#mmmmm# ',
-  ' #####..####### ',
-];
-const FOREST_X = 8;
+// The stump house (the owner's pick C, 2026-10-30, "lets drop the small tree
+// on top"; its mock render/after/cabinmock.js on branch a3-review-both): a
+// giant sawn stump hollowed into a house, one ink mass on a flare of roots,
+// its bark's seams and its openings cut out of it in paper, the cut face
+// edge-on in the pale with its rings in the mid, a shelf fungus on the bark,
+// and a stovepipe whose smoke is the one thing on it that moves. The parts
+// are after/cabin.js's, the house's own cells (i across, h up off the floor),
+// which the camp's plan takes its box off. The shack's frame is turned
+// (after/art.js), as the mock's was, so the stovepipe stands on the grove's
+// side.
+const CAB_X = ART.forestry.box[0];
+function cabinBrush(d) {
+  const px = (x, y, w, h, tone) => d.px(x, y, w, h, tone);
+  return {
+    px, fade: d.fade, sinking: d.sinking,
+    box: ([i, h, w, n], tone = K) => px((CAB_X + i) * P, -(h + n) * P, w * P, n * P, tone),
+    // paper (or a tone) cut out of the mass, 2 px in from its cells' edges
+    cut: ([i, h, w, n], tone = W) => px((CAB_X + i) * P + 2, -(h + n) * P + 2, w * P - 4, n * P - 4, tone)
+  };
+}
+// The stovepipe's smoke (config, AFTER_CABIN_SMOKE): puffs off the cap's top,
+// each rising and drifting at its true position, fading in and out and from
+// the mid grey to the pale. Not part of the house's ground, so never drawn
+// into its silhouette.
+function cabinSmoke(b, t) {
+  if (b.sinking) return;
+  const C = AFTER_CABIN_SMOKE, [ci, ch, cw, cn] = CABIN.cap, x0 = ci + cw / 2 - C.size / 2, y0 = ch + cn;
+  for (let k = 0; k < C.puffs; k++) {
+    const u = ((t / C.life + k / C.puffs) % 1 + 1) % 1;
+    const a = Math.min(1, u * C.fadeIn) * (1 - u) * C.peak;
+    const x = x0 + u * C.drift + Math.sin(t * C.swayRate + k * C.swayPhase) * C.sway, y = y0 + u * C.rise;
+    const f = clamp01((u - C.greyAt) / C.greyFade + 0.5);
+    const puff = tone => () => b.px((CAB_X + x) * P, -(y + C.size) * P, C.size * P, C.size * P, tone);
+    if (f < 1) b.fade(a * (1 - f), puff(MID));
+    if (f > 0) b.fade(a * f, puff(PALE));
+  }
+}
 function forestry(d, work, t) {
-  if (cabinMockOn()) { drawCabinMock(d, t, FOREST_X); return; } // MOCK act-3-the-cabin
-  const rows = FORESTRY;
-  rows.forEach((row, j) => [...row].forEach((ch, i) => {
-    const tone = ch === '#' ? K : ch === 'm' ? MID : ch === '.' ? W : null;
-    if (tone != null) d.c(FOREST_X + i, j - rows.length, tone);
-  }));
+  const b = cabinBrush(d), H = CABIN;
+  for (const p of [...H.mass, ...H.fungus, H.pipe, H.cap]) b.box(p);
+  for (const [i, h, n] of H.seams) b.cut([i, h, 1, n]);
+  b.cut(H.face, PALE);
+  const [, fh, , fn] = H.face;
+  for (const i of H.rings) b.px((CAB_X + i) * P, -(fh + fn) * P + 2, 2, fn * P - 4, MID);
+  for (const p of [...H.door, ...H.round, H.small]) b.box(p, W);
+  for (const [i, h] of [H.knob, H.cross]) b.box([i, h, 1, 1]);
+  cabinSmoke(b, t || 0);
 }
 
 export const DRAW = { mill, workshop, shack, forestry };
@@ -283,7 +304,7 @@ export const DRAW = { mill, workshop, shack, forestry };
 // drawing once: the moving parts swing inside it, and what they carry is
 // solid ink of its own.
 const BACKS = {};
-const backKey = key => (key === 'forestry' && globalThis.__cabinMock ? `${key}|${globalThis.__cabinMock}` : key); // MOCK act-3-the-cabin  each option its own backing
+const backKey = key => key;
 export const backOf = key => BACKS[backKey(key)] || (BACKS[backKey(key)] = silhouette(d => DRAW[key](d, false, 0, null)));
 
 // Where the worker at a working station stands and how, in its frame's

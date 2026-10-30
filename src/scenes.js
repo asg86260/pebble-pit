@@ -3971,6 +3971,13 @@ Object.assign(SCENES, {
       groveAt(360);
     } }
 });
+// The forestry shack's stump house, built (render/after/stations.js), for the
+// owner beside the mock it came from: the grove at rest, framed as the mock
+// was, its stovepipe smoking.
+SCENES['after-cabin'] = { about: 'the acts', review: 'act 3: the cabin, built', option: 'A the stump house',
+  stage: 'built: cabin-stump, not on main yet', branch: 'cabin-stump', supersedes: ['act 3: the cabin'],
+  say: "the forestry shack as the stump house: a sawn stump with an arched door, a round window and a shelf fungus in its bark, the stovepipe smoking",
+  run: () => { window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1); groveAt(300); window.__fast(0.5); } };
 // The grove's real build for the owner, one review (review.html#grove-built):
 // every real grove scene says where it is built, and nine stand as its
 // options, putting away the four mock reviews they came out of.
@@ -3983,24 +3990,6 @@ const GROVE_OPTIONS = [
 for (const key of Object.keys(SCENES)) if (key.startsWith('after-grove-') && !key.startsWith('after-grove-mock')) Object.assign(SCENES[key], GROVE_BUILT);
 for (const [key, option] of GROVE_OPTIONS) Object.assign(SCENES[key], { review: 'grove: built', option,
   supersedes: ['grove: layout, growth, the fall', 'grove: planting and seeds', 'grove: the woodcutter', 'grove: by hand'] });
-
-// MOCK act-3-the-cabin: the forestry shack redrawn four ways
-// (render/after/cabinmock.js), stood in the built grove at rest, never merged.
-const CABIN_MOCK = [
-  ['a', 'A the oak through the roof', 'A plain cabin an oak has grown up through: the trunk out of the ridge, shingles heaved round it, the crown over the house, a twig in leaf out of the window.'],
-  ['b', 'B the treehouse', "The shack up in an oak's crown: a hut on a platform among the clumps, a ladder down to the floor, a rope swing swaying under it."],
-  ['c', 'C the stump house', 'A giant sawn stump hollowed into a house: an arched door and a round window in the bark, a stovepipe smoking, a shelf fungus on the bark.'],
-  ['d', 'D the turf roof and its sapling', 'A low cottage under a thick roof of turf, grass and flowers on it, a stone chimney smoking, an oak sapling swaying on the ridge.'],
-];
-Object.assign(SCENES, Object.fromEntries(CABIN_MOCK.map(([opt, option, say]) => [`after-cabin-mock-${opt}`, {
-  about: 'the acts', review: 'act 3: the cabin', stage: 'mock: throwaway, never merged', branch: 'a3-review-both', option, say,
-  swap: () => { globalThis.__cabinMock = opt; },
-  run: () => {
-    window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
-    globalThis.__cabinMock = opt;
-    groveAt(300);
-    window.__fast(1 / 60);
-  } }])));
 
 // MOCK build-button-in-the-world: no UPGRADES button on a station not yet
 // built, and a button in the world at its lot that buys the first build
