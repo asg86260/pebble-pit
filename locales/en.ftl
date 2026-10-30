@@ -2728,6 +2728,8 @@ hover-pile-planks = plank pile
 
 # the hover over a counted pile in act 3 (the workshop's signs)
 hover-pile-signs = sign pile
+# the hover over a counted pile in act 3 (the grove's seed basket by the forestry shack)
+hover-pile-seeds = seed basket
 
 # the hover over a log in the hand's reach in act 3, lying on the floor
 hover-log = log
@@ -3394,8 +3396,8 @@ act-meet-god = God holds out a pick
 # act beat line, placeholder: the pair refuse the work
 act-refuse = they set the pick down
 
-# act beat line, placeholder: the axe handed over
-act-axe = an axe
+# act beat line, placeholder: the saw handed to the woodcutter
+act-saw = a saw
 
 # act beat line, placeholder: the strike
 act-strike = the strike
@@ -3526,23 +3528,23 @@ after-recruit-ready = { $ready } ready, { $idle } idle
 # its line while nobody is won: why it is greyed (not its price), and how souls are won
 after-recruit-none = no souls won yet: plant signs
 
-# act 3 card row (placeholder): the axe, bought: a click on a grown tree chops it
-after-row-axe = axe
+# act 3 card row (placeholder): the saw, bought: the woodcutter saws grown trees down
+after-row-saw = saw
 
 # act 3 card row (placeholder): the grove's plots, a plot cleared a press
 after-row-plot = plot
 
-# act 3 card row (MOCK grove, placeholder): a bundle of acorns carried in to the seed basket
-after-row-seed = seeds
-
-# act 3 card row (MOCK grove, placeholder): a felled tree's crown may drop an acorn, the chance a rung
-after-row-selfseed = self-seeding
-
 # act 3 card row (placeholder): the grove's faster growth
 after-row-grow = faster growth
 
-# act 3 card row (placeholder): the grove's bigger trees, more logs a fall
-after-row-tree = bigger trees
+# act 3 card row (placeholder): the grove's seeds, one acorn a press, fetched from heaven's gates to the seed basket
+after-row-seeds = seeds
+
+# the seeds row's words while it is greyed: the basket, the seeds owed and those on their way fill it
+after-seeds-full = full
+
+# act 3 card row (placeholder): the grove's self-seeding, a felled crown dropping an acorn more often a rung
+after-row-selfseed = self-seeding
 
 # act 3 card row (placeholder): the grove's stump removal: woodcutters dig stumps too
 after-row-stumps = stump removal
@@ -3576,6 +3578,12 @@ after-roster-tip = { $job }: { $line }
 
 # act 3 roster hover (placeholder): why a station's worker is standing still
 after-stall-trees = waiting on a tree to grow
+
+# act 3 roster hover (placeholder): why a station's worker is standing still
+after-stall-seeds = waiting on seeds
+
+# act 3 roster hover (placeholder): why a station's worker is standing still
+after-stall-saw = waiting on the saw
 
 # act 3 roster hover (placeholder): why a station's worker is standing still
 after-stall-logs = waiting on logs
@@ -3612,7 +3620,7 @@ after-board-pedestal = pedestal
 # act 3 board title (placeholder): the construction shack's board, every station to build
 after-board-shack = construction shack
 
-# act 3 board title (placeholder): the grove's board, the axe and the trees
+# act 3 board title (placeholder): the grove's board, the saw and the trees
 after-board-grove = grove
 
 # act 3 board title (placeholder): God's crowd's board, readings only

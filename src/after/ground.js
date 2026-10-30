@@ -28,9 +28,9 @@
 // unit comes back where it lay, its kind and tone in its value.
 
 import { S, afterGround as G } from '../state.js';
-import { AFTER_W, AFTER_H, AFTER_PILES, TERRAIN_CELL, KINDS, GRAV } from '../config.js';
-import { at, topRow, colOf, bottomY, landed, addBlock, putBlock, takeUnit, blockAt, kindOf, sizeOfCell, recount, settle } from '../grid.js';
-import { afterX0, afterTop, floorProfile, sitesKey, pileAt, pileOwner, AP } from './place.js';
+import { AFTER_W, AFTER_H, AFTER_PILES, AFTER_TREE, TERRAIN_CELL, KINDS, GRAV } from '../config.js';
+import { at, topRow, colOf, bottomY, landed, addBlock, putBlock, takeUnit, blockAt, kindOf, sizeOfCell, heightOfCell, recount, settle } from '../grid.js';
+import { afterX0, afterTop, floorProfile, sitesKey, pileAt, pileOwner, plotX, AP } from './place.js';
 import { pileGrid, pileCells } from './art.js';
 
 // The stock keys that are strips.
@@ -80,7 +80,7 @@ function layColumns() {
       // other pile the heap its brim makes a block a step (after/art.js,
       // `pileGrid`), the same slope a heap's repose leaves (grid.js).
       const h = s.g.rows, j = Math.floor((c - s.c0) / s.z);
-      capOf[c] = (AFTER_PILES[s.what].cols ? h : Math.max(0, h - Math.abs(j - (h - 1)))) * s.z;
+      capOf[c] = (AFTER_PILES[s.what].cols ? h : Math.max(0, h - Math.abs(j - (h - 1)))) * s.g.h;
     }
   });
   // Each open stretch between two strips its own region, its lattice laid off
@@ -107,8 +107,26 @@ function wire() {
   G.region = c => regionOf[c];
   G.lattice = (c, z) => { const s = c - ((c - startOf[c]) % z); return s + z <= endOf[c] ? s : -1; };
   G.ceiling = c => (capOf[c] >= 0 ? terrain[c] + capOf[c] : G.rows);
+  G.blocked = treeCol;
   G.onPut = () => { version++; };
   G.onMove = (from, to) => { const t = tags(); if (t.has(from)) { t.set(to, t.get(from)); t.delete(from); } };
+}
+
+// A tree claims its ground (DESIGN.md, "Act 3's grove, rebuilt"): a growing
+// tree, a standing or falling one and a stump are facts on the plot, not
+// units, so the trunk's columns are barred to every unit for as long as the
+// plot holds any of them -- a good let go over one lands beside it, a heap
+// never rolls into it, and a tree never grows up through a log.
+const holdsTree = p => p.grow != null || p.stump || p.fall != null;
+export function treeCol(c) {
+  const plots = S.after ? S.after.plots : null;
+  if (!plots) return false;
+  for (let i = 0; i < plots.length; i++) {
+    if (!holdsTree(plots[i])) continue;
+    const c0 = Math.round((plotX(i) - G.x) / AP) + AFTER_TREE.c0;
+    if (c >= c0 && c < c0 + AFTER_TREE.w) return true;
+  }
+  return false;
 }
 
 // Every column's terrain laid as cells, over an empty plot.
@@ -175,9 +193,9 @@ export function slotNear(c, z) {
 }
 // Whether nothing rests on the block whose bottom-left cell is ai.
 export function uncovered(ai) {
-  const c0 = ai % G.cols, r0 = (ai - c0) / G.cols, z = sizeOfCell(G.grid[ai]);
-  if (r0 + z >= G.rows) return true;
-  for (let i = c0; i < c0 + z; i++) if (G.grid[(r0 + z) * G.cols + i]) return false;
+  const c0 = ai % G.cols, r0 = (ai - c0) / G.cols, z = sizeOfCell(G.grid[ai]), h = heightOfCell(G.grid[ai]);
+  if (r0 + h >= G.rows) return true;
+  for (let i = c0; i < c0 + z; i++) if (G.grid[(r0 + h) * G.cols + i]) return false;
   return true;
 }
 // Whether the block whose bottom-left cell is ai stands on something.
@@ -187,13 +205,13 @@ const restsOn = ai => {
   for (let i = c0; i < c0 + z; i++) if (G.grid[(r0 - 1) * G.cols + i]) return true;
   return false;
 };
-// Every unit on the ground: { ai, c0, r0, v, kind, z }.
+// Every unit on the ground: { ai, c0, r0, v, kind, z, h }, `z` across and `h` tall.
 export function units() {
   const out = [];
   if (!G.grid || !G.blockN || G.blockGrid !== G.grid) return out;
   for (const ai of G.blockSet) {
     const v = G.grid[ai], k = kindOf(v);
-    if (k) out.push({ ai, c0: ai % G.cols, r0: Math.floor(ai / G.cols), v, kind: k.key, z: k.size });
+    if (k) out.push({ ai, c0: ai % G.cols, r0: Math.floor(ai / G.cols), v, kind: k.key, z: k.size, h: k.h });
   }
   return out;
 }
@@ -203,7 +221,7 @@ export function units() {
 export const counted = u => { const s = stripAt(u.c0); return !!s && s.kind === u.kind; };
 
 // The loose units, the goods a gatherer carries home and the hand takes up,
-// as rows: { id, kind, x, y, w, free } -- `id` a unit's bottom-left cell,
+// as rows: { id, kind, x, y, w, h, free } -- `id` a unit's bottom-left cell,
 // `x`, `y` its top left in the world, `free` whether a hand or a body may
 // take it now (nothing on it, not falling), and its arrival (`tagOf`). A kind
 // with no home (a site's load) is no good to carry anywhere and is not one.
@@ -213,15 +231,15 @@ export function lying() {
   if (lyingRows && lyingAt === version) return lyingRows;
   lyingAt = version;
   lyingRows = units().filter(u => !counted(u) && KINDS[u.kind].home).map(u => ({
-    id: u.ai, kind: u.kind, x: colX(u.c0), y: rowY(u.r0 + u.z), w: u.z * AP,
+    id: u.ai, kind: u.kind, x: colX(u.c0), y: rowY(u.r0 + u.h), w: u.z * AP, h: u.h * AP,
     free: uncovered(u.ai) && restsOn(u.ai), ...(tagOf(u.ai) || {})
   }));
   return lyingRows;
 }
 // The world distance from (x, y) to a unit: 0 inside it.
 const nearOf = (u, x, y) => {
-  const w = u.z * AP, x0 = colX(u.c0), top = rowY(u.r0 + u.z);
-  return Math.hypot(Math.max(x0 - x, 0, x - (x0 + w)), Math.max(top - y, 0, y - (top + w)));
+  const w = u.z * AP, x0 = colX(u.c0), top = rowY(u.r0 + u.h);
+  return Math.hypot(Math.max(x0 - x, 0, x - (x0 + w)), Math.max(top - y, 0, y - (top + u.h * AP)));
 };
 // The unit nearest (x, y) within `reach` px of it, of `kind` if one is near,
 // else any: what the hand finds there. Null over bare ground.
@@ -318,19 +336,19 @@ export function putBeside(v, x) {
 // cells, in the order laid.
 export function heapAt(v, x, n) {
   const mk = typeof v === 'function' ? v : () => v;
-  const z = sizeOfCell(mk()), mid = slotNear(colOf(G, x), z), out = [];
+  const z = sizeOfCell(mk()), hz = heightOfCell(mk()), mid = slotNear(colOf(G, x), z), out = [];
   if (mid < 0) return out;
   const near = [];
   for (let k = -n; k <= n; k++) {
     const s = mid + k * z;
-    if (s >= 0 && s + z <= G.cols && G.lattice(s, z) === s && G.region(s) === G.region(mid)) near.push(s);
+    if (s >= 0 && s + z <= G.cols && G.lattice(s, z) === s && G.region(s) === G.region(mid) && !barred(s, z)) near.push(s);
   }
   for (let i = 0; i < n; i++) {
     let best = -1, score = Infinity;
     for (const s of near) {
       const t = slotTop(s, z);
-      if (t + z > G.rows) continue;
-      const lean = [s - z, s + z].some(q => q >= 0 && q + z <= G.cols && G.lattice(q, z) === q && G.region(q) === G.region(s) && t - slotTop(q, z) >= z);
+      if (t + hz > G.rows) continue;
+      const lean = [s - z, s + z].some(q => q >= 0 && q + z <= G.cols && G.lattice(q, z) === q && G.region(q) === G.region(s) && t - slotTop(q, z) >= hz);
       if (lean) continue;
       const sc = t / z + Math.abs(s - mid) / z - (s > mid ? 0.01 : 0);
       if (sc < score) { score = sc; best = s; }
@@ -340,6 +358,8 @@ export function heapAt(v, x, n) {
   }
   return out;
 }
+// Whether any of the z columns from c is barred (a tree's, `treeCol`).
+const barred = (c, z) => { for (let i = c; i < c + z; i++) if (G.blocked && G.blocked(i)) return true; return false; };
 // Tag a unit's arrival (see `tags`).
 export function tag(ai, t) { if (ai >= 0 && S.after) tags().set(ai, t); }
 
@@ -426,7 +446,7 @@ function readRecord(rec) {
     const v = cells[ai], k = kindOf(v);
     if (!k || k.size < 2 || !Number.isInteger(ai)) continue;
     const c0 = ai % rec.cols, r0 = Math.floor(ai / rec.cols);
-    for (let j = 0; j < k.size; j++) for (let i = 0; i < k.size; i++) { const q = (r0 + j) * rec.cols + c0 + i; if (q < part.length) part[q] = 1; }
+    for (let j = 0; j < k.h; j++) for (let i = 0; i < k.size; i++) { const q = (r0 + j) * rec.cols + c0 + i; if (q < part.length) part[q] = 1; }
     place(v, c0, r0, ai);
   }
   for (let i = 0; i < cells.length; i++) {

@@ -4,7 +4,7 @@
 // reads an upgrade without importing the cards that sell it (rows.js).
 
 import { S } from '../state.js';
-import { AFTER_START_BUILT, AFTER_UPGRADES, AFTER_PLOTS0, AFTER_PODIUM_REBEL, TREE_GROW_S, AFTER_GROW_S_UP,
+import { AFTER_START_BUILT, AFTER_UPGRADES, AFTER_PLOTS0, AFTER_PODIUM_REBEL, AFTER_TREE_GROW_S, AFTER_TREE_GROW_S_UP,
          AFTER_BLADE_LOGS, AFTER_BENCH_SIGNS,
          SIGN_REACH, SIGN_REACH_UP, AFTER_SEAT_BILLS } from '../config.js';
 import { podiumStood } from './place.js';
@@ -24,10 +24,14 @@ export const seatsOf = job => 1 + seatsBought(job);
 // `podiumStood`), the further the speech carries.
 export const shoutRebel = () => AFTER_PODIUM_REBEL[podiumStood()];
 export const plotCount = () => AFTER_PLOTS0 + upCount('after-plot');
-export const growS = () => (has('after-grow') ? AFTER_GROW_S_UP : TREE_GROW_S);
-// Each read when the thing is made, never after: a tree planted big, a sign
-// put up big, so nothing already standing changes size.
-export const bigTrees = () => has('after-tree');
+// A tree's whole growth, acorn to grown (after/grove.js).
+export const growS = () => (has('after-grow') ? AFTER_TREE_GROW_S_UP : AFTER_TREE_GROW_S);
+// The saw bought on the grove's board: the woodcutter fells (the owner,
+// 2026-10-30: "the player can always cut the tree down, the saw unlocks
+// worker automation"); the hand saws with or without it.
+export const sawBought = () => !!S.after && !!S.after.sawBought;
+// Read when the thing is made, never after: a sign put up big, so nothing
+// already standing changes size.
 export const bigSigns = () => has('after-signreach');
 // Woodcutters dig stumps out too, once stump removal is bought.
 export const stumpsOn = () => has('after-stumps');

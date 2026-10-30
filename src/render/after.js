@@ -35,10 +35,10 @@ import { drawFloor } from './after/floor.js';
 import { deepAt } from '../after/sky.js';
 import { drawCloudSky } from './after/cloudsky.js';
 import { drawGrove } from './after/pine.js';
-import { drawGroveMockBodies, groveMockOn } from './after/grovemock.js'; // MOCK grove
 import { DRAW, workerPose, GLYPHS, backOf } from './after/stations.js';
 import { drawFistFlag } from './aftercrowd.js';
 import { heap, heapCells, drawGround, goodBlock } from './after/piles.js';
+import { drawBasket, drawBasketBack } from './after/basket.js';
 import { drawBody } from './crew.js';
 import { onDevice } from './wardrobe.js';
 import { drawPillar, drawPair, drawBubbles, drawRebelPile } from './after/pedestal.js';
@@ -187,7 +187,9 @@ function drawShackOrder() {
 export function drawAfterPiles() {
   const a = A();
   if (!a) return;
+  drawBasketBack();   // behind the acorns it holds
   drawGround(a.t);
+  drawBasket();   // over the acorns it holds, so its body hides their feet
 }
 export function drawAfterCamp() {
   const a = A();
@@ -295,7 +297,6 @@ export function drawAfterMembers() {
   // and the goods in the hand and in the air, over every body, as a lifted
   // one is
   drawHandGoods();
-  if (groveMockOn()) drawGroveMockBodies(); // MOCK grove
 }
 
 // --- the counts ----------------------------------------------------------------------

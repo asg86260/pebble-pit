@@ -16,7 +16,7 @@
 // drawing by `layPiles`); `ground` how far its ground runs, piles and all, pressed flat under it once it is ordered. A drawing may be turned about its own ground
 // (`flip`, its width), its box, door and piles turned with it.
 
-import { AFTER_PILES, AFTER_BLOCK, AFTER_PILE_GAP } from '../config/afterpiles.js';
+import { AFTER_PILES, AFTER_BLOCK, AFTER_BLOCK_H, AFTER_PILE_GAP } from '../config/afterpiles.js';
 
 // What a station draws past its box and piles, in its own cells, it names
 // as `reach`, the column past its right end (the saw mill's chute).
@@ -34,10 +34,13 @@ const DRAWN = {
   // off the timber mound: laid off the shed and each other (`layPiles`).
   workshop:  { box: [5, 21, 22], door: 13, pile: { signs: null, benchtimber: null } },
   shack:     { box: [0, 14, 14], door: 7, pile: {} },
-  // The forestry shack in front of the grove (the owner, 2026-10-20): the
-  // grove's board, and the pile its gatherers bring the fallen logs to,
-  // on its grove side, where the haulers fetch them from.
-  forestry:  { box: [8, 16, 13], door: 10, pile: { grovelogs: 'left' } },
+  // The forestry shack beside the grove's first plot (the owner, 2026-10-20;
+  // rebuilt 2026-10-30): the grove's board; its seed basket, and past it the
+  // pile its gatherers bring the fallen logs to, where the haulers fetch
+  // them. Drawn turned within its own ground (`flip`, set below), so the
+  // basket and the log pile stand on its far side from the grove and its
+  // wall faces the first plot.
+  forestry:  { box: [8, 16, 13], door: 10, pile: { seeds: 'left', grovelogs: 'left' }, turned: true },
   // Its board's ground on the workshops' side, between the last workshop and
   // the union's crowd: laid there off both by after/place.js, which overrides
   // this column (God's side holds the rebel pile).
@@ -63,12 +66,12 @@ const PILE_CELLS = 6;
 export function pileGrid(what) {
   const pl = AFTER_PILES[what];
   if (!pl) return null;
-  const h = Math.ceil(Math.sqrt(pl.brim)), cols = pl.cols ?? 2 * h - 1;
-  return { size: AFTER_BLOCK[pl.good], cols, rows: pl.cols ? Math.ceil(pl.brim / cols) : h };
+  const h = Math.ceil(Math.sqrt(pl.brim)), cols = pl.cols ?? 2 * h - 1, size = AFTER_BLOCK[pl.good];
+  return { size, h: AFTER_BLOCK_H[pl.good] ?? size, cols, rows: pl.cols ? Math.ceil(pl.brim / cols) : h };
 }
 // A pile's width and height in cells.
 export const pileCells = what => { const g = pileGrid(what); return g ? g.cols * g.size : PILE_CELLS; };
-export const pileHigh = what => { const g = pileGrid(what); return g ? g.rows * g.size : 0; };
+export const pileHigh = what => { const g = pileGrid(what); return g ? g.rows * g.h : 0; };
 // Which side of its drawing a pile of drawing `a` lies on, and its left
 // column: a pile left of the drawing's middle ends at its column, one right
 // of it starts there.
@@ -113,7 +116,13 @@ function layPiles(a) {
   }
   return { ...a, pile };
 }
-export const ART = Object.fromEntries(Object.entries(DRAWN).map(([k, a]) => { const b = layPiles(a); return [k, { ...b, ...span(b) }]; }));
+// A turned drawing is turned about its whole ground (`flip`, the column its
+// ground's two ends sum to), so the ground itself stays put and only what
+// stands on it changes sides.
+export const ART = Object.fromEntries(Object.entries(DRAWN).map(([k, a]) => {
+  const b = layPiles(a), s = span(b);
+  return [k, { ...b, ...s, ...(a.turned ? { flip: s.lead + s.ground } : {}) }];
+}));
 
 // The camp's order, left to right off the grove: the forestry shack in front
 // of the trees, the saw mill and the workshop, then the shack that sells
@@ -134,10 +143,12 @@ export const CAMP_ORDER = ['forestry', 'mill', 'workshop', 'shack', 'pedestal'];
 // AFTER_SHELF; the grove stands on the floor line): two neighbors on shelves
 // further apart than the gap can ramp between stand as far apart as the ramp
 // needs instead (`rampRun`).
-export function campLayout(x0, gap, u = 1, shelf = {}) {
+// `first` is the open floor before the first station, the gap unless said:
+// the grove lays its own off the shack (after/place.js, `plotX`).
+export function campLayout(x0, gap, u = 1, shelf = {}, first = gap) {
   const stations = {};
   const apart = (a, b) => Math.max(gap * u, rampRun((shelf[a] || 0) - (shelf[b] || 0)));
-  let x = x0 + apart(null, CAMP_ORDER[0]), patch = x0;
+  let x = x0 + first * u, patch = x0;
   CAMP_ORDER.forEach((key, k) => {
     if (k) {
       const g = apart(CAMP_ORDER[k - 1], key);

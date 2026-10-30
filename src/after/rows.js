@@ -32,13 +32,14 @@ import { msg } from '../lang.js';
 import { P, AFTER_UPGRADES, AFTER_JOBS, AFTER_JOB_POST, AFTER_SEAT_BILLS, AFTER_BUILDS,
          AFTER_CARDS, AFTER_YARD_COINS, AFTER_TAG_ORDER, AFTER_PATCH_AT,
          AFTER_COIN_MOTES, AFTER_COIN_UNDER_S, AFTER_COIN_STAGGER_S, AFTER_COIN_SPREAD, AFTER_COIN_LIFE_S,
-         AFTER_SEED_BILLS, AFTER_SELFSEED_BILLS, /* MOCK grove */ AFTER_RECRUIT_COST0, AFTER_RECRUIT_RATE, MEET_MEMBERS, SLOW_SHARE, STRIKE_SHARE, AFTER_BOARD_SLOTS, SHADES, SHARD_CELL, SPORE_CELL, SPARK_CELL, FIND_TONES, SCALE_SHADE, SCALE_SPREAD } from '../config.js';
+         AFTER_RECRUIT_COST0, AFTER_RECRUIT_RATE, MEET_MEMBERS, SLOW_SHARE, STRIKE_SHARE, AFTER_BOARD_SLOTS, SHADES, SHARD_CELL, SPORE_CELL, SPARK_CELL, FIND_TONES, SCALE_SHADE, SCALE_SPREAD } from '../config.js';
 import { registerBoard, openBoardByKey } from '../boardrows.js';
 import { purse, leftText } from '../words.js';
 import { payTo } from '../pit.js';
 import { upCount, built, raising, seatKey, seatsBought } from './levels.js';
 import { crewAt, spareMembers } from './bodies.js';
 import { clearPlot } from './grove.js';
+import { SEEDS_ROW, seedsBought, seedsRoom, seedBill, owe } from './seeds.js';
 import { raiseStation, placeOrder, orderedOf, onOrderLanded } from './build.js';
 import { stationBox, plotX, groveX1, afterFloor, afterX0, floorAt, AP } from './place.js';
 import { union, won, ready, hire, support } from './union.js';
@@ -100,17 +101,17 @@ const ACT_ROW = { coinOrder: AFTER_TAG_ORDER, place: 'after', flyFrom: () => pat
 
 // --- the named upgrades ----------------------------------------------------------------------
 const UP_NAMES = {
-  'after-podium': () => msg('after-row-podium'), 'after-axe': () => msg('after-row-axe'),
+  'after-podium': () => msg('after-row-podium'), 'after-saw': () => msg('after-row-saw'),
   'after-plot': () => msg('after-row-plot'), 'after-grow': () => msg('after-row-grow'),
-  'after-tree': () => msg('after-row-tree'), 'after-stumps': () => msg('after-row-stumps'),
+  'after-selfseed': () => msg('after-row-selfseed'), 'after-stumps': () => msg('after-row-stumps'),
   'after-blade': () => msg('after-row-blade'),
   'after-bench': () => msg('after-row-bench'), 'after-signreach': () => msg('after-row-signreach')
 };
-// What a purchase does beyond counting itself: a plot cleared and a sapling
-// set in it; the axe owed to its beat (rebel.js, `axeDue`).
+// What a purchase does beyond counting itself: a plot cleared, its bed bare
+// for an acorn; the saw owed to its beat (rebel.js, `sawDue`).
 const UP_DOES = {
   'after-plot': () => clearPlot(),
-  'after-axe': () => { S.after.axeBought = true; }
+  'after-saw': () => { S.after.sawBought = true; }
 };
 // A row with `marks` (the podium ladder) opens each rung when the union's
 // support reaches its mark, a share of the strike's: dead until then, saying
@@ -209,39 +210,31 @@ const recruitRow = {
   buy: () => { if (hire()) { S.after.ups[RECRUIT] = recruits() + 1; S.after.upAt[RECRUIT] = S.after.t; } }
 };
 
+// --- the seeds ---------------------------------------------------------------------------
+// One acorn a press, in the earlier acts' coins, dearer each time (seeds.js,
+// `seedBill`): a repeating row, as the recruit is. Bought, the acorn is owed;
+// a member walks to heaven's gates for it and carries it to the basket. Dead
+// while the basket, the seeds owed and those on their way would pass its
+// brim, and says so: a full basket is the row's end, not a jam.
+const seedsRow = {
+  key: SEEDS_ROW, name: msg('after-row-seeds'), card: 'grove', ...ACT_ROW, repeats: true, from: seedsBought,
+  bill: () => seedBill(),
+  show: () => cardOpen('grove'),
+  dead: () => seedsRoom() <= 0,
+  waits: () => (seedsRoom() <= 0 ? msg('after-seeds-full') : null),
+  buy: () => { if (seedsRoom() > 0) { owe(); S.after.ups[SEEDS_ROW] = seedsBought() + 1; S.after.upAt[SEEDS_ROW] = S.after.t; } }
+};
+
 // Nothing up here is for sale before the act has begun.
 const inAct = u => ({ ...u, show: () => !!S.after && u.show() });
 export const AFTER_ROWS = [
   ...AFTER_JOBS.map(seatRow),
-  ...Object.keys(AFTER_UPGRADES).map(upRow),
+  // the seeds row stands between stump removal and self-seeding
+  ...Object.keys(AFTER_UPGRADES).flatMap(k => (k === 'after-selfseed' ? [seedsRow, upRow(k)] : [upRow(k)])),
   ...Object.keys(AFTER_BUILDS).map(buildRow)
 ].map(inAct);
 // First on the pedestal's board; its line is a getter, so it is not spread.
 AFTER_ROWS.unshift(recruitRow);
-// MOCK grove: the seed row on the grove's board (the owner: "lets have the
-// first seeds cost prev resources"): a bundle of acorns a press, carried in
-// from the gates to the seed basket by a worker (after/grovemock.js); its
-// bills in the earlier acts' coins, deepening band by band as every bill
-// does (AFTER_SEED_BILLS). Shown only while the grove mock stands.
-const SEED = 'after-seed'; // MOCK grove
-const seedsBought = () => (S.after && S.after.ups[SEED]) || 0; // MOCK grove
-AFTER_ROWS.push({ key: SEED, name: msg('after-row-seed'), get card() { return globalThis.__groveMock ? 'grove' : null; }, ...ACT_ROW, repeats: true, from: seedsBought, // MOCK grove  on the grove's board only while the mock stands
-  bill: () => AFTER_SEED_BILLS[Math.min(seedsBought(), AFTER_SEED_BILLS.length - 1)].map(([c, n]) => [c, n]), // MOCK grove
-  show: () => !!S.after && !!globalThis.__groveMock && cardOpen('grove'), // MOCK grove
-  buy: () => { S.after.ups[SEED] = seedsBought() + 1; S.after.upAt[SEED] = S.after.t; globalThis.__groveSeedBought?.(); } }); // MOCK grove
-// MOCK grove: trees grow their own seed, a ladder of four rungs, each the
-// chance a felled tree's crown drops an acorn (AFTER_SELFSEED_CHANCE), bought
-// as the grove's named upgrades are (`upRow`: a bill with timber an order
-// carried, `orderOr`).
-const SELF = 'after-selfseed'; // MOCK grove
-export const selfRungs = () => Math.min(AFTER_SELFSEED_BILLS.length, (S.after && S.after.ups[SELF]) || 0); // MOCK grove  rungs bought
-LAND[SELF] = () => { S.after.ups[SELF] = selfRungs() + 1; S.after.upAt[SELF] = S.after.t; }; // MOCK grove
-AFTER_ROWS.push({ key: SELF, name: msg('after-row-selfseed'), get card() { return globalThis.__groveMock ? 'grove' : null; }, ...ACT_ROW, // MOCK grove
-  rung: () => selfRungs(), rungs: () => AFTER_SELFSEED_BILLS.length, // MOCK grove
-  bill: () => AFTER_SELFSEED_BILLS[Math.min(selfRungs(), AFTER_SELFSEED_BILLS.length - 1)].map(([c, n]) => [c, n]), // MOCK grove
-  show: () => !!S.after && !!globalThis.__groveMock && cardOpen('grove'), // MOCK grove
-  dead: () => carrying(SELF), waits: () => (carrying(SELF) ? msg('card-building') : null), // MOCK grove
-  buy: () => orderOr(SELF, 'grove', AFTER_SELFSEED_BILLS[Math.min(selfRungs(), AFTER_SELFSEED_BILLS.length - 1)]) }); // MOCK grove
 export const afterRow = key => AFTER_ROWS.find(u => u.key === key) || null;
 
 // --- buying ------------------------------------------------------------------------------

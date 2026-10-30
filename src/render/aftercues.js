@@ -16,13 +16,19 @@ import { P, GREY, GESTURE_CUE_ALPHA, GESTURE_CUE_HOVER, GESTURE_CUE_DOT, GESTURE
          GESTURE_MARK_HOLD_S, GESTURE_MARK_FADE_S, GESTURE_SAW_AMP } from '../config.js';
 import { ctx } from './ctx.js';
 import { S } from '../state.js';
-import { gestureView, partsOf, lowestBubble, groveIcons } from '../after/gestures.js';
+import { gestureView, partsOf, lowestBubble } from '../after/gestures.js';
 import { AP } from '../after/place.js';
 import { bedWants } from '../after/mill.js';
 import { stripBox } from '../after/ground.js';
-import { drawGroveIcons } from './after/pine.js';
-import { K, W, PALE, MID } from './after/kit.js';
-import { drawGroveMockCues, groveMockOn } from './after/grovemock.js'; // MOCK grove
+// track B: the trunk's cue on the hand saw, and the woodcutter's saw drawn
+// over the members, in its hand
+import { handSawAt } from '../after/gestures.js';
+import { trees, standing } from '../after/grove.js';
+import { drawHeldSaws, workedBy } from './after/saw.js';
+import { K, W, MID } from './after/kit.js';
+// track C: the stump's cue finds its stump itself (trees, imported above)
+import { pullable, PULL_HOLDS } from '../after/stump.js';
+const pulledBy = i => S.after.bodies.some(b => b.dig && b.target === i && b.pull && PULL_HOLDS.includes(b.pull.ph));
 
 const D = GESTURE_CUE_DOT;
 const snap = v => Math.round(v / P) * P;
@@ -90,17 +96,25 @@ function cueAt(key, r) {
     const b = lowestBubble(), box = partsOf('pedestal').box;
     return b ? { x: b.x + b.w / 2, y: b.y + b.h + (tapDown() ? D * 2 : 0), pose: 'point' } : { x: box.x + box.w / 2, y: box.y + P + (tapDown() ? D * 2 : 0), pose: 'point' };
   }
+  // track B: the trunk's cue (F1): the ghost hand on the grip of the saw
+  // lying across a grown trunk -- the one the hand last took, else the first
+  // grown that no woodcutter is sawing with its own -- acting its stroke out
+  // end to end. No icon over a tree.
   if (key === 'tree') {
-    const icon = groveIcons().find(c => c.kind === 'saw');
-    if (r.i == null) return icon ? { x: icon.x, y: icon.y + (tapDown() ? D * 2 : 0), pose: 'point' } : null;
-    const b = partsOf('tree', r.i).sawBox;
-    return { x: b.x + P * 2 + Math.sin(turn) * GESTURE_SAW_AMP, y: b.y + b.h / 2, pose: 'grab' };
+    const list = trees(), free = k => standing(list[k]) && !workedBy(k);
+    const i = r.on != null && free(r.on) ? r.on : list.findIndex((p, k) => free(k));
+    if (i < 0) return null;
+    const s = Math.sin(turn) * GESTURE_SAW_AMP, g = handSawAt(i, s).grip;
+    return { x: g.x, y: g.y, pose: 'grab' };
   }
+  // track C: the stump's cue, a grab on its top drawn up three cells (the
+  // signed-off F3a-1's), on the first stump that can be pulled and that no
+  // woodcutter has its hands on; no icon
   if (key === 'stump') {
-    const c = groveIcons().find(k => k.kind === 'shovel');
-    if (!c) return null;
-    const b = partsOf('stump', c.i).stump;
-    return { x: b.x + b.w / 2, y: b.y - Math.round(u * 3) * P, pose: 'grab' };
+    const i = trees().findIndex((p, k) => pullable(p) && !pulledBy(k));
+    if (i < 0) return null;
+    const b = partsOf('stump', i).stump;
+    return { x: b.x + b.w / 2, y: b.y + AP / 2 - Math.round(u * 3) * P, pose: 'grab' };
   }
   if (key === 'mill') {
     // With the bed bare and nobody at the saw, a log first: the hand pressed
@@ -135,12 +149,12 @@ export function drawAfterCues() {
   const view = gestureView();
   if (!view) return;
   const t = now();
-  drawGroveIcons();
+  drawHeldSaws();   // track B
   shown = {};
   for (const r of view) {
     // One hand: the first uses' cue, or the same hand faint while the
     // pointer is over the part, the stronger of the two; never while held.
-    const ink = r.open && !r.held && !demoHand.pose && !groveMockOn() /* MOCK grove */ ? Math.max(r.cueA, (r.hintA || 0) * GESTURE_CUE_HOVER) * GESTURE_CUE_ALPHA : 0;
+    const ink = r.open && !r.held && !demoHand.pose ? Math.max(r.cueA, (r.hintA || 0) * GESTURE_CUE_HOVER) * GESTURE_CUE_ALPHA : 0;
     const at = ink > 0.01 && cueAt(r.key, r);
     shown[r.key] = at ? ink : 0;
     if (at && at.x >= S.camX - P * 4 && at.x <= S.camX + S.viewW + P * 4) { ctx.globalAlpha = ink; handOn(ctx, at.x, at.y, at.pose); }
@@ -148,5 +162,4 @@ export function drawAfterCues() {
   }
   ctx.globalAlpha = 1;
   if (demoHand.pose) handOn(ctx, demoHand.x, demoHand.y, demoHand.pose, P / 2, '#000');
-  if (groveMockOn()) drawGroveMockCues(); // MOCK grove
 }

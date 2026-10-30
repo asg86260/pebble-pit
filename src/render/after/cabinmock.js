@@ -18,7 +18,7 @@ import { goodTone } from './piles.js';
 
 held('cabin-mock', () => { globalThis.__cabinMock = null; });
 
-// The grove mock's oak-leaf green (render/after/grovemock.js, CROWNS[4]),
+// An oak-leaf green (the grove mock's, now gone),
 // lightest first: lit tips, body, body's darker half, shadow under a clump.
 const LEAF = { light: ['#4c7f3c', '#406d33', '#38602c', '#2a4920'], dark: ['#64a052', '#568c46', '#4b7c3d', '#3a612f'] };
 const leaf = i => (darkPage ? raw(LEAF.dark[i]) : LEAF.light[i]);

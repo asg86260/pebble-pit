@@ -5887,6 +5887,13 @@
   "text": "sign pile"
  },
  {
+  "id": "hover-pile-seeds",
+  "group": "Hover",
+  "where": "src/after/stations.js",
+  "context": "the hover over a counted pile in act 3 (the grove's seed basket by the forestry shack)",
+  "text": "seed basket"
+ },
+ {
   "id": "hover-log",
   "group": "Hover",
   "where": "src/input.js",
@@ -7805,11 +7812,11 @@
   "text": "they set the pick down"
  },
  {
-  "id": "act-axe",
+  "id": "act-saw",
   "group": "The shell",
   "where": "src/actbeats.js",
-  "context": "act beat line, placeholder: the axe handed over",
-  "text": "an axe"
+  "context": "act beat line, placeholder: the saw handed to the woodcutter",
+  "text": "a saw"
  },
  {
   "id": "act-strike",
@@ -8106,11 +8113,11 @@
   "text": "no souls won yet: plant signs"
  },
  {
-  "id": "after-row-axe",
+  "id": "after-row-saw",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 card row (placeholder): the axe, bought: a click on a grown tree chops it",
-  "text": "axe"
+  "context": "act 3 card row (placeholder): the saw, bought: the woodcutter saws grown trees down",
+  "text": "saw"
  },
  {
   "id": "after-row-plot",
@@ -8120,20 +8127,6 @@
   "text": "plot"
  },
  {
-  "id": "after-row-seed",
-  "group": "Act 4 (placeholder)",
-  "where": "src/after/rows.js",
-  "context": "act 3 card row (MOCK grove, placeholder): a bundle of acorns carried in to the seed basket",
-  "text": "seeds"
- },
- {
-  "id": "after-row-selfseed",
-  "group": "Act 4 (placeholder)",
-  "where": "src/after/rows.js",
-  "context": "act 3 card row (MOCK grove, placeholder): a felled tree's crown may drop an acorn, the chance a rung",
-  "text": "self-seeding"
- },
- {
   "id": "after-row-grow",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
@@ -8141,11 +8134,25 @@
   "text": "faster growth"
  },
  {
-  "id": "after-row-tree",
+  "id": "after-row-seeds",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 card row (placeholder): the grove's bigger trees, more logs a fall",
-  "text": "bigger trees"
+  "context": "act 3 card row (placeholder): the grove's seeds, one acorn a press, fetched from heaven's gates to the seed basket",
+  "text": "seeds"
+ },
+ {
+  "id": "after-seeds-full",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/rows.js",
+  "context": "the seeds row's words while it is greyed: the basket, the seeds owed and those on their way fill it",
+  "text": "full"
+ },
+ {
+  "id": "after-row-selfseed",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/rows.js",
+  "context": "act 3 card row (placeholder): the grove's self-seeding, a felled crown dropping an acorn more often a rung",
+  "text": "self-seeding"
  },
  {
   "id": "after-row-stumps",
@@ -8239,6 +8246,20 @@
   "text": "waiting on a tree to grow"
  },
  {
+  "id": "after-stall-seeds",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/roster.js",
+  "context": "act 3 roster hover (placeholder): why a station's worker is standing still",
+  "text": "waiting on seeds"
+ },
+ {
+  "id": "after-stall-saw",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/roster.js",
+  "context": "act 3 roster hover (placeholder): why a station's worker is standing still",
+  "text": "waiting on the saw"
+ },
+ {
   "id": "after-stall-logs",
   "group": "Act 4 (placeholder)",
   "where": "src/selftest/afterboards.js",
@@ -8319,7 +8340,7 @@
   "id": "after-board-grove",
   "group": "Act 3 boards (track C, placeholder)",
   "where": "src/after/stations.js",
-  "context": "act 3 board title (placeholder): the grove's board, the axe and the trees",
+  "context": "act 3 board title (placeholder): the grove's board, the saw and the trees",
   "text": "grove"
  },
  {

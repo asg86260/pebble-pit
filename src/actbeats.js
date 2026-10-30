@@ -30,7 +30,7 @@
 // The two acts' tracks (after/, hell/) are written beside this one, so every
 // call into them is guarded: a beat calls its act's own story body on the way
 // in (`AFTER_STORY`, `HELL_STORY`) so facts the track lands there land, and
-// reads the track's triggers by name when they exist (`axeDue`,
+// reads the track's triggers by name when they exist (`sawDue`,
 // `takeCarry`, `cageBroken`), falling back to the scaffold's own facts (the
 // gate reached, each barrier's blows) and to `__actOwe`.
 
@@ -139,7 +139,7 @@ const wallDue = i => (typeof HELL.hellWallDue === 'function' ? HELL.hellWallDue(
 const cageDown = () => (typeof HELL.cageBroken === 'function' ? !!HELL.cageBroken() : down(lastWall) >= 1);
 const TRIGGERS = {
   'house-fall': () => !!A() && A().goOn && !!S.retired && A().house === 'standing',
-  'axe': () => beatDone('refuse') && typeof REBEL.axeDue === 'function' && !!REBEL.axeDue(),
+  'saw': () => beatDone('refuse') && typeof REBEL.sawDue === 'function' && !!REBEL.sawDue(),
   'strike': () => beatDone('refuse') && !(A() && A().struck)
     && (typeof STRIKE.strikeDue === 'function' ? !!STRIKE.strikeDue() : !!S.after && S.after.gate >= AFTER_GATES.length),
   'haunt': () => beatDone('ghost-road') && !!pair() && pair().mode === 'soul',
@@ -228,7 +228,7 @@ const BODIES = {
     { frame: onPair, move: 'follow', enter: () => { if (!onPedestal()) sendPair('pedestal'); }, until: () => onPedestal() && pair().top >= 1 },
     { frame: onPair, s: 1.5 }
   ],
-  'axe': [{ frame: onPair, s: ACT_CAPTION_S, say: 'act-axe' }],
+  'saw': [{ frame: onPair, s: ACT_CAPTION_S, say: 'act-saw' }],
   'strike': [{ frame: atThrone, s: ACT_CAPTION_S + 1, enter: () => { ensureActs().struck = true; }, say: 'act-strike' }],
   'unmask': [{ frame: atThrone, s: ACT_CAPTION_S + 1, enter: () => openPortal('hell'), say: 'act-unmask' }],
   'hell-told': [{ frame: atThrone, s: ACT_CAPTION_S + 1, say: 'act-hell-told' }],

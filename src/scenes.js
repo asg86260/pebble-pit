@@ -41,7 +41,7 @@ import { lay } from './deep/statuses.js';
 import { worksAt, progressOf, markDoneSeen } from './works.js';
 import { SAVE as CREW_SAVE } from './crew/records.js';
 import { goDeep, goUp, poseGlide } from './view.js';
-import { floorAt, stationX0, stationBox, signBox, soulX, afterFloor, afterOpenX, workshopsX1, unionJoinAt, campEdges, AP } from './after/place.js';
+import { floorAt, stationX0, stationBox, signBox, soulX, afterFloor, afterOpenX, workshopsX1, unionJoinAt, campEdges, plotX, AP } from './after/place.js';
 import { godFront } from './after/sky.js';
 // The window's middle at the camera's last window over act 3: God in it,
 // his stage square under him.
@@ -506,14 +506,12 @@ function handTurn(key, ring, rev, frames) {
   window.__gesture('down', ...at(0));
   for (let f = 1; f <= frames; f++) { window.__gesture('move', ...at(f / 60 * rev * 2 * Math.PI)); window.__fast(1 / 60); }
 }
-// The grove's first tree with the saw put on it by its icon, sawn back and
+// The grove's first tree, the saw lying across its trunk taken and sawn back and
 // forth `strokes` times at a stroke a `per` seconds, the press held at the
 // end of the last; framed on the plot.
 function handSaw(strokes, per = 0.5) {
   window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
-  window.__afterAxe(); window.__fast(0.5);
-  const icon = window.__groveIcons().find(c => c.kind === 'saw');
-  window.__gesture('down', icon.x, icon.y - 4); window.__gesture('up');
+  window.__afterSaw(); window.__fast(0.5);
   const b = window.__gestureParts('tree', 0).sawBox, x0 = b.x + P * 2, y = b.y + b.h / 2;
   window.__gesture('down', x0, y);
   const frames = Math.round(strokes * per * 60);
@@ -2882,14 +2880,11 @@ export const SCENES = {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
       window.__afterGrant({ rebel: 2000, timber: 300 }); yardPurse();
       for (let k = 0; k < 3; k++) buyAfter('after-plot');
-      buyAfter('after-tree');
-      window.__afterAxe();
-      // The plots stood at their stages, the setup the shot is not about:
-      // a grown tree, a big one, a pole, and a stump with its logs.
-      const plots = S.after.plots;
-      Object.assign(plots[1], { stage: 3, big: true });
-      Object.assign(plots[2], { stage: 2 });
-      Object.assign(plots[3], { stage: 0, stump: true, logs: 3 });
+      window.__afterSaw();
+      // The plots stood, the setup the shot is not about: a grown tree, one
+      // half grown, and a stump.
+      window.__afterPlant(1, 1); window.__afterPlant(2, 0.5);
+      Object.assign(S.after.plots[3], { stump: true });
       window.__fast(3);
       const t = window.__afterTrees()[0];
       for (let k = 0; k < 8; k++) window.__afterClick(t.x, t.y);
@@ -2905,7 +2900,7 @@ export const SCENES = {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
       for (const k of ['mill', 'workshop']) if (!S.after.built.includes(k)) S.after.built.push(k);
       window.__afterGrant({ logs: 6, timber: 8 });
-      window.__afterAxe();
+      window.__afterSaw();
       window.__look(stationX0('mill') - P * 20);
       window.__fast(0.5);
       handTurn('mill', 'wheel', 1.6, 90);
@@ -2916,7 +2911,7 @@ export const SCENES = {
   // on it and mid-cut, its kerf half open; a stump lifted half out by hand,
   // its shovel faded under the hand.
   'after-saw-icon': { about: 'the acts', say: "the grove's grown tree with its saw icon over it, waiting to be clicked",
-    run: () => { window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1); window.__afterAxe(); window.__fast(0.6);
+    run: () => { window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1); window.__afterSaw(); window.__fast(0.6);
                  window.__look(0); window.__holdShot(); } },
   'after-saw': { about: 'the acts', say: "the handsaw on the grove's tree, dragged back and forth, its kerf half open",
     run: () => handSaw(6) },
@@ -2925,7 +2920,7 @@ export const SCENES = {
   'after-dig': { about: 'the acts', say: "a stump with its shovel icon, dragged half up out of the ground by hand, its roots showing",
     run: () => {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
-      Object.assign(S.after.plots[0], { stage: 0, stump: true, dug: 0 });
+      Object.assign(S.after.plots[0], { grow: null, stump: true, dug: 0 });
       window.__look(0); window.__fast(0.5);
       const g = window.__gestureParts('stump', 0).stump, x = g.x + g.w / 2, y = g.y + g.h / 2;
       window.__gesture('down', x, y);
@@ -2938,7 +2933,7 @@ export const SCENES = {
   'after-pull': { about: 'the acts', say: "a stump pulled by hand and held, straining root by root until it rips out",
     run: () => {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
-      Object.assign(S.after.plots[0], { stage: 0, stump: true, dug: 0 });
+      Object.assign(S.after.plots[0], { grow: null, stump: true, dug: 0 });
       window.__look(0); window.__fast(0.5);
       const g = window.__gestureParts('stump', 0).stump, x = g.x + g.w / 2, y = g.y + g.h / 2;
       window.__gesture('down', x, y);
@@ -3106,14 +3101,14 @@ export const SCENES = {
       for (let k = 0; k < 80 && !(S.after.raising.mill && S.after.raising.mill.n >= 2); k++) window.__fast(0.5);
       window.__look(stationX0('shack') - S.viewW / 2); window.__holdShot();
     } },
-  // The yard paying (DESIGN.md, "The yard pays too"): the axe bought on the
+  // The yard paying (DESIGN.md, "The yard pays too"): the saw bought on the
   // grove's card, its dust come up out of the thin patch as motes and arcing
   // over to the grove.
   'after-coins': { about: 'the acts', say: "the yard's coins up through the thin patch in the cloud floor, arcing to the station bought",
     run: () => {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
       window.__afterGrant({ rebel: 400 }); yardPurse();
-      window.__buy('after-axe');
+      window.__buy('after-saw');
       window.__fast(AFTER_COIN_UNDER_S + 0.5);
       window.__look(stationX0('pedestal') - S.viewW / 2); window.__holdShot();
     } },
@@ -3398,7 +3393,7 @@ export const SCENES = {
       window.__fast(0.6);
       window.__holdShot();
     } },
-  'act3-mid': { about: 'the acts', say: 'act 3 mid: the camp built (saw mill, workshop, posts filled), a fifth of God\'s yard walked out, the axe in hand',
+  'act3-mid': { about: 'the acts', say: 'act 3 mid: the camp built (saw mill, workshop, posts filled), a fifth of God\'s yard walked out, the saw handed over',
     run: act3Mid },
   // Track C: each of act 3's boards open in the yard's sheet over the act-3-mid
   // camp, as a plain click on its station opens it, the station framed so
@@ -3455,7 +3450,7 @@ function actsYard(point, pieces = 0) {
 }
 
 // Act 3 half way: the opening played (`__actsAt('fallen')`, the two of them
-// up on the pedestal), the axe in hand and its beat had, the saw mill and
+// up on the pedestal), the saw handed over and its beat had, the saw mill and
 // the workshop raised off the shack, posts bought and filled, a fifth of the
 // crowd made members and walked out to the camp (the setup the scene is not
 // about), the yard rich for the bills still to come.
@@ -3490,8 +3485,8 @@ function topBlock(what) {
 }
 function act3Mid() {
   actsYard('fallen');
-  if (!S.beatsDone.includes('axe')) S.beatsDone.push('axe');
-  S.after.axeBought = true; window.__afterAxe();
+  if (!S.beatsDone.includes('saw')) S.beatsDone.push('saw');
+  S.after.sawBought = true; window.__afterSaw();
   window.__afterCrowd((i, v) => (i % CROWD_FILES < 8 && i < CROWD_FILES * 30 ? 8 : v));
   for (let k = 0; k < 120 && window.__afterRead().walking > 0; k++) window.__fast(1);
   window.__afterGrant({ rebel: 600, timber: 20, logs: 6 });
@@ -3722,64 +3717,275 @@ Object.assign(SCENES, {
     run: () => millStage(() => millSaw().out.some(o => { const p = millBlockAt(o.a); return p.x > AFTER_MILL.chute.x1 - 0.5; }), { timber: 15 }) }
 });
 
-// MOCK grove: act 3's grove redesign as review scenes (after/grovemock.js,
-// render/after/grovemock.js), never merged. Each beat its own option, plot 0
-// framed `at` px in from the left; `swap` stands the option again, since
-// each is its own setup.
-import { startGroveMock } from './after/grovemock.js'; // MOCK grove
-import { plotX } from './after/place.js'; // MOCK grove
-import { showPanel } from './board.js'; // MOCK grove
-const GROVE_MOCK = [ // MOCK grove
-  ['r', 'R the grove at rest', 300, "The grove at rest: the pine beside the forestry shack, and the seed basket on the shack's far side with five acorns sat in it."], // MOCK grove
-  ['a1', 'A1 a worker plants it', 300, "A worker takes an acorn out of the seed basket by the forestry shack, carries it to the bare plot, kneels and plants it, and a shoot comes up row by row."], // MOCK grove
-  ['a2', 'A2 you plant it', 300, "You plant it yourself: pick an acorn out of the seed basket by the forestry shack, carry it over the bare plot and let go, and it sinks in and a shoot comes up row by row."], // MOCK grove
-  ['s2', 'S2 a seed bought', 300, "The seeds row on the grove's board, paid in dust: bought, a worker walks in from heaven's gates with one acorn and puts it in the seed basket; the next costs more."], // MOCK grove
-  ['s3a', 'S3a self-seeding: an acorn', 420, "The self-seeding upgrade bought (a chance in four a fall); the pine goes over, an acorn falls out of the breaking crown and stays, and a worker carries it to the seed basket."], // MOCK grove
-  ['s3b', 'S3b self-seeding: none this time', 420, "Self-seeding owned, but the roll does not come up: the crown breaks and fades and nothing stays."], // MOCK grove
-  ['b1', 'B1 grows row by row', 420, "The planted acorn grows into the pine a row at a time from the ground up, the trunk first and then the crown, sped up to ten seconds."], // MOCK grove
-  ['c', 'C the fall: the crown breaks', 520, "The sawn pine goes over whole, away from the shack; its crown breaks into pieces that scatter and fade, and its trunk breaks along its seams into its four logs, which hop apart and lie."], // MOCK grove
-  ['cg1', 'C-green-1 deep pine green', 520, "The fall with the crown in a deep pine green, each cell one of four close shades, standing, going over and breaking."], // MOCK grove
-  ['cg2', 'C-green-2 warm moss green', 520, "The fall with the crown in a lighter, warmer moss green, each cell one of four close shades."], // MOCK grove
-  ['cg3', 'C-green-3 blue-green', 520, "The fall with the crown in a blue-green, each cell one of four close shades."], // MOCK grove
-  ['w2h', 'W-2 the hand saw, with heft', 520, "The woodcutter fells with the hand saw in long push-pull strokes: each end held, the push smeared and biting home with the body leant in and sawdust thrown from the kerf, the cut deeper each stroke, a beat of strain before the last; the tree drops and breaks into its logs."], // MOCK grove
-  ['w2', 'W-2-old the handsaw', 520, "The woodcutter fells the pine with the hand saw you use, held up at the cut; the tree lands and breaks along its seams into its four logs, which hop apart and lie as logs for the workers to carry."], // MOCK grove
-  ['cr1', 'CR-1 a tiered pine', 520, "Deep pine green, a classic pine: four tiers stepped evenly, widest at the foot, a point on top; grown row by row, then felled."], // MOCK grove
-  ['cr2', 'CR-2 a tall spruce', 520, "Deep pine green, a tall narrow spruce tapering to a point; grown row by row, then felled."], // MOCK grove
-  ['cr3', 'CR-3 a round crown', 520, "Deep pine green, a full round crown on the trunk, an acorn tree's; grown row by row, then felled."], // MOCK grove
-  ['oak1', 'OAK-1 broad and spreading', 520, "An oak in an oak-leaf green: a crown wider than tall, three lumpy clumps a side with sky between, boughs showing through, hanging low over the trunk; grown row by row, then felled."], // MOCK grove
-  ['oak2', 'OAK-2 a dome of clumps', 520, "An oak: a tall middle clump with two a side and one low in front, gaps between, boughs showing; grown row by row, then felled."], // MOCK grove
-  ['oak3', 'OAK-3 gnarled', 520, "An oak: two great side clumps on two boughs with a notch between and a small top; grown row by row, then felled."], // MOCK grove
-  ['f1', 'F1 you saw', 520, "You saw: the faint hand shows the stroke, then you drag the hand saw a log's height up the trunk until the pine goes over; it lands and breaks into its four logs."], // MOCK grove
-  ['f3a1', 'F3a-1 the earth gives', 300, "The stump pulled as in F3a, and the earth gives: the soil cracks wider as you strain, the root about to go pulls taut, and each snap jerks the stump up a cell and holds it while dirt flies."], // MOCK grove
-  ['f3a2', 'F3a-2 tug of war', 300, "Pulled in heaves: the stump settles back a little each time the hand eases, the straining root stretches, the fist leans back harder, and the last, biggest root holds two beats before the stump comes free."], // MOCK grove
-  ['f3a3', 'F3a-3 root count', 300, "The roots show from the start as three cords over the soil; each snap breaks one with a held burst, so what is left to pull is the cords still whole."], // MOCK grove
-]; // MOCK grove
-const GROVE_REVIEW = { // MOCK grove  one card per question the owner is choosing between
-  r: 'grove: layout, growth, the fall', b1: 'grove: layout, growth, the fall', c: 'grove: layout, growth, the fall', // MOCK grove
-  cg1: 'grove: layout, growth, the fall', cg2: 'grove: layout, growth, the fall', cg3: 'grove: layout, growth, the fall', // MOCK grove
-  a1: 'grove: planting and seeds', a2: 'grove: planting and seeds', s2: 'grove: planting and seeds', s3a: 'grove: planting and seeds', s3b: 'grove: planting and seeds', // MOCK grove
-  w2h: 'grove: the woodcutter', w2: 'grove: the woodcutter', // MOCK grove
-  cr1: 'grove: layout, growth, the fall', cr2: 'grove: layout, growth, the fall', cr3: 'grove: layout, growth, the fall', // MOCK grove
-  oak1: 'grove: layout, growth, the fall', oak2: 'grove: layout, growth, the fall', oak3: 'grove: layout, growth, the fall', // MOCK grove
-  f1: 'grove: by hand', f3a1: 'grove: by hand', f3a2: 'grove: by hand', f3a3: 'grove: by hand', // MOCK grove
-}; // MOCK grove
-Object.assign(SCENES, Object.fromEntries(GROVE_MOCK.map(([opt, option, at, say]) => [`after-grove-mock-${opt}`, { // MOCK grove
-  about: 'the acts', review: GROVE_REVIEW[opt], // MOCK grove
-  stage: 'mock: throwaway review code, never merged -- shows how it would look; the real build comes after you pick', option, say, // MOCK grove
-  swap: () => { globalThis.__groveMock = opt; window.__scene(`after-grove-mock-${opt}`); }, // MOCK grove
-  run: () => { // MOCK grove
-    window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1); // MOCK grove
-    if (opt === 'f1' || opt === 'f2') window.__afterAxe(); // MOCK grove
-    if (opt === 's2' || opt === 's3a') { yardPurse(); window.__afterGrant({ rebel: 2000 }); globalThis.__groveCloseBoard = () => showPanel(null); } // MOCK grove  the earlier acts' coins to pay the seed row with
-    globalThis.__groveMock = opt; // MOCK grove  first, so the plot stands where the mock lays it
-    const x = plotX(0) - at; // MOCK grove
-    pinCamera(x); window.__look(x); // MOCK grove
-    startGroveMock(opt, STEPS); // MOCK grove
-    window.__fast(1 / 60); // MOCK grove
-  } }]))); // MOCK grove
+// track A: the grove rebuilt (DESIGN.md, "Act 3's grove, rebuilt"): the
+// real game's grove at rest beside the forestry shack and its seed basket,
+// a tree growing row by row, and a tree sawn down by hand caught as its crown
+// breaks and its trunk's logs hop apart. Framed as the signed-off mock's
+// scenes were (after-grove-mock-*, the first plot's line less `at`), so the
+// two shoot side by side.
+// Framed on the first plot's line less `at`; the notices the scene's grants
+// earned (act 1's firsts, "the first ore") hushed, since play never shows
+// them up here.
+const groveAt = at => { const x = plotX(0) - at; pinCamera(x); window.__look(x); S.wonShown = S.wonSeq | 0; };
+Object.assign(SCENES, {
+  'after-grove-rest': { about: 'the acts', say: "the grove at rest: a grown oak beside the forestry shack, its seed basket on the shack's far side with five acorns in it",
+    run: () => { window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1); groveAt(300); window.__fast(0.5); window.__holdShot(); } },
+  'after-grove-basket-3': { about: 'the acts', say: 'the seed basket by the forestry shack holding three acorns, the bottom row alone',
+    run: () => { window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1); window.__afterGrant({ seeds: -2 }); groveAt(300); window.__fast(0.5); window.__holdShot(); } },
+  'after-grove-basket-1': { about: 'the acts', say: 'the seed basket by the forestry shack holding its last acorn',
+    run: () => { window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1); window.__afterGrant({ seeds: -4 }); groveAt(300); window.__fast(0.5); window.__holdShot(); } },
+  'after-grove-basket-0': { about: 'the acts', say: 'the seed basket by the forestry shack, empty',
+    run: () => { window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1); window.__afterGrant({ seeds: -5 }); groveAt(300); window.__fast(0.5); window.__holdShot(); } },
+  'after-grove-grow': { about: 'the acts', say: "a second plot's oak growing row by row from the ground up, the trunk first and then the crown, beside a grown one",
+    run: () => {
+      window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+      window.__afterGrant({ rebel: 2000 }); yardPurse(); buyAfter('after-plot');
+      window.__afterPlant(1, 0.72);
+      groveAt(420); window.__fast(0.5); window.__holdShot();
+    } },
+  'after-grove-fell': { about: 'the acts', say: "an oak sawn down by hand, landed: its crown breaking into clumps that scatter and fade, its trunk's four logs hopping apart",
+    run: () => {
+      window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+      const b = window.__gestureParts('tree', 0).sawBox, x0 = b.x + P * 2, y = b.y + b.h / 2;
+      window.__gesture('down', x0, y);
+      for (let f = 1; f <= 600 && S.after.plots[0].fall == null; f++) { window.__gesture('move', x0 + Math.sin(f / 30 * Math.PI) * P * 6, y); window.__fast(1 / 60); }
+      window.__gesture('up', x0, y);
+      for (let f = 0; f < 600 && !(S.after.plots[0].fell != null && S.after.t - S.after.plots[0].fell >= 0.62); f++) window.__fast(1 / 60);
+      groveAt(520); window.__holdShot();
+    } }
+});
+
+// track B: the saw (DESIGN.md, "Act 3's grove, rebuilt", calls 7 to 9): the
+// woodcutter felling the first oak with the hand saw, W-2 with heft, and the
+// hand doing it itself, F1, the saw lying across the trunk and no icon. Framed
+// as the signed-off mock's scenes were (after-grove-mock-w2h and -f1, the
+// first plot's line 520 px in), so the two shoot side by side. Each has a
+// `-start` twin stopped where the work begins, for a take of the whole felling.
+import { handSawAt, gestureView as sawView } from './after/gestures.js';
+import { GESTURE_SAW_AMP } from './config.js';
+const handRec = () => (sawView() || []).find(q => q.key === 'tree');
+// The woodcutter put on through its roster with the saw handed over, run
+// until it stands at the tree (`start`), or on until a bite has just landed
+// with the cut half through.
+function woodcutterStage(start) {
+  window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+  window.__afterCrowd((i, v) => (i < 2 ? 8 : v));
+  for (let k = 0; k < 90 && window.__afterRead().walking > 0; k++) window.__fast(1);
+  window.__afterGrant({ rebel: 2000 }); yardPurse();
+  window.__afterSaw();
+  staffAfter([AFTER_JOB.CUT]);
+  const w = () => S.after.bodies.find(b => b.job === AFTER_JOB.CUT);
+  const bit = () => !!w()?.bite && S.after.t - w().bite.at >= 0.05 && S.after.t - w().bite.at < 0.07;
+  for (let k = 0; k < 60 * 90 && !(w()?.sawing && (start || (S.after.plots[0].chops >= 4 && bit()))); k++) window.__fast(1 / 60);
+  groveAt(520);
+  window.__still(true); window.__holdShot();
+}
+// F1 played by the hand a player has, on the game's own clock: the ghost hand
+// teaches the stroke on the saw's grip, then the hand reaches it, presses and
+// drags it end to end until the tree goes over, lets go and watches it break.
+function sawHandDemo() {
+  const mine = S.after;
+  let ph = 'teach', t = 0, at = null;
+  const goTo = (p, pose) => { demoHand.x = p.x; demoHand.y = p.y; demoHand.pose = pose; S.mouse = { x: p.x, y: p.y }; };
+  const go = next => { ph = next; t = 0; };
+  const idx = STEPS.findIndex(q => q.name === 'sawhand');
+  if (idx >= 0) STEPS.splice(idx, 1);
+  STEPS.push({ name: 'sawhand', step: c => {
+    if (!S.after || S.after !== mine) { demoHand.pose = null; STEPS.splice(STEPS.findIndex(q => q.name === 'sawhand'), 1); return; }
+    const dt = c.dt / 1000, p = S.after.plots[0], g = handSawAt(0, 0).grip;
+    t += dt;
+    if (ph === 'teach') { if (t >= 1.6) { at = { x: g.x + P * 4, y: g.y - P * 4 }; go('reach'); } }
+    else if (ph === 'reach') {
+      const k = Math.min(1, t / 0.4), e = k * k * (3 - 2 * k);
+      goTo({ x: at.x + (g.x - at.x) * e, y: at.y + (g.y - at.y) * e }, k < 1 ? 'point' : 'grab');
+      if (k >= 1) { gestureDown(g.x, g.y); go('saw'); }
+    } else if (ph === 'saw') {
+      // end to end and back each second, a little past the saw's swing (the
+      // mock's pace: an end each half second)
+      const x = g.x + Math.sin(t * 2 * Math.PI) * GESTURE_SAW_AMP * 1.1;
+      gestureMove(x, g.y);
+      goTo(handSawAt(0, handRec()?.s || 0).grip, 'grab');
+      if (p.fall != null) { gestureUp(x, g.y); goTo({ x: demoHand.x, y: demoHand.y - P * 3 }, 'point'); go('watch'); }
+    } else if (ph === 'watch' && t >= 0.4) demoHand.pose = null;
+  } });
+}
+function sawStage(start) {
+  window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+  groveAt(520);
+  sawHandDemo();
+  const bit = () => { const d = handRec()?.dust?.at(-1); return !!d && S.after.t - d.at >= 0.05 && S.after.t - d.at < 0.07; };
+  if (!start) for (let k = 0; k < 60 * 30 && !(S.after.plots[0].chops >= 5 && bit()); k++) window.__fast(1 / 60);
+  window.__still(true); window.__holdShot();
+}
+Object.assign(SCENES, {
+  'after-grove-woodcutter': { about: 'the acts', say: "the woodcutter sawing the oak down with the hand saw: the push bitten home, the body leant in, sawdust thrown from the kerf and fading as it falls",
+    run: () => { woodcutterStage(false); } },
+  'after-grove-woodcutter-start': { about: 'the acts', say: "the woodcutter just come to the oak with the hand saw, about to fell it, for a take of the whole felling",
+    run: () => { woodcutterStage(true); } },
+  'after-grove-saw': { about: 'the acts', say: "you saw the oak down yourself: the hand saw dragged across the trunk a log's height up, sawdust flying from the cut",
+    run: () => { sawStage(false); } },
+  'after-grove-saw-start': { about: 'the acts', say: "the hand saw lying across the grown oak, the faint hand showing the stroke, for a take of the whole felling by hand",
+    run: () => { sawStage(true); } }
+});
+
+// Track C: the stump pulled (DESIGN.md, "Act 3's grove, rebuilt", call 10;
+// after/stump.js, render/after/stump.js), framed as the signed-off mock's
+// F3a-1 was (the first plot's line less 300). `after-grove-stump` plays the
+// hand on the game's own clock, through the real gesture and the one hand: a
+// press on the stump, dragged up and held, each root giving at the strain,
+// the stump out in the hand, carried off and let go, landing as a log; then
+// the stump stood again. The cursor is drawn on the stump as the mock drew
+// it (render/aftercues.js, `demoHand`); the drag itself runs on up past it,
+// as a real pointer does. The review scene is the woodcutter's pull, never
+// mocked: stump removal bought, the woodcutter at the stump, the stump stood
+// again each time its log is home.
+const STUMP_HAND = { look: 1.2, reach: 0.5, drag: 120, dragMax: 80, carry: 1.3, carryX: 14, carryUp: 4, rest: 1.6 };
+const restump = () => Object.assign(S.after.plots[0], { grow: null, stump: true, dug: 0, fell: null, fall: null });
+const stumpStep = (name, step) => {
+  const mine = S.after, idx = STEPS.findIndex(q => q.name === name);
+  if (idx >= 0) STEPS.splice(idx, 1);
+  STEPS.push({ name, step: c => {
+    if (!S.after || S.after !== mine) { demoHand.pose = null; STEPS.splice(STEPS.findIndex(q => q.name === name), 1); return; }
+    step(c.dt / 1000);
+  } });
+};
+function stumpHandDemo() {
+  let ph = 'look', t = 0, from = null;
+  const top = () => { const b = partsOf('stump', 0).stump; return { x: b.x + b.w / 2, y: b.y + AP / 2 }; };
+  const goTo = (p, pose) => { demoHand.x = p.x; demoHand.y = p.y; demoHand.pose = pose; S.mouse = { x: p.x, y: p.y }; };
+  const go = next => { ph = next; t = 0; };
+  stumpStep('stumphand', dt => {
+    t += dt;
+    const M = STUMP_HAND, g = top();
+    if (ph === 'look') {
+      if (t >= M.look) go('reach');
+    } else if (ph === 'reach') {
+      const k = Math.min(1, t / M.reach), e = k * k * (3 - 2 * k);
+      goTo({ x: g.x + AP * 8 * (1 - e), y: g.y - AP * 8 * (1 - e) }, k < 1 ? 'point' : 'grab');
+      if (k >= 1) { gestureDown(g.x, g.y); go('pull'); }
+    } else if (ph === 'pull') {
+      gestureMove(g.x, g.y - Math.min(M.dragMax, t * M.drag));
+      const rec = (window.__gestureView() || []).find(r => r.key === 'stump');
+      if (S.after.plots[0].stump) goTo({ x: g.x, y: g.y - (rec ? rec.lift : 0) }, 'grab');
+      else { from = { x: S.mouse.x, y: S.mouse.y }; go('carry'); }
+    } else if (ph === 'carry') {
+      const k = Math.min(1, t / M.carry), e = k * k * (3 - 2 * k);
+      goTo({ x: from.x - e * AP * M.carryX, y: from.y - Math.sin(Math.PI * k) * AP * M.carryUp }, 'grab');
+      window.__afterHand(S.mouse.x, S.mouse.y, 'move');
+      if (k >= 1) { S.trail = []; gestureUp(S.mouse.x, S.mouse.y); window.__afterHand(S.mouse.x, S.mouse.y, 'drop'); S.dragging = false; goTo(S.mouse, 'point'); go('rest'); }
+    } else if (ph === 'rest') {
+      goTo({ x: S.mouse.x, y: S.mouse.y - 20 * dt }, 'point');
+      if (t >= M.rest) { demoHand.pose = null; restump(); go('look'); }
+    }
+  });
+}
+// The stump stood with nothing lying round it and the act's coins to buy with.
+function stumpStage() {
+  window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+  window.__afterGrant({ rebel: 3000 }); yardPurse();
+  restump();
+  groveAt(300);
+}
+Object.assign(SCENES, {
+  'after-grove-stump': { about: 'the acts', say: "a stump pulled by hand: taken by the block itself and dragged up, the soil cracking, the next root pulling taut, each snapping with a held jerk and a throw of dirt that falls and fades; out, the stump is a log in the hand, carried off and let go",
+    run: () => { stumpStage(); window.__fast(0.2); stumpHandDemo(); window.__fast(2.4); window.__holdShot(); } },
+  'after-grove-stump-woodcutter': { about: 'the acts',
+    say: "With stump removal bought, the woodcutter pulls the stump the way your hand does: it takes hold of the block, heaves it up, leans back while a root strains, each snap jerks the stump a cell and throws dirt; with the last it swings the stump-log onto its head and carries it to the shack's pile.",
+    run: () => {
+      stumpStage();
+      buyAfter('after-stumps');
+      for (let k = 0; k < 120 && window.__afterRead().walking > 0; k++) window.__fast(1);
+      window.__afterPress('woodcutter');
+      const w = () => S.after.bodies.find(b => b.job === AFTER_JOB.CUT);
+      for (let f = 0; f < 240 * 10 && !(w() && w().pull && w().pull.ph === 'heave'); f++) window.__fast(0.1);
+      // stood again once the last log is home, so the pull plays on
+      stumpStep('stumppull', () => { const b = w(); if (!S.after.plots[0].stump && b && !b.load.length && !b.dig) restump(); });
+      window.__holdShot();
+    } }
+});
+
+// Track D: seeds (DESIGN.md, "Act 3's grove, rebuilt"): a woodcutter planting
+// from the basket, a seed bought and carried in from heaven's gates, and a
+// felled crown dropping an acorn that a member carries home. Framed as the
+// signed-off mock's scenes were (after-grove-mock-a1, -s2, -s3a), so they
+// shoot side by side. Each is run as a player's yard would run it: the
+// members walked out, the rows bought through `__buy`.
+import { clearPlot, chopTree } from './after/grove.js';
+import { lying } from './after/ground.js';
+import { TREE_CHOPS } from './config.js';
+const grovePeople = n => {
+  window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+  window.__afterCrowd((i, v) => (i < n ? 8 : v));
+  for (let k = 0; k < 90 && window.__afterRead().walking > 0; k++) window.__fast(1);
+  yardPurse(); window.__afterGrant({ rebel: 2000 });
+};
+// Frames until a fact holds, at most `s` seconds of the game.
+const until = (fact, s = 90) => { for (let f = 0; f < s * 60 && !fact(); f++) window.__fast(1 / 60); };
+const basketAt = () => window.__afterPile('forestry', 'seeds');
+Object.assign(SCENES, {
+  'after-grove-plant': { about: 'the acts', say: "a woodcutter plants: it took an acorn out of the seed basket, carried it to the bare plot and set it in; the acorn is sinking into the soil and the basket is an acorn short",
+    run: () => {
+      grovePeople(3);
+      S.after.plots = []; clearPlot();   // the grove's one plot bare, for the woodcutter to plant
+      window.__afterPress(AFTER_JOB.CUT, 1);
+      until(() => S.after.plots[0].seed != null);
+      S.after.plots[0].seed = S.after.t;   // the sink begun: a still caught while the acorn is going in
+      window.__fast(0.3);
+      groveAt(300); window.__holdShot();
+    } },
+  'after-grove-seeds': { about: 'the acts', say: "a seed bought on the grove's board: a member has walked in from heaven's gates with the one acorn and stands at the seed basket, which is two acorns short",
+    run: () => {
+      grovePeople(3);
+      window.__afterGrant({ seeds: -3 });
+      window.__buy('after-seeds');
+      until(() => S.after.bodies.some(b => loadKind(b) === 'acorn' && Math.abs(b.x - basketAt().x) < P * 10));
+      groveAt(300); window.__holdShot();
+    } },
+  'after-grove-selfseed': { about: 'the acts', say: "self-seeding bought, an oak sawn down and its crown broken: an acorn fell out of it and lies on the logs until a member carries it to the seed basket",
+    run: () => {
+      grovePeople(3);
+      window.__afterGrant({ seeds: -4 });
+      buyAfter('after-selfseed');
+      S.after.ups['after-selfseed'] = 4;   // the last rung's chance, so the first fall drops one
+      for (let k = 0; k < TREE_CHOPS; k++) chopTree(0, true);
+      window.__fast(0.1);
+      until(() => lying().some(q => q.kind === 'acorn' && q.at != null && S.after.t - q.at > 0.7), 20);
+      groveAt(420); window.__holdShot();
+    } }
+});
+
+// The woodcutter's whole round on one plot, for a take of the loop: the saw,
+// stump removal and faster growth bought, the plot bare, the woodcutter put on.
+// It plants from the basket, the oak grows, it saws it down, the logs are
+// carried home, it pulls the stump and carries that home, and plants again.
+Object.assign(SCENES, {
+  'after-grove-loop': { about: 'the acts', say: "the woodcutter's whole round on one plot: plant, grow, saw it down, the logs carried home, the stump pulled and carried, plant again",
+    run: () => {
+      grovePeople(3);
+      // the saw bought, and handed over without its beat (the act's opening is
+      // not played here, so the beat would wait on it)
+      buyAfter('after-saw'); buyAfter('after-stumps'); buyAfter('after-grow');
+      window.__afterSaw();
+      S.after.plots = []; clearPlot();
+      window.__afterPress(AFTER_JOB.CUT, 1);
+      groveAt(360);
+    } }
+});
+// The grove's real build for the owner, one review (review.html#grove-built):
+// every real grove scene says where it is built, and nine stand as its
+// options, putting away the four mock reviews they came out of.
+const GROVE_BUILT = { stage: 'built: grove-integrate, not on main yet', branch: 'grove-integrate' };
+const GROVE_OPTIONS = [
+  ['after-grove-rest', 'A rest'], ['after-grove-grow', 'B grow'], ['after-grove-woodcutter', 'C the woodcutter fells'],
+  ['after-grove-saw', 'D F1 hand saw'], ['after-grove-stump', 'E stump by hand'], ['after-grove-stump-woodcutter', 'F the woodcutter pulls a stump'],
+  ['after-grove-plant', 'G plant'], ['after-grove-seeds', 'H seeds/basket'], ['after-grove-selfseed', 'I self-seed']
+];
+for (const key of Object.keys(SCENES)) if (key.startsWith('after-grove-') && !key.startsWith('after-grove-mock')) Object.assign(SCENES[key], GROVE_BUILT);
+for (const [key, option] of GROVE_OPTIONS) Object.assign(SCENES[key], { review: 'grove: built', option,
+  supersedes: ['grove: layout, growth, the fall', 'grove: planting and seeds', 'grove: the woodcutter', 'grove: by hand'] });
 
 // MOCK act-3-the-cabin: the forestry shack redrawn four ways
-// (render/after/cabinmock.js), stood in the grove at rest, never merged.
+// (render/after/cabinmock.js), stood in the built grove at rest, never merged.
 const CABIN_MOCK = [
   ['a', 'A the oak through the roof', 'A plain cabin an oak has grown up through: the trunk out of the ridge, shingles heaved round it, the crown over the house, a twig in leaf out of the window.'],
   ['b', 'B the treehouse', "The shack up in an oak's crown: a hut on a platform among the clumps, a ladder down to the floor, a rope swing swaying under it."],
@@ -3791,10 +3997,8 @@ Object.assign(SCENES, Object.fromEntries(CABIN_MOCK.map(([opt, option, say]) => 
   swap: () => { globalThis.__cabinMock = opt; },
   run: () => {
     window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
-    globalThis.__groveMock = 'r'; globalThis.__cabinMock = opt;
-    const x = plotX(0) - 300;
-    pinCamera(x); window.__look(x);
-    startGroveMock('r', STEPS);
+    globalThis.__cabinMock = opt;
+    groveAt(300);
     window.__fast(1 / 60);
   } }])));
 

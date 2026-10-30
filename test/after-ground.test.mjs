@@ -164,6 +164,8 @@ function goodsBefore(raw) {
   if (a.hand) n[a.hand.kind] += a.hand.n;
   for (const b of a.bodies) if (b.load in n) n[b.load] += b.carry ?? 1;
   if (saw.bed) n.log++;
+  // the grove's rebuild (v35) starts every save's seed basket full
+  n.acorn = 5;
   if (saw.trip && saw.trip.ph === 'carry') n.log++;
   n.plank += (saw.out || []).length;
   return n;

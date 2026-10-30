@@ -475,8 +475,12 @@ export const cellOf = (kind, tone) => {
   if (tone === undefined) tone = Math.floor(rand() * KINDS[kind].tones);
   return KINDS[kind].first + Math.max(0, Math.min(KINDS[kind].tones - 1, tone | 0));
 };
-// cells a side of whatever a value is: one for everything that is not a block
+// cells across whatever a value is: one for everything that is not a block
 export const sizeOfCell = v => (KIND_OF[v] ? KIND_OF[v].size : 1);
+// ...and cells tall (config/blocks.js, `h`): the size for every square kind.
+// Width is what the lattice and a roll read; height is what a block's square,
+// the row over its top and its repose read.
+export const heightOfCell = v => (KIND_OF[v] ? KIND_OF[v].h : 1);
 
 // The layer, when it is the grid's own and a block is on it.
 function liveBlocks(b) {
@@ -508,19 +512,19 @@ function blocksAwake(b, awake) {
 }
 
 // the block square, written through `put` so the ledgers and the awake flags keep up
-function writeBlock(b, c0, r0, z, v) {
+function writeBlock(b, c0, r0, z, v, h = z) {
   const lay = layerOf(b), a = r0 * b.cols + c0 + 1;
-  for (let j = 0; j < z; j++) for (let i = 0; i < z; i++) lay[(r0 + j) * b.cols + c0 + i] = a;
+  for (let j = 0; j < h; j++) for (let i = 0; i < z; i++) lay[(r0 + j) * b.cols + c0 + i] = a;
   b.blockSet.add(a - 1);
   b.blockN++;
-  for (let j = 0; j < z; j++) for (let i = 0; i < z; i++) put(b, c0 + i, r0 + j, v);
+  for (let j = 0; j < h; j++) for (let i = 0; i < z; i++) put(b, c0 + i, r0 + j, v);
 }
-function eraseBlock(b, c0, r0, z) {
+function eraseBlock(b, c0, r0, z, h = z) {
   const lay = b.block;
-  for (let j = 0; j < z; j++) for (let i = 0; i < z; i++) lay[(r0 + j) * b.cols + c0 + i] = 0;
+  for (let j = 0; j < h; j++) for (let i = 0; i < z; i++) lay[(r0 + j) * b.cols + c0 + i] = 0;
   b.blockSet.delete(r0 * b.cols + c0);
   b.blockN--;
-  for (let j = 0; j < z; j++) for (let i = 0; i < z; i++) put(b, c0 + i, r0 + j, 0);
+  for (let j = 0; j < h; j++) for (let i = 0; i < z; i++) put(b, c0 + i, r0 + j, 0);
 }
 
 // is the c..c+w-1 by r..r+h-1 rectangle on the plot and empty of every cell
@@ -535,14 +539,14 @@ const emptyRect = (b, c, r, w, h) => {
 // A block must stand on its lattice, fit the plot and have its square empty;
 // false otherwise, and nothing is written.
 export function putBlock(b, c0, r0, v) {
-  const z = sizeOfCell(v);
+  const z = sizeOfCell(v), h = heightOfCell(v);
   if (z === 1) {
     if (!inside(b, c0, r0) || at(b, c0, r0)) return false;
     put(b, c0, r0, v);
     return true;
   }
-  if (c0 < 0 || slotOf(b, c0, z) !== c0 || r0 < 0 || r0 + z > b.rows || !emptyRect(b, c0, r0, z, z)) return false;
-  writeBlock(b, c0, r0, z, v);
+  if (c0 < 0 || slotOf(b, c0, z) !== c0 || r0 < 0 || r0 + h > b.rows || !emptyRect(b, c0, r0, z, h)) return false;
+  writeBlock(b, c0, r0, z, v, h);
   return true;
 }
 
@@ -559,9 +563,9 @@ export function takeUnit(b, c, r) {
   if (!v || (b.fixed && b.fixed(c, r))) return 0;
   const a = b.blockN && liveBlocks(b) ? b.block[r * b.cols + c] : 0;
   if (!a) { put(b, c, r, 0); return v; }
-  const c0 = (a - 1) % b.cols, r0 = Math.floor((a - 1) / b.cols), z = sizeOfCell(v);
-  if (!emptyRect(b, c0, r0 + z, z, 1)) return 0;
-  eraseBlock(b, c0, r0, z);
+  const c0 = (a - 1) % b.cols, r0 = Math.floor((a - 1) / b.cols), z = sizeOfCell(v), h = heightOfCell(v);
+  if (!emptyRect(b, c0, r0 + h, z, 1)) return 0;
+  eraseBlock(b, c0, r0, z, h);
   return v;
 }
 
@@ -587,7 +591,7 @@ export function blockAt(b, c, r) {
 // keeping to the region it landed on. False means there was nowhere at all.
 // It lands where it is put and the next settle rolls it off a slope.
 export function addBlock(b, x, v, skip = b.blocked, free = false) {
-  const z = sizeOfCell(v);
+  const z = sizeOfCell(v), h = heightOfCell(v);
   if (z === 1) return addGrain(b, x, skip, v, free);
   if (b.cols < z) return false;
   const col = Math.max(0, Math.min(b.cols - 1, colOf(b, x)));
@@ -608,8 +612,8 @@ export function addBlock(b, x, v, skip = b.blocked, free = false) {
       if (skip && skip(c)) return -1;
       r0 = Math.max(r0, topRow(b, c) + 1);
     }
-    if (r0 + z > b.rows) return -1;
-    if (!free && b.ceiling) for (let c = s; c < s + z; c++) if (!roomFor(b, c, r0 + z - 1)) return -1;
+    if (r0 + h > b.rows) return -1;
+    if (!free && b.ceiling) for (let c = s; c < s + z; c++) if (!roomFor(b, c, r0 + h - 1)) return -1;
     return r0;
   };
   let use = slot, r0 = restAt(slot);
@@ -638,7 +642,7 @@ export function addBlock(b, x, v, skip = b.blocked, free = false) {
     if (use < 0) return false;
   }
   landed.c = use; landed.r = r0;
-  writeBlock(b, use, r0, z, v);
+  writeBlock(b, use, r0, z, v, h);
   return true;
 }
 
@@ -664,11 +668,11 @@ export function addBlock(b, x, v, skip = b.blocked, free = false) {
 // it has come to rest, and nothing can oscillate.
 function stepBlock(b, ai, skip) {
   globalThis.__perf.blocks++;
-  const cols = b.cols, c0 = ai % cols, r0 = (ai - c0) / cols, v = b.grid[ai], z = sizeOfCell(v);
+  const cols = b.cols, c0 = ai % cols, r0 = (ai - c0) / cols, v = b.grid[ai], z = sizeOfCell(v), h = heightOfCell(v);
   if (r0 === 0) return;
   let left = 0, right = 0;
   for (let i = 0; i < z; i++) if (b.grid[(r0 - 1) * cols + c0 + i]) { if (i < z / 2) left++; else right++; }
-  if (left + right === 0) { moveBlock(b, c0, r0, c0, r0 - 1, z, v); return; }
+  if (left + right === 0) { moveBlock(b, c0, r0, c0, r0 - 1, z, v, h); return; }
   // Whether it may roll into the slot beside it on side `dir`, from `lowest`
   // up: on the plot, on the lattice and in its region, not barred, not too
   // tall for the ceiling, and clear from `lowest` through the rows it passes.
@@ -684,21 +688,21 @@ function stepBlock(b, ai, skip) {
       if (skip && skip(c)) return false;
       rest = Math.max(rest, topRow(b, c) + 1);
     }
-    for (let c = n0; c < n0 + z; c++) if (!roomFor(b, c, Math.min(r0 + z - 2, rest + z - 1))) return false;
-    return emptyRect(b, n0, lowest, z, r0 + z - lowest);
+    for (let c = n0; c < n0 + z; c++) if (!roomFor(b, c, Math.min(r0 + h - 2, rest + h - 1))) return false;
+    return emptyRect(b, n0, lowest, z, r0 + h - lowest);
   };
   const first = (Math.floor(c0 / z) + r0) & 1 ? -1 : 1;
   if ((left + right) * 2 >= z) {
-    if (r0 < z || !emptyRect(b, c0, r0 + z, z, 1)) return;
-    for (const dir of [first, -first]) if (open(dir, r0 - z)) { moveBlock(b, c0, r0, c0 + dir * z, r0 - 1, z, v); return; }
+    if (r0 < h || !emptyRect(b, c0, r0 + h, z, 1)) return;
+    for (const dir of [first, -first]) if (open(dir, r0 - h)) { moveBlock(b, c0, r0, c0 + dir * z, r0 - 1, z, v, h); return; }
     return;
   }
   const dir = left < right ? -1 : right < left ? 1 : first;
-  if (open(dir, r0 - 1)) moveBlock(b, c0, r0, c0 + dir * z, r0 - 1, z, v);
+  if (open(dir, r0 - 1)) moveBlock(b, c0, r0, c0 + dir * z, r0 - 1, z, v, h);
 }
-function moveBlock(b, c0, r0, n0, nr, z, v) {
-  eraseBlock(b, c0, r0, z);
-  writeBlock(b, n0, nr, z, v);
+function moveBlock(b, c0, r0, n0, nr, z, v, h = z) {
+  eraseBlock(b, c0, r0, z, h);
+  writeBlock(b, n0, nr, z, v, h);
   if (b.onMove) b.onMove(r0 * b.cols + c0, nr * b.cols + n0);
 }
 
@@ -712,10 +716,10 @@ export function blockProblems(b) {
   if (!lay) return ['the block layer is for other cells'];
   const named = new Set();
   for (const ai of b.blockSet) {
-    const c0 = ai % b.cols, r0 = (ai - c0) / b.cols, v = b.grid[ai], z = sizeOfCell(v);
+    const c0 = ai % b.cols, r0 = (ai - c0) / b.cols, v = b.grid[ai], z = sizeOfCell(v), h = heightOfCell(v);
     if (z === 1) { bad.push(`the block at ${c0},${r0} is not a block's value (${v})`); continue; }
     if (slotOf(b, c0, z) !== c0) bad.push(`the block at ${c0},${r0} is off its lattice (${z})`);
-    for (let j = 0; j < z; j++) for (let i = 0; i < z; i++) {
+    for (let j = 0; j < h; j++) for (let i = 0; i < z; i++) {
       const k = (r0 + j) * b.cols + c0 + i;
       if (b.grid[k] !== v || lay[k] !== ai + 1) bad.push(`the block at ${c0},${r0} is missing its cell ${c0 + i},${r0 + j}`);
       named.add(k);

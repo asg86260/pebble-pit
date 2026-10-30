@@ -180,6 +180,7 @@ this section; the release that switches it on moves these under Unreleased.
 
 **New this release**
 - Every empty lot wears a sign, BUILD over the price, that builds it when pressed, and a station not yet built has no UPGRADES button (test/build-sign.test.mjs).
+- Act 3's grove is oaks planted from acorns out of a seed basket beside the forestry shack, grown row by row, sawn down by hand any time (a bought saw lets the woodcutter do it), breaking into their four logs as the crown scatters and fades, the stump a fifth log pulled out by its roots; a seeds row buys an acorn a press and self-seeding leaves one for a member to carry home, and the axe is now the saw (test/after-grove.test.mjs, test/after-grove-seeds.test.mjs, test/after-grove-migrate.test.mjs).
 - Going through a portal, the place on the other side shows live through the ring instead of a still picture (src/selftest/deep.js, "the ring going down shows the deep live").
 - The chips off a builder's hammer are the paper over buildings and ground and the ink over the sky, on either page (src/selftest/work.js, "a builder's grit is plain paper or ink").
 - A lamp's light is a soft see-through beam that fades out with distance, lying over whatever it reaches (src/selftest/wardrobe.js, "a lamp's light is plain fills").

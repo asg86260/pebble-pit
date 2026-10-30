@@ -198,13 +198,13 @@ export const BEATS = [
     skip: t => { S.reformAt = t; sheetDown(); } },
 
   // --- act 3: the afterlife (after/story.js), behind AFTERLIFE_ON ----------
-  // The fall and the opening, played through as one story; the axe on its
+  // The fall and the opening, played through as one story; the saw on its
   // own; the strike and what it uncovers, through to the road down.
   after('house-fall', 'arrive'),
   after('arrive', 'meet-god', false),
   after('meet-god', 'refuse', false),
   after('refuse', null, false),
-  after('axe'),
+  after('saw'),
   after('strike', 'unmask'),
   after('unmask', 'hell-told', false),
   after('hell-told', 'ghost-road', false),

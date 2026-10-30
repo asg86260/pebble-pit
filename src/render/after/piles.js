@@ -5,12 +5,11 @@
 // showed, since when) is kept in kit.js.
 // Cells off the frame's ground.
 
-import { P, AFTER_COUNT_LIFT, AFTER_BLOCK, KINDS, AFTER_GOODS_DARK } from '../../config.js';
+import { P, AFTER_COUNT_LIFT, AFTER_BLOCK, KINDS, AFTER_GOODS_DARK, AFTER_BREAK_S } from '../../config.js';
 import { ctx } from '../ctx.js';
-import { AFTER_LOG_ROLL_S } from '../../config.js';
 import { units, colX, rowY, tagOf } from '../../after/ground.js';
 import { AP } from '../../after/place.js';
-import { SPLIT_S } from './pine.js';
+import { drawAcorn } from './pine.js';
 import { DUST, hash, pileAlpha, pileState, countAt, pendingCounts, clamp01, inView } from './kit.js';
 import { shown } from '../../tween.js';
 import { kindOf, toneOf } from '../../grid.js';
@@ -48,6 +47,8 @@ const DARK_RAW = Object.fromEntries(Object.entries(AFTER_GOODS_DARK).map(([k, l]
 export const goodTone = (kind, i) => (darkPage && DARK_RAW[kind] ? DARK_RAW[kind][i] : KINDS[kind].palette[i]);
 export const goodColor = (kind, v) => goodTone(kind, kindOf(v) && kindOf(v).key === kind ? toneOf(v) : 0);
 export function goodBlock(x, y, kind, v) {
+  // the acorn is no flat block but its own small drawing (render/after/pine.js)
+  if (kind === 'acorn') { drawAcorn(x, y); return; }
   const z = AFTER_BLOCK[kind] * AP;
   ctx.fillStyle = goodColor(kind, v); ctx.fillRect(x, y, z, z);
 }
@@ -55,30 +56,28 @@ export function goodBlock(x, y, kind, v) {
 // alike, each block where the heap rule has it: one drawing for all of them,
 // so a pile is only where its blocks stand. No count: the pile is the count.
 // A unit still arriving is drawn along its way there, whole, at its true
-// position: a felled log faded in over the trunk and sliding off to rest,
-// slowing, over AFTER_LOG_ROLL_S; a good let go of falling under the yard's
-// gravity from where it was let go (ground.js, `fallTag`).
+// position: a log broken off a felled trunk hidden in the trunk until it
+// breaks (its tag's `at`), then hopping a cell up off where it lay in the
+// trunk and down to its rest over AFTER_BREAK_S; a good let go of falling
+// under the yard's gravity from where it was let go (ground.js, `fallTag`).
 export function drawGround(t) {
   const us = units();
   for (const u of us) {
-    const z = u.z * AP;
-    let x = colX(u.c0), y = rowY(u.r0 + u.z), a = 1;
+    const z = u.z * AP, hz = u.h * AP;
+    let x = colX(u.c0), y = rowY(u.r0 + u.h);
     const tg = tagOf(u.ai);
     if (tg && tg.fall != null) {
       const k = tg.fall > 0 ? clamp01((t - tg.at) / tg.fall) : 1, bot = rowY(u.r0);
-      y = (tg.y0 ?? bot) + (bot - (tg.y0 ?? bot)) * k * k - z;
-    } else if (tg && tg.x0 != null && tg.at != null) {
+      y = (tg.y0 ?? bot) + (bot - (tg.y0 ?? bot)) * k * k - hz;
+    } else if (tg && tg.hop && tg.at != null) {
       const since = t - tg.at;
-      if (since < -SPLIT_S) continue;
-      const r = clamp01(since / AFTER_LOG_ROLL_S), e = 1 - (1 - r) * (1 - r);
+      if (since < 0) continue;
+      const k = clamp01(since / AFTER_BREAK_S), e = k * k * (3 - 2 * k);
       x = tg.x0 + (x - tg.x0) * e;
-      a = clamp01((since + SPLIT_S) / SPLIT_S);
+      y -= Math.sin(Math.PI * k) * AP;
     }
     if (!inView(x - z, z * 3)) continue;
-    const was = ctx.globalAlpha;
-    ctx.globalAlpha = was * a;
     goodBlock(Math.round(x), Math.round(y), u.kind, u.v);
-    ctx.globalAlpha = was;
   }
 }
 
