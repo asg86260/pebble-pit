@@ -616,3 +616,52 @@ export const AFTER_MILL = {
   set_s: 0.6, held: 0.25, puff: 0.3,
   chips_s: 0.6
 };
+
+// --- track C: the stump, F3a-1 "the earth gives" (DESIGN.md, "Act 3's grove,
+// rebuilt"; the signed-off mock's numbers, its `ROOTS`, `CHIPS` and the snap's
+// hold, on branch a3-review-both) -----------------------------------------------------
+// The stump's three roots, in the log's darkest tone: cells [column off the
+// stump block's left, depth under its foot], two thick where they leave the
+// block, tapering and branching down (the owner: "a little more root like
+// and thicker"). They go in order, the first first; pulled, each shows as far
+// as the stump is up, and snapped only its stub (depth 0) stays on the block.
+export const STUMP_ROOTS = [
+  [[0, 0], [1, 0], [-1, 1], [0, 1], [-1, 2], [0, 2], [-2, 3], [0, 3]],
+  [[2, 0], [1, 1], [2, 1], [2, 2], [1, 3], [3, 3]],
+  [[3, 0], [4, 0], [3, 1], [4, 1], [4, 2], [3, 2], [5, 3]]
+];
+// The root about to go pulls taut, straight down to the ground, past this
+// share of the strain.
+export const STUMP_TAUT = 0.45;
+// The soil cracks either side of the stump as the work goes, up to
+// STUMP_CRACKS a side, STUMP_CRACK_STEP cells apart, each inking in as its
+// share of the work comes: eased in over STUMP_CRACK_IN_S, faded over
+// STUMP_CRACK_OUT_S once the hand lets go or the stump is out.
+export const STUMP_CRACKS = 4;
+export const STUMP_CRACK_STEP = 2;
+export const STUMP_CRACK_IN_S = 0.15;
+export const STUMP_CRACK_OUT_S = 0.6;
+// Each snap holds the stump a cell higher this long (the held jerk).
+export const STUMP_JERK_S = 0.3;
+// Each snap throws STUMP_DIRT clods of dirt off the root's break, whole
+// cells: across at up to half STUMP_DIRT_VX px/s either way, up at
+// STUMP_DIRT_UP[0] plus up to STUMP_DIRT_UP[1] px/s, falling at
+// STUMP_DIRT_GRAV px/s^2, and fading by opacity as they fall, gone by the
+// time they come back down to the soil they left: never resting.
+export const STUMP_DIRT = 7;
+export const STUMP_DIRT_VX = 140;
+export const STUMP_DIRT_UP = [70, 90];
+export const STUMP_DIRT_GRAV = 520;
+// The woodcutter's pull (stump removal bought), built from F3a-1's pieces
+// with a body's hands on the stump: it stands `stand` cells off the stump's
+// shack side, takes hold over `grip` s, heaves the stump up to its root's
+// height over `heave` s, leans back up to `lean` cells while the root strains
+// (the hand's strain, GESTURE_STRAIN_S), and after each snap's held jerk
+// heaves again; the last root out, the stump-log is swung up onto its head
+// over `hoist` s and carried home as any log is. The height a root holds the
+// stump at runs from the strain height (GESTURE_STRAIN_LIFT) for the first to
+// the hand's most (GESTURE_STUMP_MAX) for the last.
+export const AFTER_PULL = { stand: 1, grip: 0.3, heave: 0.35, lean: 1, hoist: 0.4 };
+// The stump come out into the hand swings in from where it came out to hang
+// off the pointer as a held log does, at this rate a second.
+export const STUMP_HOLD_EASE = 6;

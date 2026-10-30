@@ -16,7 +16,7 @@ import { group, ok, run, yard, P } from './helpers.mjs';
 import { goodCount } from '../src/after/piles.js';
 import { AFTER_PODIUM_REBEL, AFTER_DIG_CLICKS, TREE_CHOPS, GESTURE_BUBBLE_CRIT, GESTURE_CUE_USES,
          GESTURE_CUE_FADE_S, GESTURE_CUE_IDLE_S, GESTURE_STRAIN_S,
-         GESTURE_JOINER_WAIT_S, GESTURE_NAIL_TAPS } from '../src/config.js';
+         GESTURE_JOINER_WAIT_S, GESTURE_NAIL_TAPS, GESTURE_STUMP_DRAG } from '../src/config.js';
 import { gestureDown, gestureMove, gestureUp, gestureView, gestureHover, gestureUnder, partsOf, useBubbles, groveIcons } from '../src/after/gestures.js';
 import { stationBox } from '../src/after/place.js';
 import { GESTURE_HOVER_S } from '../src/config.js';
@@ -189,21 +189,27 @@ group('the pedestal: a popped bubble\'s rebel starts at the bubble and is counte
   ];
 }, NO_RELOAD);
 
-group('a stump: its shovel shows; dragged up and held, a root gives at a time until it is out, no crit', async () => {
+// track C: the stump is its own handle (DESIGN.md, "Act 3's grove, rebuilt",
+// call 10): no icon over it, and out it comes into the hand that holds it.
+group('a stump: the block itself is the handle, no icon; dragged up and held, a root gives at a time until it is out in the hand, no crit', async () => {
   up();
   Object.assign(S.after.plots[0], { grow: null, stump: true, dug: 0 });
   run(0.2);
-  const shovel = groveIcons().some(c => c.kind === 'shovel' && c.i === 0);
+  const g = mid(partsOf('stump', 0).stump), noIcon = !groveIcons().some(c => c.i === 0), handle = gestureUnder(g.x, g.y);
   lift(0, 3, GESTURE_STRAIN_S * 1.5);
   const oneRoot = S.after.plots[0].dug, stillIn = S.after.plots[0].stump;
-  lift(0, 3, GESTURE_STRAIN_S * (AFTER_DIG_CLICKS + 1));
+  // held on through the rest: out, the stump is in the hand, held as a sweep holds
+  gestureDown(g.x, g.y); gestureMove(g.x, g.y - 3 * P / GESTURE_STUMP_DRAG);
+  run(GESTURE_STRAIN_S * (AFTER_DIG_CLICKS + 1));
   const out = !S.after.plots[0].stump && S.after.plots[0].grow == null;
-  const marks = rec('stump').marks.length, gone = !groveIcons().some(c => c.kind === 'shovel');
+  const held = S.held, inHand = held === 1 && S.motes[0]?.kind === 'log' && S.motes[0]?.place === 'after' && S.dragging;
+  const marks = rec('stump').marks.length;
+  window.__emptyHand(); S.dragging = false;
   window.__actsOn(null);
   return [
-    ok(shovel, 'a stump shows its shovel icon'),
+    ok(noIcon && handle, 'a stump has no icon over it, and a press on the block takes hold of it', JSON.stringify({ noIcon, handle })),
     ok(oneRoot === 1 && stillIn, 'held up a moment, one root gives and the stump stays', `dug ${oneRoot}`),
-    ok(out && gone, 'held long enough it comes out, the plot left bare for an acorn, and the shovel goes'),
+    ok(out && inHand, 'held long enough it comes out, the plot left bare for an acorn, the stump a log in the hand', JSON.stringify({ out, held })),
     ok(marks === 0, 'and no crit is marked', `${marks}`)
   ];
 }, NO_RELOAD);

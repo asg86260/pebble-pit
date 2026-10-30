@@ -22,6 +22,10 @@ import { bedWants } from '../after/mill.js';
 import { stripBox } from '../after/ground.js';
 import { drawGroveIcons } from './after/pine.js';
 import { K, W, MID } from './after/kit.js';
+// track C: the stump's cue finds its stump itself
+import { trees } from '../after/grove.js';
+import { pullable, PULL_HOLDS } from '../after/stump.js';
+const pulledBy = i => S.after.bodies.some(b => b.dig && b.target === i && b.pull && PULL_HOLDS.includes(b.pull.ph));
 
 const D = GESTURE_CUE_DOT;
 const snap = v => Math.round(v / P) * P;
@@ -95,11 +99,14 @@ function cueAt(key, r) {
     const b = partsOf('tree', r.i).sawBox;
     return { x: b.x + P * 2 + Math.sin(turn) * GESTURE_SAW_AMP, y: b.y + b.h / 2, pose: 'grab' };
   }
+  // track C: the stump's cue, a grab on its top drawn up three cells (the
+  // signed-off F3a-1's), on the first stump that can be pulled and that no
+  // woodcutter has its hands on; no icon
   if (key === 'stump') {
-    const c = groveIcons().find(k => k.kind === 'shovel');
-    if (!c) return null;
-    const b = partsOf('stump', c.i).stump;
-    return { x: b.x + b.w / 2, y: b.y - Math.round(u * 3) * P, pose: 'grab' };
+    const i = trees().findIndex((p, k) => pullable(p) && !pulledBy(k));
+    if (i < 0) return null;
+    const b = partsOf('stump', i).stump;
+    return { x: b.x + b.w / 2, y: b.y + AP / 2 - Math.round(u * 3) * P, pose: 'grab' };
   }
   if (key === 'mill') {
     // With the bed bare and nobody at the saw, a log first: the hand pressed

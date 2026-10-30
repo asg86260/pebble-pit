@@ -3748,3 +3748,80 @@ Object.assign(SCENES, {
       groveAt(520); window.__holdShot();
     } }
 });
+
+// Track C: the stump pulled (DESIGN.md, "Act 3's grove, rebuilt", call 10;
+// after/stump.js, render/after/stump.js), framed as the signed-off mock's
+// F3a-1 was (the first plot's line less 300). `after-grove-stump` plays the
+// hand on the game's own clock, through the real gesture and the one hand: a
+// press on the stump, dragged up and held, each root giving at the strain,
+// the stump out in the hand, carried off and let go, landing as a log; then
+// the stump stood again. The cursor is drawn on the stump as the mock drew
+// it (render/aftercues.js, `demoHand`); the drag itself runs on up past it,
+// as a real pointer does. The review scene is the woodcutter's pull, never
+// mocked: stump removal bought, the woodcutter at the stump, the stump stood
+// again each time its log is home.
+const STUMP_HAND = { look: 1.2, reach: 0.5, drag: 120, dragMax: 80, carry: 1.3, carryX: 14, carryUp: 4, rest: 1.6 };
+const restump = () => Object.assign(S.after.plots[0], { grow: null, stump: true, dug: 0, fell: null, fall: null });
+const stumpStep = (name, step) => {
+  const mine = S.after, idx = STEPS.findIndex(q => q.name === name);
+  if (idx >= 0) STEPS.splice(idx, 1);
+  STEPS.push({ name, step: c => {
+    if (!S.after || S.after !== mine) { demoHand.pose = null; STEPS.splice(STEPS.findIndex(q => q.name === name), 1); return; }
+    step(c.dt / 1000);
+  } });
+};
+function stumpHandDemo() {
+  let ph = 'look', t = 0, from = null;
+  const top = () => { const b = partsOf('stump', 0).stump; return { x: b.x + b.w / 2, y: b.y + AP / 2 }; };
+  const goTo = (p, pose) => { demoHand.x = p.x; demoHand.y = p.y; demoHand.pose = pose; S.mouse = { x: p.x, y: p.y }; };
+  const go = next => { ph = next; t = 0; };
+  stumpStep('stumphand', dt => {
+    t += dt;
+    const M = STUMP_HAND, g = top();
+    if (ph === 'look') {
+      if (t >= M.look) go('reach');
+    } else if (ph === 'reach') {
+      const k = Math.min(1, t / M.reach), e = k * k * (3 - 2 * k);
+      goTo({ x: g.x + AP * 8 * (1 - e), y: g.y - AP * 8 * (1 - e) }, k < 1 ? 'point' : 'grab');
+      if (k >= 1) { gestureDown(g.x, g.y); go('pull'); }
+    } else if (ph === 'pull') {
+      gestureMove(g.x, g.y - Math.min(M.dragMax, t * M.drag));
+      const rec = (window.__gestureView() || []).find(r => r.key === 'stump');
+      if (S.after.plots[0].stump) goTo({ x: g.x, y: g.y - (rec ? rec.lift : 0) }, 'grab');
+      else { from = { x: S.mouse.x, y: S.mouse.y }; go('carry'); }
+    } else if (ph === 'carry') {
+      const k = Math.min(1, t / M.carry), e = k * k * (3 - 2 * k);
+      goTo({ x: from.x - e * AP * M.carryX, y: from.y - Math.sin(Math.PI * k) * AP * M.carryUp }, 'grab');
+      window.__afterHand(S.mouse.x, S.mouse.y, 'move');
+      if (k >= 1) { S.trail = []; gestureUp(S.mouse.x, S.mouse.y); window.__afterHand(S.mouse.x, S.mouse.y, 'drop'); S.dragging = false; goTo(S.mouse, 'point'); go('rest'); }
+    } else if (ph === 'rest') {
+      goTo({ x: S.mouse.x, y: S.mouse.y - 20 * dt }, 'point');
+      if (t >= M.rest) { demoHand.pose = null; restump(); go('look'); }
+    }
+  });
+}
+// The stump stood with nothing lying round it and the act's coins to buy with.
+function stumpStage() {
+  window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+  window.__afterGrant({ rebel: 3000 }); yardPurse();
+  restump();
+  groveAt(300);
+}
+Object.assign(SCENES, {
+  'after-grove-stump': { about: 'the acts', say: "a stump pulled by hand: taken by the block itself and dragged up, the soil cracking, the next root pulling taut, each snapping with a held jerk and a throw of dirt that falls and fades; out, the stump is a log in the hand, carried off and let go",
+    run: () => { stumpStage(); window.__fast(0.2); stumpHandDemo(); window.__fast(2.4); window.__holdShot(); } },
+  'after-grove-stump-woodcutter': { about: 'the acts', review: 'grove: the woodcutter pulls a stump', option: 'A hands on the stump, heave and lean back',
+    stage: 'built: grove-c, not on main yet', branch: 'grove-c',
+    say: "With stump removal bought, the woodcutter pulls the stump the way your hand does: it takes hold of the block, heaves it up, leans back while a root strains, each snap jerks the stump a cell and throws dirt; with the last it swings the stump-log onto its head and carries it to the shack's pile.",
+    run: () => {
+      stumpStage();
+      buyAfter('after-stumps');
+      for (let k = 0; k < 120 && window.__afterRead().walking > 0; k++) window.__fast(1);
+      window.__afterPress('woodcutter');
+      const w = () => S.after.bodies.find(b => b.job === AFTER_JOB.CUT);
+      for (let f = 0; f < 240 * 10 && !(w() && w().pull && w().pull.ph === 'heave'); f++) window.__fast(0.1);
+      // stood again once the last log is home, so the pull plays on
+      stumpStep('stumppull', () => { const b = w(); if (!S.after.plots[0].stump && b && !b.load.length && !b.dig) restump(); });
+      window.__holdShot();
+    } }
+});

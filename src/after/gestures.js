@@ -8,8 +8,8 @@
 //   pedestal   a click on a rising speech bubble pops it
 //   tree       the saw icon over a grown tree clicked puts the handsaw on its
 //              trunk; dragged back and forth, a stroke a chop
-//   stump      the shovel icon shows it can be dug; dragged up out of the
-//              ground and held there, a root a strain
+//   stump      the stump itself taken hold of (no icon), dragged up out of
+//              the ground and held there, a root a strain; out, it is in the hand
 //   saw mill   the flywheel spun: each turn a stroke of the blade, capped
 //   workshop   a tap on a nail a blow: two drive it, four nail a sign
 //
@@ -49,6 +49,8 @@ import { turnWheel, strokesLanded } from './mill.js';
 import { pairBuilding } from './build.js';
 import { pileCount } from './piles.js';
 import { workAfter } from './work.js';
+// track C: the stump's strain, shared with the woodcutter, and its way into the hand
+import { pullable, strainStep, snapRoot, intoHand, settleHeld } from './stump.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const wrap = a => { while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI; return a; };
@@ -125,12 +127,20 @@ const DEFS = {
       if (end && end !== g.from) { if (g.from && chopTree(g.i, true)) used(g); g.from = end; }
     },
   },
+  // --- track C: the stump, F3a-1 "the earth gives" (DESIGN.md, "Act 3's grove,
+  // rebuilt"; after/stump.js holds the rule this shares with the woodcutter) ---
   stump: {
-    init: () => ({ i: null, lift: 0, target: 0, y0: 0, grab: false, strain: 0 }),
-    open: () => trees().some(stumped),
+    // `i` the stump taken hold of, `lift` px it is up toward `target`,
+    // `strain` held past the strain height; `snap`, `snapK` and `snapI` the
+    // last root to go, for the drawing's jerk and dirt; `mote` the stump come
+    // out into the hand, swinging in to the pointer.
+    init: () => ({ i: null, lift: 0, target: 0, y0: 0, grab: false, strain: 0, snap: null, snapK: null, snapI: null, mote: null }),
+    open: () => trees().some(pullable),
+    // The stump itself is the handle: the block as drawn, a little slack
+    // round it, no icon.
     grab(g, x, y) {
       const list = trees();
-      for (let i = 0; i < list.length; i++) if (stumped(list[i]) && inBox(x, y, stationParts('stump', i).grip, G_S)) return i;
+      for (let i = 0; i < list.length; i++) if (pullable(list[i]) && inBox(x, y, stationParts('stump', i).stump, G_S)) return i;
       return null;
     },
     down(g, i, x, y) {
@@ -141,18 +151,25 @@ const DEFS = {
     move(g, x, y) { g.target = clamp((g.y0 - y) * GESTURE_STUMP_DRAG, 0, GESTURE_STUMP_MAX); },
     up(g) { g.grab = false; },
     step(g, dt) {
+      settleHeld(g, dt);
       const p = g.i != null && trees()[g.i];
-      if (!p || !stumped(p)) { g.lift = Math.max(0, g.lift - GESTURE_STUMP_SINK * dt); g.grab = false; return; }
+      if (!p || !pullable(p)) { g.lift = Math.max(0, g.lift - GESTURE_STUMP_SINK * dt); g.grab = false; return; }
       if (g.grab) g.lift += (g.target - g.lift) * Math.min(1, dt * GESTURE_STUMP_FOLLOW);
       else g.lift = Math.max(0, g.lift - GESTURE_STUMP_SINK * dt);
-      // Held up past the strain height, a root gives every GESTURE_STRAIN_S;
-      // the last one and it is out, a sapling set in its place.
-      if (g.grab && g.lift >= GESTURE_STRAIN_LIFT) {
-        g.strain += dt;
-        if (g.strain >= GESTURE_STRAIN_S) { g.strain = 0; if (digStump(g.i, true)) used(g); }
-      } else g.strain = 0;
+      if (!strainStep(g, dt, g.grab, g.lift)) return;
+      snapRoot(g, g.i, p.dug);
+      // The last root and it is out: into the pointer's hand that holds it,
+      // which from here is the one hand's to carry and let go (the pad's A
+      // holds no hand, so its stump is laid where it came out).
+      const hand = held === 'stump';
+      if (digStump(g.i, true, hand ? intoHand(g, g.i, g.lift) : null)) used(g);
+      if (!stumped(p)) {
+        Object.assign(g, { grab: false, lift: 0, target: 0 });
+        if (hand) { held = null; heldWhat = null; }
+      }
     },
   },
+  // --- end track C ---
   mill: {
     // `w` the wheel's spin by the hand, radians a second, and `acc` how far
     // the pointer turned it since the last frame, `prog` the turns the hand
@@ -274,14 +291,13 @@ const live = () => afterlifeOn() && !!S.after;
 
 // --- the icons over the grove ----------------------------------------------------------
 // The saw icon over each grown tree the saw is not on (the hand's placeholder
-// until the saw lies across the trunk, track B); the shovel over each stump. Where each is and whether it shows: read
+// until the saw lies across the trunk, track B); a stump has none, the block itself its handle (track C). Where each is and whether it shows: read
 // by the drawing (render/after/pine.js) and the click alike.
 export function groveIcons() {
   if (!live()) return [];
   const g = recs(), out = [];
   trees().forEach((p, i) => {
     if (standing(p) && g.tree.i !== i) out.push({ kind: 'saw', i, ...stationParts('tree', i).icon });
-    if (stumped(p)) out.push({ kind: 'shovel', i, held: g.stump.i === i && g.stump.grab, ...stationParts('stump', i).icon });
   });
   return out;
 }
