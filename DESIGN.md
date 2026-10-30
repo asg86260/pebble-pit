@@ -23906,9 +23906,18 @@ the player is a new input, seeds, paid in the earlier acts' coins, and a
 little less wood a tree (four logs plus the stump, against six today). What
 they get is a grove they can follow end to end: every log is a piece of a
 tree they watched grow, and nothing in the grove appears or vanishes except
-the crown's leaves. The rule it must not break is **nothing teleports**:
-every log, acorn, stump and speck is moved by a body or the hand, or lies
-where it fell.
+the crown's leaves and the sawdust and dirt thrown off the work. The rule it
+must not break is **nothing teleports**: every log, acorn and stump is moved
+by a body or the hand, or lies where it fell.
+
+**The owner's answers (2026-10-30)** to the three questions this design
+first asked, now built into the text below: plots about 28 cells apart, the
+falling crown allowed to pass in front of its neighbor (a named exception,
+below); blocks taught a height, so the acorn stays 3x4; sawdust and dirt
+fall and fade, "no by product". Confirmed with them: the basket holds 5 and
+starts full, the woodcutter plants, self-seeding builds up, and the saw is a
+bought row: "theres no axe, it should just be a saw purchase to allow a
+worker to slowly cut the tree down."
 
 #### The settled calls (canon)
 
@@ -23933,16 +23942,18 @@ where it fell.
    then the crown from its lowest row up, each row from the middle out. No
    crossfades.
 6. **The fall.** Today's smooth tip, away from the shack. The crown breaks
-   into its clumps, which scatter and fade: the one fade allowed. The trunk
-   breaks along its seams into its 4 logs, which hop apart and lie as real
-   logs for workers to carry. No bucking step.
-7. **One saw.** The longer hand saw: a closed grip, a 9-cell blade tapering
-   from 3 cells deep to 1, teeth under it. The axe is gone.
+   into its clumps, which scatter and fade. The trunk breaks along its seams
+   into its 4 logs, which hop apart and lie as real logs for workers to
+   carry. No bucking step.
+7. **One saw, bought.** The longer hand saw: a closed grip, a 9-cell blade
+   tapering from 3 cells deep to 1, teeth under it. There is no axe. The saw
+   is a purchase on the grove's board that lets the woodcutter slowly saw a
+   tree down; until it is bought nothing fells a tree.
 8. **The woodcutter** fells with the hand saw from the side away from the
    fall, W-2 with heft. A 3.5-cell stroke. The beats: pull back held 0.22 s;
    push fast (0.08 s) with a smear; the bite held 0.2 s with the body leant
    one cell in; ease back (0.16 s). Sawdust is thrown from the kerf each
-   bite (5 specks; 8 on the last) and lies where it lands. A 0.6 s strain
+   bite (5 specks; 8 on the last); the specks fall and fade. A 0.6 s strain
    beat comes before the last stroke. Only the blade ever crosses the trunk:
    at full push the grip stops flush at the trunk's edge. The body carries
    the saw to and from the tree.
@@ -23952,8 +23963,8 @@ where it fell.
    logs.
 10. **Stump: F3a-1, "the earth gives".** The stump itself is the handle.
     Dragged up, the soil cracks widen and the next root pulls taut. Each
-    thick, tapering root snaps with a held one-cell jerk and dirt that flies
-    and lies. The stump comes out as a whole log block, is carried off, and
+    thick, tapering root snaps with a held one-cell jerk and dirt that flies,
+    falls and fades. The stump comes out as a whole log block, is carried off, and
     lands as a real log.
 11. **Planting, both ways.** A worker takes an acorn from the basket and
     plants it (A1). The player's hand picks one from the basket and drops it
@@ -23968,9 +23979,9 @@ where it fell.
     75, 100%) that a felled crown drops one acorn that stays. A worker
     carries it to the basket.
 15. **The rule throughout.** Nothing appears or fades except the crown
-    pieces. Every log, acorn, stump and speck is moved by a body or the hand,
-    or lies where it fell. Every log and acorn is a real unit on the ground
-    or in the basket.
+    pieces and the sawdust and dirt particles. Every log, acorn and stump is
+    moved by a body or the hand, or lies where it fell. Every log and acorn
+    is a real unit on the ground or in the basket.
 
 #### On the shared systems
 
@@ -23995,11 +24006,15 @@ extends.
   plot i is the shack's nearest claim, less `AFTER_PLOT_GAP`, less the
   plot's reach, less i plot steps. The mock took the shack's x as fixed and
   never checked plot 3 against the gateway; derived this way, plot 3 can
-  never reach it. The plot step itself waits on question 1 below.
+  never reach it. The plot step is about 28 cells (the owner, 2026-10-30),
+  derived, not typed: the trunk's half, the four logs end to end with their
+  spread, and the stump-log's landing on the fall side, plus the gap, plus
+  the neighbor's soil bed. So the logs and the stump always come to rest on
+  their own plot.
 - **The raised floor.** `AFTER_SHELF` gains the grove and the forestry at 3.
   `floorFlats` lays the grove's flat from its far slope to the shack, and
   the ramps between flats are the existing eased ramps. The ground plot's
-  terrain (`fixed` cells up to `floorAt`) follows, so logs, acorns and specks
+  terrain (`fixed` cells up to `floorAt`) follows, so logs and acorns
   come to rest on the raised floor exactly where feet stand. The lip
   (`render/after/ground.js`) is held no higher than the shelf's top under
   every soil bed and under the basket, as the mock did.
@@ -24009,16 +24024,30 @@ extends.
   `AFTER_PLOT_MAX`, built or not, and the basket with its brim of acorns as
   part of the forestry's footprint. The rule in `src/verify.js` that watches
   every group then holds the layout.
-- **One ground, and KINDS.** Three kinds are appended at the end of
-  `KIND_DEFS` (config/blocks.js), so no saved value shifts:
-  - `acorn`: 3 wide, 4 tall (question 2), weight 12, drawn as one sprite
-    from the log's darkest tone (cap and stalk) over its warmest (nut);
-    home `seeds`.
-  - `speck`: 1x1, sawdust, in timber's three deeper tones, no home.
-  - `clod`: 1x1, dirt off a snapped root, in the soil's tones, no home.
+- **The falling crown's exception** (the owner, 2026-10-30, a named
+  exception to the no-overlap rule). While a felled tree is falling, and
+  while its crown's clumps scatter and fade after it lands, the falling
+  drawing and the crown pieces may pass in front of the neighbor's tree.
+  It holds for that motion only: nothing that rests is ever exempt. The
+  logs, the stump-log and any acorn come to rest on their own plot, and the
+  plot's standing footprint is unchanged. The verify.js rule exempts exactly
+  that: a plot whose `fall` is set, or whose crown break is still within its
+  1.7 s, is checked by its standing footprint and not by the fall's sweep;
+  every resting thing is checked as before.
+- **One ground, and KINDS.** One kind is appended at the end of `KIND_DEFS`
+  (config/blocks.js), so no saved value shifts:
+  - `acorn`: 3 wide, 4 tall, weight 12, drawn as one sprite from the log's
+    darkest tone (cap and stalk) over its warmest (nut); home `seeds`.
   The stump needs no kind of its own: it is a `log` (the owner's calls 3 and
-  10), with its own stored tone, made at its own door. The three kinds join
-  rule 23's census (`CENSUS_KINDS`, src/conserve.js).
+  10), with its own stored tone, made at its own door. `acorn` joins rule
+  23's census (`CENSUS_KINDS`, src/conserve.js).
+- **Blocks have a height** (the owner, 2026-10-30: "Teach blocks a
+  height"). `KINDS` gains `h`, defaulting to the size, so every kind today is
+  unchanged. In grid.js's block rule the parts that read width stay as they
+  are (the lattice, the roll a block's width), and the parts that read
+  height read `h`: what holds a block up (its bottom row), the anchor fill,
+  take-from-top (the row over its top), and the repose test (a block's
+  height over its neighbor). The perf gate watches it.
 - **A tree claims its ground.** A growing tree, a standing one and a stump
   are facts on the plot, not units, so today nothing on the ground knows
   they are there: a thrown log would fall through a stump, and a tree would
@@ -24027,14 +24056,16 @@ extends.
   as the saw mill's heap columns are. A good that lands there rests on the
   stump's top or rolls off it by the heap rule. A plot is bare for planting
   only when nothing lies on its trunk's columns.
-- **Sawdust and dirt are units, not decoration.** A speck is a grain, as
-  act 1's dust is, and the goods' rule 1 already names sawdust "the one loose
-  material". The alternative, a cosmetic list, fails three ways: it is not
-  saved, so a reload would pop every speck out; the hand could not sweep it
-  up the way the owner expects act 1's hand to work everywhere; and a
-  "speck" the rule cannot count is the kind of thing rule 23 exists to stop.
-  The mock drew the root's dirt at half a cell; that breaks "sizes in whole
-  cells", so a clod is a whole cell. What becomes of them is question 3.
+- **Sawdust and dirt are particles, not goods** (the owner, 2026-10-30:
+  "just have them fade out when they fall. no by product."). Each bite
+  throws 5 specks off the kerf (8 on the last), and each root snap 7 clods
+  of dirt; they fly, fall under gravity, and fade by opacity as they fall
+  (fade, never pop). None ever rests on the ground. They are not units: no
+  kind, no door, no place in rule 23's census, nothing in the save, and the
+  hand cannot take them. Their motion is a pure function of when the bite
+  or the snap happened and each particle's hash, as the crown's break is, so
+  a reload mid-throw carries on (or, past their life, shows nothing). Each
+  is a whole cell; the mock's half-cell dirt breaks "sizes in whole cells".
 - **Doors** (src/flow.js, rule 23's books). Every new unit has a named
   source and every unit that ends has a named sink:
   - `log`, `tree`: four, on the frame the felled trunk breaks.
@@ -24044,15 +24075,12 @@ extends.
     gates, against a seed bought.
   - `acorn`, `crown`: one, when a crown breaks and self-seeding comes up.
   - `acorn`, `planted`: a sink, when an acorn goes into a plot's soil.
-  - `speck`, `kerf`: each bite's specks. `clod`, `root`: each snap's.
-  - `speck` and `clod`, `soil`: the sink question 3 settles.
 - **Logs land as units at once.** As the one-ground build decided, the data
   never holds a unit in mid-air. On the break frame the four logs are laid
   where the heap rule rests them (`heapAt`), on their lattice, and the hop
   apart (0.55 s, a cell up, a few px of spread: the mock's `BREAK_S` and
   `BREAK_SPREAD`) is drawn from each unit's arrival tag, as a felled log's
-  roll is drawn today. The same for specks and clods (a throw drawn from
-  the kerf or the root to where each rests) and for a dropped acorn.
+  roll is drawn today. The same for a dropped acorn.
 - **The crown's break is drawn from the plot, not kept.** The clumps are
   leaves, not goods, so they are not units. Their scatter and fade (1.7 s,
   held 0.3 s first) is a pure function of the plot's saved landing time and
@@ -24061,8 +24089,7 @@ extends.
   stump-log and acorns through `pickUp` and `putDown`, by weight. A member
   carrying acorns holds `holds('acorn')` of them; a seed fetch brings one.
 - **One hand** (hands.js). A left press and hold on the basket takes the
-  top acorn, as dust is swept; a flick throws it; specks and clods on the
-  ground are swept like dust. The stump, once out, is a log in `S.held`, and
+  top acorn, as dust is swept; a flick throws it. The stump, once out, is a log in `S.held`, and
   everything after is the shared hand: carried, let go, landed.
 - **One landing chain** (`landingOf('after')`). One surface is added before
   the ground: a bare plot's soil bed. An acorn chip that lands on it is
@@ -24084,8 +24111,8 @@ extends.
   plot's bed and opening; the mill's pile-to-bed cue is the precedent). No
   icons over trees or stumps.
 - **The gestures system** (after/gestures.js). The `tree` DEF loses its icon
-  step: `grab` finds a standing tree whose saw box (across the trunk at the
-  stump's top) is under the press, and takes it. The stroke, a `chopTree`
+  step: once the saw is bought, `grab` finds a standing tree whose saw box
+  (across the trunk at the stump's top) is under the press, and takes it. The stroke, a `chopTree`
   per end-to-end stroke, and `TREE_CHOPS` stay. The `stump` DEF's grab zone
   is the stump block itself. Its lift, strain and `digStump` per root stay;
   on the last root the stump-log is made into `S.held`, and the gesture hands
@@ -24097,7 +24124,8 @@ extends.
   is a four-bill row like the podium.
 - **Jobs.** No new job. The woodcutter's round (bodies.js) grows to: carry
   lying logs home; carry a lying acorn to the basket; plant a bare plot from
-  the basket; fell a grown tree; pull a stump once stump removal is bought.
+  the basket; saw a grown tree down once the saw is bought; pull a stump
+  once stump removal is bought.
   Idle members' errands grow by two: carry a lying acorn home, and fetch a
   seed owed from the gates. Planting is the woodcutter's alone (it is work at
   a station, not carrying), and the hand can always plant.
@@ -24138,7 +24166,7 @@ Taken cell for cell from the mock (`src/render/after/grovemock.js` and
   Pulled, each shows as far as the stump is up; the next to go pulls taut
   past half the strain; snapped, only its stub stays. The soil cracks a cell
   further either side as the work goes (up to 4). Each snap holds the stump a
-  cell higher for 0.3 s and throws 7 clods.
+  cell higher for 0.3 s and throws 7 clods of dirt, which fall and fade.
 - **The saw.** A 3x3 ink grip with a paper cell in it; blade columns 1 to 9,
   deep 3, 3, 3, 2, 2, 2, 1, 1, 1, its back a line of ink, teeth under the odd
   columns. The same sprite for the woodcutter and the hand, carried at the
@@ -24167,10 +24195,20 @@ Taken cell for cell from the mock (`src/render/after/grovemock.js` and
   `AFTER_LOGS_BIG_TREE`), and the crown's fade (`AFTER_CROWN_FADE_S`): the
   break replaces both.
 - Every stump fade, and the chip pose (`p.chip`, `AFTER_CHOP_HOLD_S`).
-- The axe: `after-axe` becomes `after-saw` (same bill), `S.after.axe` and
-  `axeBought` become `saw` and `sawBought`, and the `axe` beat hands over the
-  saw. The saw stays bought, as call 15 settled the axe: it is the act's
-  first spend, and the woodcutter does not need it.
+- The axe, everywhere (the owner, 2026-10-30: "theres no axe, it should
+  just be a saw purchase to allow a worker to slowly cut the tree down").
+  The saw is a purchase of its own: it lets
+  the woodcutter saw a tree down (and puts the saw across each standing
+  trunk for the hand), and without it nothing fells a tree. The game today
+  carries the axe in these places, and each is **renamed** to the saw, not
+  kept beside it: the row `after-axe` becomes `after-saw` (its bill, rebel
+  50 and dust 8000, unchanged), with its glyph entry; `S.after.axe` and
+  `axeBought` become `saw` and `sawBought` (after/index.js, rebel.js's
+  `axeDue` and `giveAxe`); the beat `axe` becomes `saw` (actbeats.js,
+  beats.js, story.js) and its line `act-axe` becomes `act-saw`; the locale
+  `after-row-axe` becomes `after-row-saw`; the hook `__afterAxe` becomes
+  `__afterSaw`; and every comment and scene that says axe says saw. No key,
+  field, message or text with "axe" in it is left.
 - Bigger trees (`after-tree`): every tree is exactly 4 logs now. A save that
   bought it is given self-seeding's first rung (the grove's nearest
   equivalent; its bill was the grove's dearest).
@@ -24194,9 +24232,12 @@ The save-shape-change skill's steps, `SAVE_V` 34 to 35, one migration
   A stump stays a stump with its `dug`. A tree mid-fall keeps `fall` and
   lands as the new break. `big`, `chip` and `logs` go. Tones are picked on
   read.
-- **The grove's state on S.after**: `saw` and `sawBought` from the axe's;
-  `seedsOwed` 0; `selfSeed` (the debt below) 0; `ups['after-saw']` from
-  `after-axe`; `ups['after-tree']` turned into one self-seeding rung.
+- **The grove's state on S.after**: the migration renames, and keeps
+  nothing under the old names. `after.axe` and `after.axeBought` are moved to
+  `after.saw` and `after.sawBought` and deleted; `after.ups['after-axe']` and
+  `after.upAt['after-axe']` move to `'after-saw'` and are deleted; `'axe'` in
+  `beatsDone` becomes `'saw'`. `seedsOwed` 0; `selfSeed` (the debt below) 0;
+  `ups['after-tree']` turned into one self-seeding rung and deleted.
 - **The ground moves.** `after.ground` is saved as absolute cells, and the
   rebuild moves things under them: the grove rises 3 cells, the plots move,
   the shack grows by the basket, and every station past it shifts right. An
@@ -24214,8 +24255,8 @@ The save-shape-change skill's steps, `SAVE_V` 34 to 35, one migration
   chooses again on the first frame; its `load` (cells) is kept.
 - Then the checks: `test/save-floor.test.mjs`,
   `test/persist-roundtrip.test.mjs` (every new S field in a list),
-  `test/cloud-sync.test.mjs`, `test/cloud-size.test.mjs` (the basket and the
-  specks are a few more runs). The save floor does not move.
+  `test/cloud-sync.test.mjs`, `test/cloud-size.test.mjs` (the basket is a
+  few more runs). The save floor does not move.
 
 #### The economy and the pace
 
@@ -24255,7 +24296,8 @@ The save-shape-change skill's steps, `SAVE_V` 34 to 35, one migration
   the seed table is the first knob (gentler bills, or a slower rate), before
   the basket's start or the growth time.
 - **The pace tool.** `node tools/node/act3-pace.mjs` before the rebuild
-  (seed 1, run 2026-10-30): the axe in hand 0:44, first sign 2:09, first
+  (seed 1, run 2026-10-30; the tool still calls the first milestone by the
+  old name): the saw in hand 0:44, first sign 2:09, first
   soul 6:29, the meeting 6:40, the slowdown 29:17, the strike 41:54; 267 hand
   chops and 50 digs; 130 signs. After the rebuild each milestone should land
   within ten per cent of that, and the strike inside the hands-off bound
@@ -24277,13 +24319,19 @@ The save-shape-change skill's steps, `SAVE_V` 34 to 35, one migration
   - A felled tree's break makes exactly four logs, and a pulled stump one
     (rule 23's books, by door).
   - No unit rests inside a soil bed's terrain.
-  - The no-overlap rule covers the plots' new footprints and the basket.
+  - The no-overlap rule covers the plots' new footprints and the basket, and
+    exempts only the falling crown's exception above: a plot while its
+    `fall` is set or its crown break is within its 1.7 s. A check makes a
+    resting log on a neighbor's footprint go red, and a falling crown over
+    one stay green.
+  - No tree is felled without the saw bought.
 - **Node tier, the player's way**, a new file `test/after-grove.test.mjs`:
   - The seed row bought with `__buy`: a member walks to the gates, and the
     basket's count goes up by one only on the frame the acorn is set down.
   - The woodcutter, put on with the roster's plus, takes an acorn from the
     basket to a bare plot and plants it; the tree grows to standing in the
-    growth time; the woodcutter fells it; four logs appear on the break
+    growth time; the woodcutter waits by it until the saw row is bought with
+    `__buy`, then saws it down; four logs appear on the break
     frame and are carried to the shack's pile.
   - Stump removal bought: the woodcutter pulls the stump, three root beats,
     and carries the stump-log to the pile.
@@ -24297,7 +24345,8 @@ The save-shape-change skill's steps, `SAVE_V` 34 to 35, one migration
   logs lying, a woodcutter mid-chop and bigger trees bought, kept as
   `test/fixtures/act3-grove-v34.json`; `test/after-grove-migrate.test.mjs`
   reads it and finds every unit on its strip or near its spot, the growth
-  carried, the stump standing, and self-seeding at rung 1.
+  carried, the stump standing, self-seeding at rung 1, the saw bought where
+  the axe was, and no key, field or beat named axe left in the save.
 - **Browser tier**, a new group: F1, a real pointer pressed on the trunk
   takes the saw (no icon), drags end to end and fells the tree; F3a, a press
   and hold on the stump dragged up snaps the roots at `GESTURE_STRAIN_S` and
@@ -24323,11 +24372,13 @@ C and D run at once.
   after/place.js and after/art.js (the shelf, the derived grove and shack,
   the mirror, the `seeds` pile), after/levels.js, footprints.js's act 3
   part, render/after/pine.js (soil bed, tree, growth, fall, break) and
-  render/after/ground.js (the lip), config/blocks.js (the three kinds),
-  src/conserve.js (`CENSUS_KINDS`), after/ground.js (the trees' blocked
-  columns) and grid.js (the block height, if question 2 keeps 3x4), the
-  migration,
-  state.js's lists, config/saves.js, and verify.js's grove rules. It leaves
+  render/after/ground.js (the lip), config/blocks.js (the acorn and the
+  height), src/conserve.js (`CENSUS_KINDS`), after/ground.js (the trees'
+  blocked columns), grid.js (the block height), the migration, state.js's
+  lists, config/saves.js, verify.js's grove rules and the falling crown's
+  exception, and the axe's rename to the saw everywhere it lives (rebel.js,
+  after/index.js, actbeats.js, beats.js, story.js, hooks.js, glyphs.js, the
+  row's key in rows.js, the locale lines). It leaves
   named anchors: pine.js calls `drawSaw()`, `drawStumpPull()` and
   `drawBasket()` from B's, C's and D's new files (stubs until they land),
   and bodies.js calls `pullStep(w, dt)` and `plantStep(w, dt)` from C's and
@@ -24336,20 +24387,21 @@ C and D run at once.
 - **B: the woodcutter, the saw and F1.** Owns after/bodies.js (the
   woodcutter's round and the idle errands, calling C's and D's steps),
   after/gestures.js (the tree DEF, and the stump DEF's grab as C specifies
-  it), a new render/after/saw.js (the saw, the stroke poses, the smear, the
-  specks thrown), and the `speck` door. Check: the fell and saw shots; the
+  it), and a new render/after/saw.js (the saw, the stroke poses, the smear,
+  the sawdust particles falling and fading). Check: the fell and saw shots; the
   F1 browser group; the woodcutter fells a tree in the node file.
 - **C: the stump, F3a-1.** Owns a new after/stump.js (`pullStep` for the
   woodcutter, the strain-to-root rule shared with the gesture, the stump-log
   into the hand or the arms), a new render/after/stump.js (roots, cracks,
-  the held jerk, the clods), and the `clod` door. hands.js has no way today
-  to put a unit into the hand except a sweep, so C adds one export there
-  (`holdUnit(v)`, one additive block; the rest of hands.js is untouched). Check: the stump shot; the
-  F3a browser group; the stump-pull node check.
+  the held jerk, the dirt particles falling and fading). hands.js has no way
+  today to put a unit into the hand except a sweep, so C adds one export
+  there (`holdUnit(v)`, one additive block; the rest of hands.js is
+  untouched). Check: the stump shot; the F3a browser group; the stump-pull
+  node check.
 - **D: seeds.** Owns a new after/seeds.js (the basket pile's brim, the seed
   order and `seedsOwed`, the gates fetch, `plantStep`, the self-seed debt
   and the crown's drop), a new render/after/basket.js, the grove's rows in
-  after/rows.js (seeds, self-seeding, the saw's rename, bigger trees gone),
+  after/rows.js (seeds, self-seeding, bigger trees gone),
   the plant surface in acts.js's act 3 landing list, and tools/node/
   act3-player.mjs (after B and C land). Check: the plant, seeds and selfseed
   shots; the A2 browser group; the seed and self-seed node checks.
@@ -24359,50 +24411,22 @@ name: config/after.js, render/aftercues.js (each track's cue in its own
 block of `cueAt`), locales/en.ftl, and src/scenes.js. The pace run and the
 hands-off check come last, on the integrated branch.
 
-#### Questions for the owner
+#### Settled with the owner (2026-10-30)
 
-1. **A fallen tree is longer than a plot.** Plots go left and trees fall
-   left, so plot i's tree falls toward plot i+1. A felled oak reaches about
-   28 cells past its trunk (16 of logs, 12 of crown), and today's plot step
-   is 21 cells: the falling crown would pass through the neighbor's tree and
-   the far log would land on its bed, against the hard no-overlap rule.
-   (a) Widen the step so the fall's whole sweep stays on its own plot: about
-   41 cells a plot, the grove about twice as wide, the camp further right
-   (all derived). (b) Widen it only so the logs and the stump lie on their
-   own plot, about 28 cells, and let the 1.6 s fall pass in front of the
-   neighbor: an exception to the rule, like the crown's fade. (c) Keep 21
-   cells: rejected, the logs would land in the neighbor's trunk.
-   **Recommended: (a).** It keeps the rule without an exception, and the
-   cost is walking.
-2. **The acorn is 3x4, but every unit is a square.** The block rule in
-   grid.js knows one size a side. (a) Teach it a height (`KINDS` gains `h`,
-   defaulting to the size): the parts that read width (lattice, rolls) stay,
-   and the parts that read height (support, the stack, take-from-top,
-   repose) read `h`; one track, watched by the perf gate. (b) Make the acorn
-   a 3x3 unit and drop its stalk cell. **Recommended: (a).** It keeps the
-   approved drawing, and it fixes the rule rather than the acorn, for the
-   next good that is not square.
-3. **The sawdust and dirt lie where they fall: then what?** About 43 specks
-   and 21 clods a tree, 30 or more trees an act. (a) They stay as litter for
-   good: about two thousand units by the strike, heaped by the heap rule,
-   raising the beds and growing the save. (b) Your "settle into the soil",
-   tied to a cause rather than a timer: they are thrown only within the soil
-   bed and lie there, and when the bed is next planted the planting turns
-   them into the soil: each moved down a cell into it, never faded, and
-   unmade at the `soil` sink. The cause is a body (or the hand) planting, so
-   the count stays near one tree's worth a plot. Two costs: the throw is
-   shorter than the mock's (it flew well past the bed, which reaches about 6
-   cells a side), and the logs lie on the fall side of the bed on top of
-   some specks, so a planting turns in only the specks with nothing on them
-   and the rest wait for the next one. A speck the hand carries off the bed
-   lies wherever it is let go. (c) A worker sweeps
-   them up and carries them off the cloud's edge: a new errand, more
-   walking, and the old sawdust sweep back in another form.
-   **Recommended: (b).**
+1. **Plot spacing:** "~28 cells a plot". The logs and the stump land on
+   their own plot. The falling crown passes in front of the neighbor's tree
+   while it breaks apart and fades: the named exception to the no-overlap
+   rule above, for that motion only, never for anything that rests.
+2. **The acorn:** "Teach blocks a height". The 3x4 acorn stays; `KINDS`
+   gains `h`.
+3. **Sawdust and dirt:** "just have them fade out when they fall. no by
+   product." Particles that fall and fade by opacity; nothing enters the
+   ground, the conservation ledger or the save.
+4. **Confirmed:** the basket holds 5 and starts full; the woodcutter plants;
+   the self-seed chance builds up as a debt; bigger trees retires into
+   self-seeding's first rung; the basket's acorns lie on their lattice. The
+   saw is a bought row: "theres no axe, it should just be a saw purchase to
+   allow a worker to slowly cut the tree down." No axe exists anywhere; the
+   game's axe row, fields, beat, line and hook are renamed to the saw, and
+   the migration to `SAVE_V` 35 renames them in a save.
 
-Decided here; say if any is wrong: the saw stays a bought row (call 15);
-bigger trees retires into self-seeding's first rung; the self-seed chance is
-a debt, not a dice roll; planting is the woodcutter's, and seeds and lying
-acorns are anyone's errand; the basket's brim is the 5 the mock drew, and it
-starts full; the heap rule lays the basket's acorns on their lattice (three
-in the bottom row, two over them), not over the gaps as the mock drew them.
