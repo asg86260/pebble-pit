@@ -51,40 +51,6 @@ export const GESTURE_STUMP_SINK = 40;
 export const GESTURE_STRAIN_LIFT = P * 2;
 export const GESTURE_STRAIN_S = 0.7;
 
-// The stump as drawn (render/after/pine.js), a rigid block that never
-// stretches, on the sim's own lift, strain and roots above. A rope from the
-// stump's top to the hand, this many px wide, bowed out this many art cells
-// when slack and straightening in this many held poses as the lift nears the
-// strain height; faded in and out on the grab over this long.
-export const STUMP_ROPE_W = 4;
-export const STUMP_ROPE_SLACK = 1.5;
-export const STUMP_ROPE_POSES = 3;
-export const STUMP_ROPE_FADE_S = 0.15;
-// Under strain the stump rocks in its hole, a held
-// tilt (degrees) per share of each strain, tipped on the corner it leans to;
-// a root given lifts it this many art px, risen over STUMP_RISE_S. Out, it
-// rips up this many art cells over STUMP_RIP_S, eased, turned to the throw
-// angle, held STUMP_HANG_S, and fades over STUMP_GONE_FADE_S.
-export const STUMP_ROCK_DEG = [0, -3, 0, 3, -2, 2];
-export const STUMP_GIVE = 2;
-export const STUMP_RISE_S = 0.15;
-export const STUMP_RIP_UP = 3;
-export const STUMP_RIP_S = 0.18;
-export const STUMP_THROW_DEG = 6;
-export const STUMP_HANG_S = 0.2;
-export const STUMP_GONE_FADE_S = 0.5;
-// What comes up with it: clods of soil thrown as it rips, up at
-// these speeds (px a second) under this gravity, fading over STUMP_CLOD_S;
-// the hole left, fading over STUMP_HOLE_S; the sapling set in the hole only
-// once the stump has gone, STUMP_SAPLING_WAIT_S after it came out.
-export const STUMP_CLODS = 6;
-export const STUMP_CLOD_V = [90, 170];
-export const STUMP_CLOD_SPREAD = 70;
-export const STUMP_CLOD_GRAV = 600;
-export const STUMP_CLOD_S = 0.6;
-export const STUMP_HOLE_S = 1.6;
-export const STUMP_SAPLING_WAIT_S = 0.9;
-
 // The saw mill's flywheel: turns a second it counts to at most, the log fed
 // a turn, the length of a log, how fast its speed follows the hand, how
 // slowly it coasts let go, and the least speed that still cuts.

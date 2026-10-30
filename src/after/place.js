@@ -437,11 +437,6 @@ export const plotSpan = i => [plotX(i) - AFTER_PLOT_STEP + plotReach() * AP, plo
 const SAW_EDGE = AFTER_TREE.c0 + AFTER_TREE.w, SAW_BLADE = AFTER_SAW.depth.length;
 export const SAW_SPAN = [SAW_EDGE - SAW_BLADE, SAW_EDGE + (SAW_BLADE - 1) + AFTER_SAW.grip - 1];
 export const SAW_ROWS = [-AFTER_TREE.stump - Math.max(...AFTER_SAW.depth), -AFTER_TREE.stump];
-// The grove's icons, [width, height] in their own dots of ICON_DOT px: the
-// saw over a grown tree and the shovel over a stump (render/after/pine.js),
-// the hand's placeholder until tracks B and C retire them.
-export const ICON_DOT = P;
-export const ICON = { saw: [13, 8], shovel: [5, 13] };
 // What the hand's motion at each station aims at (after/gestures.js,
 // `partsOf`), in world px, read off the numbers the drawing uses
 // (render/after/stations.js, pine.js, pedestal.js). Every key has `box`, the
@@ -456,21 +451,18 @@ export function stationParts(key, i = 0) {
   if (key === 'tree') {
     // The grown tree as drawn: its rows' spans off `foot` (its plot's line on
     // the grove's floor), and the box round them; `sawBox` the handsaw across
-    // its trunk at rest, and `icon` the saw icon over its crown.
+    // its trunk at rest.
     const bx = plotX(i), rows = treeRows();
     const a = Math.min(...rows.map(r => r[1])), b = Math.max(...rows.map(r => r[2])), top = Math.min(...rows.map(r => r[0]));
-    const ic = { w: ICON.saw[0] * ICON_DOT, h: ICON.saw[1] * ICON_DOT };
-    const icon = { x: bx, y: fl + top * AP - P * 2, box: { x: snap(bx - ic.w / 2), y: fl + top * AP - P * 2 - ic.h, w: ic.w, h: ic.h } };
     return { box: box(bx, a, top, b - a + 1, -top), rows, foot: { x: bx, y: fl }, top: fl + top * AP,
-             sawBox: box(bx, SAW_SPAN[0], SAW_ROWS[0], SAW_SPAN[1] - SAW_SPAN[0] + 1, SAW_ROWS[1] - SAW_ROWS[0] + 1), icon };
+             sawBox: box(bx, SAW_SPAN[0], SAW_ROWS[0], SAW_SPAN[1] - SAW_SPAN[0] + 1, SAW_ROWS[1] - SAW_ROWS[0] + 1) };
   }
   if (key === 'stump') {
     // `stump` the block as drawn, one whole log; `grip` round it and up over
-    // it, where the hand takes hold to lift it; `icon` the shovel over it.
-    const bx = plotX(i), { c0, w, stump: h } = AFTER_TREE, ic = { w: ICON.shovel[0] * ICON_DOT, h: ICON.shovel[1] * ICON_DOT };
-    const iy = fl - (h + 2) * AP;
+    // it, where the hand takes hold to lift it.
+    const bx = plotX(i), { c0, w, stump: h } = AFTER_TREE;
     return { box: box(bx, c0 - 1, -h, w + 2, h), at: { x: bx, y: fl }, stump: box(bx, c0, -h, w, h),
-             grip: box(bx, c0 - 1, -h - 2, w + 2, h + 3), icon: { x: bx, y: iy, box: { x: snap(bx - ic.w / 2), y: iy - ic.h, w: ic.w, h: ic.h } } };
+             grip: box(bx, c0 - 1, -h - 2, w + 2, h + 3) };
   }
   if (key === 'pedestal') {
     const a = speakerAt(0), b = speakerAt(1);

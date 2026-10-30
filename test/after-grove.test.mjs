@@ -39,6 +39,8 @@ const putOn = job => window.__afterPress(job) || (window.__afterGrant({ timber: 
 import { sawSpot, AFTER_CREW } from '../src/after/bodies.js';
 import { AFTER_WALK } from '../src/config.js';
 import { AP } from '../src/after/place.js';
+import { jobSays } from '../src/after/roster.js';
+import { msg } from '../src/lang.js';
 group('the woodcutter waits by a grown tree until the saw is bought, then saws it down; its four logs land on the break frame and are carried to the shack\'s pile', async () => {
   up();
   members(4);
@@ -49,6 +51,7 @@ group('the woodcutter waits by a grown tree until the saw is bought, then saws i
   // Waiting: at the tree, facing it, nothing sawn.
   const w0 = cutter(), plot = () => S.after.plots[0];
   const waited = !!w0 && Math.abs(w0.x - sawSpot(0)) <= AP && w0.face < 0 && plot().chops === 0 && plot().fall == null && !w0.sawing;
+  const note = jobSays('woodcutter');
   const bought = window.__buy('after-saw');
   const handed = runUntil(() => S.after.sawHanded, 4 * ACT_CAPTION_S);
   // Sawing: a frame at a time from here, so the break is seen on its frame.
@@ -78,6 +81,7 @@ group('the woodcutter waits by a grown tree until the saw is bought, then saws i
   window.__actsOn(null);
   return [
     ok(put && waited, 'put on through its roster, the woodcutter waits by the grown tree, facing it, and saws nothing before the saw is bought', JSON.stringify({ put, x: w0 && Math.round(w0.x), at: Math.round(sawSpot(0)), chops: plot().chops })),
+    ok(note.includes(msg('after-stall-saw')), 'its roster note says it is waiting on the saw', note),
     ok(bought && handed, 'the saw row bought hands it the saw'),
     ok(by === 'worker' && strokes === TREE_CHOPS - 1, 'it saws the tree down itself, a stroke a cut (the last one starts the fall)', JSON.stringify({ by, strokes, secs: felledIn.toFixed(2) })),
     ok(moved != null && moved <= AFTER_WALK / 60 + 1, 'taken up mid-stroke and set down a way off, it walks back to the tree, never put back', `${moved} px in a frame`),

@@ -8253,6 +8253,13 @@
   "text": "waiting on seeds"
  },
  {
+  "id": "after-stall-saw",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/roster.js",
+  "context": "act 3 roster hover (placeholder): why a station's worker is standing still",
+  "text": "waiting on the saw"
+ },
+ {
   "id": "after-stall-logs",
   "group": "Act 4 (placeholder)",
   "where": "src/selftest/afterboards.js",

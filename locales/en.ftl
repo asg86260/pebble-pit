@@ -3583,6 +3583,9 @@ after-stall-trees = waiting on a tree to grow
 after-stall-seeds = waiting on seeds
 
 # act 3 roster hover (placeholder): why a station's worker is standing still
+after-stall-saw = waiting on the saw
+
+# act 3 roster hover (placeholder): why a station's worker is standing still
 after-stall-logs = waiting on logs
 
 # act 3 roster hover (placeholder): why a station's worker is standing still

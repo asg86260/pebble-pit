@@ -27,7 +27,7 @@
 import { S } from '../state.js';
 import { sink } from '../flow.js';
 import { AFTER_JOB } from '../jobs.js';
-import { P, AFTER_SLOT_GAP, AFTER_JOBS, AFTER_JOB_POST, AFTER_AGITATE_S, AFTER_SAW_HEFT, AFTER_TREE, TREE_CHOPS, AFTER_DIG_S, AFTER_DIG_CLICKS, AFTER_PLANT_S,
+import { P, AFTER_SLOT_GAP, AFTER_JOBS, AFTER_JOB_POST, AFTER_AGITATE_S, AFTER_SAW_HEFT, AFTER_TREE, TREE_CHOPS, AFTER_PLANT_S,
          AFTER_PUT_S, AFTER_SAW_S, AFTER_CHOP_HOLD_S,
          AFTER_JOIN_FADE_S, AFTER_GOODS_HOME, AFTER_GOODS_FOOT, AFTER_WALK,
          AFTER_PILES, AFTER_SIGN_TIMBER, AFTER_SIGN_S, KINDS } from '../config.js';
@@ -36,7 +36,7 @@ import { stepCrew } from '../placebodies.js';
 import { kindOf as cellKind } from '../grid.js';
 import { count, push, isEmpty, loadKind, holds, clear, pop, pickUp as takeUp, putDown as setUp, dump } from '../carry.js';
 import { deepAt } from './sky.js';
-import { built, stumpsOn, seatsOf, bladeLogs, benchSigns } from './levels.js';
+import { built, seatsOf, bladeLogs, benchSigns } from './levels.js';
 // track A: the anchors tracks C and D fill: a woodcutter's pull at a stump
 // and its planting of a bare plot from the basket, each true while it has
 // the body this frame.
@@ -44,7 +44,7 @@ import { pullStep } from './stump.js';
 import { plantStep, fetchStep, seedsOwed } from './seeds.js';
 import { afterX0, afterX1, afterFloor, floorAt, stationDoor, stationBox, signFetchX, pileMid, pileOwner, plotX, soulX, soulY, groveX1, campSpot, idleX, idleSpots, podiumMid, overCrowd, crowdEdge, AP } from './place.js';
 import { agitate } from './rebel.js';
-import { standing, stumped, chopTree, digStump, settled, layGood } from './grove.js';
+import { standing, chopTree, settled, layGood } from './grove.js';
 import { isPiled, setBlock, pileCount, pileRoom, pileBrim } from './piles.js';
 import { stripOf, units, counted, uncovered, takeAt, colX, lying } from './ground.js';
 import { sawyerHolds } from './mill.js';
@@ -521,16 +521,15 @@ const JOB_STEP = {
     // grown tree, once the saw is handed over (the hand saws without it); a
     // stump only with stump removal bought. A tree under the saw is sawn
     // through before anything else.
-    if (!w.sawing && w.plant == null && gather(w, dt)) return;
+    // Not while it has hold of a stump (`w.dig`, track C): a log landing
+    // mid-pull must not take the body off it.
+    if (!w.sawing && w.plant == null && !w.dig && gather(w, dt)) return;
     if (!w.sawing && (pullStep(w, dt) || plantStep(w, dt))) return;
     const a = S.after, saws = !!a.sawHanded;
     const p = w.target != null ? a.plots[w.target] : null;
-    const ok = p && (w.dig ? stumpsOn() && stumped(p) : saws && standing(p));
-    if (!ok) {
+    if (!(p && saws && standing(p))) {
       unsaw(w);
-      let i = saws ? nearestPlot(w, standing, true) : null, dig = false;
-      if (i == null && stumpsOn()) { i = nearestPlot(w, stumped); dig = i != null; }
-      w.target = i; w.dig = dig; w.t = 0;
+      w.target = saws ? nearestPlot(w, standing, true) : null; w.t = 0;
     }
     if (w.target == null) {
       // No saw yet and a tree grown: it waits by the tree, facing it, until
@@ -540,12 +539,7 @@ const JOB_STEP = {
       if (go(w, sawSpot(k), floorY(), dt)) w.face = -1;
       return;
     }
-    if (!w.dig) { fell(w, w.target, dt); return; }
-    if (!go(w, plotX(w.target) + AP * 3, floorY(), dt)) return;
-    w.t += dt;
-    // Placeholder until the pulls are beats (track C): a pull a root, the
-    // last one handing the stump-log into its arms.
-    if (w.t >= AFTER_DIG_S / AFTER_DIG_CLICKS) { digStump(w.target, false, v => push(w, v)); w.t = 0; w.swing = a.t; if (!stumped(a.plots[w.target])) w.target = null; }
+    fell(w, w.target, dt);
   },
   // An idle member's errand only (track D): a seed owed, fetched from the gates.
   seeder: fetchStep,

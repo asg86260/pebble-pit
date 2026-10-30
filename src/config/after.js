@@ -306,16 +306,12 @@ export const AFTER_SEED_SINK_S = 0.9;
 export const AFTER_FALL_S = 1.6;
 export const AFTER_FALL_BOUNCE_S = 0.35;
 export const AFTER_FALL_BOUNCE = 0.06;
-// track A: placeholders until the woodcutter's strokes and pulls are beats
-// (tracks B and C): a swing held on the blow, a woodcutter's swing at a tree,
-// and its pull at a stump.
+// A member's swing held on the blow (the agitator's stir).
 export const AFTER_CHOP_HOLD_S = 0.25;
-export const AFTER_FELL_S = 1.5;
 // A stump's roots: each snaps on a strain held (the hand) or a pull (a
 // woodcutter, once stump removal is bought), and with the last the stump
 // comes out as a log.
 export const AFTER_DIG_CLICKS = 3;
-export const AFTER_DIG_S = 4;              // placeholder: a woodcutter's pull at a stump, until track C's beats
 
 // --- the saw mill and the workshop ---
 // Every station is worked by the click first (the owner, 2026-10-18): a
