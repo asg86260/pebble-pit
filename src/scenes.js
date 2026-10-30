@@ -3812,6 +3812,7 @@ Object.assign(SCENES, Object.fromEntries(CABIN_MOCK.map(([opt, option, say]) => 
 // shack offered but short (120 of its 150), the pointer on its button.
 // `swap` flips the option on the game standing when it is the same act.
 import { shack as buildMockShack } from './state.js'; // MOCK build-button-in-the-world
+import { drawnMid as buildMockMid } from './footprints.js'; // MOCK build-button-in-the-world
 const BUILD_MOCK = [ // MOCK build-button-in-the-world
   ['a', 'A the plate, saying BUILD', "Where UPGRADES stood, the same plate says BUILD and the price; a hover lifts it and says what it builds. Press it and the builders walk."],
   ['b', 'B a pill on the outline', "No button under the lot: a BUILD pill stands on the station's dotted outline, the price only on hover; dotted and grey while it can't be bought."],
@@ -3824,9 +3825,15 @@ const buildMockAfter = opt => { // MOCK build-button-in-the-world
   S.after.camp = 4;
   window.__afterGrant({ rebel: 50 }); yardPurse();
   globalThis.__buildBtnMock = opt;
-  const a = stationBox('mill'), b = stationBox('workshop'), x = (a.x + b.x + b.w) / 2 - S.viewW / 2;
+  // framed on the middle between the two lots' middles, so each one's
+  // button, centered on its own lot, stands whole in the window
+  const x = (buildMockMid('mill') + buildMockMid('workshop')) / 2 - S.viewW / 2;
   pinCamera(x); window.__look(x); window.__fast(1 / 60);
   globalThis.__buildMockHover?.('mill');
+  // the yard's coins granted for the bills earn act 1 notices ("the first
+  // ore") that play never shows up here: hushed while the scene stands
+  window.__fast(2);
+  S.wonShown = S.wonSeq | 0;
 };
 const buildMockYard = opt => { // MOCK build-button-in-the-world
   window.__reset(); window.__crew(2); S.seenBench = true; window.__give(120); window.__fast(2);

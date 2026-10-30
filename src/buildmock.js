@@ -39,10 +39,10 @@ if (typeof document !== 'undefined' && document.head && !document.getElementById
 import { pressRow, coinsOf } from './shop.js';
 import { offered } from './stations.js';
 import { workOn } from './works.js';
-import { stationBox, groundOf, closed } from './after/place.js';
+import { stationBox, groundOf, closed, floorAt } from './after/place.js';
 import { raising } from './after/levels.js';
 import { afterRow } from './after/rows.js';
-import { drawnMid } from './footprints.js';
+import { drawnMid, drawnRects } from './footprints.js';
 import { onTap } from './tap.js';
 import { showTip, showTipAt } from './board.js';
 
@@ -59,14 +59,24 @@ const COIN_INK = { shard: () => COIN.ore, spore: () => COIN.crop, spark: () => C
 const afterLot = card => {
   if (S.view !== 'after' || !S.after || !closed(card) || raising(card)) return null;
   const row = afterRow(`after-build-${card}`), b = stationBox(card), foot = groundOf(card);
+  // the top of what the station will stand as, its dotted outline's: its
+  // silhouette (footprints.js), not its box, which a part can reach past
+  const rs = drawnRects(card), top = rs && rs.length ? Math.min(...rs.map(r => r.y)) : b.y;
   return { id: card, row, call: msg('buildmock-call', { name: row.name }), mid: drawnMid(card) ?? b.x + b.w / 2,
-           top: b.y, foot, x: b.x, w: b.w, line: foot + AFTER_ROSTER_DOWN + AFTER_ROSTER_SHOP_DROP };
+           top, foot, x: b.x, w: b.w, under: lowestFloor };
 };
+// The lowest the floor comes anywhere across [x0, x1]: a plate seated off it
+// clears every swell and slope under it, whatever shelf its station is on.
+function lowestFloor(x0, x1) {
+  let y = -Infinity;
+  for (let x = x0; x <= x1; x += P) y = Math.max(y, floorAt(x));
+  return Math.max(y, floorAt(x1));
+}
 const yardLot = () => {
   if (S.view !== 'yard' || S.shackOpen || !offered('shack') || workOn('unlockshack')) return null;
   const row = UPGRADES.find(u => u.key === 'unlockshack'), foot = shack.y + shack.h;
   return { id: 'shack', row, call: row.name, mid: shack.x + shack.w / 2, top: shack.y, foot, x: shack.x, w: shack.w,
-           line: foot + AFTER_ROSTER_DOWN + AFTER_ROSTER_SHOP_DROP };
+           under: () => foot };
 };
 const LOTS = [() => afterLot('mill'), () => afterLot('workshop'), yardLot];
 function lots() {
@@ -103,8 +113,12 @@ const half = v => Math.round(v * 2 / P) * P / 2;
 function boxOf(l, m = mode()) {
   if (m === 'a') {
     const w = cells(textW(word()) + COIN_GAP + rowW(parts(l)) + SHOP_BTN_PAD * 2);
-    const y = snap(l.line) - WORKER / 2 - WORKER - SHOP_BTN_AIR - SHOP_BTN_H;
-    return { x: half(l.mid - w / 2), y, w, h: SHOP_BTN_H };
+    // the UPGRADES button's drop under its floor, off the lowest floor under
+    // the plate and a cell either side, so a station on a shelf seats it on
+    // the flat below rather than on the shelf's slope
+    const x = half(l.mid - w / 2), line = l.under(x - P, x + w + P) + AFTER_ROSTER_DOWN + AFTER_ROSTER_SHOP_DROP;
+    const y = snap(line) - WORKER / 2 - WORKER - SHOP_BTN_AIR - SHOP_BTN_H;
+    return { x, y, w, h: SHOP_BTN_H };
   }
   if (m === 'b') {
     const w = cells(textW(word()) + SHOP_BTN_PAD * 2);
