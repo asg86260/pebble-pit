@@ -483,6 +483,9 @@ const unsaw = w => Object.assign(w, UNSAW);
 // frame never skips a bite or the strain.
 function fell(w, i, dt) {
   const a = S.after, spot = sawSpot(i);
+  // Moved off its spot while sawing (by anything): it walks back first, so
+  // nothing puts it there.
+  if (w.sawing && Math.abs(w.x - (spot - sawPose(w).lean * AP)) > AP) unsaw(w);
   if (!w.sawing) {
     // Not slotted: one woodcutter to a tree, and its spot is exact.
     w.dest = null;
@@ -759,7 +762,9 @@ export const AFTER_CREW = {
   pickable: w => w.state !== 'join' && w.pair == null && bodyInk(w) >= 1 && deepAt(w.x) <= 0
     && !(w.at && atStation(w.at)[0] === w),
   hold(w, x, y) { w.x = x; w.y = y + BODY_H / 2; },
-  lifted(w) { w.at = null; },
+  // A woodcutter taken up mid-stroke lets go of the cut: set down elsewhere,
+  // it walks back to its tree rather than standing there again at once.
+  lifted(w) { w.at = null; unsaw(w); },
   land: w => ({ y: floorAt(w.x), x0: afterX0() + P, x1: afterX1() - P * 2 }),
   landed() {}
 };

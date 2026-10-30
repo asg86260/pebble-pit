@@ -36,7 +36,8 @@ const putOn = job => window.__afterPress(job) || (window.__afterGrant({ timber: 
   && (runUntil(() => !S.after.orders.length, 240), window.__afterPress(job)));
 
 // --- track B: the woodcutter and the saw -----------------------------------------------
-import { sawSpot } from '../src/after/bodies.js';
+import { sawSpot, AFTER_CREW } from '../src/after/bodies.js';
+import { AFTER_WALK } from '../src/config.js';
 import { AP } from '../src/after/place.js';
 group('the woodcutter waits by a grown tree until the saw is bought, then saws it down; its four logs land on the break frame and are carried to the shack\'s pile', async () => {
   up();
@@ -51,8 +52,19 @@ group('the woodcutter waits by a grown tree until the saw is bought, then saws i
   const bought = window.__buy('after-saw');
   const handed = runUntil(() => S.after.sawHanded, 4 * ACT_CAPTION_S);
   // Sawing: a frame at a time from here, so the break is seen on its frame.
-  let frames = 0, strokes = plot().chops, last = plot().chops;
-  while (plot().fall == null && frames < 60 * 60) { run(1 / 60); frames++; if (plot().chops !== last) { if (plot().chops > last) strokes++; last = plot().chops; } }
+  // Once, mid-stroke, the woodcutter is taken up by the hand and set down a
+  // way off (the place body engine's own calls): it walks back, never put back.
+  let frames = 0, strokes = plot().chops, last = plot().chops, moved = null;
+  while (plot().fall == null && frames < 60 * 60) {
+    const w = cutter();
+    if (moved == null && w.sawing && plot().chops >= 2) {
+      AFTER_CREW.lifted(w); AFTER_CREW.hold(w, w.x + 20 * AP, w.y - 9);
+      const x0 = w.x;
+      run(1 / 60); frames++;
+      moved = Math.abs(cutter().x - x0);
+    } else { run(1 / 60); frames++; }
+    if (plot().chops !== last) { if (plot().chops > last) strokes++; last = plot().chops; }
+  }
   const by = plot().by, felledIn = frames / 60;
   const fromTree = () => lying().filter(q => q.i === 0).length;
   const seen = [];
@@ -68,6 +80,7 @@ group('the woodcutter waits by a grown tree until the saw is bought, then saws i
     ok(put && waited, 'put on through its roster, the woodcutter waits by the grown tree, facing it, and saws nothing before the saw is bought', JSON.stringify({ put, x: w0 && Math.round(w0.x), at: Math.round(sawSpot(0)), chops: plot().chops })),
     ok(bought && handed, 'the saw row bought hands it the saw'),
     ok(by === 'worker' && strokes === TREE_CHOPS - 1, 'it saws the tree down itself, a stroke a cut (the last one starts the fall)', JSON.stringify({ by, strokes, secs: felledIn.toFixed(2) })),
+    ok(moved != null && moved <= AFTER_WALK / 60 + 1, 'taken up mid-stroke and set down a way off, it walks back to the tree, never put back', `${moved} px in a frame`),
     ok(seen.length === 1 && seen[0][0] === 0 && seen[0][1] === AFTER_TREE.logs, 'its four logs appear together, on the one frame the trunk breaks', JSON.stringify(seen)),
     ok(carried, 'and they are carried to the forestry shack\'s pile', `${g0} -> ${read().grovelogs}`)
   ];
