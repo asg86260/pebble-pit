@@ -357,9 +357,12 @@ export function millView() {
   const s = saw(), bed = s.bed;
   let log = null, grow = 0;
   if (bed) {
-    const e = eatenOf(bed), col = Math.min(LOG - 1, Math.floor(e + EPS));
+    // A hair past a column is the column, in what is left as in what has
+    // grown: read one way for the log and the other for the block, the sliver
+    // between them was a piece of log that was nowhere.
+    const e0 = eatenOf(bed), col = Math.min(LOG - 1, Math.floor(e0 + EPS)), e = e0 - col < EPS ? col : e0;
     log = { x: bed.at, left: LOG - e, eaten: e, v: bed.v, pv: plankV(bed, col) };
-    if (e > col + EPS) grow = e - col;
+    grow = e - col;
   }
   return { log, grow, out: s.out.map(o => ({ ...blockAt(o.a), v: o.v })),
            hitAt: s.hitAt, setAt: s.setAt, hv: s.trip ? s.trip.v : undefined };

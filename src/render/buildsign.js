@@ -21,12 +21,17 @@ import { now } from '../clock.js';
 import { reducedMotion } from '../prefs.js';
 import { signs, onSign, markScale, rowW, textW, signMid } from '../buildsign.js';
 import { toScreen } from '../world.js';
+import { DEEP_SEEN_GREYS, seen as deepDrawn } from './deeptones.js';
 
 const THIN = 2;
 const PAPER = () => GREY[0], INK = () => GREY[GREY.length - 1], MID = () => GREY[5];
 // A coin with a tone of its own wears it on the price line, as on the counter.
 const COIN_INK = { shard: () => COIN.ore, spore: () => COIN.crop, spark: () => COIN.spark };
 const font = () => `${SHOP_BTN_PX}px ${FACE}`;
+// The steps a word's smoothed edge is cut to (crisptext.js). In the deep they
+// are the deep's own greys, written as what is drawn to get them: the yard's
+// light greys there come out as tones the deep does not hold.
+const steps = place => (place === 'deep' ? DEEP_SEEN_GREYS.map(deepDrawn) : GREY);
 
 // A coin's mark is a pixel mask cut in the screen's own pixels, as the
 // roster's pips are: a cell of it is a whole number of device pixels, near
@@ -35,19 +40,27 @@ const font = () => `${SHOP_BTN_PX}px ${FACE}`;
 // a world pixel a cell came out a grey smear that read as a coin short.
 const devPx = () => ctx.getTransform?.().a || 1;
 const markCell = g => { const z = devPx(); return Math.max(1, Math.round(markScale(g) * z)) / z; };
-const onDev = v => { const z = devPx(); return Math.round(v * z) / z; };
+// A world x (or y) moved onto the nearest device pixel's edge, the camera's
+// own offset counted: the sign is placed at its true position and then laid
+// on the screen's pixels as one piece, or at a fit that is not a whole
+// number of device pixels a world pixel its edges straddle one and come out
+// a blend of paper and ink.
+const onDevX = v => { const m = ctx.getTransform?.(); return m ? (Math.round(v * m.a + m.e) - m.e) / m.a : v; };
+const onDevY = v => { const m = ctx.getTransform?.(); return m ? (Math.round(v * m.d + m.f) - m.f) / m.d : v; };
+// A length in whole device pixels.
+const devLen = v => { const z = devPx(); return Math.round(v * z) / z; };
 const drawnW = p => p.lead + (p.kind === 'text' ? textW(p.s) : p.grid[0].length * markCell(p.grid));
 
-function drawParts(ps, x, y, h, ink) {
+function drawParts(ps, x, y, h, ink, place) {
   let at = x - (ps.reduce((s, p) => s + drawnW(p), 0) - rowW(ps)) / 2;
   for (const p of ps) {
     at += p.lead;
     const tone = p.short ? MID() : p.kind === 'mark' && COIN_INK[p.coin] ? COIN_INK[p.coin]() : ink;
     if (p.kind === 'text') {
-      crispText(ctx, p.s, at, y + (h - SHOP_BTN_PX) / 2, font(), tone, 'left', PAPER(), GREY);
+      crispText(ctx, p.s, at, y + (h - SHOP_BTN_PX) / 2, font(), tone, 'left', PAPER(), steps(place));
       at += textW(p.s);
     } else {
-      const s = markCell(p.grid), ox = onDev(at), oy = onDev(y + (h - p.grid.length * s) / 2);
+      const s = markCell(p.grid), ox = onDevX(at), oy = onDevY(y + (h - p.grid.length * s) / 2);
       ctx.fillStyle = tone;
       p.grid.forEach((r, j) => { for (let i = 0; i < r.length; i++) if (r[i] === '#') ctx.fillRect(ox + i * s, oy + j * s, s, s); });
       at += p.grid[0].length * s;
@@ -70,19 +83,26 @@ function drawSign(s) {
   const b = s.box, locked = s.state === 'locked', ink = locked ? MID() : INK();
   const over = !locked && !!S.mouse && onSign(b, S.mouse.x, S.mouse.y);
   const t = lifted(s.id, over ? 1 : 0), lift = SHOP_BTN_LIFT * t;
+  // Every edge on a device pixel, measured from the board's corner laid on
+  // one: the drawing keeps its shape wherever the camera puts it.
+  const bx = onDevX(b.x), by = onDevY(b.y);
+  const rect = (x0, y0, dx, dy, w, h) => {
+    const l = devLen(dx), t0 = devLen(dy);
+    ctx.fillRect(x0 + l, y0 + t0, devLen(dx + w) - l, devLen(dy + h) - t0);
+  };
   // the post, a cell wide, into the ground under the board's middle
   ctx.fillStyle = ink;
-  ctx.fillRect(b.x + b.w / 2 - P / 2, b.y + b.plate, P, b.post);
+  rect(bx, by, b.w / 2 - P / 2, b.plate, P, b.post);
   // the shadow the board lifts off
-  if (t > 0) { ctx.fillStyle = INK(); ctx.fillRect(b.x, b.y, b.w, b.plate); }
-  const x = b.x - lift, y = b.y - lift;
-  ctx.fillStyle = PAPER(); ctx.fillRect(x, y, b.w, b.plate);
+  if (t > 0) { ctx.fillStyle = INK(); rect(bx, by, 0, 0, b.w, b.plate); }
+  const x = onDevX(b.x - lift), y = onDevY(b.y - lift);
+  ctx.fillStyle = PAPER(); rect(x, y, 0, 0, b.w, b.plate);
   fillDots(ctx, x + THIN, y + THIN, b.w - THIN * 2, b.plate - THIN * 2);
   ctx.fillStyle = ink;
-  ctx.fillRect(x, y, b.w, THIN); ctx.fillRect(x, y + b.plate - THIN, b.w, THIN);
-  ctx.fillRect(x, y, THIN, b.plate); ctx.fillRect(x + b.w - THIN, y, THIN, b.plate);
-  crispText(ctx, s.name, x + b.w / 2, y + P * SIGN_WORD_AT, font(), ink, 'center', PAPER(), GREY);
-  drawParts(s.parts, x + (b.w - rowW(s.parts)) / 2, y + P * SIGN_BILL_AT, P * SIGN_BILL_H, ink);
+  rect(x, y, 0, 0, b.w, THIN); rect(x, y, 0, b.plate - THIN, b.w, THIN);
+  rect(x, y, 0, 0, THIN, b.plate); rect(x, y, b.w - THIN, 0, THIN, b.plate);
+  crispText(ctx, s.name, x + b.w / 2, y + P * SIGN_WORD_AT, font(), ink, 'center', PAPER(), steps(s.place));
+  drawParts(s.parts, x + (b.w - rowW(s.parts)) / 2, y + P * SIGN_BILL_AT, P * SIGN_BILL_H, ink, s.place);
 }
 
 // A scene stands the pointer on a lot's sign, without importing this page
