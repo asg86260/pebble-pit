@@ -22,6 +22,45 @@ height, the axe's rename, the migration to SAVE_V 35) is built on branch
 (the stump, F3a-1) and D (seeds) build on it; until B lands the hand still
 puts the saw on a tree by its icon and the woodcutter chops on its old timer.
 
+## A game in a frame sometimes never boots on CI -- DIAGNOSING, PROBE IN (2026-10-31)
+
+The checks in src/selftest/boardwords.js boot the game in iframes
+(`play.html?bench&lang=..`, `bootFrame`) and wait 20 s for the dev handles.
+On CI, about one boot in fifty never gets its handles. The wait is either
+about 2 s or exactly 20 s, never in between, so the boot hangs rather than
+running slow. It turns up in a 1/8 browser shard, at any window, on nearly
+every run since 2026-10-29 (run 40921541679, before the build sign). The
+language and the readable-text switch are both arbitrary.
+
+Ruled out so far:
+- The deep's init-order cycle (fixed in 7647420f). It goes red on the old code
+  and on the fixed code alike.
+- A dynamic import rejecting. Every red log so far is silent: no "the game
+  stopped", no EXCEPTION. One landing-page failure on 2026-10-31 did reject
+  (`Failed to fetch dynamically imported module: /src/console.js`), but that
+  is the landing page, a different check.
+- vite re-optimizing its deps mid-run. A server with a cold private deps
+  cache optimized nothing new across the boardwords groups.
+- Frames leaking. Removed frames are reclaimed, lazily (Performance.getMetrics
+  frames rise and fall).
+- It does not reproduce locally. About 250 frame boots, unthrottled and at
+  3x and 6x CPU throttle, all booted, at 0.5 to 7 s each.
+
+Seen locally, not yet tied to it: at 3x throttle, about fifty boots in a row
+in one tab, the whole tab twice stopped answering CDP (no ping and no
+Debugger.pause for over 70 s). That tab is hung itself. CI's parent kept
+running, since it timed out at exactly 20.0 s.
+
+The probe: in dev, main.js now publishes the boot step it last reached
+(`__bootAt`: layout, store, stored, restore, handles, booted, or "handles
+failed: ..."). `bootFrame` puts that into the failing check's detail, with
+the frame's readyState, how many /src/ modules had landed, whether console.js
+was among them, and how long ago the last one landed. The next red names the
+step. A hang at `store` is IndexedDB: `openKv`'s open has no `onblocked`, and
+`kv.all()` waits on a transaction. A hang at `handles` with console.js not
+landed is the module graph. Blocker: the next CI red, to read the probe.
+Do not raise the 20 s wait.
+
 ## The yard joins the conservation rule (2026-10-28)
 
 "One resource system for every act" is built (DESIGN.md, `(built)`). Its one
