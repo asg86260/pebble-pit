@@ -38,7 +38,7 @@ const BUILD_ROW = {
   buy: press
 };
 // Bought by the row's own press: the fang is `layStation`'s to spend.
-const buyOwn = u => u.buy() != null;
+function buyOwn(u) { return u.buy() != null; }
 
 // The id the next station is minted under (party.js mints them in order).
 const nextId = () => PARTY_IDS.find(id => !stationById(id)) || null;
@@ -46,7 +46,14 @@ const nextId = () => PARTY_IDS.find(id => !stationById(id)) || null;
 // The lot of the party row `id`, for its row in the station table: standing
 // only while `id` is the next to be built, in the ground the station will
 // stand on at the next free slot.
-export const deepLot = id => ({
+//
+// A hoisted function, and everything it reads eagerly hoisted too: the
+// station table (stations.js) calls it while it is first evaluated, which can
+// be before this module's body has run (this module reaches stations.js back
+// through party.js), so the lot touches nothing of this module's until it is
+// asked a question.
+export function deepLot(id) {
+  return {
   id: () => id,
   row: () => (nextId() === id && nextSlot() >= 0 ? BUILD_ROW : null),
   box: () => { const slot = nextSlot(); if (slot < 0) return null; const r = standOfStation({ slot, cls: null }); return { x: r.x, w: r.w }; },
@@ -55,4 +62,5 @@ export const deepLot = id => ({
   mid: () => slotX(nextSlot()),
   floor: () => deepFloor(),
   act: buyOwn
-});
+  };
+}
