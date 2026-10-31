@@ -46,7 +46,6 @@ import { DRAW } from './render/after/stations.js';
 import { silhouette } from './render/after/kit.js';
 import { furnaceBox, barrierBox } from './hell/place.js';
 import { riftOpen } from './rift.js';
-import { signRects } from './buildsign.js';
 
 export const PLACES = ['yard', 'deep', 'after', 'hell'];
 
@@ -324,6 +323,13 @@ const PARTS = { yard: yardParts, deep: deepParts, after: afterParts, hell: hellP
 // Everything standing in `place` but the build signs, which are placed
 // against it (buildsign.js).
 export const standingIn = place => PARTS[place]();
+
+// The build signs' ground, handed over by buildsign.js (`claimSigns`) rather
+// than imported: the sign asks the shop its questions, and this file is read
+// by pages (the landing page, through the station table) that have no board
+// for the shop to stand on.
+let signRects = () => []; // page: the wiring, handed over once at load; it outlives games
+export const claimSigns = f => { signRects = f; };
 
 // Every object standing in `place` and the ground it takes. A build sign
 // standing in an empty lot (buildsign.js) is the lot's, under its id: what is

@@ -19,7 +19,8 @@
 //
 // Drawn by render/buildsign.js; the pointer's two questions (is it over one,
 // press it) are input.js's, asked here; it says nothing on a hover. Its ground is
-// claimed in footprints.js (`signRects`), as the lot's.
+// claimed in footprints.js (`signRects`, handed over by `claimSigns`), as the
+// lot's.
 
 import { S } from './state.js';
 import { P, SHOP_BTN_PX, SHOP_BTN_PAD, SHOP_BTN_ADVANCE, FANG_MARK, AFTER_COIN_MARKS,
@@ -30,7 +31,7 @@ import { revealed, pressRow, coinsOf } from './shop.js';
 import { billOf, building, canPay } from './upgrades.js';
 import { maxed, purse, fmt } from './words.js';
 import { msg } from './lang.js';
-import { standingIn } from './footprints.js';
+import { standingIn, claimSigns } from './footprints.js';
 
 // --- the lots --------------------------------------------------------------
 // A coin's mark on the price line.
@@ -129,6 +130,7 @@ export function signPress(x, y) {
 // The ground each sign standing in `place` takes, keyed by the lot it stands
 // in: the sign and what is built there are one object.
 export const signRects = place => signs(place).map(s => ({ id: s.id, rects: rectsOf(s.box) }));
+claimSigns(signRects);
 
 // For a scene or a check: the middle of a lot's board, by its station's key.
 export function signMid(key, place = S.view) {
