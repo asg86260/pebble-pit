@@ -73,6 +73,20 @@ loading. The counts in that reading (250 resources) were the browser's
 default resource-timing buffer, not the frame's real total. A bench frame
 now keeps 4000 entries (play.html), and lang.js names `lang`, `lang-read`,
 `face` and `face-read`, so the next red tells the two apart.
+Second reading (run 41179210914, ja, 800 1/8): `{"at":null, "lang":true,
+"modules":427, "lastMs":19183}`. lang.js had landed but never started
+running (no `lang` mark), and 427 of the roughly 540 modules had landed,
+the last 19 s before the timeout. The graph was still fetching: a module
+request never came back. That is the dev server or the connection, not a
+wait in the game. In the same run, `390,844 5/8` hung its whole tab, and
+the page would not even pause, so its renderer was gone or wedged below the
+script. A shard now also watches the network from a second session and
+lists any request still open, or slower than five seconds, at its end. It
+reports a renderer crash the moment it happens and samples heap and frames
+every 30 s. The next red says which request hung, and whether the tab died
+of memory. Leads: the frames' HTTP/1.1 connections to vite (six a host,
+about 540 modules a frame, two to fifty frames alive at once until
+collected).
 Blocker: the next CI red, to read the probe.
 Do not raise the 20 s wait.
 

@@ -65,6 +65,11 @@ const expr = serial ? `window.__test(${JSON.stringify(process.argv[3] || '')}, n
 const { own } = await browser({ port: PORT });
 await closeOtherTabs(PORT);
 const tab = await openTab(PORT);
+// A shard's requests, watched from a session of their own: a game in a frame
+// that never booted was a module request that never came back (TODO.md, "A
+// game in a frame sometimes never boots"), and only the network can say
+// which one.
+const slowNet = shard ? await watchNetwork(PORT) : null;
 
 // `--profile out.cpuprofile` samples the page while the suite runs, so where the
 // three minutes actually go is a measurement rather than a guess.
@@ -75,11 +80,14 @@ if (profile) { await tab.send('Profiler.enable'); await tab.send('Profiler.setSa
 // page is paused where it stands and its stack printed, so the red says
 // what was running (TODO.md, "A game in a frame sometimes never boots").
 const STALL_MS = (+process.env.STALL_MIN || 12) * 60000;
+let stalledOut = false;
 const stalled = new Promise(r => { const t = setTimeout(() => r('stalled'), STALL_MS); t.unref?.(); });
 const out = shard ? await Promise.race([tab.evaluate(expr), stalled]) : await tab.evaluate(expr);
 if (out === 'stalled') {
+  stalledOut = true;
   console.log(`the page has not answered in ${STALL_MS / 60000} minutes`);
   await stackOf(PORT);
+  if (slowNet) slowNet();
   if (tab.logs.length) console.log(['--- console (last 40) ---', ...tab.logs.slice(-40)].join(String.fromCharCode(10)));
   own?.kill();
   process.exit(1);
@@ -100,6 +108,7 @@ if (shot) {
   console.log(JSON.stringify(v ?? out.result, null, 1));
 }
 if (tab.logs.length) console.log(['--- console ---', ...tab.logs].join(String.fromCharCode(10)));
+if (slowNet) slowNet();
 await tab.close();
 own?.kill();
 // A suite's answer fails the run when a check failed or the page threw, so a
@@ -131,4 +140,60 @@ async function stackOf(port) {
       console.log(`  at ${f.functionName || '(anonymous)'} ${f.url.replace(/^https?:\/\/[^/]+/, '')}:${f.location.lineNumber + 1}:${f.location.columnNumber + 1}`);
     ws.close();
   } catch (e) { console.log(`no stack: ${e?.message || e}`); }
+}
+
+// Every request the page (its frames included) makes, from a second session:
+// the report lists any still open, and any that took over five seconds, with
+// their ages. Silent when there are none.
+async function watchNetwork(port) {
+  const SLOW_MS = +process.env.SLOW_MS || 5000;
+  try {
+    const list = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
+    const t = list.find(x => x.type === 'page');
+    if (!t) return null;
+    const ws = new WebSocket(t.webSocketDebuggerUrl);
+    await new Promise(r => ws.addEventListener('open', r));
+    const open = new Map(), slow = [];
+    let seen = 0;
+    const short = u => u.replace(/^https?:\/\/[^/]+/, '').replace(/\?t=\d+/, '');
+    ws.addEventListener('message', e => {
+      const m = JSON.parse(e.data), p = m.params;
+      if (m.method === 'Network.requestWillBeSent') seen++, open.set(p.requestId, { url: p.request.url, at: Date.now() });
+      else if (m.method === 'Network.loadingFinished' || m.method === 'Network.loadingFailed') {
+        const q = open.get(p.requestId);
+        open.delete(p.requestId);
+        const took = q ? Date.now() - q.at : 0;
+        if (q && (took > SLOW_MS || m.method === 'Network.loadingFailed'))
+          slow.push(`${short(q.url)} ${m.method === 'Network.loadingFailed' ? `failed (${p.errorText})` : 'took'} ${Math.round(took / 100) / 10} s`);
+      }
+    });
+    ws.send(JSON.stringify({ id: 1, method: 'Network.enable' }));
+    // And the renderer itself: a crash is said the moment it happens, and the
+    // page's heap and frames are sampled every half minute, so a tab that
+    // stopped answering says whether it ran out of room first.
+    let crashed = null, sample = null, id = 10;
+    ws.addEventListener('message', e => {
+      const m = JSON.parse(e.data);
+      if (m.method === 'Inspector.targetCrashed') { crashed = new Date().toISOString(); console.log(`the page's renderer crashed at ${crashed}`); }
+      if (m.result?.metrics) {
+        const v = Object.fromEntries(m.result.metrics.map(x => [x.name, x.value]));
+        sample = `heap ${Math.round(v.JSHeapUsedSize / 1e6)} of ${Math.round(v.JSHeapTotalSize / 1e6)} MB, ${v.Frames} frames, ${v.Documents} documents, ${v.Nodes} nodes, at ${new Date().toISOString()}`;
+      }
+    });
+    ws.send(JSON.stringify({ id: 2, method: 'Inspector.enable' }));
+    ws.send(JSON.stringify({ id: 3, method: 'Performance.enable' }));
+    const metrics = setInterval(() => ws.send(JSON.stringify({ id: ++id, method: 'Performance.getMetrics' })), 30000);
+    metrics.unref?.();
+    return () => {
+      clearInterval(metrics);
+      if (crashed || process.env.NET_DEBUG) console.log(`renderer: ${crashed ? `crashed at ${crashed}` : 'alive'}; last sample: ${sample ?? 'none'}`);
+      else if (sample && stalledOut) console.log(`renderer: last sample: ${sample}`);
+      const now = Date.now();
+      const still = [...open.values()].filter(q => now - q.at > SLOW_MS && !/^wss?:/.test(q.url))
+        .map(q => `${short(q.url)} still open after ${Math.round((now - q.at) / 100) / 10} s`);
+      if (process.env.NET_DEBUG) console.log(`network: ${seen} requests seen, ${open.size} open`);
+      if (still.length || slow.length) console.log(['--- slow requests ---', ...still, ...slow.slice(-40)].join(String.fromCharCode(10)));
+      ws.close();
+    };
+  } catch (e) { console.log(`no network watch: ${e?.message || e}`); return null; }
 }
