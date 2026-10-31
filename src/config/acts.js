@@ -295,6 +295,9 @@ export const INTRO3_MOCK = {
   g: { ...INTRO3_F, fallS: 3.0, ease: 2, margin: 6, holdS: 5.2, smear: 0.2, shake: 20, burst: 130, balls: 18,
        chunks: 36, throw: 1.5, ring: 54, ringRows: 4, crater: { depth: 2, half: 14, sink: 2, rim: 3 }, smoulderS: 20 }
 };
+// Round 5 (the owner: "lets also speed up the meteor"): G's fall in half
+// the time, still under gravity, the shadow and the blast as they were.
+INTRO3_MOCK.k = { ...INTRO3_MOCK.g, fallS: 1.5 };
 // The meteor's flame, hottest first: the meteor's own red (COIN_TONES.spark,
 // palette.js: "out of the sky and still hot"), its brightest against the
 // rock and down the flame's middle, its darkest at the edges and the end of
@@ -315,8 +318,23 @@ export const INTRO3_FLOAT = {
   i: { s: 4.6, lead: 0.55, ease: 2.2, sway: 0, swayN: 0, lag: 2.5 },
   j: { s: 5.2, lead: 0, ease: 1, sway: 2.5, swayN: 2.5, lag: 2 }
 };
+// Round 5, K on J (the owner: "lets move the gate to directly above the
+// house, and remove the stairway"): J's rise, now nearly straight up, the
+// gates' middle column over the house's middle (portals.js) and no stair;
+// the pair's way down in act 4 floats down with the same sway (ghosts.js,
+// a `drift` leg) and the freed souls float straight down from the gates
+// before they walk (`stairDown`).
+INTRO3_FLOAT.k = { ...INTRO3_FLOAT.j };
+// Over the house the gates stand over the mansion that rises there at the
+// end: their bank's foot ACT_GATES_CLEAR cells over its tallest (its towers
+// and the 4 rows over them its drawing holds, render/mansion.js `TOP`),
+// never lower than the yard's gates stood.
+export const INTRO3_GATES_SKY_K = Math.max(ACT_GATES_SKY,
+  P * (MANSION_TOWER_FLOORS * MANSION_FLOOR_ROWS + 4 + ACT_GATES_BANK.deep + ACT_GATES_CLEAR));
 export const INTRO3_BOB = { bob: 1, bobS: 1.8, halo: 0.45 };
 export const INTRO3_SOUL = { rim: GREY[2], grey: GREY[1], pale: GREY[0] };
+// K's souls a step darker, so they read on the light page
+export const INTRO3_SOUL_K = { rim: GREY[4], grey: GREY[3], pale: GREY[1] };
 export const INTRO3_HALO = GREY[3];
 export const INTRO3_FLAME = ['#e8503a', '#d93a25', '#c62d1c', '#9c2214'];
 export const INTRO3_SMOKE = [GREY[5], GREY[6], GREY[7]];

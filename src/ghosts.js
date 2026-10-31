@@ -90,7 +90,8 @@ export function stairWalk() {
 export const STAIR_POINTS = 2 + ACT_STAIR_FLIGHTS.reduce((a, n) => a + 3 * n, 0) + ACT_STAIR_FLIGHTS.length - 1;
 // The stair's foot, and the threshold at its top.
 export const stairFoot = () => stairWalk()[0];
-export const threshold = () => stairWalk()[STAIR_POINTS - 1];
+export const threshold = () => (globalThis.__intro3Float === 'k' // MOCK act-3-the-intro: K's gates stand higher, over the mansion, with no stair to them
+  ? { x: snap(tear().x - WORKER / 2), y: tear().feet - WORKER } : stairWalk()[STAIR_POINTS - 1]);
 // Where a walk `d` world px along a run of corners has got to: { x, y, done }.
 export function alongWalk(pts, d) {
   for (let i = 1; i < pts.length; i++) {
@@ -104,7 +105,11 @@ export function alongWalk(pts, d) {
 export const walkLength = pts => pts.reduce((n, b, i) => (i ? n + Math.hypot(b.x - pts[i - 1].x, b.y - pts[i - 1].y) : 0), 0);
 // The freed souls' way down (mansion.js): out of the open gates and down the
 // stair to its foot.
-export const stairDown = () => stairWalk().slice().reverse();
+export const stairDown = () => (floatK() ? floatDown() : stairWalk().slice().reverse());
+// MOCK act-3-the-intro (K): no stair; the way down is straight down from the
+// threshold to the ground under it.
+const floatK = () => globalThis.__intro3Float === 'k';
+function floatDown() { const t = threshold(); return [t, { x: t.x, y: yardFeet(t.x) }]; }
 const UP_LEGS = Array.from({ length: STAIR_POINTS - 1 }, (_, i) => ({ to: () => stairWalk()[i + 1] }));
 const DOWN_LEGS = Array.from({ length: STAIR_POINTS - 1 }, (_, i) => ({ to: () => stairWalk()[STAIR_POINTS - 2 - i] }));
 
@@ -155,6 +160,10 @@ const hellFeet = x => chamberFloor(Math.max(0, chamberAtX(x))) - WORKER;
 // The routes, each a run of legs: `h` along the ground to an x (standing on
 // `y` of where it is), `v` straight up or down to a y, `to` a slant to a
 // point (the stair), `through` heaven's gates into the place named.
+const DOWN_STAIR = [{ h: () => afterGateX(), y: x => afterFeet(x) }, { through: 'yard' }, ...DOWN_LEGS, { h: () => ruinX(), y: x => yardFeet(x) }];
+// MOCK act-3-the-intro (K): through the gates over the ruin, and floated
+// down to it with J's sway
+const DOWN_FLOAT = [{ h: () => afterGateX(), y: x => afterFeet(x) }, { through: 'yard' }, { drift: () => ({ x: ruinX(), y: yardFeet(ruinX()) }) }];
 const ROUTES = {
   // out of the ruin, up the stair to the gates; then through them
   climb: [{ h: () => stairFoot().x, y: yardFeet }, ...UP_LEGS],
@@ -165,7 +174,7 @@ const ROUTES = {
   off: [{ h: pillarFootX, y: pillarFeet }, { v: afterFeet }],
   // to the gates on the cloud floor, through them to the gates over the
   // yard, down the stair, and along to the ruin
-  down: [{ h: afterGateX, y: afterFeet }, { through: 'yard' }, ...DOWN_LEGS, { h: ruinX, y: yardFeet }],
+  get down() { return floatK() ? DOWN_FLOAT : DOWN_STAIR; },
   // act 4's carry: the ruin to the cage and back (LOOP_CAGE, LOOP_HOME)
   loop: [{ h: pitX, y: yardFeet }, { v: deepFeet }, { h: slitX, y: deepFeet }, { v: () => hellFeet(slitX()) }, { h: hellLegX, y: hellFeet },
          { h: slitX, y: hellFeet }, { v: deepFeet }, { h: pitX, y: deepFeet }, { v: () => yardFeet(pitX()) }, { h: ruinX, y: yardFeet }],
@@ -247,6 +256,7 @@ function trail(p) {
     const w = stairWalk();
     return [{ x: w[0].x + FAR, y: w[0].y }, ...w];
   }
+  if (floatK() && (p.route === 'down' || p.at === 'down')) return null; // MOCK act-3-the-intro: K floats down, no stair
   if ((p.route === 'down' && p.leg >= 2) || p.at === 'down') {
     const w = stairWalk(), t = threshold();
     return [{ x: t.x + FAR, y: t.y }, ...w.slice().reverse(), { x: w[0].x + FAR, y: w[0].y }];
@@ -293,6 +303,18 @@ export function stepPair(dist) {
       const d = L.v() - p.y, m = Math.min(Math.abs(d), dist);
       p.y += Math.sign(d) * m; dist -= m;
       done = Math.abs(L.v() - p.y) < 0.01;
+    } else if (L.drift) {
+      // MOCK act-3-the-intro (K): a float from where the leg began to its
+      // end, at the pace, swaying J's way and still at both ends
+      if (!p.drift) p.drift = { x: p.x, y: p.y, d: 0 };
+      const to = L.drift(), dx = to.x - p.drift.x, dy = to.y - p.drift.y, len = Math.hypot(dx, dy) || 1;
+      const m = Math.min(dist, len - p.drift.d);
+      p.drift.d += m; dist -= m;
+      const k = p.drift.d / len, take = INTRO3_FLOAT.k;
+      p.x = p.drift.x + dx * k + take.sway * P * Math.sin(k * Math.PI * 2 * take.swayN) * Math.sin(k * Math.PI);
+      p.y = p.drift.y + dy * k;
+      done = k >= 1 - 1e-9;
+      if (done) { p.drift = null; p.x = to.x; p.y = to.y; }
     } else if (L.through) {
       // `pass` 0..2 over twice ACT_GATES_PASS cells of walk: into the gateway
       // here, then out of it there, at the far end's threshold from 1 on

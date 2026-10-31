@@ -4176,19 +4176,17 @@ Object.assign(SCENES, {
     } }
 });
 
-// MOCK act-3-the-intro: the house's rock as a meteor (round 3's G, approved) and round 4's floating souls, each
+// MOCK act-3-the-intro: the house's rock as a meteor (G, approved, and K's faster fall) with round 4-5's floating souls, each
 // played from the go-on card's press through the refusal (the two of them
 // up on the pedestal), the walk up the stair and across the cloud floor at
 // ACT_CALL_K's pace (actbeats.js, render/intro3mock.js). Never merged. On a
 // live page it stands itself again a few seconds after the pedestal, so
 // the bench loops it; a held clock (`__still`, the GIF tool) never loops.
 const INTRO3 = [ // MOCK act-3-the-intro
-  // A and B dropped in round 2, C, D and E in round 3, F in round 4: the
-  // owner took G's impact, and round 4 is the souls after it
-  ['g', 'G the crater', "Round 3, the impact as approved, the souls as they were: up the stair at the called pace, the walk across at three times."],
-  ['g', 'H steady float', "G, then the two souls paler, haloed and bobbing a cell, float straight up out of the ruin at a steady pace and lean over into the gates near the top; no stair.", 'h'],
-  ['g', 'I rise that speeds up', "G, then the paler bobbing souls lift slowly off the ruin and rise faster and faster, leaning over into the gates at the top.", 'i'],
-  ['g', 'J swaying rise', "G, then the paler bobbing souls drift up toward the gates on one easy curve, swaying side to side as they rise, the second a little under the first.", 'j']
+  // A and B dropped in round 2, C-E in round 3, F in round 4, G-I in round
+  // 5: the owner took J's rise
+  ['g', 'J swaying rise', "Round 4, kept to compare: G's fall, then the paler bobbing souls drift up to the gates up their stair, swaying side to side.", 'j'],
+  ['k', 'K gates over the house', "The meteor in half the time, still speeding up; the gates directly over the house and no stair, so the souls (a step darker) sway straight up out of the ruin into them.", 'k']
 ];
 for (const [opt, option, say, float = null] of INTRO3) {
   const name = `intro3-${float || opt}`;

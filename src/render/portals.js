@@ -11,7 +11,7 @@ import { S } from '../state.js';
 import { P, WORKER, GREY, FINALE_GREYS, FINALE_HOUSE_W, ACT_PORTAL_SPIN_HZ, ACT_ROCK_W, ACT_ROCK_H, AFTER_TONES,
          ACT_ROCK_FROM, ACT_ROCK_STEPS, ACT_ROCK_TONES, ACT_SOUL_RIM, ACT_SOUL_PAPER,
          ACT_SLIT_TONES, ACT_GOON_ABOVE, ACT_GOON_PAD, ACT_GOON_FONT_PX, ACT_CAPTION_FONT_PX, ACT_CAPTION_GREY,
-         ACT_RIM_PIECES, MANSION_SOULS, ABYSS_TONES, INTRO3_BOB, INTRO3_SOUL, INTRO3_HALO } from '../config.js';
+         ACT_RIM_PIECES, MANSION_SOULS, ABYSS_TONES, INTRO3_BOB, INTRO3_SOUL, INTRO3_SOUL_K, INTRO3_HALO } from '../config.js';
 import { now } from '../clock.js';
 import { ctx } from './ctx.js';
 import { fillDots } from './dots.js';
@@ -235,7 +235,8 @@ perPage(() => {
 // so `light` there reads as a dim grey), and as written on the light page.
 const pale = c => (themeNow() !== 'light' ? raw(c) : c);
 const SOUL_INKS_PALE = {};
-const paleInks = () => Object.assign(SOUL_INKS_PALE, { ink: pale(INTRO3_SOUL.rim), paper: ACT_SOUL_PAPER, grey: pale(INTRO3_SOUL.grey), pale: pale(INTRO3_SOUL.pale) });
+const soulTones = () => (globalThis.__intro3Float === 'k' ? INTRO3_SOUL_K : INTRO3_SOUL);
+const paleInks = () => { const t = soulTones(); return Object.assign(SOUL_INKS_PALE, { ink: pale(t.rim), paper: ACT_SOUL_PAPER, grey: pale(t.grey), pale: pale(t.pale) }); };
 const floating = () => !!globalThis.__intro3Float;
 const bobAt = i => INTRO3_BOB.bob * P / 2 * Math.sin((now() / 1000) * Math.PI * 2 / INTRO3_BOB.bobS + i * 1.9);
 // a halo: the ring of cells one out from the body's square, at its opacity
@@ -251,7 +252,7 @@ function drawSoul(x, y, inked, look) {
   const isPale = floating();
   if (isPale) drawHalo(x, y);
   if (look) dressBehind(ctx, x, y, look);
-  RIM.forEach(([c, r], i) => cellAt(x + c * P, y + r * P, i < inked ? '#000' : isPale ? pale(INTRO3_SOUL.rim) : SOUL_RIM));
+  RIM.forEach(([c, r], i) => cellAt(x + c * P, y + r * P, i < inked ? '#000' : isPale ? pale(soulTones().rim) : SOUL_RIM));
   cellAt(x + P, y + P, ACT_SOUL_PAPER);
   if (look) { dressOn(ctx, x, y, look); dressHead(ctx, x, y, look); }
 }

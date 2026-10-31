@@ -28,6 +28,8 @@ import { afterX0, afterFloor } from './after/place.js';
 import { roadX, chamberFloor } from './hell/place.js';
 import { deepFloor } from './deep/place.js';
 import { afterlifeOn, hellOn } from './acts.js';
+import { houseX } from './home.js'; // MOCK act-3-the-intro
+import { FINALE_HOUSE_W, INTRO3_GATES_SKY_K } from './config.js'; // MOCK act-3-the-intro
 import { travel, gliding, glidingBy, goDeep, goUp, canGoDown } from './view.js';
 
 const snap = v => Math.round(v / P) * P;
@@ -41,7 +43,7 @@ export const PORTALS = {
     end: {
       // The gates on their bank, up the stair at the yard's left end, left
       // of the house.
-      yard: () => gatesEnd(ACT_GATES_YARD_CELL * P, snap(S.groundY) - ACT_GATES_SKY),
+      yard: () => gatesEnd(globalThis.__intro3Float === 'k' ? snap(houseX() + FINALE_HOUSE_W * P / 2) : ACT_GATES_YARD_CELL * P, snap(S.groundY) - (globalThis.__intro3Float === 'k' ? INTRO3_GATES_SKY_K : ACT_GATES_SKY)), // MOCK act-3-the-intro: K over the house
       // Standing on the cloud floor at the camp's own column.
       after: () => gatesEnd(Math.max(afterX0(), ACT_GATES_CELL * P), snap(afterFloor()))
     }

@@ -246,7 +246,8 @@ export function drawGatesBehind() {
     rays(cx, ty, lit);
   });
   // the stair, from the foot under the gates (a body's left, ghosts.js)
-  const pieces = stairPieces(cx, g);
+  // MOCK act-3-the-intro: K has no stair
+  const pieces = globalThis.__intro3Float === 'k' ? [] : stairPieces(cx, g);
   pieces.forEach(({ x0, x1, r, landing }, i) => faded(treadIn(k, i, pieces.length), () => {
     const m = mask();
     for (let x = x0 - (landing ? 1 : 0); x <= x1 + (landing ? 1 : 0); x++) for (let y = r; y < r + 3; y++) add(m, x, y);

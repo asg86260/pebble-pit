@@ -150,6 +150,7 @@ function bank(e) {
   return [rect((cx + b.lo) * P, ty * P, (b.hi - b.lo + 1) * P, ACT_GATES_BANK.deep * P)];
 }
 function stairRects(e) {
+  if (globalThis.__intro3Float === 'k') return []; // MOCK act-3-the-intro: K has no stair
   const g = Math.round(S.groundY / P);
   return stairPieces(Math.round(e.x / P), g).map(({ x0, x1, r }) => rect(x0 * P, r * P, (x1 - x0 + 1) * P, 3 * P));
 }
