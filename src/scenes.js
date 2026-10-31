@@ -4125,41 +4125,6 @@ for (const [opt, option, say] of BUILD_MOCK) for (const [act, name, stand, view,
     run: () => stand(opt) };
 }
 
-// Fighters' skills on the hover (deep/skillsmock.js), never merged: a Ranger
-// at rung 8, so she has both her skills, her capstone's line held up as the
-// pointer resting on it would. The card can take no pointer today, so in a
-// and b the hover on a skill is stood by the scene; c's is the board's own.
-const SKILLS_MOCK = [
-  ['a', 'A chips on the card', "Her card, then a chip a skill, the move a square, the capstone a purple one; a chip hovered puts its line under them. The card grows from three lines to four, five with a line up."],
-  ['b', 'B lines on the card', "Her card, then a line a skill; a line hovered says what it does beside the card, in the boards' black hover line. The card grows from three lines to five."],
-  ['c', "C on the station's board", "The card stays as it is: her station's board lists her skills under her name, each with its line on hover, as the board's statuses have now."],
-];
-const skillsStand = opt => {
-  deepYard({ stage: 1, wound: 0.33, run: 4, party: [cast('ranger', 8)] });
-  const id = S.stations[0].id, w = S.workers.find(b => b.station === id);
-  // a and b: her a little left of the middle, so the card and its line have
-  // the room on her right
-  if (opt === 'c' || !w) lookAtStation(0); else lookDeep(w.x + 260);
-  if (opt === 'c') window.__board(id);
-  // the act 1 notices the granted coins earn, which play never shows here
-  window.__fast(1 / 60);
-  S.wonShown = S.wonSeq | 0;
-  globalThis.__skillsMock = { opt, station: id, skill: 1 };
-  globalThis.__skillsHold?.();
-  window.__holdShot();
-};
-for (const [opt, option, say] of SKILLS_MOCK) {
-  SCENES[`skills-${opt}`] = { about: 'the deep', review: 'fighters: skills on the hover', branch: 'a3-review-both',
-    stage: 'mock: throwaway, never merged', option, say,
-    // a and b are the same game standing, the card swapped; the board's comes and goes with c
-    swap: () => {
-      const m = globalThis.__skillsMock;
-      if (S.view !== 'deep' || !m || (opt === 'c') !== (m.opt === 'c')) { window.__scene(`skills-${opt}`); return; }
-      globalThis.__skillsMock = { ...m, opt };
-    },
-    run: () => skillsStand(opt) };
-}
-
 // The build sign (buildsign.js), in each place that has an empty lot: staked
 // in the lot, its name over the price, the pointer on it, lifting it.
 // Act 1: the shack offered but short (120 of its 150). Act 3: the saw mill

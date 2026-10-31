@@ -543,18 +543,15 @@ export function showTip(text, at, lead = null) {
 // (padread.js) worn in front of the words, for a tip a pad's focus asked for,
 // or a drawing that is the whole tip with no words after it (the furnace's
 // dps, render/dpstip.js).
-export function showTipAt(text, sx, sy, centred, over = false, lead = null, tail = null) {
+export function showTipAt(text, sx, sy, centred, over = false, lead = null) {
   if (!text && !lead) {
     if (tipFor !== null) { tipEl.hidden = true; tipFor = null; }
     return;
   }
-  // MOCK fighters-skills-on-the-hover: `tail` is worn after the words, its
-  // `dataset.key` saying when it has changed
-  const said = (lead ? `${lead.textContent}|${lead.className}|${text}` : text) + (tail ? `|${tail.dataset.key}` : '');
+  const said = lead ? `${lead.textContent}|${lead.className}|${text}` : text;
   if (said !== tipFor) {
     if (lead) tipEl.replaceChildren(...(text ? [lead, ` ${text}`] : [lead]));
     else tipEl.textContent = text;
-    if (tail) tipEl.appendChild(tail);
     tipEl.hidden = false;
     tipFor = said;
   }

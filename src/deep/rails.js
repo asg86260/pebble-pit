@@ -89,20 +89,6 @@ export const statusLineOf = (key, n) => (ICON_STATUS[key]
 // And its name alone, for its label under the icon.
 export const statusName = key => (ICON_STATUS[key] ? STATUS_NAME[ICON_STATUS[key]] : null);
 const plain = t => t.replace(/\{(\w+)\}/g, (_, k) => STATUS_NAME[k] ?? k);
-// MOCK fighters-skills-on-the-hover: what a fighter at station `st` can do
-// by its rung -- its class's move from MOVE_RUNG, its capstone from
-// CAPSTONE_RUNG; a base unit or a Recruit has none -- each its name and its
-// line, a status in it said out with what it does, so a skill that is only a
-// status ("Knockout: Stun") still says something.
-const spelled = t => t.replace(/\{(\w+)\}/g, (_, k) => (STATUS[k] ? msg('skill-status', { name: STATUS_NAME[k], does: STATUS[k] }) : k));
-export function skillsOf(st) {
-  const w = st?.cls && WORDS[st.cls];
-  if (!w) return [];
-  const out = [];
-  if (st.rung >= MOVE_RUNG) out.push({ name: w.move[0], does: spelled(w.move[1]), cap: false });
-  if (st.rung >= CAPSTONE_RUNG) out.push({ name: w.cap[0], does: spelled(w.cap[1]), cap: true });
-  return out.map(k => ({ ...k, line: msg('rail-line', { name: k.name, what: k.does }) }));
-}
 const BASE_DOES = { altar: msg('base-altar-does'), well: msg('base-well-does'), armory: msg('base-armory-does'),
                     circle: msg('base-circle-does'), spire: msg('base-spire-does') };
 const RECRUIT_DOES = msg('recruit-does');
@@ -302,11 +288,7 @@ function recruitHTML(r) {
 
 function bodyHTML(r) {
   if (r.recruit) return recruitHTML(r);
-  // MOCK fighters-skills-on-the-hover: option C, the skills it has under its name
-  const sk = globalThis.__skillsMock?.opt === 'c' ? skillsOf(stationById(r.id)) : [];
-  const skills = sk.length ? `<div class="rl-skills">${sk.map(k => `<span class="rl-fx${k.cap ? ' cap' : ''}"><i class="${k.cap ? 'cp' : 'mv'}"></i>` +
-    `<b class="rl-st rl-sk" data-line="${esc(k.line)}">${esc(k.name)}</b></span>`).join('')}</div>` : '';
-  return `<div class="rl-who">${esc(r.who)}</div>` + skills + treeHTML(r) +
+  return `<div class="rl-who">${esc(r.who)}</div>` + treeHTML(r) +
          (r.ask ? `<div class="rl-ask">${esc(r.ask)}</div>` : '') +
          r.rows.map(o => rowHTML(o, o.cls ? `data-cls="${o.cls}"` : '')).join('') +
          `<button type="button" class="rl-reset"${r.reset.can ? '' : ' disabled'}>${esc(msg('rail-reset'))}</button>`;
@@ -401,14 +383,6 @@ export function refresh(id) {
 // Every frame (a layer in render.js): the open station's board part in its
 // page, and filled. A board whose part has just gone in or changed its rows
 // is measured again, so it is seated for what it holds.
-// MOCK fighters-skills-on-the-hover: a scene holds skill `i`'s line up, as
-// the pointer resting on it would.
-export function skillTipOn(id, i) {
-  const m = mounted.get(id), el = m?.body.querySelectorAll('.rl-sk')[i];
-  if (el) showTip(m, el);
-  return !!el;
-}
-
 export function seatRails() {
   const id = S.stationBoardOpen;
   // A hover line stands on the page, not in its board: when a board closes

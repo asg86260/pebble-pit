@@ -6608,13 +6608,6 @@
   "text": "${name}: ${does}"
  },
  {
-  "id": "skill-status",
-  "group": "The deep",
-  "where": "src/deep/rails.js",
-  "context": "a status said out inside a skill's line (MOCK fighters-skills-on-the-hover): $name (status-…) and what it does",
-  "text": "${name} (${does})"
- },
- {
   "id": "status-line-n",
   "group": "The deep",
   "where": "src/deep/rails.js",
