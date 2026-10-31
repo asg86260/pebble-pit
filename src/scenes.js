@@ -58,6 +58,7 @@ import { afterGround } from './state.js';
 import { FINALE_HOUSE_W, APOTH_POTS_MAX } from './config.js';
 import { houseX } from './home.js';
 import { goOnAlpha } from './actbeats.js';
+import { held as intro3Held } from './reset.js'; // MOCK act-3-the-intro
 import { forceMotion, motionForcedNow } from './prefs.js';
 import { stopById } from './stops.js';
 import { INDEX } from './config/index.js';
@@ -4134,3 +4135,37 @@ Object.assign(SCENES, {
       standSign('s2', signMid('s2', 'deep').x - S.viewW / 2);
     } }
 });
+
+// MOCK act-3-the-intro: the house's rock as a meteor, three entries, each
+// played from the go-on card's press through the refusal (the two of them
+// up on the pedestal), the walk up the stair and across the cloud floor at
+// ACT_CALL_K's pace (actbeats.js, render/intro3mock.js). Never merged. On a
+// live page it stands itself again a few seconds after the pedestal, so
+// the bench loops it; a held clock (`__still`, the GIF tool) never loops.
+const INTRO3 = [ // MOCK act-3-the-intro
+  ['a', 'A the dive', 'Straight down from off the top of the screen, a flame tail streaming behind it; it lands in a dust puff, the flame burning out. The walk up the stair and across to the pedestal at three times the pace.'],
+  ['b', 'B the arc', 'In from off the right on a long falling curve, embers shed along the way it came fading where they were left; smoke rises off it once it lies there. The walk at three times the pace.'],
+  ['c', 'C shadow, then the glow', 'A shadow swells on the ground where it will land before anything shows; the rock comes in glowing from far above and its glow and flames burn out on it once down. The walk at three times the pace.']
+];
+for (const [opt, option, say] of INTRO3) {
+  const name = `intro3-${opt}`;
+  SCENES[name] = { about: 'the acts', review: 'act 3: the intro', branch: 'a3-review-both',
+    stage: 'mock: throwaway, never merged', option, say,
+    swap: () => { window.__scene(name); },
+    run: () => {
+      actsYard('home');
+      for (let i = 0; i < 60 * 30 && goOnAlpha() < 1; i++) window.__fast(1 / 60);
+      window.__unpin();
+      globalThis.__intro3Mock = opt;
+      window.__goOn();
+      if (typeof setInterval !== 'function' || typeof window.__scene !== 'function') return;
+      let doneAt = 0;
+      const loop = setInterval(() => {
+        if (S.still || globalThis.__intro3Mock !== opt) return;
+        if (!S.beatsDone.includes('refuse')) { doneAt = 0; return; }
+        doneAt = doneAt || performance.now();
+        if (performance.now() - doneAt > 3000) window.__scene(name);
+      }, 250);
+      intro3Held('intro3mock-loop', () => clearInterval(loop));
+    } };
+}

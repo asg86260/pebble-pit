@@ -39,7 +39,16 @@ import { S } from './state.js';
 import { P, WORKER, FINALE_HOUSE_W, AFTER_GATES, HELL_TIERS, ACT_HURRY, ACT_CAPTION_S, ACT_CAPTION_FADE_S,
          ACT_ROCK_FALL_S, ACT_ROCK_DUST_S, ACT_SOUL_LIFT_S, ACT_RIM_PIECES, ACT_RIM_STEP_S,
          ACT_CALL_K, ACT_GOON_WAIT_S, ACT_GOON_FADE_S, MANSION_FILE_AT, MANSION_FILE_W,
-         ACT_PEDESTAL_FADE_S } from './config.js';
+         ACT_PEDESTAL_FADE_S, INTRO3_MOCK } from './config.js';
+// MOCK act-3-the-intro: `globalThis.__intro3Mock` ('a'..'c') plays the
+// house's rock as a meteor (render/intro3mock.js) for that option's fall and
+// hold, and the intro's walk at ACT_CALL_K; null is the game as it is, and a
+// reset puts it away.
+held('intro3mock', () => { globalThis.__intro3Mock = null; });
+const intro3 = () => INTRO3_MOCK[globalThis.__intro3Mock] || null;
+const fallS = () => intro3()?.fallS ?? ACT_ROCK_FALL_S;
+const dustS = () => intro3()?.holdS ?? ACT_ROCK_DUST_S;
+const INTRO3_WALKS = ['climb', 'camp', 'pedestal'];
 import { frameMs } from './clock.js';
 import { afterlifeOn, hellOn, owed } from './acts.js';
 import { play, stepShot, release, addScene } from './cutscene.js';
@@ -207,8 +216,8 @@ function leavePedestal() {
 const BODIES = {
   'house-fall': [
     { frame: atHouse, enter: walkThemIn, until: indoors, skipIf: fallen },
-    { frame: atHouse, s: ACT_ROCK_FALL_S, skipIf: fallen, end: houseFalls },
-    { frame: atHouse, s: ACT_ROCK_DUST_S, enter: () => openPortal('heaven'), say: 'act-house-fall', skipIf: () => !!pair() },
+    { frame: atHouse, get s() { return fallS(); }, skipIf: fallen, end: houseFalls },
+    { frame: atHouse, get s() { return dustS(); }, enter: () => openPortal('heaven'), say: 'act-house-fall', skipIf: () => !!pair() },
     { frame: onPair, s: ACT_SOUL_LIFT_S, enter: makePair, step: u => { pair().lift = Math.min(1, u / ACT_SOUL_LIFT_S); }, skipIf: () => !!pair() && pair().lift >= 1 },
     // up the cloud stair to the gates, followed; they stand open as the two come to them
     { frame: onPair, move: 'follow', enter: () => { makePair().lift = 1; if (!pairAt('climb')) sendPair('climb'); }, until: () => pairAt('climb'),
@@ -379,8 +388,8 @@ function step(key, next, t) {
 // null otherwise (render/portals.js draws the rock at rest off `S.acts.house`).
 export function fallNow() {
   if (!run || run.key !== 'house-fall' || run.out) return null;
-  if (run.i === 1) return { rock: Math.min(1, run.u / ACT_ROCK_FALL_S), dust: 0 };
-  if (run.i === 2) return { rock: 1, dust: Math.min(1, run.u / ACT_ROCK_DUST_S) };
+  if (run.i === 1) return { rock: Math.min(1, run.u / fallS()), dust: 0, u: run.u };
+  if (run.i === 2) return { rock: 1, dust: Math.min(1, run.u / dustS()), u: run.u };
   if (run.i === 0) return { rock: -1, dust: 0 };
   return null;
 }
@@ -422,7 +431,7 @@ export function stepActs(c) {
   }
   if (p && p.route) {
     const base = ghostPace();
-    const k = (p.hold ? ACT_CALL_K : 1) * (run ? run.hurry : 1);
+    const k = (p.hold || (intro3() && run && INTRO3_WALKS.includes(p.route)) ? ACT_CALL_K : 1) * (run ? run.hurry : 1);
     stepPair(base * k * c.dt / 1000);
   }
   // The mansion is a standing job from the start of the cage's barrier
