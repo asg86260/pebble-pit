@@ -3725,6 +3725,7 @@ Object.assign(SCENES, {
     run: () => millStage(() => millSaw().out.some(o => { const p = millBlockAt(o.a); return p.x > AFTER_MILL.chute.x1 - 0.5; }), { timber: 15 }) }
 });
 
+
 // track A: the grove rebuilt (DESIGN.md, "Act 3's grove, rebuilt"): the
 // real game's grove at rest beside the forestry shack and its seed basket,
 // a tree growing row by row, and a tree sawn down by hand caught as its crown
@@ -4100,6 +4101,7 @@ for (const [opt, option, say] of BUILD_MOCK) for (const [act, name, stand, view,
     swap: () => { if (S.view !== view) { window.__scene(name); return; } globalThis.__buildBtnMock = opt; globalThis.__buildMockHover?.(lot); },
     run: () => stand(opt) };
 }
+
 // The build sign (buildsign.js), in each place that has an empty lot: staked
 // in the lot, its name over the price, the pointer on it, lifting it.
 // Act 1: the shack offered but short (120 of its 150). Act 3: the saw mill
