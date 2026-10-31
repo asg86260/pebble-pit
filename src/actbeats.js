@@ -44,12 +44,15 @@ import { P, WORKER, FINALE_HOUSE_W, AFTER_GATES, HELL_TIERS, ACT_HURRY, ACT_CAPT
 // house's rock as a meteor (render/intro3mock.js) for that option's fall and
 // hold, and the intro's walk at ACT_CALL_K; null is the game as it is, and a
 // reset puts it away.
-held('intro3mock', () => { globalThis.__intro3Mock = null; });
+// (and when the rock landed, on the game clock: G's fire burns on from it)
+let intro3Landed = null; // held: the mock's landing time
+held('intro3mock', () => { globalThis.__intro3Mock = null; intro3Landed = null; });
+export const intro3LandedAt = () => intro3Landed;
 const intro3 = () => INTRO3_MOCK[globalThis.__intro3Mock] || null;
 const fallS = () => intro3()?.fallS ?? ACT_ROCK_FALL_S;
 const dustS = () => intro3()?.holdS ?? ACT_ROCK_DUST_S;
 const INTRO3_WALKS = ['climb', 'camp', 'pedestal'];
-import { frameMs } from './clock.js';
+import { frameMs, now } from './clock.js';
 import { afterlifeOn, hellOn, owed } from './acts.js';
 import { play, stepShot, release, addScene } from './cutscene.js';
 import { travel, gliding, setView, goDeep, goUp, canGoDown } from './view.js';
@@ -194,6 +197,7 @@ function walkThemIn() {
 const indoors = () => !S.retired || (S.retired.mode === 'in' && (S.retired.u || 0) >= IN_DONE_S);
 function houseFalls() {
   ensureActs().house = 'fallen';
+  if (intro3()) intro3Landed = now(); // MOCK act-3-the-intro
 }
 const fallen = () => !!A() && A().house !== 'standing';
 

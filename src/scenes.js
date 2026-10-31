@@ -4157,18 +4157,16 @@ Object.assign(SCENES, {
     } }
 });
 
-// MOCK act-3-the-intro: the house's rock as a meteor, C and round 2's D-F, each
+// MOCK act-3-the-intro: the house's rock as a meteor, round 2's F and round 3's G, each
 // played from the go-on card's press through the refusal (the two of them
 // up on the pedestal), the walk up the stair and across the cloud floor at
 // ACT_CALL_K's pace (actbeats.js, render/intro3mock.js). Never merged. On a
 // live page it stands itself again a few seconds after the pedestal, so
 // the bench loops it; a held clock (`__still`, the GIF tool) never loops.
 const INTRO3 = [ // MOCK act-3-the-intro
-  // A and B dropped in round 2: the owner took C and asked for more sauce
-  ['c', 'C shadow, then the glow', 'Round 1, kept to compare: a shadow swells on the ground where it will land before anything shows; the rock comes in glowing from far above and its glow and flames burn out on it once down. The walk at three times the pace.'],
-  ['d', 'D hotter', "C hotter: a flame twice as long that flickers a cell at a time, sparks thrown off the dive fading where they're left, the glow rising as it nears, the shadow beating faster as it comes. The same quiet landing as C."],
-  ['e', 'E the blast', "D's fall, then the impact: a held smear of flame flat along the ground, the house thrown up in pieces that arc, land and fade, and a ring of dust running out both ways."],
-  ['f', 'F the aftermath', "E, then after: the ground scorched round it with embers glowing in it as they go out, and a column of smoke rising and leaning off downwind, the hold longer to let it play."]
+  // A and B dropped in round 2, C, D and E in round 3: the owner took F
+  ['f', 'F the aftermath', "Round 2, kept to compare: the hot fall, a held smear of flame along the ground, the house thrown up in pieces, a ring of dust, then scorched ground with embers going out and a column of smoke."],
+  ['g', 'G the crater', "F falling under gravity, slow at first and speeding into the ground; a big explosion of flame and smoke held a beat then thrown out, the view shaken for half a second, the debris higher and wider, a bolder ring; the rock sits in a shallow crater with a rim of thrown dirt, and a fire smoulders round it, going out over twenty seconds."]
 ];
 for (const [opt, option, say] of INTRO3) {
   const name = `intro3-${opt}`;
