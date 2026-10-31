@@ -1609,10 +1609,13 @@ export const SCENES = {
                  window.__spend(st().stored - 300); window.__fast(1);
                  window.__board('bench');
                  setTimeout(() => document.querySelector('#shop button[data-key^="unlock"]')?.scrollIntoView({ block: 'center' }), 300); } },
-  'bench-building': { about: 'the bench', say: 'the bench open on its building section: the build-speed ladder, two rungs bought',
+  'bench-building': { about: 'the bench', say: 'build speed on the bench: eight rungs, up to twice as fast, every build in every act',
+    review: 'build speed: built', option: 'A the bench, building section',
+    stage: 'built: build-speed, not on main yet', branch: 'build-speed',
     run: () => { window.__reset(); window.__crew(4); window.__answered('props', 'net'); S.autoMine = true;
-                 window.__grant({ dust: 6000, shards: 2, spores: 400 }); window.__levels({ speedLevel: 2, buildSpeedLevel: 2 });
-                 window.__fast(2); window.__board('bench');
+                 window.__grant({ dust: 6000, shards: 2, spores: 400 }); window.__levels({ speedLevel: 2 });
+                 window.__fast(2); window.__buy('buildspeed'); window.__buy('buildspeed');
+                 window.__fast(1); window.__board('bench');
                  setTimeout(() => document.querySelector('#shop button[data-key^="buildspeed"]')?.scrollIntoView({ block: 'center' }), 300); } },
   apron: { about: 'the rock', say: 'the bare strip in front of the hill',
     run: () => { rich(); window.__jump(4);
