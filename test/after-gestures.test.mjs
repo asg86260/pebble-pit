@@ -381,3 +381,16 @@ group('every station\'s UPGRADES button asks for its own board, centered under i
 }, NO_RELOAD);
 const rosterHitAt = (x, y) => { const r = rosterHit(x, y); rosterUp(); return r; };
 
+
+// The strain is kept exactly: what a long frame runs past a root is the next
+// root's, so the roots give a strain apart at any frame length, not a strain
+// and a frame's overshoot.
+group('a long frame keeps the stump\'s roots a strain apart', async () => {
+  const { strainStep } = await import('../src/after/stump.js');
+  const { GESTURE_STRAIN_S, GESTURE_STRAIN_LIFT } = await import('../src/config.js');
+  const r = { strain: 0 }, dt = 0.09, frames = 78;
+  let roots = 0;
+  for (let f = 0; f < frames; f++) if (strainStep(r, dt, true, GESTURE_STRAIN_LIFT)) roots++;
+  const want = Math.floor((frames * dt + 1e-9) / GESTURE_STRAIN_S);
+  return [ok(roots === want, `${want} roots in ${(frames * dt).toFixed(2)} s of ${dt} s frames`, `${roots}`)];
+});
