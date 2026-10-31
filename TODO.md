@@ -46,10 +46,16 @@ Ruled out so far:
 - It does not reproduce locally. About 250 frame boots, unthrottled and at
   3x and 6x CPU throttle, all booted, at 0.5 to 7 s each.
 
-Seen locally, not yet tied to it: at 3x throttle, about fifty boots in a row
-in one tab, the whole tab twice stopped answering CDP (no ping and no
-Debugger.pause for over 70 s). That tab is hung itself. CI's parent kept
-running, since it timed out at exactly 20.0 s.
+A second symptom, probably the same defect: the whole tab stops answering.
+Locally, at 3x throttle, about fifty boots in a row in one tab, the tab
+twice stopped answering CDP (no ping and no Debugger.pause for over 70 s).
+On CI the `browser 800,600 5/8` job of run 41174909950 (86fe3e9a) sat in the
+suite for its whole hour with no output. In the frame-boot reds the parent
+kept running (it timed out at exactly 20.0 s), so the hang there is in the
+frame's own boot. `tools/headless.mjs` now gives a shard 12 minutes
+(`STALL_MIN`), then pauses the page through a second debugger session and
+prints its stack and the last of its console, so a hung tab says what it
+was running.
 
 The probe: in dev, main.js now publishes the boot step it last reached
 (`__bootAt`: layout, store, stored, restore, handles, booted, or

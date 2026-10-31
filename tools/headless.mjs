@@ -69,7 +69,21 @@ const tab = await openTab(PORT);
 // `--profile out.cpuprofile` samples the page while the suite runs, so where the
 // three minutes actually go is a measurement rather than a guess.
 if (profile) { await tab.send('Profiler.enable'); await tab.send('Profiler.setSamplingInterval', { interval: 1000 }); await tab.send('Profiler.start'); }
-const out = await tab.evaluate(expr);
+// A shard takes minutes; one that has not answered in STALL_MIN (12 by
+// default) has a page that stopped answering at all -- a whole tab hung,
+// seen on CI as a job that ran into its hour. Rather than wait it out, the
+// page is paused where it stands and its stack printed, so the red says
+// what was running (TODO.md, "A game in a frame sometimes never boots").
+const STALL_MS = (+process.env.STALL_MIN || 12) * 60000;
+const stalled = new Promise(r => { const t = setTimeout(() => r('stalled'), STALL_MS); t.unref?.(); });
+const out = shard ? await Promise.race([tab.evaluate(expr), stalled]) : await tab.evaluate(expr);
+if (out === 'stalled') {
+  console.log(`the page has not answered in ${STALL_MS / 60000} minutes`);
+  await stackOf(PORT);
+  if (tab.logs.length) console.log(['--- console (last 40) ---', ...tab.logs.slice(-40)].join(String.fromCharCode(10)));
+  own?.kill();
+  process.exit(1);
+}
 if (profile) {
   const p = await tab.send('Profiler.stop');
   writeFileSync(profile, JSON.stringify(p.result.profile));
@@ -94,3 +108,27 @@ const v = out.result?.result?.value;
 const red = out.result?.exceptionDetails || (v && typeof v === 'object' && 'total' in v
   && (v.passed < v.total || v.errors?.length));
 process.exit(red ? 1 : 0);
+
+// Where a page that stopped answering is: a second debugger session on its
+// target pauses it and prints the top of the stack, frames included.
+async function stackOf(port) {
+  try {
+    const list = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
+    const t = list.find(x => x.type === 'page');
+    if (!t) { console.log('no page to pause'); return; }
+    const ws = new WebSocket(t.webSocketDebuggerUrl);
+    await new Promise(r => ws.addEventListener('open', r));
+    const paused = new Promise(r => ws.addEventListener('message', e => {
+      const m = JSON.parse(e.data);
+      if (m.method === 'Debugger.paused') r(m.params);
+    }));
+    ws.send(JSON.stringify({ id: 1, method: 'Debugger.enable' }));
+    ws.send(JSON.stringify({ id: 2, method: 'Debugger.pause' }));
+    const p = await Promise.race([paused, new Promise(r => setTimeout(() => r(null), 20000))]);
+    if (!p) { console.log('the page would not pause: its renderer is gone or wedged below the script'); return; }
+    console.log(`paused (${p.reason}), the stack:`);
+    for (const f of p.callFrames.slice(0, 30))
+      console.log(`  at ${f.functionName || '(anonymous)'} ${f.url.replace(/^https?:\/\/[^/]+/, '')}:${f.location.lineNumber + 1}:${f.location.columnNumber + 1}`);
+    ws.close();
+  } catch (e) { console.log(`no stack: ${e?.message || e}`); }
+}
