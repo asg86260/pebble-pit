@@ -6020,6 +6020,20 @@
   "text": "the serpent"
  },
  {
+  "id": "hover-furnace-dps",
+  "group": "Hover",
+  "where": "src/render/dpstip.js",
+  "context": "the furnace's hover, beside its graph of the last minute: the party's damage a second",
+  "text": "${n} dps"
+ },
+ {
+  "id": "hover-furnace-you",
+  "group": "Hover",
+  "where": "src/deep/dps.js",
+  "context": "a row in the furnace's hover, under the graph: the damage your own clicks did",
+  "text": "you"
+ },
+ {
   "id": "hover-house",
   "group": "Hover",
   "where": "src/input.js",

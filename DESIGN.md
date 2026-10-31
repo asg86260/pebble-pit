@@ -15824,6 +15824,33 @@ game no longer plays (the sunset's `look`, `hop`) reads as sat on the bench.
 Only `S.retired`'s mode and clock are saved; a reload mid-finale lands with
 the house standing and the pair indoors, the sheet to come.
 
+## The furnace's dps (built 2026-10-31)
+
+The owner: "lets also put a dps graph in the hover for the furnace", then "i
+want to see a dps by fighter"; picked from mocks on the review bench. The
+furnace (the crusher) burns nothing a second worth a graph, so the graph is
+the fight's: the party's damage a second on the serpent, read where the
+scales it knocks loose end up.
+
+The hover is the last minute as a filled heap, its top eased so a new peak
+lifts it, with a dotted rule at the pace that opens the wound to the stage's
+depth inside one window (`depth / windowS()`): above the rule the stage
+breaks, below it the meal closes the wound. Beside it the total; under it a
+row a fighter -- the class's name, a bar, its dps -- the highest on top.
+Ranked by whole cells of bar so two fighters a point apart do not trade
+places every second, and a row that does change places fades out and back in
+(a glide ran two rows' words through each other).
+
+Who did it is decided at the one door every hit goes through (`strike`): a
+hit with a striker is its station's; a bleed's tick names only its weapon, so
+it is the station's whose class cuts with that weapon, or the class's when
+none stands; anything else is the click, "you". The numbers are a ten-second
+mean: a Sapper's charges are further apart than five. Nothing is saved -- it
+is a reading of the fight now (`deep/dps.js`, `render/dpstip.js`).
+
+The crusher's own tip, the full floor's mark, still speaks when the pointer
+is on the mark; anywhere else on the furnace the fight does.
+
 ## One crew, two homes: pods in the deep (built 2026-09-23)
 
 *The owner's calls, 2026-09-23: one crew, pods cost scales, the weapon

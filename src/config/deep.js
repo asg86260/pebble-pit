@@ -396,3 +396,26 @@ export const DEEP_KNOBS = [
   { key: 'DEEP_REST_PULL', label: 'deep rest, pull on a hop', min: 0.005, max: 0.1, step: 0.001,
     get: () => DEEP_REST_PULL, set: v => { DEEP_REST_PULL = v; } }
 ];
+
+// --- the furnace's dps (deep/dps.js, render/dpstip.js) -------------------------
+// The fight's damage a second is kept in buckets of DPS_BIN_S game seconds over
+// the last DPS_SPAN_S. Every number in the hover is the mean over the last
+// DPS_NOW_S: a Sapper charges further apart than five seconds, and a shorter
+// mean read it as nought between charges. The heap's point is the mean of the
+// DPS_SMOOTH_S up to it: a party's blows land in beats, and a second at a time
+// drew the beat, not the pace.
+export const DPS_BIN_S = 1;
+export const DPS_SPAN_S = 60;
+export const DPS_NOW_S = 10;
+export const DPS_SMOOTH_S = 4;
+// The hover's drawing, in cells of the world's cell on the glass: the heap
+// DPS_HEAP_W x DPS_HEAP_H, a row a fighter DPS_ROW_H tall with a bar up to
+// DPS_BAR_W long. The heap's top eases to its peak and a row changing places
+// fades out and in, at DPS_EASE a second.
+export const DPS_HEAP_W = 24;
+export const DPS_HEAP_H = 8;
+export const DPS_ROW_H = 4;
+export const DPS_BAR_W = 12;
+export const DPS_EASE = 2;
+// Head room over the heap's peak, so the top of the heap never meets the edge.
+export const DPS_HEAD = 1.15;

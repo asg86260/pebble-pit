@@ -1822,6 +1822,9 @@ body.still #held > :not([hidden]), body.still .col > :not([hidden]) { animation:
   white-space: pre;
   line-height: var(--lh-text);
 }
+/* The furnace's dps (render/dpstip.js) is the whole tip: a block, so no line
+   box of words stands round it. */
+#tip .dpsgraph { display: block; }
 
 /* A toggle says its state in its words ("hide finished" / "show
    finished"), as the settings' rows do; it is drawn as any small control. */
