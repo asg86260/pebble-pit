@@ -1091,5 +1091,5 @@ export function drawFistFlag(px, foot, U, lettered = 1, pole = 0) {
 export function godHeadMock() {
   if (!S.after) return null;
   camFrame();
-  return { x: gx(), top: F.gy0 - GOD_CROWN.up * H, bottom: F.gy0 + GOD_N * H, foot: (() => { const th = throne(); return F.gy0 + th.Y0 * H + th.height / K; })(), w: GOD_N * H };
+  return { x: gx(), top: F.gy0 - GOD_CROWN.up * H, face: F.gy0, bottom: F.gy0 + GOD_N * H, foot: (() => { const th = throne(); return F.gy0 + th.Y0 * H + th.height / K; })(), w: GOD_N * H };
 }
