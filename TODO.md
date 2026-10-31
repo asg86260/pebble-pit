@@ -22,73 +22,28 @@ height, the axe's rename, the migration to SAVE_V 35) is built on branch
 (the stump, F3a-1) and D (seeds) build on it; until B lands the hand still
 puts the saw on a tree by its icon and the woodcutter chops on its old timer.
 
-## A game in a frame sometimes never boots on CI -- DIAGNOSING, PROBE IN (2026-10-31)
+## A browser shard's whole tab stops answering on CI -- PROBE IN (2026-10-31)
 
-The checks in src/selftest/boardwords.js boot the game in iframes
-(`play.html?bench&lang=..`, `bootFrame`) and wait 20 s for the dev handles.
-On CI, about one boot in fifty never gets its handles. The wait is either
-about 2 s or exactly 20 s, never in between, so the boot hangs rather than
-running slow. It turns up in a 1/8 browser shard, at any window, on nearly
-every run since 2026-10-29 (run 40921541679, before the build sign). The
-language and the readable-text switch are both arbitrary.
+Sometimes a CI browser shard's page stops answering CDP altogether. On
+2026-10-31, `800,600 5/8` (run 41174909950) sat in the suite for its whole
+hour, and `390,844 5/8` (run 41179210914) did not answer for 12 minutes and
+would not even pause, so its renderer was gone or wedged below the script.
+Locally, at 3x CPU throttle, about fifty frame boots in a row in one tab
+twice hung the tab the same way. It is not the frame-boot timeout. That one
+was Chrome refusing module requests (net::ERR_INSUFFICIENT_RESOURCES, its cap
+on one renderer's outstanding requests) while a ~540-module dev graph loaded
+in a frame beside the suite's page; `bootFrame` now sees the failed graph
+(`__bootErr = 'graph'`, play.html) and loads the frame again. The same cap is
+a lead here: the landing-page check once lost `/src/console.js` the same
+way, and a renderer short of resources may be what wedges.
 
-Ruled out so far:
-- The deep's init-order cycle (fixed in 7647420f). It goes red on the old code
-  and on the fixed code alike.
-- A dynamic import rejecting. Every red log so far is silent: no "the game
-  stopped", no EXCEPTION. One landing-page failure on 2026-10-31 did reject
-  (`Failed to fetch dynamically imported module: /src/console.js`), but that
-  is the landing page, a different check.
-- vite re-optimizing its deps mid-run. A server with a cold private deps
-  cache optimized nothing new across the boardwords groups.
-- Frames leaking. Removed frames are reclaimed, lazily (Performance.getMetrics
-  frames rise and fall).
-- It does not reproduce locally. About 250 frame boots, unthrottled and at
-  3x and 6x CPU throttle, all booted, at 0.5 to 7 s each.
-
-A second symptom, probably the same defect: the whole tab stops answering.
-Locally, at 3x throttle, about fifty boots in a row in one tab, the tab
-twice stopped answering CDP (no ping and no Debugger.pause for over 70 s).
-On CI the `browser 800,600 5/8` job of run 41174909950 (86fe3e9a) sat in the
-suite for its whole hour with no output. In the frame-boot reds the parent
-kept running (it timed out at exactly 20.0 s), so the hang there is in the
-frame's own boot. `tools/headless.mjs` now gives a shard 12 minutes
-(`STALL_MIN`), then pauses the page through a second debugger session and
-prints its stack and the last of its console, so a hung tab says what it
-was running.
-
-The probe: in dev, main.js now publishes the boot step it last reached
-(`__bootAt`: layout, store, stored, restore, handles, booted, or
-handles-failed with the error in `__bootErr`). `bootFrame` puts that into the failing check's detail, with
-the frame's readyState, how many /src/ modules had landed, whether console.js
-was among them, and how long ago the last one landed. The next red names the
-step. A hang at `store` is IndexedDB: `openKv`'s open has no `onblocked`, and
-`kv.all()` waits on a transaction. A hang at `handles` with console.js not
-landed is the module graph. First reading (run 41178542463, fr and ja, 800 and 1920 1/8):
-`{"at":null, "ready":"complete", "console":false}`. main.js's body never ran,
-so the frame hung inside the static module graph, before main.js. Either a
-module request never came back, or a top-level await in the graph never
-resolved: lang.js waits on the language's chunk and, for CJK, on its face
-loading. The counts in that reading (250 resources) were the browser's
-default resource-timing buffer, not the frame's real total. A bench frame
-now keeps 4000 entries (play.html), and lang.js names `lang`, `lang-read`,
-`face` and `face-read`, so the next red tells the two apart.
-Second reading (run 41179210914, ja, 800 1/8): `{"at":null, "lang":true,
-"modules":427, "lastMs":19183}`. lang.js had landed but never started
-running (no `lang` mark), and 427 of the roughly 540 modules had landed,
-the last 19 s before the timeout. The graph was still fetching: a module
-request never came back. That is the dev server or the connection, not a
-wait in the game. In the same run, `390,844 5/8` hung its whole tab, and
-the page would not even pause, so its renderer was gone or wedged below the
-script. A shard now also watches the network from a second session and
-lists any request still open, or slower than five seconds, at its end. It
-reports a renderer crash the moment it happens and samples heap and frames
-every 30 s. The next red says which request hung, and whether the tab died
-of memory. Leads: the frames' HTTP/1.1 connections to vite (six a host,
-about 540 modules a frame, two to fifty frames alive at once until
-collected).
-Blocker: the next CI red, to read the probe.
-Do not raise the 20 s wait.
+The probe: `tools/headless.mjs` gives a shard 12 minutes (`STALL_MIN`), then
+pauses the page from a second debugger session and prints its stack and
+last console lines. All along it watches the network and lists any request
+still open, slower than five seconds or failed. It reports a renderer crash
+when it happens and samples heap, frames and documents every 30 s. In dev,
+`__bootAt` (main.js, lang.js) names the boot step a frame reached. Blocker:
+the next hung shard, to read the probe.
 
 ## The yard joins the conservation rule (2026-10-28)
 

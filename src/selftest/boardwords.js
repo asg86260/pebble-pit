@@ -20,10 +20,23 @@ import { UNFOLDING, overOf } from '../slotfit.js';
 // contentWindow then throws a cross-origin SecurityError on any read. That is
 // the load failing, not the game: put the address back and wait out what is
 // left of the 20 s.
+//
+// So is a module graph the browser would not fetch. Unbundled, the dev
+// server's game is some 540 modules a frame, fetched beside the suite's own
+// page in one renderer, and on a slow machine Chrome refuses the overflow
+// (net::ERR_INSUFFICIENT_RESOURCES, its cap on one process's outstanding
+// requests). The page's module script then fires `error` and never runs
+// (play.html marks it `__bootErr = 'graph'`). A shipped game is a handful of
+// files and never meets the cap, so this is the bench's load, put back the
+// same way.
 async function bootFrame(f, needBuy, t0) {
   const src = f.src;
   const booted = () => {
-    try { const x = f.contentWindow; return !!(x?.__scene && x.__board && x.__fast && (!needBuy || x.__buy)); }
+    try {
+      const x = f.contentWindow;
+      if (x?.__bootErr === 'graph') return null;
+      return !!(x?.__scene && x.__board && x.__fast && (!needBuy || x.__buy));
+    }
     catch { return null; }
   };
   let last = 0, reloads = 0;
