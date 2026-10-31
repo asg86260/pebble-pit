@@ -24541,7 +24541,10 @@ in the real game on the review bench (review "dialog: the look", branch
 - **B, the band's line grown into a box**: the foot band already holds the
   beat's line; it gets the speaker's chip (the speaker drawn small) beside
   the words, and the line stays out of the world. The least new drawing; the
-  words never cover the picture.
+  words never cover the picture. It takes the foot band's middle, where the
+  skip hint (`#skip`, skiphint.js) stands today, so under B the hint moves
+  into the top band while a line is up (as the mock does) -- a shared
+  control moved, not only a line drawn.
 - **C, a line under the speaker that types in**, each letter faded in (never
   snapped on), then the whole line faded out: in the world like A, without a
   box or a tail.
@@ -24578,9 +24581,13 @@ machine of its own:
 ```
 
 A phase with `lines` holds until every line has been heard (its `until` is
-"no line left"), the camera framing the phase's box as any phase does; a
-line's `who` may move the frame to that speaker (the frame read per line),
-so the shot glides between God and the pair on its one curve. The runner's
+"no line left"), the camera framing the phase's box as any phase does. For
+B the frame can stay where the phase put it. For A or C a line's `who` must
+move the frame to that speaker (the frame read per line), so the shot
+glides between God and the pair on its one curve: at meet-god today the
+camera rests on the throne and the pair stand a whole window or more away
+on the cloud floor, so without the glide the pair's line can only speak
+from the window's edge (as the mock shows). The runner's
 `caption` grows from `{ id, args, a }` to `{ id, args, a, who }`, and the one
 drawing (`drawActCaption`, in whichever look) reads it. `say` stays for a
 phase that is a plain label: it is a one-line, speakerless `lines`.
@@ -24664,8 +24671,9 @@ Five to eight lines in all; nothing longer.
 1. **Where do the words go: over the body in the world (A or C) or in the
    band (B)?** The game's bodies have never said a word -- dots, hearts,
    bangs, and the pedestal's bubbles carry a symbol, "never a word" (the
-   owner, 2026-10-18). A and C break that for the story's speakers only; B
-   keeps every word out of the world.
+   owner, 2026-10-18). A and C break that for the story's speakers only, and
+   need the camera to glide to whoever speaks; B keeps every word out of the
+   world, at the price of moving the skip hint into the top band.
 2. **Does a line wait for the player, or run on its own clock?** Proposed:
    its own clock, with a click to go on sooner, so the beat never waits on a
    reader. The other shape (a line holds until clicked) is the classic one,
