@@ -31,6 +31,22 @@ import { deepTop, deepFloor } from './deep/place.js';
 import { portalEnd } from './portals.js';
 import * as HELL from './hell/index.js';
 import { mansionDoorX, soulAt } from './mansion.js';
+import { INTRO3_FLOAT } from './config.js'; // MOCK act-3-the-intro
+
+// MOCK act-3-the-intro (round 4): the first soul's spot `p.float.u` of the
+// way through the rise from where it stood (`p.float`) to the gates'
+// threshold, by the take's shape: straight up for `lead` of it (sped up by
+// `ease`), then leaning over to the gates; and a sway either side that is
+// still at both ends. The second hangs `lag` cells under, level at the ends.
+const smooth = k => k * k * (3 - 2 * k);
+export function floatAt(p, lag = 0) {
+  const f = p.float, take = INTRO3_FLOAT[f.key], to = threshold(), u = f.u;
+  const up = Math.pow(u, take.ease);
+  const over = take.lead > 0 ? smooth(Math.max(0, (u - take.lead) / (1 - take.lead))) : smooth(u);
+  const sway = take.sway * P * Math.sin(u * Math.PI * 2 * take.swayN) * Math.sin(u * Math.PI);
+  const y = f.y + (to.y - f.y) * (take.lead > 0 ? up : smooth(u));
+  return { x: f.x + (to.x - f.x) * over + sway, y: y + lag * take.lag * P * Math.sin(u * Math.PI) };
+}
 
 const snap = v => Math.round(v / P) * P;
 
@@ -207,6 +223,7 @@ export function seenAt(p = S.acts && S.acts.pair) {
 export function pairBodies() {
   const p = S.acts && S.acts.pair;
   if (!p) return null;
+  if (p.float) { const b = floatAt(p, 1); return [{ x: p.x, y: p.y }, { x: b.x - (p.face || 1) * GHOST_GAP, y: b.y }]; } // MOCK act-3-the-intro
   const poly = trail(p), d = poly ? along(poly, p) : null;
   // (coming out over the yard it steps out on the gates' near side, where
   // the walk down the stair has it next, `trail`)
@@ -225,6 +242,7 @@ export const passAlpha = (p = S.acts && S.acts.pair) => (p && p.pass > 0 ? Math.
 // (ACT_STAIR_SIDE), so the ground walked to and from its foot runs off that way.
 const FAR = -ACT_STAIR_SIDE * P * 1e4;
 function trail(p) {
+  if (p.floated && p.at === 'climb') return null; // MOCK act-3-the-intro: floated up, no stair under them
   if (p.route === 'climb' || p.at === 'climb') {
     const w = stairWalk();
     return [{ x: w[0].x + FAR, y: w[0].y }, ...w];

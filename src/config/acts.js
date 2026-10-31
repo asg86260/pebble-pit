@@ -299,5 +299,24 @@ export const INTRO3_MOCK = {
 // palette.js: "out of the sky and still hot"), its brightest against the
 // rock and down the flame's middle, its darkest at the edges and the end of
 // the run, then smoke. White would vanish on the paper.
+// Round 4, after G's impact (the owner: "lets have the two souls float a
+// little bit and be lighter colored. and lets have them float straight up
+// instead of the stairs"): `__intro3Float` picks a rise from the ruin up to
+// heaven's gates in place of the stair. `s` the rise's seconds, `lead` the
+// share of it spent going straight up before it leans over to the gates,
+// `ease` the power its climb speeds up by, `sway` cells of side-to-side
+// and `swayN` its swings. The second soul hangs `lag` cells below the first
+// at the rise's middle, level with it at both ends. While any rise is
+// picked the souls bob `bob` cells over `bobS` seconds wherever they go,
+// are drawn in INTRO3_SOUL (a rim a step paler than ACT_SOUL_RIM, their
+// clothes paler still), and wear a halo of INTRO3_HALO at `halo` opacity.
+export const INTRO3_FLOAT = {
+  h: { s: 4.0, lead: 0.62, ease: 1, sway: 0, swayN: 0, lag: 1.5 },
+  i: { s: 4.6, lead: 0.55, ease: 2.2, sway: 0, swayN: 0, lag: 2.5 },
+  j: { s: 5.2, lead: 0, ease: 1, sway: 2.5, swayN: 2.5, lag: 2 }
+};
+export const INTRO3_BOB = { bob: 1, bobS: 1.8, halo: 0.45 };
+export const INTRO3_SOUL = { rim: GREY[2], grey: GREY[1], pale: GREY[0] };
+export const INTRO3_HALO = GREY[3];
 export const INTRO3_FLAME = ['#e8503a', '#d93a25', '#c62d1c', '#9c2214'];
 export const INTRO3_SMOKE = [GREY[5], GREY[6], GREY[7]];

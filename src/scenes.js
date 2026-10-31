@@ -4193,19 +4193,22 @@ Object.assign(SCENES, {
     } }
 });
 
-// MOCK act-3-the-intro: the house's rock as a meteor, round 2's F and round 3's G, each
+// MOCK act-3-the-intro: the house's rock as a meteor (round 3's G, approved) and round 4's floating souls, each
 // played from the go-on card's press through the refusal (the two of them
 // up on the pedestal), the walk up the stair and across the cloud floor at
 // ACT_CALL_K's pace (actbeats.js, render/intro3mock.js). Never merged. On a
 // live page it stands itself again a few seconds after the pedestal, so
 // the bench loops it; a held clock (`__still`, the GIF tool) never loops.
 const INTRO3 = [ // MOCK act-3-the-intro
-  // A and B dropped in round 2, C, D and E in round 3: the owner took F
-  ['f', 'F the aftermath', "Round 2, kept to compare: the hot fall, a held smear of flame along the ground, the house thrown up in pieces, a ring of dust, then scorched ground with embers going out and a column of smoke."],
-  ['g', 'G the crater', "F falling under gravity, slow at first and speeding into the ground; a big explosion of flame and smoke held a beat then thrown out, the view shaken for half a second, the debris higher and wider, a bolder ring; the rock sits in a shallow crater with a rim of thrown dirt, and a fire smoulders round it, going out over twenty seconds."]
+  // A and B dropped in round 2, C, D and E in round 3, F in round 4: the
+  // owner took G's impact, and round 4 is the souls after it
+  ['g', 'G the crater', "Round 3, the impact as approved, the souls as they were: up the stair at the called pace, the walk across at three times."],
+  ['g', 'H steady float', "G, then the two souls paler, haloed and bobbing a cell, float straight up out of the ruin at a steady pace and lean over into the gates near the top; no stair.", 'h'],
+  ['g', 'I rise that speeds up', "G, then the paler bobbing souls lift slowly off the ruin and rise faster and faster, leaning over into the gates at the top.", 'i'],
+  ['g', 'J swaying rise', "G, then the paler bobbing souls drift up toward the gates on one easy curve, swaying side to side as they rise, the second a little under the first.", 'j']
 ];
-for (const [opt, option, say] of INTRO3) {
-  const name = `intro3-${opt}`;
+for (const [opt, option, say, float = null] of INTRO3) {
+  const name = `intro3-${float || opt}`;
   SCENES[name] = { about: 'the acts', review: 'act 3: the intro', branch: 'a3-review-both',
     stage: 'mock: throwaway, never merged', option, say,
     swap: () => { window.__scene(name); },
@@ -4213,12 +4216,12 @@ for (const [opt, option, say] of INTRO3) {
       actsYard('home');
       for (let i = 0; i < 60 * 30 && goOnAlpha() < 1; i++) window.__fast(1 / 60);
       window.__unpin();
-      globalThis.__intro3Mock = opt;
+      globalThis.__intro3Mock = opt; globalThis.__intro3Float = float;
       window.__goOn();
       if (typeof setInterval !== 'function' || typeof window.__scene !== 'function') return;
       let doneAt = 0;
       const loop = setInterval(() => {
-        if (S.still || globalThis.__intro3Mock !== opt) return;
+        if (S.still || globalThis.__intro3Mock !== opt || globalThis.__intro3Float !== float) return;
         if (!S.beatsDone.includes('refuse')) { doneAt = 0; return; }
         doneAt = doneAt || performance.now();
         if (performance.now() - doneAt > 3000) window.__scene(name);

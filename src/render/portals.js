@@ -11,13 +11,13 @@ import { S } from '../state.js';
 import { P, WORKER, GREY, FINALE_GREYS, FINALE_HOUSE_W, ACT_PORTAL_SPIN_HZ, ACT_ROCK_W, ACT_ROCK_H, AFTER_TONES,
          ACT_ROCK_FROM, ACT_ROCK_STEPS, ACT_ROCK_TONES, ACT_SOUL_RIM, ACT_SOUL_PAPER,
          ACT_SLIT_TONES, ACT_GOON_ABOVE, ACT_GOON_PAD, ACT_GOON_FONT_PX, ACT_CAPTION_FONT_PX, ACT_CAPTION_GREY,
-         ACT_RIM_PIECES, MANSION_SOULS, ABYSS_TONES } from '../config.js';
+         ACT_RIM_PIECES, MANSION_SOULS, ABYSS_TONES, INTRO3_BOB, INTRO3_SOUL, INTRO3_HALO } from '../config.js';
 import { now } from '../clock.js';
 import { ctx } from './ctx.js';
 import { fillDots } from './dots.js';
 import { hash } from './flicker.js';
 import { msg, FACE } from '../lang.js';
-import { raw, light, perPage } from '../ink.js';
+import { raw, light, perPage, themeNow } from '../ink.js';
 import { bandCells } from '../cutscene.js';
 import { CELL } from '../config.js';
 import { drawBody, lookFor } from './crew.js';
@@ -227,10 +227,30 @@ perPage(() => {
   SOUL_RIM = seen(ACT_SOUL_RIM);
   Object.assign(SOUL_INKS, { ink: SOUL_RIM, paper: ACT_SOUL_PAPER, grey: seen(GREY[2]), pale: seen(GREY[1]) });
 });
+// MOCK act-3-the-intro (round 4): with a rise picked, the souls paler and
+// haloed, and bobbing.
+// A pale soul is pale on either page: drawn as written past the map where
+// the page is turned (the yard's map would land a pale grey near the black,
+// so `light` there reads as a dim grey), and as written on the light page.
+const pale = c => (themeNow() !== 'light' ? raw(c) : c);
+const SOUL_INKS_PALE = {};
+const paleInks = () => Object.assign(SOUL_INKS_PALE, { ink: pale(INTRO3_SOUL.rim), paper: ACT_SOUL_PAPER, grey: pale(INTRO3_SOUL.grey), pale: pale(INTRO3_SOUL.pale) });
+const floating = () => !!globalThis.__intro3Float;
+const bobAt = i => INTRO3_BOB.bob * P / 2 * Math.sin((now() / 1000) * Math.PI * 2 / INTRO3_BOB.bobS + i * 1.9);
+// a halo: the ring of cells one out from the body's square, at its opacity
+function drawHalo(x, y) {
+  faded(INTRO3_BOB.halo, () => {
+    const tone = pale(INTRO3_HALO);
+    for (let c = -1; c <= 3; c++) for (let r = -1; r <= 3; r++)
+      if (c === -1 || c === 3 || r === -1 || r === 3) if (!((c === -1 || c === 3) && (r === -1 || r === 3))) cellAt(x + c * P, y + r * P, tone);
+  });
+}
 const RIM = [[0, 0], [1, 0], [2, 0], [2, 1], [2, 2], [1, 2], [0, 2], [0, 1]];
 function drawSoul(x, y, inked, look) {
+  const isPale = floating();
+  if (isPale) drawHalo(x, y);
   if (look) dressBehind(ctx, x, y, look);
-  RIM.forEach(([c, r], i) => cellAt(x + c * P, y + r * P, i < inked ? '#000' : SOUL_RIM));
+  RIM.forEach(([c, r], i) => cellAt(x + c * P, y + r * P, i < inked ? '#000' : isPale ? pale(INTRO3_SOUL.rim) : SOUL_RIM));
   cellAt(x + P, y + P, ACT_SOUL_PAPER);
   if (look) { dressOn(ctx, x, y, look); dressHead(ctx, x, y, look); }
 }
@@ -247,11 +267,12 @@ export function drawActBodies(place) {
       // layer draws them (render/road.js)
       if ((placeAt(b.y) || (onRoad(b.y) ? 'road' : null)) !== place) return;
       // Up there, a body standing on the cloud floor stands on its puffs.
-      const x = Math.round(b.x), y = Math.round(b.y);
+      const fl = floating() && p.mode === 'soul';
+      const x = Math.round(b.x), y = fl ? b.y - P / 2 + bobAt(i) : Math.round(b.y); // MOCK act-3-the-intro: a soul's bob, a cell up and down
       const look = lookFor(WHO[i], {}, b.x, { face: p.face || null, deep: place === 'deep' });
       faded(k, () => {
         if (p.mode === 'alive') drawBody(x, y, look);
-        else drawSoul(x, y, Math.min(ACT_RIM_PIECES, p.rims || 0), look && { ...look, inks: SOUL_INKS });
+        else drawSoul(x, y, Math.min(ACT_RIM_PIECES, p.rims || 0), look && { ...look, inks: fl ? paleInks() : SOUL_INKS });
       });
       // a load of the yard's dust in the first one's hands, on the way down
       if (i === 0 && p.carry > 0) for (let c = 0; c < 2; c++) cellAt(x + c * P + P / 2, y - P, FINALE_GREYS[2]);

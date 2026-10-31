@@ -39,19 +39,35 @@ import { S } from './state.js';
 import { P, WORKER, FINALE_HOUSE_W, AFTER_GATES, HELL_TIERS, ACT_HURRY, ACT_CAPTION_S, ACT_CAPTION_FADE_S,
          ACT_ROCK_FALL_S, ACT_ROCK_DUST_S, ACT_SOUL_LIFT_S, ACT_RIM_PIECES, ACT_RIM_STEP_S,
          ACT_CALL_K, ACT_GOON_WAIT_S, ACT_GOON_FADE_S, MANSION_FILE_AT, MANSION_FILE_W,
-         ACT_PEDESTAL_FADE_S, INTRO3_MOCK } from './config.js';
+         ACT_PEDESTAL_FADE_S, INTRO3_MOCK, INTRO3_FLOAT } from './config.js';
 // MOCK act-3-the-intro: `globalThis.__intro3Mock` ('a'..'c') plays the
 // house's rock as a meteor (render/intro3mock.js) for that option's fall and
 // hold, and the intro's walk at ACT_CALL_K; null is the game as it is, and a
 // reset puts it away.
 // (and when the rock landed, on the game clock: G's fire burns on from it)
 let intro3Landed = null; // held: the mock's landing time
-held('intro3mock', () => { globalThis.__intro3Mock = null; intro3Landed = null; });
+held('intro3mock', () => { globalThis.__intro3Mock = null; globalThis.__intro3Float = null; intro3Landed = null; });
 export const intro3LandedAt = () => intro3Landed;
 const intro3 = () => INTRO3_MOCK[globalThis.__intro3Mock] || null;
 const fallS = () => intro3()?.fallS ?? ACT_ROCK_FALL_S;
 const dustS = () => intro3()?.holdS ?? ACT_ROCK_DUST_S;
 const INTRO3_WALKS = ['climb', 'camp', 'pedestal'];
+// Round 4: the souls float from the ruin up to the gates (ghosts.js,
+// `floatAt`), the camera following, in place of the climb.
+const floatTake = () => INTRO3_FLOAT[globalThis.__intro3Float] || null;
+function startFloat() {
+  const p = makePair();
+  p.route = null; p.at = null;
+  p.float = { x: p.x, y: p.y, u: 0, key: globalThis.__intro3Float };
+}
+function stepFloat(u) {
+  const p = pair(), f = p && p.float, take = floatTake();
+  if (!f || !take) return;
+  f.u = Math.min(1, u / take.s);
+  const at = floatAt(p);
+  p.x = at.x; p.y = at.y;
+  if (f.u >= 1) { p.float = null; p.floated = true; p.at = 'climb'; }
+}
 import { frameMs, now } from './clock.js';
 import { afterlifeOn, hellOn, owed } from './acts.js';
 import { play, stepShot, release, addScene } from './cutscene.js';
@@ -59,7 +75,7 @@ import { travel, gliding, setView, goDeep, goUp, canGoDown } from './view.js';
 import { beatDone } from './beats.js';
 import { openPortal, freePortal, portalEnd, portalBetween, stepPortals } from './portals.js';
 import { sendPair, stepPair, pairAt, placeFor, placeAt, ruinX, yardFeet, cageX, takeLoad, LOOP_CAGE, ghostPace,
-         tear, seenAt, atGates, STAIR_POINTS, stairFoot } from './ghosts.js';
+         tear, seenAt, atGates, STAIR_POINTS, stairFoot, floatAt } from './ghosts.js';
 import { beginMansion, mansionDone, mansionX, MANSION_W, beginGathering, gathered, stepMansion, stepGathering,
          forgetMansionHands } from './mansion.js';
 import { houseX, IN_DONE_S } from './home.js';
@@ -224,7 +240,9 @@ const BODIES = {
     { frame: atHouse, get s() { return dustS(); }, enter: () => openPortal('heaven'), say: 'act-house-fall', skipIf: () => !!pair() },
     { frame: onPair, s: ACT_SOUL_LIFT_S, enter: makePair, step: u => { pair().lift = Math.min(1, u / ACT_SOUL_LIFT_S); }, skipIf: () => !!pair() && pair().lift >= 1 },
     // up the cloud stair to the gates, followed; they stand open as the two come to them
-    { frame: onPair, move: 'follow', enter: () => { makePair().lift = 1; if (!pairAt('climb')) sendPair('climb'); }, until: () => pairAt('climb'),
+    // (MOCK act-3-the-intro: or floated straight up to them, round 4)
+    { frame: onPair, move: 'follow', enter: () => { makePair().lift = 1; if (pairAt('climb')) return; if (floatTake()) startFloat(); else sendPair('climb'); },
+      step: u => { if (floatTake()) stepFloat(u); }, until: () => pairAt('climb'),
       skipIf: () => !!pair() && (pairAt('rise') || pair().route === 'rise' || placeAt(pair().y) !== 'yard') },
     // through the open gates, the camera after them by the ripple, and out
     // of heaven's onto the cloud floor
