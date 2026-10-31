@@ -222,6 +222,9 @@ this section; the release that switches it on moves these under Unreleased.
 - Every build takes 10 to 20 seconds at one pair of hands, the biggest (a new station, a machine, the last shield) 30 at most, by one rule off a row's place in its ladder instead of a figure a row (test/build-times.test.mjs).
 - The sphere costs 1.75 times the dearest other machine in every coin, so it is the last machine you can afford (test/sphere.test.mjs).
 
+- The game no longer fails to start when the deep's build sign happens to load before its stations (test/combo.test.mjs, test/deep-board.test.mjs).
+- The landing page's language tab, its foot and the cloud save section work again (src/selftest/language.js, src/selftest/cloud.js).
+- The build sign in the deep is drawn in the deep's own greys, with no blurred edges on a large window (src/selftest/deeppalette.js).
 - A game tab that is not being saved -- another tab has the save, or the browser refused it -- shows a struck-through disk in the corner instead of playing on in silence, takes the save back by itself once its game is the newest, and a game tab opened in the background no longer takes the save from the one you are playing (test/save-alarm.test.mjs).
 - The browser closing the save's database under the page no longer stops the game; the save is retried on a fresh connection (src/selftest/savemark.js).
 - The save as it was before an update changed its shape is kept beside it, so a bad update can be rolled back (test/save-alarm.test.mjs).
