@@ -28,6 +28,10 @@ try {
   if (t === 'dim') document.documentElement.classList.add('dim');
   if (/[?&]readable\b/.test(location.search) || (p && p.readable)) document.documentElement.classList.add('readable');
 } catch (e) {}
+// A bench frame (the checks' frames) keeps every module's timing, not the
+// browser's first 250, so a boot that never finished can say which module
+// landed last (selftest/boardwords.js, `whyNot`).
+try { if (/[?&]bench\b/.test(location.search)) performance.setResourceTimingBufferSize(4000); } catch (e) {}
 </script>
 </head>
 <body>

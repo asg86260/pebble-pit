@@ -136,7 +136,8 @@ function frame() {
 // shop rows it decides, then anybody the counts say is missing.
 // How far the boot got, for a check whose frame never boots
 // (selftest/boardwords.js, `bootFrame`): a hang names its step, and a
-// rejected import its error (`__bootErr`). Dev only.
+// rejected import its error (`__bootErr`). lang.js names the steps before
+// this module runs: `lang`, `lang-read`, `face`, `face-read`. Dev only.
 const bootAt = step => { if (DEV) globalThis.__bootAt = step; };
 bootAt('layout');
 relayout();

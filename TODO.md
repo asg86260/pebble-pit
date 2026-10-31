@@ -64,7 +64,16 @@ the frame's readyState, how many /src/ modules had landed, whether console.js
 was among them, and how long ago the last one landed. The next red names the
 step. A hang at `store` is IndexedDB: `openKv`'s open has no `onblocked`, and
 `kv.all()` waits on a transaction. A hang at `handles` with console.js not
-landed is the module graph. Blocker: the next CI red, to read the probe.
+landed is the module graph. First reading (run 41178542463, fr and ja, 800 and 1920 1/8):
+`{"at":null, "ready":"complete", "console":false}`. main.js's body never ran,
+so the frame hung inside the static module graph, before main.js. Either a
+module request never came back, or a top-level await in the graph never
+resolved: lang.js waits on the language's chunk and, for CJK, on its face
+loading. The counts in that reading (250 resources) were the browser's
+default resource-timing buffer, not the frame's real total. A bench frame
+now keeps 4000 entries (play.html), and lang.js names `lang`, `lang-read`,
+`face` and `face-read`, so the next red tells the two apart.
+Blocker: the next CI red, to read the probe.
 Do not raise the 20 s wait.
 
 ## The yard joins the conservation rule (2026-10-28)
