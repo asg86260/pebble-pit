@@ -400,17 +400,20 @@ export const DEEP_KNOBS = [
 // MOCK the-furnace-dps-graph: the furnace's hover graph of the party's damage
 // a second (src/deep/dpsmock.js), never merged. The history is buckets of
 // FURNACE_DPS_BIN_S game seconds over FURNACE_DPS_SPAN_S; the number beside
-// it is the mean over the last FURNACE_DPS_NOW_S; option B's bars are
-// FURNACE_DPS_BAR_S each. The graph is FURNACE_DPS_W x FURNACE_DPS_H cells,
+// it is the mean over the last FURNACE_DPS_NOW_S. The graph is FURNACE_DPS_W x FURNACE_DPS_H cells,
 // a cell the world's cell on the glass. The scale eases toward its peak at
 // FURNACE_DPS_EASE a second, so a new top lifts the line rather than jumps it.
 export const FURNACE_DPS_BIN_S = 1;
 export const FURNACE_DPS_SPAN_S = 60;
-export const FURNACE_DPS_NOW_S = 5;
-export const FURNACE_DPS_BAR_S = 5;
+export const FURNACE_DPS_NOW_S = 10;   // a sapper charges slower than five seconds: a shorter mean read it as nought between charges
 export const FURNACE_DPS_W = 24;
 export const FURNACE_DPS_H = 8;
 export const FURNACE_DPS_EASE = 2;
 // The line's point is the mean of this many seconds up to it: a party's
 // blows land in beats, and a second at a time drew the beat, not the pace.
 export const FURNACE_DPS_SMOOTH_S = 4;
+// The per-fighter rows under the heap: a row FURNACE_DPS_ROW_H cells tall, its
+// bar or sparkline FURNACE_DPS_ROW_W cells long, a sparkline FURNACE_DPS_SPARK_H tall.
+export const FURNACE_DPS_ROW_H = 4;
+export const FURNACE_DPS_ROW_W = 12;
+export const FURNACE_DPS_SPARK_H = 3;

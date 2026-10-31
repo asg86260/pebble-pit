@@ -4108,9 +4108,10 @@ for (const [opt, option, say] of BUILD_MOCK) for (const [act, name, stand, view,
 // bare coil, the wound held so no break ends the fight, then the camera at
 // the furnace and the tip stood over it as the pointer would.
 const FURNACE_MOCK = [
-  ['a', 'A sparkline', 'the last minute of the party\'s damage a second as a line, its live end a cell, the number beside it'],
-  ['b', 'B stepped bars', 'a bar every five seconds, a cell wide, climbing a cell at a time, the top cell fading up as it fills'],
   ['c', 'C heap and the break pace', 'the minute as a filled heap, and a dotted rule at the pace that opens the wound to its depth in one window'],
+  ['d', 'D heap stacked by fighter', "C's heap stacked a band a fighter, each its own fill in whole cells; a key under it: the fill, the fighter, its dps"],
+  ['e', 'E a bar a fighter', "C's heap as the total; under it a row a fighter, a bar and its dps, the highest on top"],
+  ['f', 'F a line a fighter', "C's heap as the total; under it a small line a fighter on one scale, and its dps"],
 ];
 for (const [opt, option, say] of FURNACE_MOCK) SCENES[`furnace-dps-${opt}`] = {
   about: 'the deep', review: 'the furnace: dps graph', option, say, branch: 'a3-review-both',
@@ -4120,8 +4121,12 @@ for (const [opt, option, say] of FURNACE_MOCK) SCENES[`furnace-dps-${opt}`] = {
     // Two fighters for half a minute, then two more join: a line with a
     // climb in it, not a level beat.
     deepYard({ stage: 1, wound: 0.2, run: 25, party: [cast('brawler', 4), cast('ranger', 4)] });
-    window.__party({ stations: [cast('brawler', 4), cast('ranger', 4), cast('sapper', 6), cast('mage', 6)] });
-    for (let s = 0; s < 35; s += 0.5) { window.__fast(0.5); window.__serpent({ stage: 1, wound: 0.2 * depthAt(1) }); }
+    window.__party({ stations: [cast('sapper', 6), cast('mage', 6)] });
+    // and the hand clicks the coil now and then, a source of its own
+    for (let s = 0; s < 35; s += 0.5) {
+      window.__fast(0.5); window.__serpent({ stage: 1, wound: 0.2 * depthAt(1) });
+      if (s % 2 === 0 && s > 8) { const p = coilAt(Math.floor(COIL_SEGS / 3), now()); clickDeep(p.x, p.y); }
+    }
     globalThis.__furnaceGraphMock = opt;
     S.wonShown = S.wonSeq | 0;   // the act-1 notice the granted coins earn, hushed while the scene stands
     window.__look(deepX0());

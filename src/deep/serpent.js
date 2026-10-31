@@ -129,7 +129,7 @@ export function strike(weapon, dmg, x, y, from = null, side = 0, o = {}) {
     if (o.stun) stun(blow, o.stun);
   }
   keep(weapon, done, x, y, from, !!o.tick);
-  furnaceMockFeed(done); // MOCK the-furnace-dps-graph
+  furnaceMockFeed(done, weapon, o.by); // MOCK the-furnace-dps-graph
   return done;
 }
 
