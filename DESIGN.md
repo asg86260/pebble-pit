@@ -15832,8 +15832,10 @@ furnace (the crusher) burns nothing a second worth a graph, so the graph is
 the fight's: the party's damage a second on the serpent, read where the
 scales it knocks loose end up.
 
-The hover is the last minute as a filled heap, its top eased so a new peak
-lifts it, with a dotted rule at the pace that opens the wound to the stage's
+The hover is the last minute as a heap of five-second columns on a baseline
+("lets clean up the top graph a bit": a line a second drew the party's beat
+as sawteeth), its top eased so a new peak lifts it, with one dashed rule in
+the tone between ink and paper at the pace that opens the wound to the stage's
 depth inside one window (`depth / windowS()`): above the rule the stage
 breaks, below it the meal closes the wound. Beside it the total; under it a
 row a fighter -- the class's name, a bar, its dps -- the highest on top.

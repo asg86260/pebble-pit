@@ -11,14 +11,15 @@
 // REVIEW the-furnace-dps-graph-built
 
 import { S } from '../state.js';
-import { P, DPS_BIN_S, DPS_HEAP_W, DPS_HEAP_H, DPS_ROW_H, DPS_BAR_W, DPS_EASE, DPS_HEAD } from '../config.js';
+import { P, DPS_BIN_S, DPS_HEAP_W, DPS_HEAP_H, DPS_ROW_H, DPS_BAR_W, DPS_EASE, DPS_HEAD,
+         DPS_COL_S, DPS_COL_W, DPS_LINE_K, DPS_DASH, DPS_LABEL_GAP } from '../config.js';
 import { now } from '../clock.js';
 import { held } from '../reset.js';
 import { msg } from '../lang.js';
 import { fmt } from '../words.js';
 import { raw } from '../ink.js';
 import { crusherRect } from '../deep/place.js';
-import { BINS, SMOOTH_BINS, meanTo, totalDps, totalSeries, breakPace, sources } from '../deep/dps.js';
+import { meanTo, totalDps, totalSeries, breakPace, sources } from '../deep/dps.js';
 import { showTipAt } from '../board.js';
 import { toScreen } from '../world.js';
 
@@ -64,22 +65,27 @@ function loop() {
 
 function typeOf() {
   const cs = getComputedStyle(tipEl());
-  return { ink: cs.color, font: `${cs.fontSize} ${cs.fontFamily}`, track: cs.letterSpacing,
+  // the tone halfway between the tip's ink and its paper
+  const rgb = v => (v.match(/[\d.]+/g) || [0, 0, 0]).slice(0, 3).map(Number);
+  const a = rgb(cs.color), b = rgb(cs.backgroundColor);
+  const mid = `rgb(${a.map((x, i) => Math.round((x + b[i]) / 2)).join(', ')})`;
+  return { ink: cs.color, mid, font: `${cs.fontSize} ${cs.fontFamily}`, track: cs.letterSpacing,
            upper: cs.textTransform === 'uppercase' };
 }
 
 function draw() {
   const c = cellPx(), ty = typeOf();
   const HW = DPS_HEAP_W * c, HH = DPS_HEAP_H * c, RH = DPS_ROW_H * c;
-  const t = now() / 1000 / DPS_BIN_S, k0 = Math.floor(t), frac = t - k0;
-  // The newest whole second comes in from past the right edge as the next
-  // one fills, so the heap slides on and its end never pops on. A point is
-  // the mean of the seconds up to it only, so a point drawn never changes.
-  const shown = BINS - 2, dx = HW / (shown - 2);
-  const xs = [], heap = [];
-  for (let j = 0; j <= shown; j++) {
-    xs.push(HW + dx - (j + frac) * dx);
-    heap.push(meanTo(totalSeries(), k0 - 1 - j, SMOOTH_BINS));
+  // The heap's columns: each the mean of DPS_COL_S finished seconds. The
+  // newest finished one comes in from past the right edge while the next
+  // fills, so the heap slides on, a column never changes once drawn, and none
+  // pops on.
+  const per = Math.max(1, Math.round(DPS_COL_S / DPS_BIN_S)), colW = DPS_COL_W * c;
+  const tp = now() / 1000 / DPS_BIN_S / per, p0 = Math.floor(tp), fp = tp - p0;
+  const cols = [];
+  for (let j = 0; j <= Math.ceil(HW / colW) + 1; j++) {
+    const p = p0 - 1 - j;
+    cols.push({ x: HW - (j + fp) * colW, v: p < 0 ? 0 : meanTo(totalSeries(), (p + 1) * per - 1, per) });
   }
   const rows = sources();
   const say = s => (ty.upper ? s.toUpperCase() : s);
@@ -92,7 +98,8 @@ function draw() {
   const nameW = Math.ceil(Math.max(0, ...rows.map(r => g.measureText(say(r.name)).width)));
   const numW = Math.ceil(Math.max(0, ...rows.map(r => g.measureText(fmt(r.dps)).width)));
   const barW = DPS_BAR_W * c;
-  const W = Math.max(HW + 2 * c + labelW, rows.length ? nameW + 2 * c + barW + 2 * c + numW : 0);
+  const gap = DPS_LABEL_GAP * c;
+  const W = Math.max(HW + gap + labelW, rows.length ? nameW + 2 * c + barW + 2 * c + numW : 0);
   const H = HH + (rows.length ? c + rows.length * RH : 0);
   const dpr = window.devicePixelRatio || 1;
   if (canvas.width !== Math.round(W * dpr) || canvas.height !== Math.round(H * dpr)) {
@@ -109,25 +116,37 @@ function draw() {
   lastWall = wall;
   const ease = (key, peak) => (eased[key] = eased[key] ? eased[key] + (peak - eased[key]) * Math.min(1, dt * DPS_EASE) : peak);
 
-  // The heap, and the rule's cells over it: ink on the paper, paper on the heap.
+  // The heap on its baseline, its columns' tops eased against the peak so a
+  // new high lifts the heap rather than jumps it.
   const pace = breakPace();
-  const top = ease('heap', Math.max(1, pace, ...heap) * DPS_HEAD);
-  const yOf = v => HH - (v / top) * HH;
+  const top = ease('heap', Math.max(1, pace, ...cols.map(k => k.v)) * DPS_HEAD);
+  const lw = Math.max(1, Math.round(c * DPS_LINE_K)), floor = HH - lw;
+  const yOf = v => floor - (v / top) * floor;
   g.save();
   g.beginPath(); g.rect(0, 0, HW, HH); g.clip();
+  // One skyline filled once: columns at a fractional place filled one by
+  // one leave a hairline of paper where each meets the next.
   g.beginPath();
-  xs.forEach((x, i) => (i ? g.lineTo(x, yOf(heap[i])) : g.moveTo(x, yOf(heap[i]))));
-  g.lineTo(xs[xs.length - 1], HH); g.lineTo(xs[0], HH); g.closePath();
+  g.moveTo(cols[0].x + colW, floor);
+  for (const k of cols) {
+    const y = k.v > 0 ? Math.round(yOf(k.v)) : floor;
+    g.lineTo(k.x + colW, y); g.lineTo(k.x, y);
+  }
+  g.lineTo(cols[cols.length - 1].x, floor);
+  g.closePath();
   g.fill();
+  g.fillRect(0, floor, HW, lw);
+  // The pace that breaks the stage: one dashed rule over it all, in the tone
+  // halfway between ink and paper, which reads on the heap and off it.
   if (pace > 0) {
-    g.globalCompositeOperation = 'xor';
-    const y = Math.max(0, Math.min(HH - c, yOf(pace) - c / 2));
-    for (let x = 0; x < HW; x += 2 * c) g.fillRect(x, y, c, c);
-    g.globalCompositeOperation = 'source-over';
+    g.fillStyle = raw(ty.mid);
+    const y = Math.round(Math.max(0, Math.min(floor - lw, yOf(pace) - lw / 2)));
+    for (let x = 0; x < HW; x += (DPS_DASH + 1) * c) g.fillRect(x, y, DPS_DASH * c, lw);
+    g.fillStyle = raw(ty.ink);
   }
   g.restore();
   g.textAlign = 'left';
-  g.fillText(label, HW + 2 * c, HH / 2);
+  g.fillText(label, HW + gap, HH / 2);
   if (!rows.length) return;
 
   // The rows, ranked by whole cells of bar, ties kept where they stood: two
