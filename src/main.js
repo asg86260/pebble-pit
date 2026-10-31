@@ -135,7 +135,8 @@ function frame() {
 // stands in it (the ground's sand is allocated here). Then the save, then the
 // shop rows it decides, then anybody the counts say is missing.
 // How far the boot got, for a check whose frame never boots
-// (selftest/boardwords.js, `bootFrame`): a hang names its step. Dev only.
+// (selftest/boardwords.js, `bootFrame`): a hang names its step, and a
+// rejected import its error (`__bootErr`). Dev only.
 const bootAt = step => { if (DEV) globalThis.__bootAt = step; };
 bootAt('layout');
 relayout();
@@ -222,7 +223,7 @@ addEventListener('storage', e => {
 if (import.meta.env.DEV) {
   bootAt('handles');
   import('./dev.js');
-  import('./console.js').then(() => bootAt('booted'), e => { bootAt(`handles failed: ${e?.message || e}`); throw e; });
+  import('./console.js').then(() => bootAt('booted'), e => { bootAt('handles-failed'); globalThis.__bootErr = String(e?.message || e); throw e; });
   import('./scenesheet.js');
 }
 

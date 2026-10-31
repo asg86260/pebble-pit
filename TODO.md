@@ -52,8 +52,8 @@ Debugger.pause for over 70 s). That tab is hung itself. CI's parent kept
 running, since it timed out at exactly 20.0 s.
 
 The probe: in dev, main.js now publishes the boot step it last reached
-(`__bootAt`: layout, store, stored, restore, handles, booted, or "handles
-failed: ..."). `bootFrame` puts that into the failing check's detail, with
+(`__bootAt`: layout, store, stored, restore, handles, booted, or
+handles-failed with the error in `__bootErr`). `bootFrame` puts that into the failing check's detail, with
 the frame's readyState, how many /src/ modules had landed, whether console.js
 was among them, and how long ago the last one landed. The next red names the
 step. A hang at `store` is IndexedDB: `openKv`'s open has no `onblocked`, and

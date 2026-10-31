@@ -47,7 +47,7 @@ function whyNot(f, reloads) {
     const mods = res.filter(r => r.name.includes('/src/'));
     const lastAt = res.reduce((m, r) => Math.max(m, r.responseEnd), 0);
     const short = r => r.name.replace(/^.*?\/src\//, '').replace(/\?.*$/, '');
-    return JSON.stringify({ at: x.__bootAt ?? null, ready: x.document.readyState, reloads, resources: res.length, modules: mods.length,
+    return JSON.stringify({ at: x.__bootAt ?? null, err: x.__bootErr ?? null, ready: x.document.readyState, reloads, resources: res.length, modules: mods.length,
       console: mods.some(r => short(r) === 'console.js'), lastMs: Math.round(now - lastAt),
       last: [...mods].sort((a, b) => b.responseEnd - a.responseEnd).slice(0, 3).map(short) });
   } catch (e) { return `unreadable: ${e?.message || e} (${reloads} reloads)`; }
