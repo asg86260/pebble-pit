@@ -143,7 +143,7 @@ export const GLYPH_OF = {
   carry: ['sack'], auto: ['lever'], speed: ['swing'], pick: ['pickhead'],
   autotoss: ['lever'], toss: ['swing', 'up'], reach: ['swing'],
   critchance: ['spark'], critmult: ['cracked'],
-  haulcarry: ['sack'], haulpace: ['boot', 'up'], carter: ['cart'], driver: ['lift'], liftload: ['lift', 'plus'], liftpace: ['lift', 'up'], belt: ['belt'],
+  haulcarry: ['sack'], haulpace: ['boot', 'up'], carter: ['cart'], driver: ['lift'], liftload: ['lift', 'plus'], liftpace: ['lift', 'up'], belt: ['belt'], buildspeed: ['planks', 'up'],
   unlockquarry: ['hoist'], unlockfarm: ['furrow'], unlockapothecary: ['pot'], unlockcasino: ['die'],
   unlockshack: ['hut'], unlockouthouse: ['bucket'], unlocktower: ['tower'], unlockfilter: ['balloon'],
   // the house and the closet

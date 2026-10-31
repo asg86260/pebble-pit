@@ -34,6 +34,12 @@ export const LADDERS = {
   reach:        { value: [500, 640, 800, 1000, 1200, 1600, 2000, 2500, 3000], dust: [60, 100, 150, 200, 300, 450, 700, 1000] }, // px a held hand throws; the foot covers the rock's own pile to the hole
   critchance:   { value: [5, 8, 10, 12, 15, 18, 20, 25, 30], dust: [500, 800, 1250, 2000, 3000, 5000, 8000, 12000] },   // % of swings
   critmult:     { value: [2, 3, 4, 5, 6, 7, 8, 9, 10], dust: [1000, 1500, 2500, 4000, 6000, 10000, 16000, 25000] }, // x a crit is worth
+  // --- the bench: building -----------------------------------------------------
+  // A builder's work in a second, as a multiple of the foot's one: every build,
+  // at every site, goes this much faster (works.js, `effortAt`). Even steps
+  // from the foot to double at the top; the dust is the carry ladder's shape
+  // (1, 2, 3, 4, 6, 8, 10, 12) at 250 a unit.
+  buildspeed:   { value: [1, 1.125, 1.25, 1.375, 1.5, 1.625, 1.75, 1.875, 2], dust: [250, 500, 750, 1000, 1500, 2000, 2500, 3000] }, // x, a builder's pace
   // --- the shack: the gang -----------------------------------------------------
   // The gang and the haulers are fitted to each other, against a measured
   // trip: at the foot a digger needs about one and a half haulers, and the

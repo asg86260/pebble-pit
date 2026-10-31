@@ -1706,6 +1706,12 @@ does-hit = hit
 # the bench: your swing pace ladder
 row-speed = auto swing
 
+# the bench: the build-speed ladder
+row-buildspeed = build speed
+
+# a row's verb, before its gain: how fast a builder works
+does-build = pace
+
 # a row's verb, before its gain: throws
 does-throw = throw
 
@@ -1922,6 +1928,9 @@ sect-haulers = the haulers
 
 # a heading on the bench's board: the rows that put up a new place
 sect-build = build
+
+# the bench: a section heading over the rows that speed up building
+sect-building = building
 
 # the house's board: buy another house to hire somebody
 row-house = another house

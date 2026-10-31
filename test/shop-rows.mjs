@@ -71,6 +71,7 @@ export const ROWS = [
   { key: 'reach', part: 1, reach: S => { S.autoToss = true; } },
   // Both sit beside the swing once the swinging is automatic.
   { key: 'speed', part: 1, reach: S => { S.autoMine = true; } },
+  { key: 'buildspeed', part: 1, reach: S => { S.autoMine = true; } },
   { key: 'pick', part: 1, reach: S => { S.autoMine = true; } },
   { key: 'critchance', fresh: true, part: 1 },
   { key: 'critmult', fresh: true, part: 1 },

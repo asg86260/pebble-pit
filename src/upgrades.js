@@ -133,6 +133,7 @@ export const SECTIONS = [
   { key: 'you', title: msg('sect-you'), keys: ['carry', 'autotoss', 'toss', 'reach', 'auto', 'speed', 'pick'] },
   { key: 'lucky swings', title: msg('sect-luck'), keys: ['critchance', 'critmult'] },
   { key: 'the haulers', title: msg('sect-haulers'), keys: ['haulcarry', 'haulpace', 'carter', 'driver', 'liftload', 'liftpace', 'belt'] },
+  { key: 'building', title: msg('sect-building'), keys: ['buildspeed'] },
   { key: 'build', title: msg('sect-build'), keys: [
     'unlockquarry', 'unlockfarm', 'unlockapothecary', 'unlockcasino',
     'unlockshack', 'unlockouthouse', 'unlocktower',
