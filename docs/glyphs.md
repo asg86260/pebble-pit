@@ -69,6 +69,7 @@ cells wide); those are redrawn at eight, the shape settled.
 | ore lump        | `seam` +plus, `spellluck` +star                                                          |
 | ear of crop     | `crop` +plus, `spellgmo` +star                                                       |
 | hoe             | `tend` +up                                                                             |
+| mallet          | `buildspeed` +up                                                                       |
 | vial            | `brewdoses` +plus                                                                      |
 | bowl            | `potency-stew` +plus                                                                   |
 | star (5-point)  | `spelldrive`, `spellluck`, `spellgmo`, `spellthrift`, `spellsweep` (with their own first glyph) |

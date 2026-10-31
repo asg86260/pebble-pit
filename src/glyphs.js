@@ -11,6 +11,8 @@ import { SHELF_GLYPH_CELL as CELL, SHELF_GLYPH_CELLS as CELLS, SHELF_INK, SHELF_
 export const GLYPHS = {
   sack:       ['########', '#......#', '#..##..#', '########', '#..##..#', '#......#', '#......#', '########'],
   planks:     ['........', '........', '###..###', '#..##..#', '#......#', '#......#', '#......#', '#......#'],
+  // the build-speed row's wooden mallet: a chunky head on a one-cell handle
+  mallet:     ['........', '#####...', '#####...', '#####...', '..#.....', '..#.....', '..#.....', '..#.....'],
   net:        ['........', '........', '##.#.#.#', '#.#.#.##', '##.#.#.#', '#.#.#.##', '#......#', '#......#'],
   arch:       ['........', '...##...', '.######.', '###..###', '#......#', '#......#', '#......#', '#......#'],
   point:      ['........', '........', '........', '...##...', '..####..', '.######.', '........', '........'],
@@ -143,7 +145,7 @@ export const GLYPH_OF = {
   carry: ['sack'], auto: ['lever'], speed: ['swing'], pick: ['pickhead'],
   autotoss: ['lever'], toss: ['swing', 'up'], reach: ['swing'],
   critchance: ['spark'], critmult: ['cracked'],
-  haulcarry: ['sack'], haulpace: ['boot', 'up'], carter: ['cart'], driver: ['lift'], liftload: ['lift', 'plus'], liftpace: ['lift', 'up'], belt: ['belt'], buildspeed: ['planks', 'up'],
+  haulcarry: ['sack'], haulpace: ['boot', 'up'], carter: ['cart'], driver: ['lift'], liftload: ['lift', 'plus'], liftpace: ['lift', 'up'], belt: ['belt'], buildspeed: ['mallet', 'up'],
   unlockquarry: ['hoist'], unlockfarm: ['furrow'], unlockapothecary: ['pot'], unlockcasino: ['die'],
   unlockshack: ['hut'], unlockouthouse: ['bucket'], unlocktower: ['tower'], unlockfilter: ['balloon'],
   // the house and the closet
