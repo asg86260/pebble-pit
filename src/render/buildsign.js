@@ -1,6 +1,6 @@
 // REVIEW build-sign
-// The build sign as drawn (buildsign.js): a board on a post, BUILD over the
-// price, staked in an empty lot. Paper with the boards' dots, a two-pixel
+// The build sign as drawn (buildsign.js): a board on a post, the name of what
+// goes up there over its price, staked in an empty lot. Paper with the boards' dots, a two-pixel
 // ink edge, the post a cell wide into the ground under its middle. Greyed,
 // edge and all, while its row waits on something; a coin short of greyed on
 // the price line alone. Under the pointer it lifts up and left off a hard
@@ -19,8 +19,7 @@ import { crispText } from './crisptext.js';
 import { fillDots } from './dots.js';
 import { now } from '../clock.js';
 import { reducedMotion } from '../prefs.js';
-import { signs, onSign, signWord, markScale, rowW, textW, signMid, signSays } from '../buildsign.js';
-import { showTip } from '../board.js';
+import { signs, onSign, markScale, rowW, textW, signMid } from '../buildsign.js';
 import { toScreen } from '../world.js';
 
 const THIN = 2;
@@ -82,19 +81,16 @@ function drawSign(s) {
   ctx.fillStyle = ink;
   ctx.fillRect(x, y, b.w, THIN); ctx.fillRect(x, y + b.plate - THIN, b.w, THIN);
   ctx.fillRect(x, y, THIN, b.plate); ctx.fillRect(x + b.w - THIN, y, THIN, b.plate);
-  crispText(ctx, signWord(), x + b.w / 2, y + P * SIGN_WORD_AT, font(), ink, 'center', PAPER(), GREY);
+  crispText(ctx, s.name, x + b.w / 2, y + P * SIGN_WORD_AT, font(), ink, 'center', PAPER(), GREY);
   drawParts(s.parts, x + (b.w - rowW(s.parts)) / 2, y + P * SIGN_BILL_AT, P * SIGN_BILL_H, ink);
 }
 
-// A scene stands the pointer on a lot's sign, its hover up, without
-// importing this page module into the node tier (scenes.js is read there
-// too); a check finds the sign on the glass to press it as a player does.
+// A scene stands the pointer on a lot's sign, without importing this page
+// module into the node tier (scenes.js is read there too); a check finds the
+// sign on the glass to press it as a player does.
 globalThis.__signHover = key => {
   const at = signMid(key);
-  if (!at) return;
-  S.mouse = at;
-  const s = signSays(at.x, at.y);
-  if (s) showTip(s.text, s.at);
+  if (at) S.mouse = at;
 };
 globalThis.__signScreen = key => { const at = signMid(key); return at && toScreen(at.x, at.y); };
 

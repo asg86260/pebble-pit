@@ -1,14 +1,14 @@
-// The build sign: a signboard on a post staked in an empty lot, BUILD over
-// the price, the lot's first build bought off it (src/buildsign.js). The
+// The build sign: a signboard on a post staked in an empty lot, its name over
+// its price, the lot's first build bought off it (src/buildsign.js). The
 // owner voted its look as the review's mock D drew it (2026-10-30); these are
 // that drawing's sizes.
 import { P } from './yard.js';
 
-// The board, in cells: the word on one line, the price on the next.
+// The board, in cells: the name on one line, the price on the next.
 export const SIGN_PLATE = 7;
 // The post under it, in cells, down into the ground under the board's middle.
 export const SIGN_POST = 4;
-// Where the word and the price stand on the board, in cells from its top, and
+// Where the name and the price stand on the board, in cells from its top, and
 // the price line's height in cells.
 export const SIGN_WORD_AT = 1;
 export const SIGN_BILL_AT = 3.5;

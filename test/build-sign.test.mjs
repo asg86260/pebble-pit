@@ -3,13 +3,13 @@
 // row out in the world, so each check holds it to the board: it stands
 // exactly when the row is listed (the row's own `show` behind its one-way
 // `once`, read through `revealed` in shop.js, and the board itself up), it
-// goes while the build is in the works, it greys where the row greys and says
-// the row's `waits` line. Every buy here is the sign's own press, at the
+// goes while the build is in the works, it greys where the row greys. It
+// wears the station's name and says nothing on a hover. Every buy here is the sign's own press, at the
 // sign's middle, as a pointer makes it (`signPress`, the press input.js asks);
 // the hooks only set up what a check is not about.
 import { group, ok, run, runUntil, yard } from './helpers.mjs';
 import { SHACK_DUST, UNLOCK_SHOW } from '../src/config.js';
-import { signs, signMid, signPress, signSays } from '../src/buildsign.js';
+import { signs, signMid, signPress } from '../src/buildsign.js';
 import { revealed } from '../src/shop.js';
 import { UPGRADES, building, take } from '../src/upgrades.js';
 import { afterRow } from '../src/after/rows.js';
@@ -52,7 +52,6 @@ group('the shack\'s sign stands exactly when its row is on the bench: not before
   run(0.2);
   const spent = { sign: !!signOf('shack', 'yard'), row: revealed(shackRow()), stored: S.stored };
   const s = signOf('shack', 'yard');
-  const says = s && signSays(signMid('shack', 'yard').x, signMid('shack', 'yard').y)?.text;
   // with the bench not yet standing, its rows are on no board
   S.seenBench = false;
   const benchless = !!signOf('shack', 'yard');
@@ -61,8 +60,7 @@ group('the shack\'s sign stands exactly when its row is on the bench: not before
     ok(at.sign && at.row, 'at it, both', JSON.stringify(at)),
     ok(spent.sign && spent.row && spent.stored < reveal, 'and spent back under it, both stay', JSON.stringify(spent)),
     ok(s && s.state === 'short' && s.bill.every(c => c.short), 'short of its price, the sign says so coin by coin', JSON.stringify(s && s.bill)),
-    ok(says === msg('build-sign-say', { call: shackRow().name, bill: msg('build-sign-coin', { n: String(SHACK_DUST), coin: msg('books-dust') }) }),
-       'and its hover names what it builds and the price', String(says)),
+    ok(s && s.name === msg('station-shack.sign').toUpperCase() && s.name === 'SHACK', 'it wears the station\'s name', s && s.name),
     ok(!benchless, 'and no sign while the bench, its board, is not up')
   ];
 });
@@ -94,15 +92,13 @@ group('pressed, the shack\'s sign pays once, hides while the hut goes up, and a 
   ];
 });
 
-group('act 3: the saw mill\'s sign is its shack row; the workshop\'s greys with its row, saying what it waits on', async () => {
+group('act 3: the saw mill\'s sign is its shack row; the workshop\'s greys with its row; each wears its station\'s name', async () => {
   up();
   window.__afterGrant({ rebel: 30 });
   run(0.2);
   const mill = afterRow('after-build-mill'), shop = afterRow('after-build-workshop');
   const listed = boardOf('after-shack').rows().filter(u => revealed(u)).map(u => u.key);
   const m = signOf('after-mill', 'after'), w = signOf('after-workshop', 'after');
-  const wAt = signMid('after-workshop', 'after');
-  const wSays = wAt && signSays(wAt.x, wAt.y)?.text;
   const rebel0 = S.after.rebel;
   const lockedPress = pressSign('after-workshop', 'after');
   const lockedPaid = S.after.rebel !== rebel0 || raising('workshop');
@@ -114,8 +110,7 @@ group('act 3: the saw mill\'s sign is its shack row; the workshop\'s greys with 
   return [
     ok(listed.includes(mill.key) && listed.includes(shop.key) && !!m && !!w, 'both rows are listed on the shack\'s board, and both lots wear a sign', listed.join(' ')),
     ok(w.state === 'locked' && shop.dead(), 'the workshop\'s sign greys while its row is dead', w.state),
-    ok(wSays === msg('build-sign-wait', { call: msg('build-sign-call', { name: msg('after-build-workshop') }), why: msg('after-wait-mill') }),
-       'and its hover is the row\'s waits line', String(wSays)),
+    ok(m.name === 'SAW MILL' && w.name === 'WORKSHOP', 'each wears its station\'s name', `${m.name} / ${w.name}`),
     ok(lockedPress && !lockedPaid, 'a press on it is the sign\'s, and buys nothing', `rebel ${rebel0} -> ${S.after.rebel}`),
     ok(short, 'the saw mill\'s, short of rebel, greys that coin alone', JSON.stringify(m && m.bill)),
     ok(ok2 === 'ok', 'and with the rebel, it can be bought', String(ok2))
@@ -174,7 +169,7 @@ group('the deep: a fang held, the next free slot wears a sign; pressed, the fang
   const pressed = pressSign('s2', 'deep');
   run(0.2);
   return [
-    ok(!!s && s.bill.length === 1 && s.bill[0].coin === 'fang' && s.state === 'ok', 'a sign over the next slot, asking a fang', JSON.stringify(s && s.bill)),
+    ok(!!s && s.bill.length === 1 && s.bill[0].coin === 'fang' && s.state === 'ok' && s.name === 'STATION', 'a sign over the next slot, STATION over a fang', JSON.stringify(s && [s.name, s.bill])),
     ok(pressed && S.fangs === fangs - 1 && S.stations.length === n + 1, 'pressed, one fang spent and a station laid', `${fangs} -> ${S.fangs}, ${n} -> ${S.stations.length}`),
     ok(!signs('deep').length, 'and with no fang left, no sign')
   ];

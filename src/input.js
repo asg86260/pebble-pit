@@ -30,7 +30,7 @@ import { doneName } from './works.js';
 import { fadeIn, fadeOut } from './fade.js';
 import { rosterHit, overRoster, rosterSays, shopAt, shopBoxOf, rosterUp } from './roster.js';
 import { buildMockPress, buildMockSays, buildMockOver } from './buildmock.js'; // MOCK build-button-in-the-world
-import { signAt, signSays, signPress } from './buildsign.js';
+import { signAt, signPress } from './buildsign.js';
 import { overCount, countRect } from './render/counter.js';
 import { potPick, potHover } from './potpick.js';
 import { shutOpts } from './shop.js';
@@ -676,12 +676,9 @@ function askedAbout(x, y, cx, cy) {
 
   const bm = buildMockSays(x, y); // MOCK build-button-in-the-world
   if (bm) { showTip(bm.text, bm.at); return true; } // MOCK build-button-in-the-world
-  // A build sign: what it builds and its price, or what it waits on.
-  const sign = signSays(x, y);
-  if (sign) {
-    showTip(sign.text, sign.at);
-    return true;
-  }
+  // A build sign says what it is on its face: no hover over it, nor over what
+  // stands behind it.
+  if (signAt(x, y)) { showTip(null); return false; }
 
   const roster = rosterSays(x, y);
   if (roster) {
@@ -747,8 +744,7 @@ const CURSORS = [
   [() => S.crewSight != null, 'grab'],
   // the counts under a station, and the places with a board on them
   [(x, y) => overRoster(x, y) || buildMockOver(x, y), 'pointer'], // MOCK build-button-in-the-world  or a lot's build button
-  // a build sign: one that waits on something tells you why
-  [(x, y) => signAt(x, y)?.state === 'locked', 'help'],
+  // a build sign
   [(x, y) => !!signAt(x, y), 'pointer'],
   // the way through the surface, from either side, and the serpent to hit
   [(x, y) => onShaftArrow(x, y) || onPortal(x, y) || onCoil(x, y) || overOrb(x, y), 'pointer'],

@@ -50,6 +50,8 @@ export const deepLot = id => ({
   id: () => id,
   row: () => (nextId() === id && nextSlot() >= 0 ? BUILD_ROW : null),
   box: () => { const slot = nextSlot(); if (slot < 0) return null; const r = standOfStation({ slot, cls: null }); return { x: r.x, w: r.w }; },
+  // what goes up there is a station, its fighter picked once it stands
+  name: () => msg('station-party-lot.sign'),
   mid: () => slotX(nextSlot()),
   floor: () => deepFloor(),
   act: buyOwn

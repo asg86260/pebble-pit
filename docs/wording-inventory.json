@@ -4837,11 +4837,25 @@
   "text": "the casino"
  },
  {
+  "id": "station-casino.sign",
+  "group": "Stations",
+  "where": "src/stations.js",
+  "context": "a station's name: its board's title, the pointer's label, the queue card",
+  "text": "casino"
+ },
+ {
   "id": "station-filter",
   "group": "Stations",
   "where": "play.html",
   "context": "a station's name",
   "text": "the air filter"
+ },
+ {
+  "id": "station-filter.sign",
+  "group": "Stations",
+  "where": "play.html",
+  "context": "a station's name",
+  "text": "air filter"
  },
  {
   "id": "station-filter-empty",
@@ -4858,6 +4872,13 @@
   "text": "the quarry"
  },
  {
+  "id": "station-quarry.sign",
+  "group": "Stations",
+  "where": "play.html",
+  "context": "a station's name",
+  "text": "quarry"
+ },
+ {
   "id": "station-quarry-empty",
   "group": "Stations",
   "where": "src/stations.js",
@@ -4870,6 +4891,13 @@
   "where": "play.html",
   "context": "a station's name",
   "text": "the farm"
+ },
+ {
+  "id": "station-farm.sign",
+  "group": "Stations",
+  "where": "play.html",
+  "context": "a station's name",
+  "text": "farm"
  },
  {
   "id": "station-farm-empty",
@@ -4886,6 +4914,13 @@
   "text": "the apothecary"
  },
  {
+  "id": "station-apothecary.sign",
+  "group": "Stations",
+  "where": "play.html",
+  "context": "a station's name",
+  "text": "apothecary"
+ },
+ {
   "id": "station-apothecary-empty",
   "group": "Stations",
   "where": "src/stations.js",
@@ -4900,6 +4935,13 @@
   "text": "the tower"
  },
  {
+  "id": "station-tower.sign",
+  "group": "Stations",
+  "where": "play.html",
+  "context": "a station's name",
+  "text": "tower"
+ },
+ {
   "id": "station-tower-empty",
   "group": "Stations",
   "where": "src/stations.js",
@@ -4912,6 +4954,13 @@
   "where": "play.html",
   "context": "a station's name",
   "text": "the shack"
+ },
+ {
+  "id": "station-shack.sign",
+  "group": "Stations",
+  "where": "play.html",
+  "context": "a station's name",
+  "text": "shack"
  },
  {
   "id": "station-shack-empty",
@@ -4933,6 +4982,13 @@
   "where": "play.html",
   "context": "a station's name",
   "text": "the janitor's closet"
+ },
+ {
+  "id": "station-outhouse.sign",
+  "group": "Stations",
+  "where": "play.html",
+  "context": "a station's name",
+  "text": "janitor's closet"
  },
  {
   "id": "station-outhouse-empty",
@@ -5010,6 +5066,13 @@
   "where": "src/stations.js",
   "context": "a deep station not yet given a fighter; $nth counts the empty lots before it (an eighth reads \"undefined\", as the code said)",
   "text": "a undefined station"
+ },
+ {
+  "id": "station-party-lot.sign",
+  "group": "Stations",
+  "where": "src/deep/buildbutton.js",
+  "context": "a deep station not yet given a fighter; $nth counts the empty lots before it (an eighth reads \"undefined\", as the code said)",
+  "text": "station"
  },
  {
   "id": "crew-at-rockhands",
@@ -5329,7 +5392,7 @@
  {
   "id": "books-dust",
   "group": "The books",
-  "where": "src/selftest/buildsign.js",
+  "where": "src/stats.js",
   "context": "the books: a coin, before its rate",
   "text": "pebbles"
  },
@@ -8475,47 +8538,5 @@
   "where": "src/buildmock.js",
   "context": "",
   "text": "${n} ${coin}"
- },
- {
-  "id": "build-sign-word",
-  "group": "Act 3 boards (track C, placeholder)",
-  "where": "src/buildsign.js",
-  "context": "The sign staked in an empty lot that builds it, in every act: the word on its board.",
-  "text": "build"
- },
- {
-  "id": "build-sign-call",
-  "group": "Act 3 boards (track C, placeholder)",
-  "where": "src/after/stations.js",
-  "context": "The sign's hover, naming what it builds: \"build the saw mill\".",
-  "text": "build the ${name}"
- },
- {
-  "id": "build-sign-say",
-  "group": "Act 3 boards (track C, placeholder)",
-  "where": "src/buildsign.js",
-  "context": "The sign's hover: what it builds and its price, \"build the shack: 150 pebbles\".",
-  "text": "${call}: ${bill}"
- },
- {
-  "id": "build-sign-wait",
-  "group": "Act 3 boards (track C, placeholder)",
-  "where": "src/buildsign.js",
-  "context": "The sign's hover while its build waits on something: \"build the workshop: needs the saw mill\".",
-  "text": "${call}: ${why}"
- },
- {
-  "id": "build-sign-coin",
-  "group": "Act 3 boards (track C, placeholder)",
-  "where": "src/buildsign.js",
-  "context": "One coin of the sign's price, in its hover: \"150 pebbles\".",
-  "text": "${n} ${coin}"
- },
- {
-  "id": "build-sign-fang",
-  "group": "Act 3 boards (track C, placeholder)",
-  "where": "src/buildsign.js",
-  "context": "The deep's coin on its build sign, in the hover: \"1 fang\".",
-  "text": "fang"
  }
 ]
