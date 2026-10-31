@@ -18,6 +18,7 @@ import { P, AFTER_SAW, AFTER_GAP, AFTER_H, AFTER_W, AFTER_FLOOR_MARGIN,
          AFTER_SIGN_BOARD, AFTER_PEDESTAL_SIGN_GAP } from '../config.js';
 
 import { S } from '../state.js';
+import { crownMock, crownMockKey, wobble } from './crownmock.js'; // MOCK grove-the-crown
 import { ART as BASE_ART, standCol, rampRun, pileLeft, pileCells, pileHigh, pileGrid } from './art.js';
 
 const snap = v => Math.round(v / P) * P;
@@ -367,17 +368,34 @@ export const TRUNK_TOP = -(AFTER_TREE.stump + AFTER_TREE.logs * AFTER_TREE.log);
 const mirror = lobes => lobes.flatMap(([x, y, r]) => (x ? [[x, y, r], [-x, y, r]] : [[x, y, r]]));
 export const OAK = mirror(AFTER_OAK);
 let CELLS = null; // cache: the tree's cells, worked out once
+// MOCK grove-the-crown: the caches below are for the option standing, and
+// the clumps the crown is laid off are that option's.
+let CROWN_KEY = '';
+const freshCrown = () => { const k = crownMockKey(); if (k !== CROWN_KEY) { CROWN_KEY = k; CELLS = ORDER = CELL_SET = ROWS = null; } };
+export const crownLobes = () => crownMock()?.lobes || OAK;
 export function treeCells() {
+  freshCrown();
   if (CELLS) return CELLS;
+  const OAK = crownLobes(), mock = crownMock(), cut = mock?.cut || [], rag = mock?.rag || 0;
   const { c0, w, stump } = AFTER_TREE, out = [], leaf = new Set();
   for (let r = -1; r >= -stump; r--) for (let c = c0; c < c0 + w; c++) out.push([c, r, 'stump', 0]);
   for (let r = -stump - 1; r >= TRUNK_TOP; r--) for (let c = c0; c < c0 + w; c++) out.push([c, r, 'trunk', 0]);
-  const reach = Math.ceil(Math.max(...OAK.map(([, y, r]) => y + r))), low = Math.floor(Math.min(...OAK.map(([, y, r]) => y - r)));
-  const inLobe = (cx, cy) => OAK.some(([x, y, r]) => (cx - x) ** 2 + (cy - y) ** 2 <= r * r);
+  const reach = Math.ceil(Math.max(...OAK.map(([, y, r]) => y + r + rag / 2))), low = Math.floor(Math.min(...OAK.map(([, y, r]) => y - r - rag / 2)));
+  const inLobe = (cx, cy) => OAK.some(([x, y, r], k) => Math.hypot(cx - x, cy - y) <= r + rag * wobble(cx, cy, k))
+    && !cut.some(([x, y, r]) => Math.hypot(cx - x, cy - y) <= r + rag * 0.5 * wobble(cx, cy, 9));
   const depth = (cx, cy, k) => Math.hypot(cx - OAK[k][0], cy - OAK[k][1]) - OAK[k][2];
+  // MOCK grove-the-crown: a ragged edge tidied, so no leaf hangs on by a
+  // corner and no pinhole of sky shows that is not a cut window.
+  const inside = new Set();
+  for (let y = reach; y >= low; y--) for (let c = -AFTER_OAK_HALF; c < AFTER_OAK_HALF; c++) if (inLobe(c + 0.5, y - 0.5)) inside.add(`${c}|${y}`);
+  if (mock) for (let pass = 0; pass < 2; pass++) for (let y = reach; y >= low; y--) for (let c = -AFTER_OAK_HALF; c < AFTER_OAK_HALF; c++) {
+    const n = [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(([a, b]) => inside.has(`${c + a}|${y + b}`)).length, key = `${c}|${y}`;
+    if (inside.has(key) && n < 2) inside.delete(key);
+    else if (!inside.has(key) && n >= 3 && !cut.some(([x, yy, r]) => Math.hypot(c + 0.5 - x, y - 0.5 - yy) <= r + 0.5)) inside.add(key);
+  }
   for (let y = reach; y >= low; y--) for (let c = -AFTER_OAK_HALF; c < AFTER_OAK_HALF; c++) {
     const cx = c + 0.5, cy = y - 0.5;
-    if (!inLobe(cx, cy)) continue;
+    if (!inside.has(`${c}|${y}`)) continue;
     let k = 0;
     for (let j = 1; j < OAK.length; j++) if (depth(cx, cy, j) < depth(cx, cy, k)) k = j;
     leaf.add(`${c}|${y}`);
@@ -396,6 +414,21 @@ export function treeCells() {
       if (yy > 0 && !leaf.has(`${c}|${yy}`) && Math.abs(c + 0.5) > w / 2 - 0.01 && !has.has(key)) { has.add(key); out.push([c, TRUNK_TOP - yy, 'bough', 0]); }
     }
   }
+  // MOCK grove-the-crown: a bough seen only through a window, cut off from
+  // the trunk by leaves, reads as a stray mark; only the ones joined to the
+  // trunk stay.
+  if (mock) {
+    const wood = new Map(out.filter(q => q[2] === 'trunk' || q[2] === 'bough').map(q => [`${q[0]}|${q[1]}`, q]));
+    const seen = new Set(), todo = out.filter(q => q[2] === 'trunk').map(q => `${q[0]}|${q[1]}`);
+    while (todo.length) {
+      const key = todo.pop();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const [c, r] = key.split('|').map(Number);
+      for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) if (wood.has(`${c + a}|${r + b}`)) todo.push(`${c + a}|${r + b}`);
+    }
+    return (CELLS = out.filter(q => q[2] !== 'bough' || seen.has(`${q[0]}|${q[1]}`)));
+  }
   return (CELLS = out);
 }
 // The order a tree comes in as it grows (B1): the stump and trunk from the
@@ -403,6 +436,7 @@ export function treeCells() {
 // out.
 let ORDER = null; // cache: the cells in growing order, worked out once
 export function growOrder() {
+  freshCrown();
   if (ORDER) return ORDER;
   ORDER = treeCells().slice().sort((a, b) => (b[1] - a[1]) || (Math.abs(a[0] + 0.5) - Math.abs(b[0] + 0.5)) || (a[0] - b[0]));
   return ORDER;
@@ -410,11 +444,12 @@ export function growOrder() {
 // The tree's cells as a set of "c|r", what the hand presses exactly (gaps
 // between the clumps are sky, nobody's).
 let CELL_SET = null; // cache: the tree's cells as keys, worked out once
-export const treeHas = (c, r) => (CELL_SET || (CELL_SET = new Set(treeCells().map(([cc, rr]) => `${cc}|${rr}`)))).has(`${c}|${r}`);
+export const treeHas = (c, r) => (freshCrown(), CELL_SET || (CELL_SET = new Set(treeCells().map(([cc, rr]) => `${cc}|${rr}`)))).has(`${c}|${r}`);
 // The tree as rows [row, from, to] of cells off its plot's line and the floor,
 // and the box round them: the map's.
 let ROWS = null; // cache: the tree's rows, worked out once
 export function treeRows() {
+  freshCrown();
   if (ROWS) return ROWS;
   const spans = new Map();
   for (const [c, r] of treeCells()) { const s = spans.get(r); spans.set(r, s ? [Math.min(s[0], c), Math.max(s[1], c)] : [c, c]); }
