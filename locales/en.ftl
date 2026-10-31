@@ -3015,6 +3015,9 @@ status-inspired-does = hits harder
 # a status's hover line: $name (status-…) and what it does
 status-line = { $name }: { $does }
 
+# a status said out inside a skill's line (MOCK fighters-skills-on-the-hover): $name (status-…) and what it does
+skill-status = { $name } ({ $does })
+
 # a status's hover line when $n of it are on
 status-line-n = { $name } x{ $n }: { $does }
 

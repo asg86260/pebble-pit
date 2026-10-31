@@ -31,6 +31,7 @@ import { fadeIn, fadeOut } from './fade.js';
 import { rosterHit, overRoster, rosterSays, shopAt, shopBoxOf, rosterUp } from './roster.js';
 import { buildMockPress, buildMockSays, buildMockOver } from './buildmock.js'; // MOCK build-button-in-the-world
 import { signAt, signPress } from './buildsign.js';
+import { skillsCard, skillsCardGone } from './deep/skillsmock.js'; // MOCK fighters-skills-on-the-hover
 import { overCount, countRect } from './render/counter.js';
 import { potPick, potHover } from './potpick.js';
 import { shutOpts } from './shop.js';
@@ -455,7 +456,7 @@ addEventListener('blur', () => {
 });
 
 // The cursor leaving the canvas takes any label with it.
-canvas.addEventListener('pointerleave', () => { showTipAt(null); gestureHover(null); });
+canvas.addEventListener('pointerleave', () => { showTipAt(null); gestureHover(null); skillsCardGone(); }); // MOCK fighters-skills-on-the-hover
 
 
 // --- the hover registry ---------------------------------------------------------
@@ -665,9 +666,10 @@ function askedAbout(x, y, cx, cy) {
   const w = lifted() || workerAt(x, y);
   if (w) {
     const at = toScreen(w.x + WORKER + P * 2, w.y - P * 3);
-    showTipAt(card(w), at.x, at.y);
+    if (!skillsCard(w, at.x, at.y)) showTipAt(card(w), at.x, at.y); // MOCK fighters-skills-on-the-hover
     return true;
   }
+  skillsCardGone(); // MOCK fighters-skills-on-the-hover
   for (const p of shownPiles()) {
     if (!S.pileFull[p.key] || !overPileMark(p.key, x, y)) continue;
     showTip(fullSays(p.key), pileMarkAt(p.key));

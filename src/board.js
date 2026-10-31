@@ -541,15 +541,18 @@ export function showTip(text, at, lead = null) {
 // neighboring tiles, where standing clear of the whole board would put it on
 // the far side of the sheet from the tile. `lead` is a pad's button glyph
 // (padread.js) worn in front of the words, for a tip a pad's focus asked for.
-export function showTipAt(text, sx, sy, centred, over = false, lead = null) {
+export function showTipAt(text, sx, sy, centred, over = false, lead = null, tail = null) {
   if (!text) {
     if (tipFor !== null) { tipEl.hidden = true; tipFor = null; }
     return;
   }
-  const said = lead ? `${lead.textContent}|${text}` : text;
+  // MOCK fighters-skills-on-the-hover: `tail` is worn after the words, its
+  // `dataset.key` saying when it has changed
+  const said = (lead ? `${lead.textContent}|${text}` : text) + (tail ? `|${tail.dataset.key}` : '');
   if (said !== tipFor) {
     if (lead) tipEl.replaceChildren(lead, ` ${text}`);
     else tipEl.textContent = text;
+    if (tail) tipEl.appendChild(tail);
     tipEl.hidden = false;
     tipFor = said;
   }
