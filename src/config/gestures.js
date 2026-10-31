@@ -84,6 +84,12 @@ export const GESTURE_PAD_TURN = 0.5;
 export const GESTURE_CUE_DOT = 2;
 export const GESTURE_CUE_LOOP_S = 1.4;
 export const GESTURE_CUE_TAP_S = 0.4;
+// The ghost acorn over each bare plot that can take one (the owner, 2026-10-31,
+// "we should put an indicator over the plant site where to put a seed"; voted
+// A of the mock): `up` cells over the soil bed, bobbing `bob` cells smoothly
+// once every `bob_s` seconds; at the cue's ink with the hand empty, its line
+// darkened to the page's ink while the hand holds an acorn.
+export const GESTURE_PLANT_CUE = { up: 1.5, bob: 1, bob_s: 1.6 };
 
 // The same hand again while the pointer is over a part (DESIGN.md, "Act 3's
 // goods are blocks", rule 3): at GESTURE_CUE_HOVER of the cue's own ink, so it

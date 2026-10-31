@@ -13,7 +13,7 @@
 // is a held star.
 
 import { P, GREY, GESTURE_CUE_ALPHA, GESTURE_CUE_HOVER, GESTURE_CUE_DOT, GESTURE_CUE_TAP_S, GESTURE_CUE_LOOP_S, GESTURE_STAR_HOLD_S, GESTURE_STAR_FADE_S,
-         GESTURE_MARK_HOLD_S, GESTURE_MARK_FADE_S, GESTURE_SAW_AMP } from '../config.js';
+         GESTURE_MARK_HOLD_S, GESTURE_MARK_FADE_S, GESTURE_SAW_AMP, GESTURE_CUE_FADE_S, GESTURE_PLANT_CUE, AFTER_BLOCK, AFTER_BLOCK_H } from '../config.js';
 import { ctx } from './ctx.js';
 import { S } from '../state.js';
 import { gestureView, partsOf, lowestBubble } from '../after/gestures.js';
@@ -28,6 +28,11 @@ import { drawHeldSaws, workedBy } from './after/saw.js';
 import { K, W, MID } from './after/kit.js';
 // track C: the stump's cue finds its stump itself (trees, imported above)
 import { pullable, PULL_HOLDS } from '../after/stump.js';
+// the ghost acorn over a bare plot (A2's cue): where, and whether the hand holds one
+import { plantable } from '../after/grove.js';
+import { plotX, groundOf } from '../after/place.js';
+import { heldGoods } from '../hands.js';
+import { line as inkLine } from '../ink.js';
 const pulledBy = i => S.after.bodies.some(b => b.dig && b.target === i && b.pull && PULL_HOLDS.includes(b.pull.ph));
 
 const D = GESTURE_CUE_DOT;
@@ -136,6 +141,56 @@ function cueAt(key, r) {
   return null;
 }
 
+// --- the ghost acorn ---------------------------------------------------------------
+// Over each bare plot that can take an acorn, a ghost of one bobbing over its
+// soil bed (GESTURE_PLANT_CUE): the acorn's cells (render/after/pine.js) in the
+// cue's dots, its rim the cue's line, its cap filled in the line so it reads
+// as an acorn, its nut paper. Each plot's mark eases in as the plot comes
+// bare and out as it is planted; while the hand holds an acorn its line is
+// laid again in the page's ink, eased the same way, so it darkens rather
+// than pops. A pointer's mark over the place, as the hand is: never a thing
+// in it, so nothing rests or is counted.
+const ACORN_CELLS = [[1, 0], [0, 1], [1, 1], [2, 1], [0, 2], [1, 2], [2, 2], [1, 3]];
+const cellDots = cells => {
+  const per = Math.round(AP / D), on = new Set();
+  for (const [c, r] of cells) for (let j = 0; j < per; j++) for (let i = 0; i < per; i++) on.add(`${c * per + i}|${r * per + j}`);
+  return on;
+};
+const ACORN_DOTS = cellDots(ACORN_CELLS), CAP_DOTS = cellDots(ACORN_CELLS.filter(([, r]) => r < 2));
+const rimDot = (i, j) => !ACORN_DOTS.has(`${i - 1}|${j}`) || !ACORN_DOTS.has(`${i + 1}|${j}`) || !ACORN_DOTS.has(`${i}|${j - 1}`) || !ACORN_DOTS.has(`${i}|${j + 1}`);
+function ghostAcorn(x, y, tone, rimsOnly) {
+  x = dsnap(x); y = dsnap(y);
+  for (const k of ACORN_DOTS) {
+    const [i, j] = k.split('|').map(Number), rim = rimDot(i, j), cap = CAP_DOTS.has(k);
+    if (rimsOnly && !rim && !cap) continue;
+    ctx.fillStyle = rim || cap ? tone : GREY[W];
+    ctx.fillRect(x + i * D, y + j * D, D, D);
+  }
+}
+const plantInk = [], plantDark = []; // page: each plot's mark's ink and its held line, 0..1, eased on the act's clock
+let plantT = null; // page: the act's clock the marks were last eased to
+const ease = (v, want, dt) => v + Math.max(-dt / GESTURE_CUE_FADE_S, Math.min(dt / GESTURE_CUE_FADE_S, want - v));
+function drawPlantCue() {
+  const t = now(), dt = plantT == null || t < plantT ? 0 : Math.min(0.25, t - plantT), list = trees();
+  plantT = t;
+  const holding = heldGoods()?.kind === 'acorn', C = GESTURE_PLANT_CUE;
+  const w = AFTER_BLOCK.acorn * AP, h = AFTER_BLOCK_H.acorn * AP, top = groundOf('grove') - AP;
+  const bob = (Math.sin(t * 2 * Math.PI / C.bob_s) + 1) / 2;
+  list.forEach((p, i) => {
+    const open = plantable(i);
+    plantInk[i] = ease(plantInk[i] ?? 0, open ? GESTURE_CUE_ALPHA : 0, dt);
+    plantDark[i] = ease(plantDark[i] ?? 0, open && holding ? 1 : 0, dt);
+    if (plantInk[i] <= 0.01 && plantDark[i] <= 0.01) return;
+    const x = plotX(i) - w / 2, y = top - h - (C.up + bob * C.bob) * AP;
+    if (x + w < S.camX - P * 4 || x > S.camX + S.viewW + P * 4) return;
+    ctx.globalAlpha = plantInk[i];
+    ghostAcorn(x, y, GREY[MID], false);
+    if (plantDark[i] > 0.01) { ctx.globalAlpha = plantDark[i]; ghostAcorn(x, y, inkLine(GREY[K]), true); }
+  });
+  plantInk.length = plantDark.length = list.length;
+  ctx.globalAlpha = 1;
+}
+
 // The hand's ink each station drew last frame, by key (0 where none): read by
 // the browser check (src/selftest/aftergestures.js), so it is a fact about
 // the drawing.
@@ -150,6 +205,7 @@ export function drawAfterCues() {
   if (!view) return;
   const t = now();
   drawHeldSaws();   // track B
+  drawPlantCue();
   shown = {};
   for (const r of view) {
     // One hand: the first uses' cue, or the same hand faint while the
