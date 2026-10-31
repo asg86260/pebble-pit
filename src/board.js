@@ -540,17 +540,19 @@ export function showTip(text, at, lead = null) {
 // note stand on the board: a shelf tile's note sits beside its tile, over the
 // neighboring tiles, where standing clear of the whole board would put it on
 // the far side of the sheet from the tile. `lead` is a pad's button glyph
-// (padread.js) worn in front of the words, for a tip a pad's focus asked for.
+// (padread.js) worn in front of the words, for a tip a pad's focus asked for,
+// or a drawing that is the whole tip with no words after it (the furnace's
+// dps, render/dpstip.js).
 export function showTipAt(text, sx, sy, centred, over = false, lead = null, tail = null) {
-  if (!text) {
+  if (!text && !lead) {
     if (tipFor !== null) { tipEl.hidden = true; tipFor = null; }
     return;
   }
   // MOCK fighters-skills-on-the-hover: `tail` is worn after the words, its
   // `dataset.key` saying when it has changed
-  const said = (lead ? `${lead.textContent}|${text}` : text) + (tail ? `|${tail.dataset.key}` : '');
+  const said = (lead ? `${lead.textContent}|${lead.className}|${text}` : text) + (tail ? `|${tail.dataset.key}` : '');
   if (said !== tipFor) {
-    if (lead) tipEl.replaceChildren(lead, ` ${text}`);
+    if (lead) tipEl.replaceChildren(...(text ? [lead, ` ${text}`] : [lead]));
     else tipEl.textContent = text;
     if (tail) tipEl.appendChild(tail);
     tipEl.hidden = false;

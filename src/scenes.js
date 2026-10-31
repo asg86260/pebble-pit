@@ -30,6 +30,7 @@ import { depthAt } from './deep/depth.js';
 import { strike, clickDeep } from './deep/serpent.js';
 import { mouthX, portalX, spotX, coilAt, bellySeg, slotX, crusherRect, deepFloor, deepX0 } from './deep/place.js';
 import { sweep } from './hands.js';
+import { showFurnaceTip } from './render/dpstip.js';
 import { windowS, startMeal, landAt } from './deep/meals.js';
 import { startleFauna, faunaWhen } from './deep/fauna.js';
 import { nextWave } from './render/deepwave.js';
@@ -58,6 +59,7 @@ import { afterGround } from './state.js';
 import { FINALE_HOUSE_W, APOTH_POTS_MAX } from './config.js';
 import { houseX } from './home.js';
 import { goOnAlpha } from './actbeats.js';
+import { held as intro3Held } from './reset.js'; // MOCK act-3-the-intro
 import { forceMotion, motionForcedNow } from './prefs.js';
 import { stopById } from './stops.js';
 import { INDEX } from './config/index.js';
@@ -1020,6 +1022,27 @@ const deepScenes = {
       for (let i = 0; i < 6; i++) sweep(c.x + c.w + P * (6 + i * 2), deepFloor() - P);
       S.mouse = { x: c.x + c.w / 2, y: c.y + c.h * 0.6 };
       window.__look(deepX0());   // the deep's left end, where the card stands clear of the furnace
+    } },
+  // The furnace's hover (render/dpstip.js): two fighters for half a minute,
+  // two more joining and the hand clicking now and then, the wound held so no
+  // break ends the fight; then the camera on the furnace and the pointer on it.
+  'furnace-dps': { about: 'the deep', review: 'the furnace: dps graph, built', option: 'A a bar a fighter',
+    stage: 'built: furnace-dps, not on main yet', branch: 'furnace-dps', supersedes: ['the furnace: dps graph'],
+    say: "the furnace's hover: the minute's damage a second as a heap under the break pace, and a bar a fighter, the highest on top",
+    run: () => {
+      deepYard({ stage: 1, wound: 0.2, run: 25, party: [cast('brawler', 4), cast('ranger', 4)] });
+      window.__party({ stations: [cast('sapper', 6), cast('mage', 6)] });
+      for (let s = 0; s < 35; s += 0.5) {
+        window.__fast(0.5); window.__serpent({ stage: 1, wound: 0.2 * depthAt(1) });
+        if (s % 2 === 0 && s > 8) { const p = coilAt(Math.floor(COIL_SEGS / 3), now()); clickDeep(p.x, p.y); }
+      }
+      S.wonShown = S.wonSeq | 0;   // the act-1 notice the granted coins earn, hushed while the scene stands
+      window.__look(deepX0());
+      window.__fast(1 / 60);
+      const c = crusherRect();
+      S.mouse = { x: c.x + c.w / 2, y: c.y + c.h / 2 };
+      showFurnaceTip();
+      window.__holdShot();
     } },
   // A storm over the yard and a strike at its flash while the view is in the
   // deep: under the water none of it shows.
@@ -4169,3 +4192,37 @@ Object.assign(SCENES, {
       standSign('s2', signMid('s2', 'deep').x - S.viewW / 2);
     } }
 });
+
+// MOCK act-3-the-intro: the house's rock as a meteor, round 2's F and round 3's G, each
+// played from the go-on card's press through the refusal (the two of them
+// up on the pedestal), the walk up the stair and across the cloud floor at
+// ACT_CALL_K's pace (actbeats.js, render/intro3mock.js). Never merged. On a
+// live page it stands itself again a few seconds after the pedestal, so
+// the bench loops it; a held clock (`__still`, the GIF tool) never loops.
+const INTRO3 = [ // MOCK act-3-the-intro
+  // A and B dropped in round 2, C, D and E in round 3: the owner took F
+  ['f', 'F the aftermath', "Round 2, kept to compare: the hot fall, a held smear of flame along the ground, the house thrown up in pieces, a ring of dust, then scorched ground with embers going out and a column of smoke."],
+  ['g', 'G the crater', "F falling under gravity, slow at first and speeding into the ground; a big explosion of flame and smoke held a beat then thrown out, the view shaken for half a second, the debris higher and wider, a bolder ring; the rock sits in a shallow crater with a rim of thrown dirt, and a fire smoulders round it, going out over twenty seconds."]
+];
+for (const [opt, option, say] of INTRO3) {
+  const name = `intro3-${opt}`;
+  SCENES[name] = { about: 'the acts', review: 'act 3: the intro', branch: 'a3-review-both',
+    stage: 'mock: throwaway, never merged', option, say,
+    swap: () => { window.__scene(name); },
+    run: () => {
+      actsYard('home');
+      for (let i = 0; i < 60 * 30 && goOnAlpha() < 1; i++) window.__fast(1 / 60);
+      window.__unpin();
+      globalThis.__intro3Mock = opt;
+      window.__goOn();
+      if (typeof setInterval !== 'function' || typeof window.__scene !== 'function') return;
+      let doneAt = 0;
+      const loop = setInterval(() => {
+        if (S.still || globalThis.__intro3Mock !== opt) return;
+        if (!S.beatsDone.includes('refuse')) { doneAt = 0; return; }
+        doneAt = doneAt || performance.now();
+        if (performance.now() - doneAt > 3000) window.__scene(name);
+      }, 250);
+      intro3Held('intro3mock-loop', () => clearInterval(loop));
+    } };
+}

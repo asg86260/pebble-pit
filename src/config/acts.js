@@ -251,3 +251,53 @@ export const ACT_KNOBS = [
   { key: 'ACT_ROAD_CLOUDS', label: 'clouds up the road', min: 0, max: 40, step: 1,
     get: () => ACT_ROAD_CLOUDS, set: v => { ACT_ROAD_CLOUDS = v; } }
 ];
+
+// MOCK act-3-the-intro
+// Throwaway review numbers, never merged: the house's rock as a meteor, off
+// screen to the ruin with flames (src/render/intro3mock.js), and the
+// intro's walk up the stair and across the cloud floor at ACT_CALL_K's pace.
+// Per option: `fallS` the fall's seconds, `holdS` the impact's hold (the dust
+// phase), `trail` the flame's length behind the rock and `flare` its width
+// past the rock's, in cells; `margin` cells kept clear of the view's edge at
+// the start, so it begins wholly off screen; `ease` the power the fall
+// speeds up by.
+// Round 2 builds on C ("lets give it more sauce", the owner): `flick` the
+// flame's edge cells flickering a cell at a time, `sparks` shed along the
+// dive, `glow` the heat brightening as it nears the ground, `pulse` the
+// shadow beating faster as it comes; then on the ground `smear` seconds of
+// a held impact pose (the flame flattened out along the ground), `chunks`
+// of the house thrown up in arcs, `ring` the dust's shockwave, `scorch`
+// the scorched ground and its embers, `column` the smoke rising and
+// drifting. Each hold is long enough that everything has faded by its end.
+const INTRO3_C = { fallS: 2.6, holdS: 2.6, trail: 12, flare: 1, margin: 30, ease: 1.9, drift: 0.1, shadow: 0.9 };
+const INTRO3_D = { ...INTRO3_C, trail: 24, flare: 2, margin: 36, flick: true, sparks: 60, glow: true, pulse: true };
+const INTRO3_E = { ...INTRO3_D, holdS: 3.2, smear: 0.35, chunks: 20, ring: 34 };
+const INTRO3_F = { ...INTRO3_E, holdS: 4.8, chunks: 26, scorch: true, column: 34 };
+export const INTRO3_MOCK = {
+  a: { fallS: 1.5, holdS: 2.2, trail: 34, flare: 2, margin: 4, ease: 1.7, drift: 0.18 },
+  b: { fallS: 3.2, holdS: 2.8, trail: 18, flare: 1, margin: 4, ease: 1.25, embers: 0.9, smoke: 26 },
+  c: INTRO3_C,
+  d: INTRO3_D,
+  e: INTRO3_E,
+  f: INTRO3_F,
+  // Round 3 on F (the owner: "it should come in, accellerating a bit,
+  // screenshake, big explosion, slight crater, smouldering fire"): `ease` 2
+  // is a fall under gravity, its speed growing the whole way, from a start
+  // just `margin` cells off the top so the speeding up is seen; `shake` the
+  // throw handed to the yard's own shake (world.js, `shakeView`, which the
+  // motion setting already turns off), rung out by SHAKE_RATE and
+  // SHAKE_DECAY in about half a second; `burst` flame cells and `balls`
+  // smoke balls thrown out and up, held `smear` seconds first; `throw` the
+  // debris's speed against E's; `ringRows` the dust ring's height at its
+  // front; `crater` the bowl in cells (its depth, its half width, how far
+  // the rock sits down in it, its rim's height); `smoulderS` the seconds
+  // the fire left in it takes to go out once the hold is over.
+  g: { ...INTRO3_F, fallS: 3.0, ease: 2, margin: 6, holdS: 5.2, smear: 0.2, shake: 20, burst: 130, balls: 18,
+       chunks: 36, throw: 1.5, ring: 54, ringRows: 4, crater: { depth: 2, half: 14, sink: 2, rim: 3 }, smoulderS: 20 }
+};
+// The meteor's flame, hottest first: the meteor's own red (COIN_TONES.spark,
+// palette.js: "out of the sky and still hot"), its brightest against the
+// rock and down the flame's middle, its darkest at the edges and the end of
+// the run, then smoke. White would vanish on the paper.
+export const INTRO3_FLAME = ['#e8503a', '#d93a25', '#c62d1c', '#9c2214'];
+export const INTRO3_SMOKE = [GREY[5], GREY[6], GREY[7]];

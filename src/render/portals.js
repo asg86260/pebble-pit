@@ -31,6 +31,7 @@ import { drawGatesBehind, drawGatesFront, drawGatesAfter } from './gates.js';
 import { goOnDue, goOnAlpha, fallNow, actCaption } from '../actbeats.js';
 import { rockRowsLeft, soulAt, mansionHeld } from '../mansion.js';
 import { deepFloor } from '../deep/place.js';
+import { drawIntro3 } from './intro3mock.js'; // MOCK act-3-the-intro
 
 const snap = v => Math.round(v / P) * P;
 const cellAt = (x, y, tone) => { if (!tone) return; ctx.fillStyle = tone; ctx.fillRect(x, y, P, P); };
@@ -92,6 +93,7 @@ function drawRock() {
   const f = fallNow();
   const x0 = snap(houseX() + FINALE_HOUSE_W * P / 2 - ACT_ROCK_W * P / 2);
   const rest = Math.round(S.groundY / P) * P - ACT_ROCK_H * P;
+  if (drawIntro3(f, (x, y, rows) => rockCells(x, y, rows), (dy = 0) => { const rows = rockRowsLeft(); if (rows > 0) rockCells(x0, rest + dy, rows); })) return; // MOCK act-3-the-intro
   if (f && f.rock < 0) return;
   if (f && f.rock < 1) {
     const k = Math.floor(f.rock * ACT_ROCK_STEPS) / ACT_ROCK_STEPS;

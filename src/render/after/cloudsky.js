@@ -19,7 +19,7 @@ import { P, CLOUDS_ACT3 as A, CLOUDS_SKY, CLOUDS_PALETTE } from '../../config.js
 import { S } from '../../state.js';
 import { ctx } from '../ctx.js';
 import { onPixel } from '../frame.js';
-import { darkPage, onTheme } from '../../ink.js';
+import { darkPage, onTheme, raw } from '../../ink.js';
 import { afterOpenX, afterX0, afterX1 } from '../../after/place.js';
 import { skyLayer, layerLook, layerParams, stillSheet, drawBand } from '../clouds.js';
 import { cellOnPage, layerSpan, workClouds, putCells } from '../cloudpage.js';
@@ -30,7 +30,10 @@ import { held } from '../../reset.js';
 const page = () => (darkPage ? 'dark' : 'light');
 // The path's surface: the paper by day, by night the cloud palette's role
 // CLOUDS_ACT3.path names (render/after/floor.js draws the path in it too).
-export const pathTone = () => (darkPage ? CLOUDS_PALETTE.dark[A.path.dark] : CLOUDS_PALETTE.light.sky);
+// The night tone is already the dark page's own, as the clouds' cells reach
+// the canvas unmapped, so it goes past the page's map as written: turned
+// again it lands near the ink, a light slab under every shelf.
+export const pathTone = () => (darkPage ? raw(CLOUDS_PALETTE.dark[A.path.dark]) : CLOUDS_PALETTE.light.sky);
 
 // The layers, made once: their puffs are fixed by the seed, and only where
 // they are drawn changes.

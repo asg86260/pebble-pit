@@ -40,6 +40,7 @@ import { holdAt, dragArm, releaseArm, tapAt, leverUnder, signUnder } from './lev
 import { hoverAt, grabAt, inHand, holdBody } from './crew/pointer.js';
 import './upgrades.js';
 import { card } from './crewboard.js';
+import { overFurnace, showFurnaceTip } from './render/dpstip.js';
 import { houseRect } from './house.js';
 import { now } from './clock.js';
 import { MACHINES, running, specOf } from './machines.js';
@@ -685,6 +686,14 @@ function askedAbout(x, y, cx, cy) {
   const roster = rosterSays(x, y);
   if (roster) {
     showTip(roster.text, roster.at);
+    return true;
+  }
+
+  // The furnace says the fight's damage a second, by fighter. Its full
+  // floor's mark was asked first above: on the mark the mark speaks, and
+  // anywhere else on the furnace the fight does.
+  if (overFurnace(x, y)) {
+    showFurnaceTip();
     return true;
   }
 

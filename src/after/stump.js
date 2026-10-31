@@ -43,12 +43,14 @@ export const pullable = p => !!p && stumped(p) && p.fell == null;
 // --- the strain, the hand's and the woodcutter's alike ----------------------------------
 // A record `r` with a `strain` (seconds) one frame on: held (`held`) with the
 // stump up past the strain height (`lift` px), the strain builds; let go or
-// down, it is lost. True on the frame a root gives, the strain spent.
+// down, it is lost. True on the frame a root gives, a strain's worth spent.
 export function strainStep(r, dt, held, lift) {
   if (!held || lift < GESTURE_STRAIN_LIFT) { r.strain = 0; return false; }
   r.strain += dt;
   if (r.strain < GESTURE_STRAIN_S) return false;
-  r.strain = 0;
+  // what the frame ran past the root is the next root's: a long frame keeps
+  // the roots a strain apart rather than dropping its overshoot
+  r.strain -= GESTURE_STRAIN_S;
   return true;
 }
 // The root `k` of plot i snapped now, remembered on `r` for the drawing.

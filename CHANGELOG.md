@@ -179,6 +179,7 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
+- Hovering the furnace in the deep shows the last minute of the party's damage a second against the pace that breaks the serpent, with a bar and a number for each fighter, highest on top, and one for your own clicks (test/furnace-dps.test.mjs).
 - A "build speed" ladder on the bench, under a new "building" section: eight rungs, two a coin, from one builder-second a second up to double, so every build in every act goes sooner (test/build-speed.test.mjs).
 - Act 3's grove is oaks planted from acorns out of a seed basket beside the forestry shack, grown row by row, sawn down by hand any time (a bought saw lets the woodcutter do it), breaking into their four logs as the crown scatters and fades, the stump a fifth log pulled out by its roots; a ghost acorn bobs over each bare plot an acorn can go in, a seeds row buys an acorn a press and self-seeding leaves one for a member to carry home, and the axe is now the saw (test/after-grove.test.mjs, test/after-grove-seeds.test.mjs, test/after-grove-migrate.test.mjs).
 - Act 3's forestry shack is a stump house: a sawn stump with an arched door, a round window and a shelf fungus in its bark, its stovepipe smoking, and the whole of it, pipe and all, hovers as the grove (test/after-stations.test.mjs).
@@ -225,6 +226,9 @@ this section; the release that switches it on moves these under Unreleased.
 - Every build takes 10 to 20 seconds at one pair of hands, the biggest (a new station, a machine, the last shield) 30 at most, by one rule off a row's place in its ladder instead of a figure a row (test/build-times.test.mjs).
 - The sphere costs 1.75 times the dearest other machine in every coin, so it is the last machine you can afford (test/sphere.test.mjs).
 
+- On the dark and dim pages act 3's raised shelves and the cloud's edge are the cloud's own dark tone again, not a light grey slab (src/selftest/afterpage.js, "act 3's raised shelves stand on the cloud's own tone").
+- Pulling a stump, its roots give a steady strain apart even when the game stutters (test/after-gestures.test.mjs).
+- The log on the saw mill's bed no longer loses a sliver as the blade starts on its last column (test/after-pair-stays.test.mjs).
 - The game no longer fails to start when the deep's build sign happens to load before its stations (test/combo.test.mjs, test/deep-board.test.mjs).
 - The landing page's language tab, its foot and the cloud save section work again (src/selftest/language.js, src/selftest/cloud.js).
 - The build sign in the deep is drawn in the deep's own greys, with no blurred edges on a large window (src/selftest/deeppalette.js).

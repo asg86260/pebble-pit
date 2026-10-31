@@ -2767,6 +2767,12 @@ hover-portal-down = the portal — down to the deep
 # the hover over the serpent
 hover-serpent = the serpent
 
+# the furnace's hover, beside its graph of the last minute: the party's damage a second
+hover-furnace-dps = { $n } dps
+
+# a row in the furnace's hover, under the graph: the damage your own clicks did
+hover-furnace-you = you
+
 # the hover over the crew's houses
 hover-house = house
 
