@@ -35,7 +35,7 @@ import { startleFauna, faunaWhen } from './deep/fauna.js';
 import { nextWave } from './render/deepwave.js';
 import { skyMoment, skyWatch } from './render/aftercrowd.js';
 import { buildStation, nextSlot } from './deep/party.js';
-import { lookAt } from './deep/rails.js';
+import { lookAt, seatRails } from './deep/rails.js';
 import { press as pressBuildButton } from './deep/buildbutton.js';
 import { lay } from './deep/statuses.js';
 import { worksAt, progressOf, markDoneSeen } from './works.js';
@@ -1101,6 +1101,24 @@ const deepScenes = {
       window.__scales(99999);
       lookAtStation(0);
       window.__board(S.stations[0].id);
+    } },
+  // A fighter's skills on her board, under her name, the pointer resting on
+  // her capstone: its line beside the board. Built, on its branch.
+  'fighter-skills': { about: 'the deep', say: "a Ranger at rung 8: her two skills under her name on her board, the capstone hovered, its line beside the board",
+    review: 'fighters: skills on the hover, built', option: 'built', stage: 'built: fighter-skills, not on main yet',
+    branch: 'fighter-skills', supersedes: ['fighters: skills on the hover'],
+    run: () => {
+      deepYard({ stage: 1, wound: 0.33, run: 4, party: [cast('ranger', 8)] });
+      lookAtStation(0);
+      const id = S.stations[0].id;
+      window.__board(id);
+      seatRails();
+      // the act 1 notices the granted coins earn, which play never shows here
+      window.__fast(1 / 60);
+      S.wonShown = S.wonSeq | 0;
+      seatRails();
+      document.querySelectorAll(`.rails[data-station="${id}"] .rl-sk`)[1]?.dispatchEvent(new PointerEvent('pointerenter'));
+      window.__holdShot();
     } },
   // Her at the first station in the deep, dressed in the deep's inks, a
   // second station beside her.

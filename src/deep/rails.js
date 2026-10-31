@@ -89,6 +89,20 @@ export const statusLineOf = (key, n) => (ICON_STATUS[key]
 // And its name alone, for its label under the icon.
 export const statusName = key => (ICON_STATUS[key] ? STATUS_NAME[ICON_STATUS[key]] : null);
 const plain = t => t.replace(/\{(\w+)\}/g, (_, k) => STATUS_NAME[k] ?? k);
+// REVIEW fighters-skills-on-the-hover-built
+// What the fighter at station `st` can do, by its rung: its class's move from
+// MOVE_RUNG, its capstone from CAPSTONE_RUNG; a base unit or a Recruit has
+// neither. Each with its line, a status in it said out with what it does, so
+// a skill that is only a status ("Knockout: Stun") still says something.
+const spelled = t => t.replace(/\{(\w+)\}/g, (_, k) => (STATUS[k] ? msg('skill-status', { name: STATUS_NAME[k], does: STATUS[k] }) : k));
+export function skillsOf(st) {
+  const w = st?.cls && WORDS[st.cls];
+  if (!w) return [];
+  const out = [];
+  if (st.rung >= MOVE_RUNG) out.push({ name: w.move[0], does: spelled(w.move[1]), cap: false });
+  if (st.rung >= CAPSTONE_RUNG) out.push({ name: w.cap[0], does: spelled(w.cap[1]), cap: true });
+  return out.map(k => ({ ...k, line: msg('rail-line', { name: k.name, what: k.does }) }));
+}
 const BASE_DOES = { altar: msg('base-altar-does'), well: msg('base-well-does'), armory: msg('base-armory-does'),
                     circle: msg('base-circle-does'), spire: msg('base-spire-does') };
 const RECRUIT_DOES = msg('recruit-does');
@@ -183,8 +197,10 @@ export function railsOf(id) {
     const w = WORDS[st.cls], cap = next === CAPSTONE_RUNG;
     rows.push(row(st.cls, cap ? w.cap[0] : CLASSES[st.cls].name, cap ? w.cap[1] : worth(st.cls, next)));
   }
+  // The skills it has, under its name: only the reached ones, since the
+  // tree's big pips already say what is coming and when.
   return { id, lot: false, kind: st.kind, cls: st.cls, rung: st.rung, who: st.cls ? CLASSES[st.cls].name : BASES[st.kind],
-           tree: { base, arms }, ask, rows, top: st.rung >= LADDER, reset: { can: !!st.kind } };
+           skills: skillsOf(st), tree: { base, arms }, ask, rows, top: st.rung >= LADDER, reset: { can: !!st.kind } };
 }
 
 // --- the presses ----------------------------------------------------------------
@@ -286,9 +302,15 @@ function recruitHTML(r) {
          `<div class="rl-rail" style="--n:${n}">${ticks}</div><div class="rl-five" style="--n:${n}">${nodes}</div>${pick}`;
 }
 
+// The skills a fighter has, under its name, in the effects' marks -- the
+// move a square, the capstone a purple one -- each name carrying its line.
+const skillsHTML = sk => (sk?.length ? `<div class="rl-skills">${sk.map(k =>
+  `<span class="rl-fx${k.cap ? ' cap' : ''}"><i class="${k.cap ? 'cp' : 'mv'}"></i>` +
+  `<b class="rl-sk" data-line="${esc(k.line)}">${esc(k.name)}</b></span>`).join('')}</div>` : '');
+
 function bodyHTML(r) {
   if (r.recruit) return recruitHTML(r);
-  return `<div class="rl-who">${esc(r.who)}</div>` + treeHTML(r) +
+  return `<div class="rl-who">${esc(r.who)}</div>` + skillsHTML(r.skills) + treeHTML(r) +
          (r.ask ? `<div class="rl-ask">${esc(r.ask)}</div>` : '') +
          r.rows.map(o => rowHTML(o, o.cls ? `data-cls="${o.cls}"` : '')).join('') +
          `<button type="button" class="rl-reset"${r.reset.can ? '' : ' disabled'}>${esc(msg('rail-reset'))}</button>`;
@@ -309,8 +331,20 @@ function showTip(m, pip) {
   tip.textContent = pip.dataset.line;
   tip.hidden = false;
   const b = pip.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight;
-  const left = Math.max(TIP_EDGE, Math.min(b.left + b.width / 2 - w / 2, innerWidth - w - TIP_EDGE));
-  const top = b.top - h - TIP_GAP >= TIP_EDGE ? b.top - h - TIP_GAP : b.bottom + TIP_GAP;
+  let left = Math.max(TIP_EDGE, Math.min(b.left + b.width / 2 - w / 2, innerWidth - w - TIP_EDGE));
+  let top = b.top - h - TIP_GAP >= TIP_EDGE ? b.top - h - TIP_GAP : b.bottom + TIP_GAP;
+  // A skill sits right under the fighter's name, and a line over it hid the
+  // name: its line stands clear of the whole sheet instead, as a row's note
+  // does (board.js, `showTipAt`) -- level with it on the right, else the left;
+  // on a narrow window, over the sheet's top edge, else under its foot.
+  const sheet = pip.classList.contains('rl-sk') && (el.closest('#panel') || el).getBoundingClientRect();
+  if (sheet) {
+    const level = Math.max(TIP_EDGE, Math.min(b.top + b.height / 2 - h / 2, innerHeight - h - TIP_EDGE));
+    if (sheet.right + TIP_GAP + w <= innerWidth - TIP_EDGE) [left, top] = [sheet.right + TIP_GAP, level];
+    else if (sheet.left - TIP_GAP - w >= TIP_EDGE) [left, top] = [sheet.left - TIP_GAP - w, level];
+    else if (sheet.top - TIP_GAP - h >= TIP_EDGE) top = sheet.top - TIP_GAP - h;
+    else if (sheet.bottom + TIP_GAP + h <= innerHeight - TIP_EDGE) top = sheet.bottom + TIP_GAP;
+  }
   tip.style.left = `${Math.round(left)}px`;
   tip.style.top = `${Math.round(top)}px`;
 }
@@ -327,7 +361,7 @@ function wire(id, m) {
   const reset = body.querySelector('.rl-reset');
   if (reset) onTap(reset, () => { pressReset(id); refresh(id); });
   // A status's line is a hover's only: most sit inside a row a tap buys.
-  for (const pip of body.querySelectorAll('.rl-tree i, .rl-st')) {
+  for (const pip of body.querySelectorAll('.rl-tree i, .rl-st, .rl-sk')) {
     if (coarse() && pip.classList.contains('rl-st')) continue;
     if (coarse()) onTap(pip, () => showTip(m, m.tip.hidden || m.tip.textContent !== pip.dataset.line ? pip : null));
     else {

@@ -179,6 +179,7 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
+- A fighter's board lists the skills it has under its name, its move from rung 4 and its capstone from rung 8, each saying what it does on hover (test/fighter-skills.test.mjs).
 - A "build speed" ladder on the bench, under a new "building" section: eight rungs, two a coin, from one builder-second a second up to double, so every build in every act goes sooner (test/build-speed.test.mjs).
 - Act 3's grove is oaks planted from acorns out of a seed basket beside the forestry shack, grown row by row, sawn down by hand any time (a bought saw lets the woodcutter do it), breaking into their four logs as the crown scatters and fades, the stump a fifth log pulled out by its roots; a ghost acorn bobs over each bare plot an acorn can go in, a seeds row buys an acorn a press and self-seeding leaves one for a member to carry home, and the axe is now the saw (test/after-grove.test.mjs, test/after-grove-seeds.test.mjs, test/after-grove-migrate.test.mjs).
 - Act 3's forestry shack is a stump house: a sawn stump with an arched door, a round window and a shelf fungus in its bark, its stovepipe smoking, and the whole of it, pipe and all, hovers as the grove (test/after-stations.test.mjs).
