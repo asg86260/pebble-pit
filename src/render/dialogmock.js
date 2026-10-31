@@ -45,7 +45,7 @@ const U = 2;               // screen px: a stroke of the bubble and the chips
 let st = null; // held: the script's place { i, at, out, done, free }
 held('dialog-mock', () => { globalThis.__dialogMock = null; globalThis.__dialogMockFree = false; globalThis.__dialogMockT0 = null; skipTo(false); st = null; lastCam = null; restFrames = 0; });
 
-const look = () => (['a', 'b', 'c'].includes(globalThis.__dialogMock) ? globalThis.__dialogMock : null);
+const look = () => (['a', 'a1', 'a2', 'b', 'c'].includes(globalThis.__dialogMock) ? globalThis.__dialogMock : null);
 // The beat holding still on God, framed: lines run only then.
 // (and the shot's pan from the arrival come to rest on him: `settled`)
 let lastCam = null, restFrames = 0; // held with `st`: the camera's last spot and how many draws it has stood there
@@ -94,14 +94,14 @@ function speakerAt(who) {
   if (who === 'god') {
     const g = godHeadMock();
     if (!g) return null;
-    const a = toScreen(g.x, g.top), b = toScreen(g.x, g.bottom), f = toScreen(g.x, g.foot);
-    return { x: a.x, top: a.y, bottom: b.y, foot: f.y };
+    const a = toScreen(g.x, g.top), b = toScreen(g.x, g.bottom), f = toScreen(g.x, g.foot), m = toScreen(g.x, (g.face + g.bottom) / 2);
+    return { x: a.x, top: a.y, bottom: b.y, foot: f.y, mid: m.y, half: g.w / 2 * S.zoomShow };
   }
   const two = pairBodies();
   if (!two) return null;
   const mid = (two[0].x + two[1].x) / 2 + WORKER / 2, top = Math.min(two[0].y, two[1].y);
   const a = toScreen(mid, top), b = toScreen(mid, top + WORKER);
-  return { x: a.x, top: a.y, bottom: b.y, foot: b.y };
+  return { x: a.x, top: a.y, bottom: b.y, foot: b.y, mid: (a.y + b.y) / 2, half: (Math.abs(two[0].x - two[1].x) + WORKER) / 2 * S.zoomShow };
 }
 
 const band = () => Math.round(S.hush * bandCells()) * CELL;
@@ -123,15 +123,17 @@ function drawBubble(l, sp) {
   const lines = wrap(l.text, Math.min(S.W - CELL * 8, 260));
   const w = Math.ceil(Math.max(...lines.map(s => ctx.measureText(s).width))) + pad * 2 + U * 6;
   const h = lines.length * lh + pad * 2 - 3;
-  const tail = CELL * 3, lo = band() + CELL, hi = S.H - band() - CELL - h;
+  const T = TAILS[look()] || TAILS.a, L = T.rows.length * U, M = CELL;   // the tail's reach, and its tip's gap to the head
+  const lo = band() + CELL, hi = S.H - band() - CELL - h;
   const vy = v => Math.round(Math.max(lo, Math.min(hi, v)));
   // over the head if there is room under the top band, else beside it; a
-  // speaker past the window's edge speaks from that edge, the tail at it
-  let x, y, dir;
-  if (sp.x < 0) { dir = 'left'; x = CELL * 2 + tail; y = vy(sp.top - h / 2); }
-  else if (sp.x > S.W) { dir = 'right'; x = S.W - CELL * 2 - tail - w; y = vy(sp.top - h / 2); }
-  else if (sp.top - CELL - tail - h >= lo) { dir = 'down'; x = Math.round(clampX(sp.x - w / 2, w)); y = Math.round(sp.top - CELL - tail - h); }
-  else { dir = 'left'; x = Math.round(clampX(sp.x + (sp.bottom - sp.top) / 2 + tail + CELL, w)); y = vy(sp.top); }
+  // speaker past the window's edge speaks from that edge, the tail at it.
+  // `at` is where the tip points across the tail: x for 'down', y for a side.
+  let x, y, dir, at;
+  if (sp.x < 0) { dir = 'left'; x = CELL * 2 + L; at = sp.mid; y = vy(at - h / 2); }
+  else if (sp.x > S.W) { dir = 'right'; x = S.W - CELL * 2 - L - w; at = sp.mid; y = vy(at - h / 2); }
+  else if (sp.top - M * 3 - L - h >= lo) { dir = 'down'; at = sp.x; x = Math.round(clampX(at - w / 2, w)); y = Math.round(sp.top - M * 3 - L - h); }
+  else { dir = 'left'; x = Math.round(clampX(sp.x + sp.half + M + L, w)); at = sp.mid; y = vy(at - h / 2); }
   const PAPER = raw(paper), INK = raw(ink);
   ctx.fillStyle = INK;
   // the box, its corners notched a stroke, the stroke U thick
@@ -140,27 +142,57 @@ function drawBubble(l, sp) {
   ctx.fillStyle = PAPER;
   ctx.fillRect(x + U * 2, y + U, w - U * 4, h - U * 2);
   ctx.fillRect(x + U, y + U * 2, w - U * 2, h - U * 4);
-  // the tail: a stepped wedge out of the box toward the head, a stroke of
-  // ink round its paper, a stroke narrower each step; its paper opens the
-  // box's own stroke where the two meet
-  // Each step is one stroke deep: ink a stroke past both its edges, paper
-  // between; the first step's paper also lies over the box's own stroke.
-  const steps = Math.round(tail / U), base = Math.round(tail * 0.8 / U) * U;
-  const lenAt = k => Math.max(0, Math.round((base - k * base / steps) / U) * U);   // narrowing to the tip
-  const ex = Math.round(Math.max(x + CELL * 2, Math.min(x + w - CELL * 2 - base, sp.x - U * 2)));   // 'down': the wedge's left edge
-  const ty = y + CELL;                                                                                // a side's: its top edge
-  // the step k strokes out of the box (k = -1 is the box's own stroke)
-  const stepRect = (k, len, grow) => dir === 'down'
-    ? [ex - grow, y + h - U + (k + 1) * U, len + grow * 2, U]
-    : [dir === 'left' ? x - (k + 1) * U : x + w - U + (k + 1) * U, ty - grow, U, len + grow * 2];
-  ctx.fillStyle = INK;
-  for (let k = 0; k < steps; k++) { const len = lenAt(k); if (len > 0) ctx.fillRect(...stepRect(k, len, U)); }
-  ctx.fillStyle = PAPER;
-  for (let k = -1; k < steps; k++) { const len = lenAt(Math.max(0, k)); if (len > 0) ctx.fillRect(...stepRect(k, len, 0)); }
+  drawTail(T, dir, x, y, w, h, at, INK, PAPER);
   ctx.fillStyle = INK;
   ctx.textAlign = 'left'; ctx.textBaseline = 'top';
   lines.forEach((s, k) => ctx.fillText?.(s, x + pad, y + pad + k * lh));
   more(x + w - pad / 2 - U * 5, y + h - pad / 2 - U * 3, INK);
+}
+
+// The tail, on the bubble's own cells (U, its stroke): `rows` are the
+// paper's widths in cells, row 0 lying over the box's own stroke so the two
+// are one shape with no seam, each row after it one cell further out; the
+// ink is every cell beside the paper, so the outline is one cell all round
+// and steps diagonally at the taper. A1 tapers from both sides to a middle
+// tip, a cell a side every two cells out; A2 keeps one edge straight (the side toward the bubble's corner),
+// a comic-strip tail. Its tip points at `at` (x for 'down', y for a side).
+const TAILS = {
+  a: { rows: [5, 5, 3, 3, 1, 1], mid: true },
+  a1: { rows: [5, 5, 3, 3, 1, 1], mid: true },
+  a2: { rows: [4, 4, 3, 3, 2, 2, 1, 1], mid: false }
+};
+function drawTail(T, dir, x, y, w, h, at, INK, PAPER) {
+  const n = T.rows.length, wide = T.rows[0];
+  // across the tail: the box's edge it leaves from, in whole cells off the
+  // box's corner, kept two cells clear of the notched corners
+  const side = dir === 'down' ? x : y, span = dir === 'down' ? w : h;
+  const tip = Math.round((at - side) / U - (T.mid ? 0 : 0.5));
+  // A2's wedge runs from its straight edge toward the box's middle
+  const sign = T.mid ? 0 : (at - side < span / 2 ? 1 : -1);
+  const lo = (T.mid ? (wide - 1) / 2 : sign < 0 ? wide - 1 : 0) + 2;
+  const hi = span / U - 3 - (T.mid ? (wide - 1) / 2 : sign > 0 ? wide - 1 : 0);
+  const c0 = Math.max(lo, Math.min(hi, tip));
+  const paper = new Set();
+  const key = (c, r) => `${c},${r}`;
+  for (let r = 0; r < n; r++) {
+    const k = T.rows[r];
+    for (let i = 0; i < k; i++) paper.add(key(T.mid ? c0 - (k - 1) / 2 + i : c0 + sign * i, r));
+  }
+  const ink = new Set();
+  for (const p of paper) {
+    const [c, r] = p.split(',').map(Number);
+    for (const [dc, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const q = key(c + dc, r + dr);
+      if (r + dr >= 0 && !paper.has(q)) ink.add(q);
+    }
+  }
+  // a cell (c across, r out from the box) on the window
+  const at2 = (c, r) => dir === 'down' ? [x + c * U, y + h - U + r * U]
+    : dir === 'left' ? [x - r * U, y + c * U] : [x + w - U + r * U, y + c * U];
+  for (const [set, tone] of [[ink, INK], [paper, PAPER]]) {
+    ctx.fillStyle = tone;
+    for (const p of set) { const [c, r] = p.split(',').map(Number); const [px, py] = at2(c, r); ctx.fillRect(px, py, U, U); }
+  }
 }
 
 // The go-on mark: a small wedge pointing down, still (never blinking).
@@ -271,7 +303,7 @@ export function drawDialogMock() {
   if (o === 'b') drawBox(l);
   else {
     const sp = speakerAt(l.who);
-    if (sp) (o === 'a' ? drawBubble : drawTyped)(l, sp);
+    if (sp) (o === 'c' ? drawTyped : drawBubble)(l, sp);
   }
   ctx.restore();
   ctx.fillStyle = '#000';

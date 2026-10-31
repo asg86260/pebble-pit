@@ -4235,9 +4235,9 @@ for (const [opt, option, say, float = null] of INTRO3) {
 // design-dialog). The opening played from the go-on card to God; the beat
 // held there while the mock's three lines run and start over. Never merged.
 const DIALOG_LOOKS = [
-  ['a', 'A a bubble over the speaker', "A bubble over whoever speaks, a tail to the head: God's lines beside his head (no room over it under the band), the pair's over the two of them. Click, tap or Enter for the next line; hold space to end them all and let the beat go on. The words are the game's own captions, standing in."],
-  ['b', 'B a box in the band', "The band's line grown into a box: the speaker drawn small at its left (God crowned, the pair two squares), the words beside it, the picture left clear. Click, tap or Enter for the next line; hold space to end them all. The words are the game's own captions, standing in."],
-  ['c', 'C a line typed under the speaker', "No box: the line types in under whoever speaks, each letter faded in, then the whole line fades out. Click, tap or Enter for the next line; hold space to end them all. The words are the game's own captions, standing in."]
+  // round 2: the owner took A, 'lets clean up that speech bubble pointer'; B and C put away
+  ['a1', 'A1 a tail tapering to a middle point', "The bubble's tail redrawn on the bubble's own cells: one shape with the box, no seam, tapering a cell each side every two cells out to a point at the speaker's head. Beside God's head at this window, over it on a phone; the pair's line from the window's edge. Click, tap or Enter for the next line; hold space to end them all. The words are the game's own captions, standing in."],
+  ['a2', 'A2 a tail with one straight edge', "The same bubble with a comic-strip tail: one edge straight, the other tapering a cell every two cells out to a point at the speaker's head. Click, tap or Enter for the next line; hold space to end them all. The words are the game's own captions, standing in."]
 ];
 for (const [opt, option, say] of DIALOG_LOOKS) {
   const name = `dialog-${opt}`;
