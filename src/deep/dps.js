@@ -26,11 +26,12 @@ import { stationById, classOf } from './party.js';
 export const BINS = Math.round(DPS_SPAN_S / DPS_BIN_S) + 2;
 const NOW_BINS = Math.max(1, Math.round(DPS_NOW_S / DPS_BIN_S));
 
-const make = () => ({ sums: new Float64Array(BINS), stamps: new Int32Array(BINS).fill(-1) });
+// `first` is the bucket of the source's first hit since the history began.
+const make = () => ({ sums: new Float64Array(BINS), stamps: new Int32Array(BINS).fill(-1), first: null });
 const total = make();
 const bySource = new Map();   // a source's key -> its buckets
 held('deep-dps', () => {
-  total.sums.fill(0); total.stamps.fill(-1);
+  total.sums.fill(0); total.stamps.fill(-1); total.first = null;
   bySource.clear();
 });
 
@@ -39,6 +40,7 @@ const put = (s, k, done) => {
   const i = k % BINS;
   if (s.stamps[i] !== k) { s.stamps[i] = k; s.sums[i] = 0; }
   s.sums[i] += done;
+  if (s.first == null) s.first = k;
 };
 
 // Whose a hit is. `tick` is a held thing's tick, which carries no striker
@@ -74,10 +76,27 @@ export function nowWindow() {
   const k = binOf(now());
   return { from: (k - NOW_BINS) * DPS_BIN_S * 1000, to: k * DPS_BIN_S * 1000 };
 }
-const nowOf = s => meanTo(s, binOf(now()) - 1, NOW_BINS);
+// The whole seconds a source's mean is taken over: the window, or the part of
+// it since the source's first hit, so a fighter that joined twenty seconds
+// ago is its twenty seconds' pace and not a third of it. Nought before its
+// first second has finished.
+function secsOf(s) {
+  const k0 = binOf(now());
+  if (s.first == null) return 0;
+  return Math.max(0, k0 - Math.max(k0 - NOW_BINS, s.first)) * DPS_BIN_S;
+}
+// A source's damage a second: what it did in the window over its seconds in it.
+function nowOf(s) {
+  const secs = secsOf(s), k0 = binOf(now());
+  if (!(secs > 0)) return 0;
+  let v = 0;
+  for (let k = k0 - NOW_BINS; k < k0; k++) v += rateAt(s, k) * DPS_BIN_S;
+  return v / secs;
+}
 
-// The party's damage a second, over the window.
-export const totalDps = () => nowOf(total);
+// The party's damage a second: every row's summed, each at its own pace, so
+// a fighter just come counts at its rate and the total is the rows' sum.
+export const totalDps = () => sources().reduce((v, r) => v + r.dps, 0);
 export const totalSeries = () => total;
 
 // The pace that opens the wound to its depth inside one window: the rule the
@@ -91,8 +110,9 @@ function nameOf(key) {
   return (st && classOf(st)?.name) || '';
 }
 
-// Everyone with a hit in the minute shown: { key, name, dps, series }, in the
-// party's slot order, then a class's ticks, then the hand.
+// Everyone with a hit in the window: { key, name, dps, secs, series }, `secs`
+// the seconds its dps is the mean over, in the party's slot order, then a
+// class's ticks, then the hand.
 export function sources() {
   const k0 = binOf(now());
   const slot = key => {
@@ -102,9 +122,9 @@ export function sources() {
     return i < 0 ? 1e4 : i;
   };
   const live = [...bySource].filter(([, s]) => {
-    for (let j = 1; j < BINS - 1; j++) if (rateAt(s, k0 - j) > 0) return true;
+    for (let j = 1; j <= NOW_BINS; j++) if (rateAt(s, k0 - j) > 0) return true;
     return false;
   });
   return live.sort((a, b) => slot(a[0]) - slot(b[0]))
-    .map(([key, s]) => ({ key, name: nameOf(key), dps: nowOf(s), series: s }));
+    .map(([key, s]) => ({ key, name: nameOf(key), dps: nowOf(s), secs: secsOf(s), series: s }));
 }
