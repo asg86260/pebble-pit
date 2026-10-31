@@ -4229,3 +4229,33 @@ for (const [opt, option, say, float = null] of INTRO3) {
       intro3Held('intro3mock-loop', () => clearInterval(loop));
     } };
 }
+
+// MOCK dialog-the-look: three looks for a line of dialog, stood at act 3's
+// meet-god beat (render/dialogmock.js, DESIGN.md "A dialog system" on branch
+// design-dialog). The opening played from the go-on card to God; the beat
+// held there while the mock's three lines run and start over. Never merged.
+const DIALOG_LOOKS = [
+  ['a', 'A a bubble over the speaker', "A bubble over whoever speaks, a tail to the head: God's lines beside his head (no room over it under the band), the pair's over the two of them. Click, tap or Enter for the next line; hold space to end them all and let the beat go on. The words are the game's own captions, standing in."],
+  ['b', 'B a box in the band', "The band's line grown into a box: the speaker drawn small at its left (God crowned, the pair two squares), the words beside it, the picture left clear. Click, tap or Enter for the next line; hold space to end them all. The words are the game's own captions, standing in."],
+  ['c', 'C a line typed under the speaker', "No box: the line types in under whoever speaks, each letter faded in, then the whole line fades out. Click, tap or Enter for the next line; hold space to end them all. The words are the game's own captions, standing in."]
+];
+for (const [opt, option, say] of DIALOG_LOOKS) {
+  const name = `dialog-${opt}`;
+  SCENES[name] = { about: 'the acts', review: 'dialog: the look', branch: 'a3-review-both',
+    stage: 'mock: throwaway, never merged', option, say,
+    swap: () => {
+      if (!S.beat || S.beat.camera !== 'meet-god' || globalThis.__dialogMockFree) { window.__scene(name); return; }
+      globalThis.__dialogMock = opt;
+    },
+    run: () => {
+      actsYard('home');
+      for (let i = 0; i < 60 * 30 && goOnAlpha() < 1; i++) window.__fast(1 / 60);
+      window.__unpin();
+      globalThis.__dialogMock = opt;
+      window.__goOn();
+      for (let i = 0; i < 60 * 600 && !(S.beat.camera === 'meet-god' && S.viewTo == null && S.hush >= 0.99); i++) window.__fast(1 / 60);
+      // the shot's pan from the arrival to the throne, come to rest
+      for (let i = 0, still = 0, was = S.camX; i < 60 * 20 && still < 20; i++) { window.__fast(1 / 60); still = Math.abs(S.camX - was) < 0.01 ? still + 1 : 0; was = S.camX; }
+      globalThis.__dialogMockT0 = now();
+    } };
+}

@@ -389,7 +389,8 @@ function step(key, next, t) {
     if (ph.step) ph.step(run.u, dt);
     const hold = ph.s ?? ACT_CAPTION_S;
     caption = ph.say ? { id: ph.say, args: ph.args || null, a: captionAlpha(run.u, ph.until ? Infinity : hold) } : null;
-    const done = ph.until ? ph.until() : run.u >= hold;
+    // MOCK dialog-the-look: meet-god held while the mock's lines run (render/dialogmock.js)
+    const done = (ph.until ? ph.until() : run.u >= hold) && !(globalThis.__dialogMock && key === 'meet-god' && !globalThis.__dialogMockFree);
     if (!done) return true;
     if (ph.end) ph.end();
     // the next phase glides the camera from here to what it looks at

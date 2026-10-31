@@ -32,6 +32,7 @@ import { goOnDue, goOnAlpha, fallNow, actCaption } from '../actbeats.js';
 import { rockRowsLeft, soulAt, mansionHeld } from '../mansion.js';
 import { deepFloor } from '../deep/place.js';
 import { drawIntro3 } from './intro3mock.js'; // MOCK act-3-the-intro
+import { drawDialogMock } from './dialogmock.js'; // MOCK dialog-the-look
 
 const snap = v => Math.round(v / P) * P;
 const cellAt = (x, y, tone) => { if (!tone) return; ctx.fillStyle = tone; ctx.fillRect(x, y, P, P); };
@@ -300,6 +301,7 @@ export function drawActBodies(place) {
 // In the foot band, white on its black, faded in and out (actbeats.js). The
 // words are the owner's to write: each is a plain label in locales/en.ftl.
 export function drawActCaption() {
+  if (globalThis.__dialogMock && drawDialogMock()) return; // MOCK dialog-the-look
   const c = actCaption();
   if (!c || c.a <= 0 || S.hush <= 0) return;
   const band = Math.round(S.hush * bandCells()) * CELL;

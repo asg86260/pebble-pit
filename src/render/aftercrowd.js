@@ -1084,3 +1084,12 @@ export function drawFistFlag(px, foot, U, lettered = 1, pole = 0) {
   blit(flagSprite(U, phase, W), x, y - A);
   ctx.restore();
 }
+
+// MOCK dialog-the-look: where God's head stands in the world (its middle
+// across, the top of his square and its bottom, his throne's foot), for the dialog mock's
+// bubble and under-line (render/dialogmock.js). Never merged.
+export function godHeadMock() {
+  if (!S.after) return null;
+  camFrame();
+  return { x: gx(), top: F.gy0 - GOD_CROWN.up * H, bottom: F.gy0 + GOD_N * H, foot: (() => { const th = throne(); return F.gy0 + th.Y0 * H + th.height / K; })(), w: GOD_N * H };
+}
