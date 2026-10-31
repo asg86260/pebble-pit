@@ -5,6 +5,7 @@
 // A glyph is the thing, never the effect. A row with no glyph of its own gets
 // the crate, so a missing one is visible on the shelf rather than a blank.
 import { SHELF_GLYPH_CELL as CELL, SHELF_GLYPH_CELLS as CELLS, SHELF_INK, SHELF_BADGE_HALO as BADGE_HALO, SHELF_BADGE_CELL as BCELL, SHELF_HAND_CELLS as HAND, SHELF_HAND_GAP as HAND_GAP, SHELF_HAND_SLIDE as HAND_SLIDE } from './config.js';
+import { held } from './reset.js'; // MOCK build-speed-the-mallet
 
 // The drawings, by the object's name; the review sheet (glyphs.html) says
 // which are still wearing the crate.
@@ -86,6 +87,10 @@ export const GLYPHS = {
   bench:      ['........', '........', '..##....', '..##....', '########', '########', '.##..##.', '.##..##.'],
   ledger:     ['.######.', '##....#.', '##.##.#.', '##....#.', '##.##.#.', '##....#.', '.######.', '........'],
   trophy:     ['########', '#.####.#', '.######.', '..####..', '...##...', '...##...', '..####..', '.######.'],
+  // MOCK build-speed-the-mallet: three mallets for the build-speed row, never merged
+  'mallet-a': ['........', '#####...', '#####...', '#####...', '..#.....', '..#.....', '..#.....', '..#.....'],
+  'mallet-b': ['........', '#####...', '.###....', '..#.....', '..#.....', '..#.....', '..#.....', '..#.....'],
+  'mallet-c': ['.###....', '#####...', '#####...', '#####...', '.###....', '..#.....', '..#.....', '..#.....'],
   // The pointing hand that says "click this" (render/hand.js; the owner,
   // 2026-10-15, option E of docs/mocks/hand-glyph-2-2026-10-15/): not a shelf
   // drawing -- ten cells, '#' the line and 'o' the fill, so glyphs.html leaves
@@ -188,7 +193,11 @@ export const GLYPH_OF = {
 // else the crate.
 let inherited = () => null;  // page: wiring the shop hands in at load; code, not the yard
 export const inheritGlyph = fn => { inherited = fn; };
-export const glyphNameOf = key => (GLYPH_OF[key] || [])[0] || inherited(key) || 'crate';
+// MOCK build-speed-the-mallet: `globalThis.__malletMock` ('a'..'c') puts a
+// mallet on the build-speed row for the review; a new game clears it.
+held('mallet-mock', () => { globalThis.__malletMock = null; });
+const malletMock = key => (key === 'buildspeed' && globalThis.__malletMock ? `mallet-${globalThis.__malletMock}` : null);
+export const glyphNameOf = key => malletMock(key) || (GLYPH_OF[key] || [])[0] || inherited(key) || 'crate';
 export const glyphFor = key => GLYPHS[glyphNameOf(key)] || GLYPHS.crate;
 // Its badge's rows, if it wears one. Laid on in `drawGlyph` at the pixel, not
 // the cell: a one-pixel halo round the badge's ink is all that is cut out of

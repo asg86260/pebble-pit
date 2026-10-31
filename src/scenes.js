@@ -4132,3 +4132,19 @@ Object.assign(SCENES, {
       standSign('s2', signMid('s2', 'deep').x - S.viewW / 2);
     } }
 });
+// MOCK build-speed-the-mallet: the bench's building section with a mallet on
+// the build-speed row (glyphs.js, `__malletMock`), never merged. A tile is
+// redrawn only when its drawn key changes, so setting the flag forgets the
+// keys; `swap` flips the drawing on the board standing.
+const malletOn = opt => {
+  globalThis.__malletMock = opt;
+  if (typeof document !== 'undefined') document.querySelectorAll('#shop .pic').forEach(p => { delete p.dataset.tint; });
+};
+for (const [opt, option, say] of [
+  ['a', 'A chunky wooden mallet', 'A wooden mallet with a chunky square head on a one-cell handle.'],
+  ['b', "B slim carpenter's mallet", "A slimmer carpenter's mallet: a shallow head tapering into a long handle."],
+  ['c', 'C round-headed mallet', "A carver's mallet: a round head on a short handle."],
+]) SCENES[`bench-building-mallet-${opt}`] = { about: 'the bench', review: 'build speed: the mallet', option, say,
+  stage: 'mock: throwaway, never merged', branch: 'a3-review-both',
+  swap: () => malletOn(opt),
+  run: () => { SCENES['bench-building'].run(); malletOn(opt); } };
