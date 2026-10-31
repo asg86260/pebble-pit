@@ -3978,6 +3978,62 @@ SCENES['after-cabin'] = { about: 'the acts', review: 'act 3: the cabin, built', 
   stage: 'built: cabin-stump, not on main yet', branch: 'cabin-stump', supersedes: ['act 3: the cabin'],
   say: "the forestry shack as the stump house: a sawn stump with an arched door, a round window and a shelf fungus in its bark, the stovepipe smoking",
   run: () => { window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1); groveAt(300); window.__fast(0.5); } };
+// The ghost acorn over a bare plot (render/aftercues.js, `drawPlantCue`): a
+// grown oak on the first plot and a bare second plot beside it, so only the
+// bare one is marked. The hand plays on the game's own clock: empty a while
+// (the mark at the cue's ink), then it presses an acorn off the basket and
+// carries it over the bare bed (the mark darkened), lets it go and it is
+// planted (the mark fades out); then the plot is cleared and the mark fades
+// back in. The `-held` twin stops with the acorn held over the bed.
+const plantHereYard = () => {
+  window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+  window.__afterGrant({ rebel: 2000 }); yardPurse(); buyAfter('after-plot');
+  const basket = window.__afterPile('forestry', 'seeds'), x = (plotX(1) + basket.x) / 2 - S.viewW / 2;
+  pinCamera(x); window.__look(x);
+  window.__fast(1); S.wonShown = S.wonSeq | 0;
+  return basket;
+};
+const plantHereBed = () => ({ x: plotX(1), y: groundOf('grove') - AP * 12 });
+function plantHereDemo(basket) {
+  let ph = 'look', t = 0;
+  const goTo = (p, pose) => { demoHand.x = p.x; demoHand.y = p.y; demoHand.pose = pose; S.mouse = { x: p.x, y: p.y }; };
+  const go = next => { ph = next; t = 0; };
+  const ease = k => k * k * (3 - 2 * k);
+  stumpStep('planthere', dt => {
+    t += dt;
+    const bed = plantHereBed();
+    if (ph === 'look') { demoHand.pose = null; if (t >= 2.5) go('reach'); }
+    else if (ph === 'reach') {
+      const k = ease(Math.min(1, t / 0.5));
+      goTo({ x: basket.x + AP * 6 * (1 - k), y: basket.y - AP * 8 * (1 - k) }, k < 1 ? 'point' : 'grab');
+      if (t >= 0.5) { window.__afterHand(basket.x, basket.y, 'press'); go('carry'); }
+    } else if (ph === 'carry') {
+      const k = ease(Math.min(1, t / 1.4)), p = { x: basket.x + (bed.x - basket.x) * k, y: basket.y + (bed.y - basket.y) * k - Math.sin(Math.PI * k) * AP * 6 };
+      goTo(p, 'grab'); window.__afterHand(p.x, p.y, 'move');
+      if (t >= 1.4) go('hover');
+    } else if (ph === 'hover') {
+      goTo(bed, 'grab'); window.__afterHand(bed.x, bed.y, 'move');
+      if (t >= 1.2) { S.trail = []; window.__afterHand(bed.x, bed.y, 'drop'); S.dragging = false; goTo(bed, 'point'); go('rest'); }
+    } else if (ph === 'rest') {
+      goTo({ x: bed.x, y: bed.y - 20 * Math.min(t, 1) }, 'point');
+      if (t >= 1) demoHand.pose = null;
+      if (t >= 3) { Object.assign(S.after.plots[1], { grow: null, seed: null, stump: false, dug: 0, fall: null, fell: null, chops: 0 }); go('look'); }
+    }
+  });
+}
+Object.assign(SCENES, {
+  'after-grove-plant-here': { about: 'the acts', say: "A ghost acorn bobs over each bare plot an acorn can go in: faint while your hand is empty, darker while it holds an acorn, fading out once one is planted.",
+    run: () => { plantHereDemo(plantHereYard()); } },
+  'after-grove-plant-here-held': { about: 'the acts', say: 'the ghost acorn over the bare plot, darkened while the hand holds an acorn over the bed',
+    run: () => {
+      const basket = plantHereYard(), bed = plantHereBed();
+      window.__afterHand(basket.x, basket.y, 'press');
+      for (let k = 1; k <= 10; k++) { const x = basket.x + (bed.x - basket.x) * k / 10, y = basket.y + (bed.y - basket.y) * k / 10; window.__afterHand(x, y, 'move'); window.__fast(0.1); }
+      demoHand.x = bed.x; demoHand.y = bed.y; demoHand.pose = 'grab'; S.mouse = { x: bed.x, y: bed.y };
+      window.__fast(1); window.__holdShot();
+    } }
+});
+
 // The grove's real build for the owner, one review (review.html#grove-built):
 // every real grove scene says where it is built, and nine stand as its
 // options, putting away the four mock reviews they came out of.
@@ -3985,7 +4041,8 @@ const GROVE_BUILT = { stage: 'built: grove-integrate, not on main yet', branch: 
 const GROVE_OPTIONS = [
   ['after-grove-rest', 'A rest'], ['after-grove-grow', 'B grow'], ['after-grove-woodcutter', 'C the woodcutter fells'],
   ['after-grove-saw', 'D F1 hand saw'], ['after-grove-stump', 'E stump by hand'], ['after-grove-stump-woodcutter', 'F the woodcutter pulls a stump'],
-  ['after-grove-plant', 'G plant'], ['after-grove-seeds', 'H seeds/basket'], ['after-grove-selfseed', 'I self-seed']
+  ['after-grove-plant', 'G plant'], ['after-grove-seeds', 'H seeds/basket'], ['after-grove-selfseed', 'I self-seed'],
+  ['after-grove-plant-here', 'J plant here']
 ];
 for (const key of Object.keys(SCENES)) if (key.startsWith('after-grove-') && !key.startsWith('after-grove-mock')) Object.assign(SCENES[key], GROVE_BUILT);
 for (const [key, option] of GROVE_OPTIONS) Object.assign(SCENES[key], { review: 'grove: built', option,
