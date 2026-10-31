@@ -4122,6 +4122,7 @@ const skillsStand = opt => {
   window.__fast(1 / 60);
   S.wonShown = S.wonSeq | 0;
   globalThis.__skillsMock = { opt, station: id, skill: 1 };
+  globalThis.__skillsHold?.();
   window.__holdShot();
 };
 for (const [opt, option, say] of SKILLS_MOCK) {

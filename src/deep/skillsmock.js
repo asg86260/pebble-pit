@@ -59,7 +59,7 @@ export function skillsCard(w, sx, sy, on = -1) {
   const st = stationById(w.station), sk = skillsOf(st);
   if (!sk.length) return false;
   const tail = document.createElement('div');
-  tail.className = `skm skm-${opt}`;
+  tail.classList.add('skm', `skm-${opt}`);
   tail.dataset.key = `${opt}${on}${st.cls}${st.rung}`;
   if (opt === 'a') {
     tail.innerHTML = `<div class="skm-chips">${sk.map((k, i) => `<span class="skm-chip${i === on ? ' on' : ''}${k.cap ? ' cap' : ''}">${mark(k)}${esc(k.name)}</span>`).join('')}</div>` +
@@ -94,10 +94,13 @@ export const skillsCardGone = () => { if (side) side.hidden = true; };
 
 // A scene's hold: every frame the card stands over the fighter at
 // `station`, or the board's skill line is held up, as a resting pointer
-// would keep them.
+// would keep them. Started by the scene and running only while it stands:
+// a loop from load would keep the node tier's process alive for ever.
+let holding = false;
 function hold() {
   const m = globalThis.__skillsMock;
-  if (m?.station && S.view === 'deep') {
+  if (!m?.station) { holding = false; return; }
+  if (S.view === 'deep') {
     if (m.opt === 'c') { showTipAt(null); skillsCardGone(); skillTipOn(m.station, m.skill ?? -1); }
     else {
       const w = S.workers.find(o => o.station === m.station);
@@ -109,4 +112,9 @@ function hold() {
   }
   requestAnimationFrame(hold);
 }
-if (typeof requestAnimationFrame === 'function') requestAnimationFrame(hold);
+export function skillsHold() {
+  if (holding || typeof requestAnimationFrame !== 'function') return;
+  holding = true;
+  requestAnimationFrame(hold);
+}
+globalThis.__skillsHold = skillsHold;
