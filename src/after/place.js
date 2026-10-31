@@ -383,6 +383,26 @@ export function treeCells() {
     leaf.add(`${c}|${y}`);
     out.push([c, TRUNK_TOP - y, 'crown', k]);
   }
+  // Sky the leaves close all round is leaf too (the owner, 2026-10-30: no
+  // hole in the middle of the crown): what open sky can't reach from outside
+  // the crown, laid in the clump it sits deepest in.
+  const open = new Set(), todo = [`${-AFTER_OAK_HALF - 1}|${reach + 1}`];
+  while (todo.length) {
+    const key = todo.pop();
+    if (open.has(key) || leaf.has(key)) continue;
+    const [c, y] = key.split('|').map(Number);
+    if (c < -AFTER_OAK_HALF - 1 || c > AFTER_OAK_HALF || y < low - 1 || y > reach + 1) continue;
+    open.add(key);
+    todo.push(`${c + 1}|${y}`, `${c - 1}|${y}`, `${c}|${y + 1}`, `${c}|${y - 1}`);
+  }
+  for (let y = reach; y >= low; y--) for (let c = -AFTER_OAK_HALF; c < AFTER_OAK_HALF; c++) {
+    const key = `${c}|${y}`;
+    if (open.has(key) || leaf.has(key)) continue;
+    let k = 0;
+    for (let j = 1; j < OAK.length; j++) if (depth(c + 0.5, y - 0.5, j) < depth(c + 0.5, y - 0.5, k)) k = j;
+    leaf.add(key);
+    out.push([c, TRUNK_TOP - y, 'crown', k]);
+  }
   // The leader: the trunk's two middle columns carried on up under the leaves.
   for (let c = c0 + 1; c < c0 + w - 1; c++) for (let y = 1; y <= reach && !leaf.has(`${c}|${y}`); y++) out.push([c, TRUNK_TOP - y, 'bough', 0]);
   // The boughs: from the trunk's top out to each side clump, seen where the
