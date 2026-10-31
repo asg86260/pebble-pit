@@ -2767,6 +2767,9 @@ hover-portal-down = the portal — down to the deep
 # the hover over the serpent
 hover-serpent = the serpent
 
+# MOCK the-furnace-dps-graph: the furnace's hover, beside its graph: the party's damage a second
+hover-furnace-dps = { $n } dps
+
 # the hover over the crew's houses
 hover-house = house
 
