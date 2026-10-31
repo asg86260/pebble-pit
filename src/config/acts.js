@@ -261,10 +261,24 @@ export const ACT_KNOBS = [
 // past the rock's, in cells; `margin` cells kept clear of the view's edge at
 // the start, so it begins wholly off screen; `ease` the power the fall
 // speeds up by.
+// Round 2 builds on C ("lets give it more sauce", the owner): `flick` the
+// flame's edge cells flickering a cell at a time, `sparks` shed along the
+// dive, `glow` the heat brightening as it nears the ground, `pulse` the
+// shadow beating faster as it comes; then on the ground `smear` seconds of
+// a held impact pose (the flame flattened out along the ground), `chunks`
+// of the house thrown up in arcs, `ring` the dust's shockwave, `scorch`
+// the scorched ground and its embers, `column` the smoke rising and
+// drifting. Each hold is long enough that everything has faded by its end.
+const INTRO3_C = { fallS: 2.6, holdS: 2.6, trail: 12, flare: 1, margin: 30, ease: 1.9, drift: 0.1, shadow: 0.9 };
+const INTRO3_D = { ...INTRO3_C, trail: 24, flare: 2, margin: 36, flick: true, sparks: 60, glow: true, pulse: true };
+const INTRO3_E = { ...INTRO3_D, holdS: 3.2, smear: 0.35, chunks: 20, ring: 34 };
 export const INTRO3_MOCK = {
   a: { fallS: 1.5, holdS: 2.2, trail: 34, flare: 2, margin: 4, ease: 1.7, drift: 0.18 },
   b: { fallS: 3.2, holdS: 2.8, trail: 18, flare: 1, margin: 4, ease: 1.25, embers: 0.9, smoke: 26 },
-  c: { fallS: 2.6, holdS: 2.6, trail: 12, flare: 1, margin: 30, ease: 1.9, drift: 0.1, shadow: 0.9 }
+  c: INTRO3_C,
+  d: INTRO3_D,
+  e: INTRO3_E,
+  f: { ...INTRO3_E, holdS: 4.8, chunks: 26, scorch: true, column: 34 }
 };
 // The meteor's flame, hottest first: the meteor's own red (COIN_TONES.spark,
 // palette.js: "out of the sky and still hot"), its brightest against the

@@ -4169,16 +4169,18 @@ Object.assign(SCENES, {
     } }
 });
 
-// MOCK act-3-the-intro: the house's rock as a meteor, three entries, each
+// MOCK act-3-the-intro: the house's rock as a meteor, C and round 2's D-F, each
 // played from the go-on card's press through the refusal (the two of them
 // up on the pedestal), the walk up the stair and across the cloud floor at
 // ACT_CALL_K's pace (actbeats.js, render/intro3mock.js). Never merged. On a
 // live page it stands itself again a few seconds after the pedestal, so
 // the bench loops it; a held clock (`__still`, the GIF tool) never loops.
 const INTRO3 = [ // MOCK act-3-the-intro
-  ['a', 'A the dive', 'Straight down from off the top of the screen, a flame tail streaming behind it; it lands in a dust puff, the flame burning out. The walk up the stair and across to the pedestal at three times the pace.'],
-  ['b', 'B the arc', 'In from off the right on a long falling curve, embers shed along the way it came fading where they were left; smoke rises off it once it lies there. The walk at three times the pace.'],
-  ['c', 'C shadow, then the glow', 'A shadow swells on the ground where it will land before anything shows; the rock comes in glowing from far above and its glow and flames burn out on it once down. The walk at three times the pace.']
+  // A and B dropped in round 2: the owner took C and asked for more sauce
+  ['c', 'C shadow, then the glow', 'Round 1, kept to compare: a shadow swells on the ground where it will land before anything shows; the rock comes in glowing from far above and its glow and flames burn out on it once down. The walk at three times the pace.'],
+  ['d', 'D hotter', "C hotter: a flame twice as long that flickers a cell at a time, sparks thrown off the dive fading where they're left, the glow rising as it nears, the shadow beating faster as it comes. The same quiet landing as C."],
+  ['e', 'E the blast', "D's fall, then the impact: a held smear of flame flat along the ground, the house thrown up in pieces that arc, land and fade, and a ring of dust running out both ways."],
+  ['f', 'F the aftermath', "E, then after: the ground scorched round it with embers glowing in it as they go out, and a column of smoke rising and leaning off downwind, the hold longer to let it play."]
 ];
 for (const [opt, option, say] of INTRO3) {
   const name = `intro3-${opt}`;
