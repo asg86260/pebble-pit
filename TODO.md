@@ -4,6 +4,20 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
+## A dialog system -- DESIGNED, AWAITING THE OWNER (2026-10-31)
+
+The owner: "we need to have some dialog to explain the premise of act 3. we
+dont have a dialog system yet though". Designed in DESIGN.md, "A dialog
+system (design, not built)": lines as a phase field on the act beats'
+`BODIES` beside `say`, drawn in the caption's place, advanced on their own
+clock or by a click, all ended by the held space bar, each heard line saved
+in `S.heard` so nothing replays after a reload. Three looks are mocked in
+the real game on the review bench (review "dialog: the look", scenes
+`dialog-a`, `dialog-b`, `dialog-c`, branch `a3-review-both`, never merged).
+Blocker: the owner's three calls at the end of the section (where the words
+go, whether a line waits for the player, whether the pair speak in words),
+and the lines themselves, which are the owner's to write.
+
 ## Act 3's grove, rebuilt -- DESIGNED, QUESTIONS SETTLED, READY TO BUILD (2026-10-30)
 
 The owner's fifteen calls from the live grove review (mock branch
