@@ -225,6 +225,7 @@ this section; the release that switches it on moves these under Unreleased.
 - Every build takes 10 to 20 seconds at one pair of hands, the biggest (a new station, a machine, the last shield) 30 at most, by one rule off a row's place in its ladder instead of a figure a row (test/build-times.test.mjs).
 - The sphere costs 1.75 times the dearest other machine in every coin, so it is the last machine you can afford (test/sphere.test.mjs).
 
+- On the dark and dim pages act 3's raised shelves and the cloud's edge are the cloud's own dark tone again, not a light grey slab (src/selftest/afterpage.js, "act 3's raised shelves stand on the cloud's own tone").
 - Pulling a stump, its roots give a steady strain apart even when the game stutters (test/after-gestures.test.mjs).
 - The log on the saw mill's bed no longer loses a sliver as the blade starts on its last column (test/after-pair-stays.test.mjs).
 - The game no longer fails to start when the deep's build sign happens to load before its stations (test/combo.test.mjs, test/deep-board.test.mjs).
