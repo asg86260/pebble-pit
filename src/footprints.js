@@ -321,7 +321,7 @@ export const standingIn = place => PARTS[place]();
 // than imported: the sign asks the shop its questions, and this file is read
 // by pages (the landing page, through the station table) that have no board
 // for the shop to stand on.
-let signRects = () => [];
+let signRects = () => []; // page: the wiring, handed over once at load; it outlives games
 export const claimSigns = f => { signRects = f; };
 
 // Every object standing in `place` and the ground it takes. A build sign
