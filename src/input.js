@@ -39,8 +39,6 @@ import { holdAt, dragArm, releaseArm, tapAt, leverUnder, signUnder } from './lev
 import { hoverAt, grabAt, inHand, holdBody } from './crew/pointer.js';
 import './upgrades.js';
 import { card } from './crewboard.js';
-import { furnaceMockSays, seat as furnaceMockSeat, wireFurnaceMock } from './deep/dpsmock.js'; // MOCK the-furnace-dps-graph
-wireFurnaceMock({ showTipAt, toScreen }); // MOCK the-furnace-dps-graph
 import { houseRect } from './house.js';
 import { now } from './clock.js';
 import { MACHINES, running, specOf } from './machines.js';
@@ -676,8 +674,6 @@ function askedAbout(x, y, cx, cy) {
     return true;
   }
 
-  const fm = furnaceMockSays(x, y); // MOCK the-furnace-dps-graph
-  if (fm) { furnaceMockSeat(fm); return true; } // MOCK the-furnace-dps-graph
   const bm = buildMockSays(x, y); // MOCK build-button-in-the-world
   if (bm) { showTip(bm.text, bm.at); return true; } // MOCK build-button-in-the-world
   // A build sign says what it is on its face: no hover over it, nor over what

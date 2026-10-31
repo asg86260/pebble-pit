@@ -27,7 +27,6 @@ import { mealDue, startMeal, stepMeal as stepTheMeal } from './meals.js';
 import { stepMechanic, resetMechanic, sunk, guardOf, breaking, stepBreak, killA, hitOrb, cutOrb, orbOn, orbMiddle, settleResist,
          breakOrb, recoiling, recoilLen, recoilTickAt } from './phases.js';
 import { depthAt } from './depth.js';
-import { feed as furnaceMockFeed } from './dpsmock.js'; // MOCK the-furnace-dps-graph
 
 // The defenses are 0..LAST; the last break leaves the stage past it, which
 // resists nothing and has nothing left to heal.
@@ -129,7 +128,6 @@ export function strike(weapon, dmg, x, y, from = null, side = 0, o = {}) {
     if (o.stun) stun(blow, o.stun);
   }
   keep(weapon, done, x, y, from, !!o.tick);
-  furnaceMockFeed(done, weapon, o.by); // MOCK the-furnace-dps-graph
   return done;
 }
 
