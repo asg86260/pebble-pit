@@ -24435,7 +24435,11 @@ hands-off check come last, on the integrated branch.
 The owner, 2026-10-30: "lets also remove the upgrades button for shops that
 havent been built yet, and add a button in the world for the initial build."
 Voted D of four mocks (review "build button in the world"): a sign staked in
-the empty lot, BUILD over the price.
+the empty lot, BUILD over the price. Then, the same day: "i dont think we
+need the cost in the hover, i dont think we need the hover at all. we should
+put the thing name in the sign." So the board reads the station's name (SAW
+MILL, SHACK; a yard station's `.sign` attribute, its name with no article)
+over the price, grows to fit the longer line, and has no hover.
 
 - **Every act, one mechanism.** A station row with a `lot` (stations.js)
   wears the sign: act 1's eight door rows, act 3's saw mill and workshop, and
@@ -24447,7 +24451,7 @@ the empty lot, BUILD over the price.
   asked through the board's own `revealed` (a sticky door's `once` comes with
   it, so the shack's 70% reveal holds past a spend), and while that board is
   up (the bench, in the yard); it goes once the row is in the works or done.
-  Greyed when the row is dead, its hover the row's `waits` line; a coin short
+  Greyed when the row is dead, saying nothing more; a coin short
   greyed on the price line alone. Its press is the tile's (`pressRow`).
 - **The sign is the way in.** Act 3's construction shack still sells both
   builds. A station not yet built has no UPGRADES button and no board, and a

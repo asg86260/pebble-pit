@@ -46,6 +46,8 @@ const nearly = n => S.stored >= n * UNLOCK_SHOW;
 const yardLot = key => ({
   row: () => UPGRADES.find(u => u.key === `unlock${key}`) || null,
   board: 'bench',
+  // the station's name as a sign reads it, with no article (`.sign`)
+  name: () => msg(`station-${key}.sign`),
   box: () => { const s = S.placed?.[key]; return s && { x: key === 'shack' ? shackSpot() : s.x, w: s.w }; },
   floor: () => S.groundY
 });
@@ -135,10 +137,10 @@ for (const id of PARTY_IDS) {
 // than over it, where the board would hide the parts a hand works (act 3's
 // stations, after/stations.js); without one, the board stands centered over
 // its ground. A row with a `lot` is a place built on an empty lot that wears
-// a build sign until it is (buildsign.js): the row that builds it, the ground
-// the sign stands in (`box`, and a `mid` where the drawing's middle is not
+// a build sign until it is (buildsign.js): the row that builds it, the name on
+// the sign, the ground it stands in (`box`, and a `mid` where the drawing's middle is not
 // the box's), the floor under it, and where they differ, the board the row
-// is listed on, the call its hover makes and its own press. So a new place is one row, and every system
+// is listed on and its own press. So a new place is one row, and every system
 // that shows or staffs a place reads it off here.
 //
 // Which place a row stands in (`place`: 'yard', 'deep', 'after' or 'hell';

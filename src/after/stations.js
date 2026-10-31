@@ -114,7 +114,7 @@ const lotOf = card => ({
   box: () => stationBox(card),
   mid: () => drawnMid(card),
   floor: floorAt,
-  call: () => msg('build-sign-call', { name: NAMES[card]() })
+  name: NAMES[card]
 });
 
 // In the order a press asks them: the standing stations, the grove, God's camp.

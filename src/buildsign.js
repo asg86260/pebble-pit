@@ -1,22 +1,24 @@
 // REVIEW build-sign
-// The build sign: a signboard on a post staked in an empty lot, BUILD over
-// the price, which buys the lot's first build (the owner, 2026-10-30, mock D
-// of the review "build button in the world"). Every place's empty lots wear
-// one: a station row says it has a lot (`lot`, stations.js), and that column
-// is the whole of what a place supplies -- the row that builds it, the ground
-// it stands in, the floor under it. The rest is here, once.
+// The build sign: a signboard on a post staked in an empty lot, the name of
+// what goes up there over its price, which buys the lot's first build (the
+// owner, 2026-10-30, mock D of the review "build button in the world"; the
+// name on the board where BUILD stood, and no hover, the same day). Every
+// place's empty lots wear one: a station row says it has a lot (`lot`,
+// stations.js), and that column is the whole of what a place supplies -- the
+// row that builds it, the name it goes by, the ground it stands in, the floor
+// under it. The rest is here, once.
 //
 // The sign is the board's row out in the world, so it asks the board's own
 // questions and no others: it stands while the row is listed on its board
 // (`revealed`, shop.js, the row's `show` behind its one-way `once` door), and
 // while the board itself stands; it goes when the row is bought and in the
 // works (`building`) or done (`maxed`); it is greyed where the board greys
-// the row (`dead`, saying its `waits` line), and each coin you are short of
+// the row (`dead`), and each coin you are short of
 // is greyed as the tile greys it. A press is the tile's press (`pressRow`),
 // so the bill is taken and the builders walk as they do from the board.
 //
-// Drawn by render/buildsign.js; the pointer's three questions (is it over
-// one, what does it say, press it) are input.js's, asked here; its ground is
+// Drawn by render/buildsign.js; the pointer's two questions (is it over one,
+// press it) are input.js's, asked here; it says nothing on a hover. Its ground is
 // claimed in footprints.js (`signRects`), as the lot's.
 
 import { S } from './state.js';
@@ -26,16 +28,14 @@ import { COIN_MARKS } from './glyphs.js';
 import { STATIONS, open } from './stations.js';
 import { revealed, pressRow, coinsOf } from './shop.js';
 import { billOf, building, canPay } from './upgrades.js';
-import { maxed, purse, fmt, priceText } from './words.js';
+import { maxed, purse, fmt } from './words.js';
 import { msg } from './lang.js';
 import { standingIn } from './footprints.js';
 
 // --- the lots --------------------------------------------------------------
-// A coin's mark on the price line, and what the hover calls it.
+// A coin's mark on the price line.
 export const SIGN_MARKS = { dust: COIN_MARKS.dust, shard: COIN_MARKS.ore, spore: COIN_MARKS.crop, spark: COIN_MARKS.spark,
                             rebel: AFTER_COIN_MARKS.rebel, timber: AFTER_COIN_MARKS.timber, fang: FANG_MARK };
-const COIN_NAME = { dust: 'books-dust', shard: 'books-shard', spore: 'books-spore', spark: 'books-spark',
-                    rebel: 'after-coin-rebel', fang: 'build-sign-fang' };
 
 // The row a lot's sign sells, while the sign stands: listed on a board that
 // is up, and neither in the works nor done.
@@ -50,7 +50,6 @@ function selling(lot) {
 // `shopW`): the node tier, which has no canvas, claims the same ground the
 // page draws.
 export const textW = s => Math.ceil(s.length * SHOP_BTN_PX * SHOP_BTN_ADVANCE);
-export const signWord = () => msg('build-sign-word').toUpperCase();
 // A coin's mark at whole pixels a cell, near the type's height.
 export const markScale = g => Math.max(1, Math.round(SIGN_MARK / g.length));
 // The price line: each coin's mark and its count, greyed where the purse is
@@ -81,8 +80,9 @@ const meets = (a, b) => Math.min(a.x + a.w, b.x + b.w) > Math.max(a.x, b.x) && M
 // Centered on the lot, unless that stands it on something else's ground (a
 // price wider than the lot, beside the lot's pile): then the nearest spot, a
 // cell at a time either way, that touches nothing but the lot.
-function boxOf(mid, floor, parts, others) {
-  const w = cells(Math.max(textW(signWord()), rowW(parts)) + SHOP_BTN_PAD * 2), x0 = half(mid - w / 2);
+// As wide as the longer of its two lines, the name or the price.
+function boxOf(mid, floor, name, parts, others) {
+  const w = cells(Math.max(textW(name), rowW(parts)) + SHOP_BTN_PAD * 2), x0 = half(mid - w / 2);
   const clear = b => !rectsOf(b).some(r => others.some(o => meets(r, o)));
   for (let k = 0; k <= w / P; k++)
     for (const dx of k ? [-k * P, k * P] : [0]) { const b = boxAt(x0 + dx, w, floor); if (clear(b)) return b; }
@@ -106,27 +106,16 @@ export function signs(place = S.view) {
     const state = u.dead?.() ? 'locked' : canPay(u) ? 'ok' : 'short';
     const parts = partsOf(bill, state === 'locked');
     const mid = lot.mid ? lot.mid() : spot.x + spot.w / 2;
-    const box = boxOf(mid, lot.floor, parts, others);
-    const call = lot.call ? lot.call() : u.name;
-    out.push({ id, key: r.key, place, row: u, act: lot.act, call, bill, state, parts, lot: spot, box });
+    const name = lot.name().toUpperCase();
+    const box = boxOf(mid, lot.floor, name, parts, others);
+    out.push({ id, key: r.key, place, row: u, act: lot.act, name, bill, state, parts, lot: spot, box });
   }
   return out;
 }
 
-// --- what it says ------------------------------------------------------------
-const billSaid = s => (s.bill.length ? s.bill.map(c => msg('build-sign-coin', { n: priceText(c.coin, c.n), coin: msg(COIN_NAME[c.coin] || 'books-dust') })).join(', ')
-                                    : msg('build-free'));
-export const signSaid = s => (s.state === 'locked' ? msg('build-sign-wait', { call: s.call, why: s.row.waits?.() || '' })
-                                                   : msg('build-sign-say', { call: s.call, bill: billSaid(s) }));
-
-// --- the pointer's three questions -------------------------------------------
+// --- the pointer's two questions ---------------------------------------------
 export const onSign = (b, x, y) => x >= b.x - SIGN_HIT && x < b.x + b.w + SIGN_HIT && y >= b.y - SIGN_HIT && y < b.y + b.h + SIGN_HIT;
 export const signAt = (x, y) => signs().find(s => onSign(s.box, x, y)) || null;
-// What the hover says over one, and the world point it hangs from.
-export function signSays(x, y) {
-  const s = signAt(x, y);
-  return s && { text: signSaid(s), at: { x: s.box.x + s.box.w / 2, y: s.box.y + s.box.h } };
-}
 // A press on one is the board tile's press on its row: a bill that cannot be
 // paid, or a row that waits, buys nothing, as the tile's press does. True
 // when the press was the sign's.

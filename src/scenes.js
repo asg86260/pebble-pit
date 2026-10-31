@@ -3723,7 +3723,7 @@ Object.assign(SCENES, {
 });
 
 // The build sign (buildsign.js), in each place that has an empty lot: staked
-// in the lot, BUILD over the price, the pointer on it saying what it builds.
+// in the lot, its name over the price, the pointer on it, lifting it.
 // Act 1: the shack offered but short (120 of its 150). Act 3: the saw mill
 // payable beside the workshop, which waits on it. The deep: a fang held, the
 // next free slot's sign. The pointer is stood on the sign by the page
@@ -3732,12 +3732,12 @@ const SIGN_REVIEW = { about: 'the acts', review: 'build sign: built', stage: 'bu
                       branch: 'build-sign', supersedes: ['build button in the world'] };
 const standSign = (key, x) => { pinCamera(x); window.__look(x); window.__fast(1 / 60); globalThis.__signHover?.(key); };
 Object.assign(SCENES, {
-  'build-sign-yard': { ...SIGN_REVIEW, option: 'A act 1: the shack', say: "The shack's lot: a sign staked where the hut will stand, BUILD over its price, the pebbles you're short of greyed. Press it and a builder walks out.",
+  'build-sign-yard': { ...SIGN_REVIEW, option: 'A act 1: the shack', say: "The shack's lot: a sign staked where the hut will stand, SHACK over its price, the pebbles you're short of greyed. Press it and a builder walks out.",
     run: () => {
       window.__reset(); window.__crew(2); S.seenBench = true; window.__give(120); window.__fast(2);
       standSign('shack', signMid('shack', 'yard').x - S.viewW / 2);
     } },
-  'build-sign-after': { ...SIGN_REVIEW, option: 'B act 3: the saw mill and the workshop', say: "The saw mill's sign payable, the workshop's greyed until the saw mill stands; no UPGRADES under either. The shack's board still sells both.",
+  'build-sign-after': { ...SIGN_REVIEW, option: 'B act 3: the saw mill and the workshop', say: "SAW MILL payable, WORKSHOP greyed until the saw mill stands, no hover on either; and no UPGRADES under either. The shack's board still sells both.",
     run: () => {
       window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
       for (let k = 0; k < 90 && window.__afterRead().walking > 0; k++) window.__fast(1);
@@ -3748,7 +3748,7 @@ Object.assign(SCENES, {
       S.wonShown = S.wonSeq | 0;   // the yard's coins granted for the bills earn act 1 notices play never shows here
       standSign('after-mill', x);
     } },
-  'build-sign-deep': { ...SIGN_REVIEW, option: 'C the deep: the next slot', say: "A fang held: the sign staked in the next free slot, BUILD over the fang's mark. It replaces the floating build button.",
+  'build-sign-deep': { ...SIGN_REVIEW, option: 'C the deep: the next slot', say: "A fang held: the sign staked in the next free slot, STATION over the fang's mark. It replaces the floating build button.",
     run: () => {
       deepYard({ party: [cast('brawler', 2)], fangs: 1, run: 6 });
       standSign('s2', signMid('s2', 'deep').x - S.viewW / 2);
