@@ -14,7 +14,7 @@
 // new game (`held`).
 
 import { S } from '../state.js';
-import { DPS_BIN_S, DPS_SPAN_S, DPS_NOW_S, DPS_SMOOTH_S, SERPENT_PHASES, CLASSES } from '../config.js';
+import { DPS_BIN_S, DPS_SPAN_S, DPS_NOW_S, SERPENT_PHASES, CLASSES } from '../config.js';
 import { now } from '../clock.js';
 import { held } from '../reset.js';
 import { msg } from '../lang.js';
@@ -25,7 +25,6 @@ import { stationById, classOf } from './party.js';
 // Two buckets past the span: the one filling, and one sliding off the edge.
 export const BINS = Math.round(DPS_SPAN_S / DPS_BIN_S) + 2;
 const NOW_BINS = Math.max(1, Math.round(DPS_NOW_S / DPS_BIN_S));
-export const SMOOTH_BINS = Math.max(1, Math.round(DPS_SMOOTH_S / DPS_BIN_S));
 
 const make = () => ({ sums: new Float64Array(BINS), stamps: new Int32Array(BINS).fill(-1) });
 const total = make();
