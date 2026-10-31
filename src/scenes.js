@@ -30,6 +30,7 @@ import { depthAt } from './deep/depth.js';
 import { strike, clickDeep } from './deep/serpent.js';
 import { mouthX, portalX, spotX, coilAt, bellySeg, slotX, crusherRect, deepFloor, deepX0 } from './deep/place.js';
 import { sweep } from './hands.js';
+import { showFurnaceTip } from './render/dpstip.js';
 import { windowS, startMeal, landAt } from './deep/meals.js';
 import { startleFauna, faunaWhen } from './deep/fauna.js';
 import { nextWave } from './render/deepwave.js';
@@ -1021,6 +1022,27 @@ const deepScenes = {
       for (let i = 0; i < 6; i++) sweep(c.x + c.w + P * (6 + i * 2), deepFloor() - P);
       S.mouse = { x: c.x + c.w / 2, y: c.y + c.h * 0.6 };
       window.__look(deepX0());   // the deep's left end, where the card stands clear of the furnace
+    } },
+  // The furnace's hover (render/dpstip.js): two fighters for half a minute,
+  // two more joining and the hand clicking now and then, the wound held so no
+  // break ends the fight; then the camera on the furnace and the pointer on it.
+  'furnace-dps': { about: 'the deep', review: 'the furnace: dps graph, built', option: 'A a bar a fighter',
+    stage: 'built: furnace-dps, not on main yet', branch: 'furnace-dps', supersedes: ['the furnace: dps graph'],
+    say: "the furnace's hover: the minute's damage a second as a heap under the break pace, and a bar a fighter, the highest on top",
+    run: () => {
+      deepYard({ stage: 1, wound: 0.2, run: 25, party: [cast('brawler', 4), cast('ranger', 4)] });
+      window.__party({ stations: [cast('sapper', 6), cast('mage', 6)] });
+      for (let s = 0; s < 35; s += 0.5) {
+        window.__fast(0.5); window.__serpent({ stage: 1, wound: 0.2 * depthAt(1) });
+        if (s % 2 === 0 && s > 8) { const p = coilAt(Math.floor(COIL_SEGS / 3), now()); clickDeep(p.x, p.y); }
+      }
+      S.wonShown = S.wonSeq | 0;   // the act-1 notice the granted coins earn, hushed while the scene stands
+      window.__look(deepX0());
+      window.__fast(1 / 60);
+      const c = crusherRect();
+      S.mouse = { x: c.x + c.w / 2, y: c.y + c.h / 2 };
+      showFurnaceTip();
+      window.__holdShot();
     } },
   // A storm over the yard and a strike at its flash while the view is in the
   // deep: under the water none of it shows.

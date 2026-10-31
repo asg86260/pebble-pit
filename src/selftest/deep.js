@@ -972,3 +972,38 @@ TESTS.push(['a status tile answers the pointer only while it is drawn', async ()
     ok(at && !statusAt(...at), 'and with the bar gone that spot answers nothing', String(at))
   ];
 }]);
+
+// The furnace's hover, by a real pointer (render/dpstip.js): a party a while
+// at the coil, the camera on the furnace, and the pointer moved onto it. The
+// tip comes up wearing the dps drawing, a row for each fighter that hit.
+import { furnaceTipRows } from '../render/dpstip.js';
+import { PAIRS } from '../config.js';
+TESTS.push(['deep: the pointer on the furnace shows the fight\'s dps, a row a fighter', async () => {
+  const kindOf = cls => Object.keys(PAIRS).find(k => PAIRS[k].includes(cls));
+  window.__fullSites();
+  window.__snatch({ played: true });
+  window.__crew(0, 4);
+  window.__deepCrew({ spare: 1 });
+  window.__party({ stations: ['brawler', 'ranger'].map(cls => ({ kind: kindOf(cls), cls, rung: 4 })) });
+  window.__serpent({ stage: 0, wound: 0 });
+  window.__view('deep');
+  run(VIEW_GLIDE_S + 25);
+  const c = crusherRect();
+  window.__look(c.x + c.w / 2 - S.viewW / 3);
+  run(0.2);
+  point('pointermove', ...onScreen(c.x + c.w / 2, c.y + c.h / 2), 0);
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  const tip = document.getElementById('tip');
+  const graph = tip.querySelector('canvas.dpsgraph');
+  const up = !tip.hidden;
+  const rows = furnaceTipRows();
+  const want = S.stations.map(st => `st:${st.id}`);
+  // and off it again, the tip goes
+  point('pointermove', ...onScreen(c.x - P * 30, c.y - P * 20), 0);
+  return [
+    ok(up && !!graph, 'the tip is up over the furnace, wearing the dps drawing', up ? tip.innerHTML.slice(0, 80) : 'hidden'),
+    ok(graph && graph.width > 0 && graph.height > 0, 'and it is drawn'),
+    ok(want.length === 2 && want.every(k => rows.includes(k)), 'a row for each fighter at the coil', JSON.stringify({ rows, want })),
+    ok(tip.hidden, 'off the furnace the tip goes')
+  ];
+}]);

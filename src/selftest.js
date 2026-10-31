@@ -54,6 +54,7 @@ import { TESTS as afterseeds } from './selftest/afterseeds.js';   // track D: th
 import { TESTS as playcheck } from './selftest/playcheck.js';   // a play check for each place, by the pointer
 import { TESTS as cutbench } from './selftest/cutbench.js';   // the cutscene bench (cutscenes.html)
 import { TESTS as buildsign } from './selftest/buildsign.js';   // the build sign under a real pointer
+import { TESTS as afterpage } from './selftest/afterpage.js';   // act 3's cloud floor on every page, read off the frame
 
 // Every group there is, in file order.
 const TESTS = [
@@ -99,6 +100,7 @@ const TESTS = [
   ...playcheck,
   ...cutbench,
   ...buildsign,
+  ...afterpage,
 ];
 
 // `__test()` runs the lot. `__test('casino')` runs the groups whose name says
