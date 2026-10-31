@@ -4100,6 +4100,35 @@ for (const [opt, option, say] of BUILD_MOCK) for (const [act, name, stand, view,
     swap: () => { if (S.view !== view) { window.__scene(name); return; } globalThis.__buildBtnMock = opt; globalThis.__buildMockHover?.(lot); },
     run: () => stand(opt) };
 }
+
+// MOCK the-furnace-dps-graph: the party's damage a second in the furnace's
+// hover (src/deep/dpsmock.js), never merged. A mixed party a minute into the
+// bare coil, the wound held so no break ends the fight, then the camera at
+// the furnace and the tip stood over it as the pointer would.
+const FURNACE_MOCK = [
+  ['a', 'A sparkline', 'the last minute of the party\'s damage a second as a line, its live end a cell, the number beside it'],
+  ['b', 'B stepped bars', 'a bar every five seconds, a cell wide, climbing a cell at a time, the top cell fading up as it fills'],
+  ['c', 'C heap and the break pace', 'the minute as a filled heap, and a dotted rule at the pace that opens the wound to its depth in one window'],
+];
+for (const [opt, option, say] of FURNACE_MOCK) SCENES[`furnace-dps-${opt}`] = {
+  about: 'the deep', review: 'the furnace: dps graph', option, say, branch: 'a3-review-both',
+  stage: 'mock: throwaway, never merged',
+  swap: () => { globalThis.__furnaceGraphMock = opt; globalThis.__furnaceMockHover?.(); },
+  run: () => {
+    // Two fighters for half a minute, then two more join: a line with a
+    // climb in it, not a level beat.
+    deepYard({ stage: 1, wound: 0.2, run: 25, party: [cast('brawler', 4), cast('ranger', 4)] });
+    window.__party({ stations: [cast('brawler', 4), cast('ranger', 4), cast('sapper', 6), cast('mage', 6)] });
+    for (let s = 0; s < 35; s += 0.5) { window.__fast(0.5); window.__serpent({ stage: 1, wound: 0.2 * depthAt(1) }); }
+    globalThis.__furnaceGraphMock = opt;
+    S.wonShown = S.wonSeq | 0;   // the act-1 notice the granted coins earn, hushed while the scene stands
+    window.__look(deepX0());
+    window.__fast(1 / 60);
+    const c = crusherRect();
+    S.mouse = { x: c.x + c.w / 2, y: c.y + c.h / 2 };
+    globalThis.__furnaceMockHover?.();
+    window.__holdShot();
+  } };
 // The build sign (buildsign.js), in each place that has an empty lot: staked
 // in the lot, its name over the price, the pointer on it, lifting it.
 // Act 1: the shack offered but short (120 of its 150). Act 3: the saw mill
