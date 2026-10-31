@@ -400,11 +400,13 @@ export const DEEP_KNOBS = [
 // --- the furnace's dps (deep/dps.js, render/dpstip.js) -------------------------
 // The fight's damage a second is kept in buckets of DPS_BIN_S game seconds over
 // the last DPS_SPAN_S. Every number in the hover is the mean over the last
-// DPS_NOW_S: a Sapper charges further apart than five seconds, and a shorter
-// mean read it as nought between charges.
+// DPS_NOW_S (the owner, 2026-10-31: "average the dps over a minute or so so
+// they dont jump arond as much"), or over the part of it since that one first
+// hit, so a fighter just come is read at its pace rather than diluted. The
+// span outlasts the window so the minute is always whole.
 export const DPS_BIN_S = 1;
-export const DPS_SPAN_S = 60;
-export const DPS_NOW_S = 10;
+export const DPS_SPAN_S = 90;
+export const DPS_NOW_S = 60;
 // The hover's drawing, in cells of the world's cell on the glass: the heap
 // DPS_HEAP_W x DPS_HEAP_H, a row a fighter DPS_ROW_H tall with a bar up to
 // DPS_BAR_W long. The heap's top eases to its peak and a row changing places

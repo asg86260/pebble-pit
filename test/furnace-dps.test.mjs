@@ -1,7 +1,7 @@
 // The furnace's dps (deep/dps.js; DESIGN.md, "The furnace's dps"): every
 // hit through `strike` is credited to whoever did it, a fighter's station, a
 // bleed's class or the hand, and read back as damage a second over the last
-// DPS_NOW_S. What a fighter's row says is what that fighter did over the
+// DPS_NOW_S, or the part of it since that one first hit. What a row says is what it did over the
 // window; the total is the rows summed; nothing of it outlives a new game.
 // How the hover draws it is the scene's (`furnace-dps`) and the browser's.
 
@@ -61,13 +61,35 @@ group("each fighter's dps is its damage over the window, and the total is their 
   for (const cls of ['brawler', 'ranger']) {
     const r = row(cls), did = inWindow(landed, CLASSES[cls].hit);
     checks.push(ok(r && did > 0, `the ${cls} has a row, and hit in the window`, JSON.stringify({ row: r && r.dps, did })));
-    checks.push(ok(r && near(r.dps * DPS_NOW_S, did), `the ${cls}'s dps times the window is what it did in the window`,
-                   JSON.stringify({ said: r && r.dps * DPS_NOW_S, did })));
+    checks.push(ok(r && near(r.dps * r.secs, did), `the ${cls}'s dps times its seconds in the window is what it did there`,
+                   JSON.stringify({ said: r && r.dps * r.secs, did })));
     checks.push(ok(r && r.name === CLASSES[cls].name, `the ${cls}'s row is named for its class`, r && r.name));
   }
   const sum = rows.reduce((s, r) => s + r.dps, 0);
+  checks.push(ok(rows.every(r => r.secs === DPS_NOW_S), 'a minute and a half in, every row is read over the whole window',
+                 JSON.stringify(rows.map(r => [r.key, r.secs]))));
   checks.push(ok(near(totalDps(), sum), 'the total is the rows summed', JSON.stringify({ total: totalDps(), sum })));
   return checks;
+});
+
+// A fighter come late is read over its own seconds in the window, not the
+// whole of it: a third of a minute at the coil is that third's pace.
+group('a fighter that joined inside the window reads at its own pace, not diluted by the window', async () => {
+  fight(['brawler']);
+  watch(DPS_NOW_S + 10);
+  window.__party({ stations: [{ kind: KIND_OF.ranger, cls: 'ranger', rung: 4 }] });
+  const landed = watch(25);
+  const st = S.stations.find(x => x.cls === 'ranger');
+  const r = sources().find(x => x.key === `st:${st?.id}`);
+  const did = inWindow(landed, CLASSES.ranger.hit);
+  const old = sources().find(x => x.key === `st:${S.stations.find(x => x.cls === 'brawler')?.id}`);
+  return [
+    ok(r && did > 0, 'the newcomer hit', JSON.stringify({ did })),
+    ok(r && r.secs > 0 && r.secs < 25, 'its dps is taken over its own seconds since its first hit', JSON.stringify(r && r.secs)),
+    ok(r && near(r.dps * r.secs, did), 'and is what it did over them', JSON.stringify({ said: r && r.dps * r.secs, did })),
+    ok(r && r.dps > did / DPS_NOW_S * 1.5, 'well over what the whole window would make of it', JSON.stringify({ dps: r && r.dps, diluted: did / DPS_NOW_S })),
+    ok(old && old.secs === DPS_NOW_S, 'the fighter there all along is read over the whole window', JSON.stringify(old && old.secs))
+  ];
 });
 
 group("a bleed's tick, which names only its weapon, is its class's", async () => {
@@ -79,7 +101,7 @@ group("a bleed's tick, which names only its weapon, is its class's", async () =>
   return [
     ok(did > 0, 'the bleed ticked in the window', String(did)),
     ok(r && r.name === CLASSES.sword.name, 'its ticks are a row named for the class that cuts with it', JSON.stringify(sources().map(x => x.key))),
-    ok(r && near(r.dps * DPS_NOW_S, did), "and the row's dps is what the ticks did", JSON.stringify({ said: r && r.dps * DPS_NOW_S, did })),
+    ok(r && near(r.dps * r.secs, did), "and the row's dps is what the ticks did", JSON.stringify({ said: r && r.dps * r.secs, did })),
     ok(!sources().some(x => x.key === 'you'), 'none of it is the hand\'s')
   ];
 });
@@ -95,7 +117,7 @@ group('a click on the coil is "you"', async () => {
   return [
     ok(hit && did > 0, 'the click landed', JSON.stringify({ hit, did })),
     ok(r && r.name === 'you', 'the hand has a row of its own', JSON.stringify(sources().map(x => [x.key, x.name]))),
-    ok(r && near(r.dps * DPS_NOW_S, did), "and the row's dps is what the click did", JSON.stringify({ said: r && r.dps * DPS_NOW_S, did }))
+    ok(r && near(r.dps * r.secs, did), "and the row's dps is what the click did", JSON.stringify({ said: r && r.dps * r.secs, did }))
   ];
 });
 

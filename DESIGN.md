@@ -15846,8 +15846,11 @@ places every second, and a row that does change places fades out and back in
 Who did it is decided at the one door every hit goes through (`strike`): a
 hit with a striker is its station's; a bleed's tick names only its weapon, so
 it is the station's whose class cuts with that weapon, or the class's when
-none stands; anything else is the click, "you". The numbers are a ten-second
-mean: a Sapper's charges are further apart than five. Nothing is saved -- it
+none stands; anything else is the click, "you". The numbers are a minute's
+mean ("average the dps over a minute or so so they dont jump arond as
+much"), each taken over the part of the minute since that one first hit, so a
+fighter just come reads at its pace rather than a third of it; the total is
+the rows summed. Nothing is saved -- it
 is a reading of the fight now (`deep/dps.js`, `render/dpstip.js`).
 
 The crusher's own tip, the full floor's mark, still speaks when the pointer
