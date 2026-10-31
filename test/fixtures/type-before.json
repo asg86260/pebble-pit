@@ -594,18 +594,6 @@
   "value": "normal"
  },
  {
-  "file": "src/shelf.css",
-  "sel": "#buildbtn",
-  "prop": "font",
-  "value": "inherit"
- },
- {
-  "file": "src/shelf.css",
-  "sel": "#buildbtn",
-  "prop": "letter-spacing",
-  "value": ".14em"
- },
- {
   "file": "src/title.css",
   "sel": ".col",
   "prop": "letter-spacing",

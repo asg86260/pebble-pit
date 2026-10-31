@@ -17,7 +17,7 @@ import { deepFloor } from '../src/deep/place.js';
 import { deepBed } from '../src/state.js';
 import { putBlock, takeUnit, addGrain, cellOf } from '../src/grid.js';
 import { afterGround } from '../src/state.js';
-import { stripOf, slotTop } from '../src/after/ground.js';
+import { stripOf, slotTop, uncovered } from '../src/after/ground.js';
 import { chopTree } from '../src/after/grove.js';
 import { push } from '../src/cells.js';
 import { flowBy } from '../src/flow.js';
@@ -43,7 +43,7 @@ const red = msg => /appeared or vanished/.test(msg);
 group('the played chain is quiet, and every door that made or unmade a unit is named', async () => {
   camp(8);
   const raised = raise('mill') && raise('workshop');
-  window.__afterAxe();
+  window.__afterSaw();
   window.__afterGrant({ grovelogs: 4 });
   for (let k = 0; k < 12; k++) chopTree(0, true);
   window.__afterPress('sawyer'); window.__afterPress('joiner'); window.__afterPress('carrier');
@@ -72,7 +72,7 @@ group('a unit written or erased round the doors turns the rule red', async () =>
   putBlock(afterGround, c, slotTop(c, s.z), cellOf('plank'));
   out.push(['a block written onto the ground', says()]);
   // a block erased from it
-  const lo = afterGround.blockSet && [...afterGround.blockSet][0];
+  const lo = afterGround.blockSet && [...afterGround.blockSet].find(ai => uncovered(ai));
   takeUnit(afterGround, lo % afterGround.cols, Math.floor(lo / afterGround.cols));
   out.push(['a block erased from the ground', says()]);
   // a unit conjured into a member's arms

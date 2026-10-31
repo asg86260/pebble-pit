@@ -4858,11 +4858,25 @@
   "text": "the casino"
  },
  {
+  "id": "station-casino.sign",
+  "group": "Stations",
+  "where": "src/stations.js",
+  "context": "a station's name: its board's title, the pointer's label, the queue card",
+  "text": "casino"
+ },
+ {
   "id": "station-filter",
   "group": "Stations",
   "where": "play.html",
   "context": "a station's name",
   "text": "the air filter"
+ },
+ {
+  "id": "station-filter.sign",
+  "group": "Stations",
+  "where": "play.html",
+  "context": "a station's name",
+  "text": "air filter"
  },
  {
   "id": "station-filter-empty",
@@ -4879,6 +4893,13 @@
   "text": "the quarry"
  },
  {
+  "id": "station-quarry.sign",
+  "group": "Stations",
+  "where": "play.html",
+  "context": "a station's name",
+  "text": "quarry"
+ },
+ {
   "id": "station-quarry-empty",
   "group": "Stations",
   "where": "src/stations.js",
@@ -4891,6 +4912,13 @@
   "where": "play.html",
   "context": "a station's name",
   "text": "the farm"
+ },
+ {
+  "id": "station-farm.sign",
+  "group": "Stations",
+  "where": "play.html",
+  "context": "a station's name",
+  "text": "farm"
  },
  {
   "id": "station-farm-empty",
@@ -4907,6 +4935,13 @@
   "text": "the apothecary"
  },
  {
+  "id": "station-apothecary.sign",
+  "group": "Stations",
+  "where": "play.html",
+  "context": "a station's name",
+  "text": "apothecary"
+ },
+ {
   "id": "station-apothecary-empty",
   "group": "Stations",
   "where": "src/stations.js",
@@ -4921,6 +4956,13 @@
   "text": "the tower"
  },
  {
+  "id": "station-tower.sign",
+  "group": "Stations",
+  "where": "play.html",
+  "context": "a station's name",
+  "text": "tower"
+ },
+ {
   "id": "station-tower-empty",
   "group": "Stations",
   "where": "src/stations.js",
@@ -4933,6 +4975,13 @@
   "where": "play.html",
   "context": "a station's name",
   "text": "the shack"
+ },
+ {
+  "id": "station-shack.sign",
+  "group": "Stations",
+  "where": "play.html",
+  "context": "a station's name",
+  "text": "shack"
  },
  {
   "id": "station-shack-empty",
@@ -4954,6 +5003,13 @@
   "where": "play.html",
   "context": "a station's name",
   "text": "the janitor's closet"
+ },
+ {
+  "id": "station-outhouse.sign",
+  "group": "Stations",
+  "where": "play.html",
+  "context": "a station's name",
+  "text": "janitor's closet"
  },
  {
   "id": "station-outhouse-empty",
@@ -5031,6 +5087,13 @@
   "where": "src/stations.js",
   "context": "a deep station not yet given a fighter; $nth counts the empty lots before it (an eighth reads \"undefined\", as the code said)",
   "text": "a undefined station"
+ },
+ {
+  "id": "station-party-lot.sign",
+  "group": "Stations",
+  "where": "src/deep/buildbutton.js",
+  "context": "a deep station not yet given a fighter; $nth counts the empty lots before it (an eighth reads \"undefined\", as the code said)",
+  "text": "station"
  },
  {
   "id": "crew-at-rockhands",
@@ -5906,6 +5969,13 @@
   "where": "src/after/stations.js",
   "context": "the hover over a counted pile in act 3 (the workshop's signs)",
   "text": "sign pile"
+ },
+ {
+  "id": "hover-pile-seeds",
+  "group": "Hover",
+  "where": "src/after/stations.js",
+  "context": "the hover over a counted pile in act 3 (the grove's seed basket by the forestry shack)",
+  "text": "seed basket"
  },
  {
   "id": "hover-log",
@@ -6932,15 +7002,15 @@
  {
   "id": "row-raise-station",
   "group": "The deep",
-  "where": "src/deep/party.js",
+  "where": "src/deep/buildbutton.js",
   "context": "the deep: the build of a new fighter's station (the queue card names it)",
   "text": "raise a station"
  },
  {
   "id": "build-free",
   "group": "The deep",
-  "where": "src/deep/buildbutton.js",
-  "context": "the deep's build button: the first station costs no fang",
+  "where": "src/buildsign.js",
+  "context": "a build sign's price when it asks nothing: the deep's first station costs no fang",
   "text": "free"
  },
  {
@@ -7826,11 +7896,11 @@
   "text": "they set the pick down"
  },
  {
-  "id": "act-axe",
+  "id": "act-saw",
   "group": "The shell",
   "where": "src/actbeats.js",
-  "context": "act beat line, placeholder: the axe handed over",
-  "text": "an axe"
+  "context": "act beat line, placeholder: the saw handed to the woodcutter",
+  "text": "a saw"
  },
  {
   "id": "act-strike",
@@ -8127,11 +8197,11 @@
   "text": "no souls won yet: plant signs"
  },
  {
-  "id": "after-row-axe",
+  "id": "after-row-saw",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 card row (placeholder): the axe, bought: a click on a grown tree chops it",
-  "text": "axe"
+  "context": "act 3 card row (placeholder): the saw, bought: the woodcutter saws grown trees down",
+  "text": "saw"
  },
  {
   "id": "after-row-plot",
@@ -8148,11 +8218,25 @@
   "text": "faster growth"
  },
  {
-  "id": "after-row-tree",
+  "id": "after-row-seeds",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 card row (placeholder): the grove's bigger trees, more logs a fall",
-  "text": "bigger trees"
+  "context": "act 3 card row (placeholder): the grove's seeds, one acorn a press, fetched from heaven's gates to the seed basket",
+  "text": "seeds"
+ },
+ {
+  "id": "after-seeds-full",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/rows.js",
+  "context": "the seeds row's words while it is greyed: the basket, the seeds owed and those on their way fill it",
+  "text": "full"
+ },
+ {
+  "id": "after-row-selfseed",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/rows.js",
+  "context": "act 3 card row (placeholder): the grove's self-seeding, a felled crown dropping an acorn more often a rung",
+  "text": "self-seeding"
  },
  {
   "id": "after-row-stumps",
@@ -8246,6 +8330,20 @@
   "text": "waiting on a tree to grow"
  },
  {
+  "id": "after-stall-seeds",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/roster.js",
+  "context": "act 3 roster hover (placeholder): why a station's worker is standing still",
+  "text": "waiting on seeds"
+ },
+ {
+  "id": "after-stall-saw",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/roster.js",
+  "context": "act 3 roster hover (placeholder): why a station's worker is standing still",
+  "text": "waiting on the saw"
+ },
+ {
   "id": "after-stall-logs",
   "group": "Act 4 (placeholder)",
   "where": "src/selftest/afterboards.js",
@@ -8302,13 +8400,6 @@
   "text": "build"
  },
  {
-  "id": "after-sect-rebuild",
-  "group": "Act 4 (placeholder)",
-  "where": "src/after/rows.js",
-  "context": "act 3 ruined station's card heading (placeholder): its rebuild",
-  "text": "rebuild"
- },
- {
   "id": "after-sect-card",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
@@ -8333,7 +8424,7 @@
   "id": "after-board-grove",
   "group": "Act 3 boards (track C, placeholder)",
   "where": "src/after/stations.js",
-  "context": "act 3 board title (placeholder): the grove's board, the axe and the trees",
+  "context": "act 3 board title (placeholder): the grove's board, the saw and the trees",
   "text": "grove"
  },
  {

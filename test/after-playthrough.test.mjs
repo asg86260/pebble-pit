@@ -2,7 +2,7 @@
 // "Acts 3 and 4", act 3): from a yard just past act 2's finale, the go-on
 // card over the house; the house's fall, the arrival, the meeting and the
 // refusal, each beat played to its end, the two of them up on the pedestal;
-// the pair's speech bubbles popped for rebel; the axe bought, a tree sawn
+// the pair's speech bubbles popped for rebel; the saw bought, a tree sawn
 // down by hand and its stump pulled; the saw mill raised off the shack
 // and its flywheel spun; members put on their jobs through the rosters; the chain
 // built on to the workshop; signs winning souls, who are hired on
@@ -17,7 +17,7 @@
 //    granted just before that bill is bought (the yard's earning is act 2's
 //    checks, and act 3's bills take far more of them than a hole holds at once);
 //  - rebel for the seats and the stations past the saw mill, granted in one
-//    block once the axe's and the mill's have been earned off the bubbles.
+//    block once the saw's and the mill's have been earned off the bubbles.
 import { group, ok, run, yard, P } from './helpers.mjs';
 import { lying } from '../src/after/ground.js';
 import { AFTER_GATES, AFTER_BUILDS, AFTER_UPGRADES, AFTER_SEAT_BILLS, GESTURE_STUMP_DRAG, AFTER_FIRST_MEMBERS, AFTER_LOG_TIMBER } from '../src/config.js';
@@ -77,6 +77,8 @@ function sawTree(i) {
 }
 // A stump taken hold of where it stands and held up until the roots give.
 function pullStump(i) {
+  // the tree's crown done breaking first: till then the stump is not to hand
+  until(() => S.after.plots[i].fell == null, 10, 0.25);
   const g = partsOf('stump', i).stump, p0 = { x: g.x + g.w / 2, y: g.y + g.h / 2 }, p1 = { x: p0.x, y: p0.y - 3 * P / GESTURE_STUMP_DRAG };
   gestureDown(p0.x, p0.y); gestureMove(p1.x, p1.y);
   let f = 0;
@@ -146,21 +148,21 @@ group('act 3 from the go-on card to the strike, played as a player plays it', as
   const stood = { view: S.view, at: S.acts.pair && S.acts.pair.at, top: S.acts.pair && S.acts.pair.top, house: S.acts.house };
   note(`opened ${opened} ${JSON.stringify(stood)} camp ${read().camp}`);
 
-  // The pair's speech: bubbles popped as they rise, for the axe's rebel.
+  // The pair's speech: bubbles popped as they rise, for the saw's rebel.
   const r0 = read().rebel;
   // (The idle members at the podium give lines of their own the while: the
   // bubbles are to earn fifty more than they have.)
   const popped = earn(r0 + 50, 300);
   const earned = read().rebel - r0;
-  const axe = buyRow('axe');
-  const handed = until(() => beatDone('axe') && read().axe, 60, 0.25);
-  note(`popped ${popped} earned ${earned} axe ${axe} ${handed}`);
+  const sawRow = buyRow('saw');
+  const handed = until(() => beatDone('saw') && read().sawHanded, 60, 0.25);
+  note(`popped ${popped} earned ${earned} saw ${sawRow} ${handed}`);
   // A tree sawn down by hand, and its stump pulled out on its own.
   const sawn = sawTree(0);
   run(3);
   const logsDown = lying().filter(q => q.i === 0).length;
   const pulled = pullStump(0);
-  const replanted = S.after.plots[0].stage;
+  const bare = S.after.plots[0].grow == null && !S.after.plots[0].stump;
   note(`sawn ${JSON.stringify(sawn)} logs ${logsDown} pulled ${JSON.stringify(pulled)}`);
 
   // The saw mill off the shack, for rebel the bubbles earn, and two members put
@@ -222,7 +224,7 @@ group('act 3 from the go-on card to the strike, played as a player plays it', as
   const unmasked = until(() => beatDone('unmask'), 120);
   note(`struck ${struck} union ${u0}->${read().union} camp up to ${peakCamp} signs ${planted} unbought ${want.join(' ')}`);
   window.__actsOn(null);
-  const act3 = ['house-fall', 'arrive', 'meet-god', 'refuse', 'axe', 'strike', 'unmask'];
+  const act3 = ['house-fall', 'arrive', 'meet-god', 'refuse', 'saw', 'strike', 'unmask'];
   const story = log.join(' | ');
   return [
     ok(cardIn < Infinity && goOn, 'the go-on card fades in over the house and answers the press', `${cardIn} ${goOn}`),
@@ -230,10 +232,10 @@ group('act 3 from the go-on card to the strike, played as a player plays it', as
     ok(stood.house === 'fallen' && stood.view === 'after' && stood.at === 'pedestal' && stood.top === 1,
        'the house under the rock, the two of them up on the pedestal, the camera with them', JSON.stringify(stood)),
     ok(camped < Infinity, 'the refusal\'s first members walk out to the camp', `${read().camp}`),
-    ok(popped > 0 && earned >= 50, 'bubbles popped off the pair as they rise earn the axe\'s rebel', `${popped} popped, ${earned} rebel`),
-    ok(axe && handed < Infinity, 'the axe is bought on the grove\'s card and its beat hands it over', `${axe} ${handed}`),
+    ok(popped > 0 && earned >= 50, 'bubbles popped off the pair as they rise earn the saw\'s rebel', `${popped} popped, ${earned} rebel`),
+    ok(sawRow && handed < Infinity, 'the saw is bought on the grove\'s card and its beat hands it over', `${sawRow} ${handed}`),
     ok(sawn.fell && logsDown > 0, 'a tree sawn by hand falls and lies as logs', JSON.stringify(sawn)),
-    ok(pulled.out && replanted === 1, 'its stump pulled by hand comes out and a sapling is set', JSON.stringify(pulled)),
+    ok(pulled.out && bare, 'its stump pulled by hand comes out and leaves the plot bare', JSON.stringify(pulled)),
     ok(mill && post && onJobs === 2 && left <= camp0 - 2 && fed < Infinity, 'the saw mill raised off the shack, a woodcutter and a sawyer walk off the podium to their jobs and carry the logs in', story),
     ok(spun.cut >= 1 && sawnInto > 0, 'the flywheel spun by hand saws a log into timber', JSON.stringify(spun)),
     ok(rows.every(([, b]) => b), 'the posts and the workshop are all bought through their rows',

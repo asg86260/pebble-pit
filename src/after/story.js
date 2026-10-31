@@ -1,7 +1,7 @@
 // Act 3's beats, the bodies of their rows (DESIGN.md, "Acts 3 and 4", "The
 // story, beat by beat", act 3). The rows themselves -- the order, the owner,
 // the trigger -- are in BEATS (beats.js); this file is what each one does.
-// All but the axe still do nothing: each enters, ends on its first step and
+// All but the saw still do nothing: each enters, ends on its first step and
 // lands no fact, until its piece is built, mock-voted first (God, the throne,
 // the unmasking are mocks before they are code).
 //
@@ -9,7 +9,7 @@
 // and `fall` is already the opening's rock coming down (beats.js), so it is
 // `house-fall` here.
 
-import { giveAxe } from './rebel.js';
+import { giveSaw } from './rebel.js';
 
 // A beat that does nothing yet: entered, over on its first frame.
 const stub = () => ({ enter() {}, step() { return false; }, skip() {} });
@@ -29,11 +29,11 @@ export const AFTER_STORY = {
   // and following the pair to the camp's bare patch, the pair up on the
   // pedestal and the first line of their speech.
   'refuse': stub(),
-  // The axe handed over once it is bought on the grove's card (call 15,
-  // settled): due while rebel.js's `axeDue` says so. The member walking over
-  // from the grove with it is a mock before it is a drawing; until then the
-  // beat hands the axe over on its first frame, so the click chops from then on.
-  'axe': { enter() { giveAxe(); }, step() { return false; }, skip() { giveAxe(); } },
+  // The saw handed over once it is bought on the grove's card: due while
+  // rebel.js's `sawDue` says so. The member walking over with it is a mock
+  // before it is a drawing; until then the beat hands it over on its first
+  // frame, and the woodcutter fells from then on (the hand always could).
+  'saw': { enter() { giveSaw(); }, step() { return false; }, skip() { giveSaw(); } },
   // 6. The strike: the whole crowd's tools down at once, God's yard still.
   // Due by strike.js's `strikeDue` at STRIKE_SHARE walked out.
   'strike': stub(),

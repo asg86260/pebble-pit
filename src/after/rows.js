@@ -39,8 +39,9 @@ import { payTo } from '../pit.js';
 import { upCount, built, raising, seatKey, seatsBought } from './levels.js';
 import { crewAt, spareMembers } from './bodies.js';
 import { clearPlot } from './grove.js';
+import { SEEDS_ROW, seedsBought, seedsRoom, seedBill, owe } from './seeds.js';
 import { raiseStation, placeOrder, orderedOf, onOrderLanded } from './build.js';
-import { stationBox, plotX, groveX1, afterFloor, afterX0, floorAt, AP, closed } from './place.js';
+import { stationBox, plotX, groveX1, afterFloor, afterX0, floorAt, AP } from './place.js';
 import { union, won, ready, hire, support } from './union.js';
 import { setCrowdAt } from './stations.js';
 
@@ -100,17 +101,17 @@ const ACT_ROW = { coinOrder: AFTER_TAG_ORDER, place: 'after', flyFrom: () => pat
 
 // --- the named upgrades ----------------------------------------------------------------------
 const UP_NAMES = {
-  'after-podium': () => msg('after-row-podium'), 'after-axe': () => msg('after-row-axe'),
+  'after-podium': () => msg('after-row-podium'), 'after-saw': () => msg('after-row-saw'),
   'after-plot': () => msg('after-row-plot'), 'after-grow': () => msg('after-row-grow'),
-  'after-tree': () => msg('after-row-tree'), 'after-stumps': () => msg('after-row-stumps'),
+  'after-selfseed': () => msg('after-row-selfseed'), 'after-stumps': () => msg('after-row-stumps'),
   'after-blade': () => msg('after-row-blade'),
   'after-bench': () => msg('after-row-bench'), 'after-signreach': () => msg('after-row-signreach')
 };
-// What a purchase does beyond counting itself: a plot cleared and a sapling
-// set in it; the axe owed to its beat (rebel.js, `axeDue`).
+// What a purchase does beyond counting itself: a plot cleared, its bed bare
+// for an acorn; the saw owed to its beat (rebel.js, `sawDue`).
 const UP_DOES = {
   'after-plot': () => clearPlot(),
-  'after-axe': () => { S.after.axeBought = true; }
+  'after-saw': () => { S.after.sawBought = true; }
 };
 // A row with `marks` (the podium ladder) opens each rung when the union's
 // support reaches its mark, a share of the strike's: dead until then, saying
@@ -209,11 +210,27 @@ const recruitRow = {
   buy: () => { if (hire()) { S.after.ups[RECRUIT] = recruits() + 1; S.after.upAt[RECRUIT] = S.after.t; } }
 };
 
+// --- the seeds ---------------------------------------------------------------------------
+// One acorn a press, in the earlier acts' coins, dearer each time (seeds.js,
+// `seedBill`): a repeating row, as the recruit is. Bought, the acorn is owed;
+// a member walks to heaven's gates for it and carries it to the basket. Dead
+// while the basket, the seeds owed and those on their way would pass its
+// brim, and says so: a full basket is the row's end, not a jam.
+const seedsRow = {
+  key: SEEDS_ROW, name: msg('after-row-seeds'), card: 'grove', ...ACT_ROW, repeats: true, from: seedsBought,
+  bill: () => seedBill(),
+  show: () => cardOpen('grove'),
+  dead: () => seedsRoom() <= 0,
+  waits: () => (seedsRoom() <= 0 ? msg('after-seeds-full') : null),
+  buy: () => { if (seedsRoom() > 0) { owe(); S.after.ups[SEEDS_ROW] = seedsBought() + 1; S.after.upAt[SEEDS_ROW] = S.after.t; } }
+};
+
 // Nothing up here is for sale before the act has begun.
 const inAct = u => ({ ...u, show: () => !!S.after && u.show() });
 export const AFTER_ROWS = [
   ...AFTER_JOBS.map(seatRow),
-  ...Object.keys(AFTER_UPGRADES).map(upRow),
+  // the seeds row stands between stump removal and self-seeding
+  ...Object.keys(AFTER_UPGRADES).flatMap(k => (k === 'after-selfseed' ? [seedsRow, upRow(k)] : [upRow(k)])),
   ...Object.keys(AFTER_BUILDS).map(buildRow)
 ].map(inAct);
 // First on the pedestal's board; its line is a getter, so it is not spread.
@@ -231,9 +248,6 @@ export const afterBill = u => (u.bill ? u.bill() : []);
 // under `after-<card>` (boardrows.js), the key of the card's station row.
 const jobsAt = card => AFTER_JOBS.filter(j => AFTER_JOB_POST[j] === card);
 const sectionsOf = card => {
-  // A station standing closed: its board is its rebuild, the shack's build
-  // row for it.
-  if (closed(card)) return [{ key: `after-${card}-rebuild`, title: msg('after-sect-rebuild'), keys: [`after-build-${card}`] }];
   if (card === 'shack') return [{ key: 'after-build', title: msg('after-sect-build'), keys: Object.keys(AFTER_BUILDS).map(s => `after-build-${s}`) }];
   const rows = AFTER_ROWS.filter(u => u.card === card);
   return [{ key: `after-${card}-seats`, title: msg('after-sect-seats'), keys: rows.filter(u => u.seat).map(u => u.key),
@@ -241,7 +255,9 @@ const sectionsOf = card => {
           { key: `after-${card}`, title: msg('after-sect-card'), keys: rows.filter(u => !u.seat).map(u => u.key) }]
     .filter(s => s.keys.length);
 };
-export const afterBoard = card => ({ rows: closed(card) ? [afterRow(`after-build-${card}`)] : AFTER_ROWS.filter(u => u.card === card), sections: sectionsOf(card) });
+// A station not yet built has no board (after/stations.js): its build is
+// sold by the sign in its lot and on the shack's board.
+export const afterBoard = card => ({ rows: AFTER_ROWS.filter(u => u.card === card), sections: sectionsOf(card) });
 // Each board's title, the ground it stands over and the click that opens it
 // are its station row's (after/stations.js, in the one station table).
 for (const card of AFTER_CARDS)

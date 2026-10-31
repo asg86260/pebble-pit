@@ -10,8 +10,8 @@
 // read by the sim and the drawing alike, so a body walks to the spot the
 // picture shows.
 
-import { P, AFTER_GAP, AFTER_H, AFTER_W, AFTER_FLOOR_MARGIN, AFTER_PINE,
-         AFTER_GROVE_X0, AFTER_PLOT_MAX, AFTER_PLOT_STEP, AFTER_STATIONS, AFTER_PODIUM_U, AFTER_PODIUM_TOPS, AFTER_PODIUM_PAIR, AFTER_PODIUM_CLIMB, AFTER_PODIUM_PILE, UNION_CROWD, AFTER_START_BUILT,
+import { P, AFTER_SAW, AFTER_GAP, AFTER_H, AFTER_W, AFTER_FLOOR_MARGIN,
+         AFTER_GROVE_X0, AFTER_GROVE_START, AFTER_PLOT_MAX, AFTER_PLOT_STEP, AFTER_PLOT_GAP, AFTER_TREE, AFTER_OAK, AFTER_OAK_HALF, AFTER_BED, AFTER_STATIONS, AFTER_PODIUM_U, AFTER_PODIUM_TOPS, AFTER_PODIUM_PAIR, AFTER_PODIUM_CLIMB, AFTER_PODIUM_PILE, UNION_CROWD, AFTER_START_BUILT,
          CROWD_X0, CROWD_FILES, CROWD_PITCH, CROWD_NEAR, CROWD_ROW, CROWD_FAR_ROW,
          AFTER_STAIR_X, AFTER_STAIR_W, AFTER_STAIR_RISE,
          AFTER_ZONE_GAP, AFTER_UNION_W, AFTER_BILLOW_SEED, AFTER_BILLOW_BIG, AFTER_PUFF_LEAST, AFTER_SHELF, ACT_GATES_CELL, AFTER_ART_SCALE, AFTER_IDLE_STEP,
@@ -30,7 +30,9 @@ export const AP = P * AFTER_ART_SCALE;
 export const afterFloor = () => snap(-AFTER_GAP);
 // A station's shelf, in cells over the floor line, and the top of it: where
 // its drawing, piles, board's spot, door and roster stand (config, AFTER_SHELF).
-export const shelfOf = key => AFTER_SHELF[key] || 0;
+// A tree and a stump stand on the grove's.
+const SHELF_KEY = { tree: 'grove', stump: 'grove' };
+export const shelfOf = key => AFTER_SHELF[SHELF_KEY[key] || key] || 0;
 export const groundOf = key => afterFloor() - shelfOf(key) * P;
 export const afterTop = () => afterFloor() - AFTER_H;
 export const afterX0 = () => 0;
@@ -58,13 +60,23 @@ export const ART = { ...BASE_ART, pedestal: { ...BASE_ART.pedestal,
   get sign() { return pedSign(); },
   get lead() { return Math.min(BASE_ART.pedestal.box[0], pedSign()); } } };
 export const stationX0 = key => afterX0() + AFTER_STATIONS[key].at * P;
+// A column `x` of a station's drawing, `w` wide, where it stands: turned with
+// a turned drawing (`flip`), as `pileAt` turns its piles.
+const turnCol = (art, x, w = 0) => (art.flip ? art.flip - x - w : x);
 
 // --- the grove ---------------------------------------------------------------------
-// A plot's trunk column (its middle one), its left edge on the grid. The
-// grove's ground runs to the last plot its card can clear, so the camp
-// beside it never moves.
-export const plotX = i => afterX0() + AFTER_GROVE_X0 + i * AFTER_PLOT_STEP + snap(AFTER_PLOT_STEP / 2);
-export const groveX1 = () => plotX(AFTER_PLOT_MAX - 1) + AFTER_PLOT_STEP;
+// The grove counts from the forestry shack (the owner, 2026-10-28: "start
+// the first tree close to the cabin, then grow left from there"): a plot's
+// line (the boundary between its trunk's two middle columns) stands so its
+// footprint ends AFTER_PLOT_GAP short of the shack's nearest claim, its
+// drawing or its board's column, and each next plot a plot's step further
+// left. The grove's ground runs from AFTER_GROVE_START to the shack's own
+// (config/after.js lays the shack off it), so the last plot can never reach
+// the gateway.
+export const plotReach = () => AFTER_OAK_HALF;
+export const plotX = i => snap(Math.min(stationBox('forestry').x, signBox('forestry').x) - (AFTER_PLOT_GAP + plotReach()) * AP - i * AFTER_PLOT_STEP);
+export const groveX0 = () => afterX0() + AFTER_GROVE_START * P;
+export const groveX1 = () => stationX0('forestry') + ART.forestry.lead * AP;
 
 // --- the camp ----------------------------------------------------------------------
 // A station's box on the floor: its drawing, off ART.
@@ -72,7 +84,7 @@ export const stationBox = key => {
   const s = AFTER_STATIONS[key], art = ART[key];
   if (!s || !art) return null;
   const [x, w, h] = art.box;
-  return { x: stationX0(key) + x * AP, y: groundOf(key) - h * AP, w: w * AP, h: h * AP };
+  return { x: stationX0(key) + turnCol(art, x, w) * AP, y: groundOf(key) - h * AP, w: w * AP, h: h * AP };
 };
 // Where a carrier takes a sign off the workshop's pile (beside it, `pileMid`),
 // and the sign march's length from there to God's crowd's near edge, px:
@@ -82,7 +94,7 @@ export const signFetchX = () => pileMid('workshop', 'signs');
 export const signMarch = () => CROWD_X0 - signFetchX();
 // Where a body stands to work a station: the middle column of the worker the
 // mock draws there.
-export const stationDoor = key => (ART[key] ? stationX0(key) + ART[key].door * AP : 0);
+export const stationDoor = key => (ART[key] ? stationX0(key) + turnCol(ART[key], ART[key].door) * AP : 0);
 export const stationMid = key => { const b = stationBox(key); return b ? b.x + b.w / 2 : 0; };
 // The column of a station's ground its board stands over (after/art.js,
 // SIGN), from the floor up, and its upper part alone, the board's anchor
@@ -90,7 +102,7 @@ export const stationMid = key => { const b = stationBox(key); return b ? b.x + b
 // covers none of the parts the hand works.
 export const signBox = key => {
   const C = AFTER_SIGN_BOARD;
-  return ART[key] && { x: stationX0(key) + ART[key].sign * AP, y: groundOf(key) - (C.post + C.h) * AP, w: C.w * AP, h: (C.post + C.h) * AP };
+  return ART[key] && { x: stationX0(key) + turnCol(ART[key], ART[key].sign, C.w) * AP, y: groundOf(key) - (C.post + C.h) * AP, w: C.w * AP, h: (C.post + C.h) * AP };
 };
 export const signBoard = key => { const b = signBox(key); return b && { ...b, h: AFTER_SIGN_BOARD.h * AP }; };
 // A station's pile of `what`, its left edge in the world. A pile's place in
@@ -98,7 +110,7 @@ export const signBoard = key => { const b = signBox(key); return b && { ...b, h:
 // drawing turns its piles too.
 export const pileAt = (key, what) => {
   const art = ART[key], x = pileLeft(art, what);
-  return stationX0(key) + (art.flip ? art.flip - x - pileCells(what) : x) * AP;
+  return stationX0(key) + turnCol(art, x, pileCells(what)) * AP;
 };
 // The station a counted pile lies on, by the pile's stock key, and the box
 // the hand finds it in: across the pile, `reach` art cells up off the floor
@@ -139,7 +151,7 @@ export const buildLayAt = (key, side) => { const b = stationBox(key); return sid
 // stands clear of the pile; the floor it stands on is the station's ground.
 export const pileMid = (key, what) => {
   const art = ART[key], s = standCol(art, what);
-  return stationX0(key) + (art.flip ? art.flip - s : s) * AP;
+  return stationX0(key) + turnCol(art, s) * AP;
 };
 // Where the pair stand to speak: on the pillar's top, their feet on it, two
 // cells apart. A speaker's spot is its left edge.
@@ -278,9 +290,9 @@ export function floorFlats() {
   const c = x => Math.round((x - afterX0()) / P);
   const span = (x, w) => [c(x) - 1, c(x) + w + 1];
   const out = [];
-  // The grove, from the first stump to its end: a tree falls across its
-  // plot and its logs roll to rest anywhere along it (after/grove.js).
-  { const x = plotX(0) + STUMP[0] * AP; out.push(span(x, (groveX1() - x) / P)); }
+  // The grove on its shelf, from its far slope to the shack: a tree falls
+  // across its plot and its logs come to rest anywhere along it.
+  out.push([...span(groveX0(), (groveX1() - groveX0()) / P), shelfOf('grove')]);
   // A station's whole ground, from the moment it is ordered: an unbuilt
   // spot is open floor like any other (the owner, 2026-10-18).
   for (const key of Object.keys(AFTER_STATIONS)) {
@@ -344,48 +356,107 @@ export const floorAt = x => {
   return afterFloor() - ((el[j] || 0) * (1 - f) + (el[j + 1] || 0) * f) * P;
 };
 
-// --- the pine, as drawn ------------------------------------------------------------
-// The grove's pine (config's AFTER_PINE), read here by the drawing
-// (render/after/pine.js) and the hand (after/grove.js) alike, so both see the
-// one shape.
-export const PINE_GROWN = 3;
-export const PINE = AFTER_PINE;
-export const pineOf = (stage, big) => (stage === PINE_GROWN && big ? PINE.big : PINE[stage]);
-// Whether (u, v) lies in the tiers: u across from the trunk's middle, v up
-// from the top of the trunk, both in cells.
-export const inPine = (tiers, u, v) => tiers.some(({ v0, h, s }) => v >= v0 && v < v0 + h && Math.abs(u) <= (v0 + h - v) - 0.5 + s + 1e-6);
-// A pine standing, as rows [row, from, to] of cells off its plot's trunk
-// column and the floor (row -1 the bottom), the trunk and the tiers both:
-// worked out once a stage.
-const ROWS = new Map();
-export function pineRows(stage, big) {
-  const st = pineOf(stage, big);
-  if (!st) return [];
-  const id = `${stage}|${!!big}`;
-  if (ROWS.has(id)) return ROWS.get(id);
-  const [w, h] = st.trunk, spans = new Map();
-  const add = (x, y) => { const s = spans.get(y); spans.set(y, s ? [Math.min(s[0], x), Math.max(s[1], x)] : [x, x]); };
-  for (let y = -h; y < 0; y++) for (let x = -(w - 1) / 2; x <= (w - 1) / 2; x++) add(x, y);
-  for (let y = -40; y < -h; y++) for (let x = -30; x <= 30; x++) if (inPine(st.tiers, x, -(y + 0.5) - h)) add(x, y);
-  const out = [...spans].map(([y, [a, b]]) => [y, a, b]).sort((p, q) => p[0] - q[0]);
-  ROWS.set(id, out);
-  return out;
+// --- the tree, as drawn ------------------------------------------------------------
+// The grove's tree (config's AFTER_TREE and AFTER_OAK), read here by the
+// drawing (render/after/pine.js), the hand (after/grove.js, `treeAt`) and the
+// map (footprints.js) alike, so all three see the one shape. Cells
+// [c, r, part, clump]: c off the plot's line, r up from the floor (row -1
+// the bottom), part 'stump', 'trunk', 'crown' or 'bough', and a leaf's clump
+// (the one it sits deepest in, by which it is shaded and broken).
+export const TRUNK_TOP = -(AFTER_TREE.stump + AFTER_TREE.logs * AFTER_TREE.log);
+const mirror = lobes => lobes.flatMap(([x, y, r]) => (x ? [[x, y, r], [-x, y, r]] : [[x, y, r]]));
+export const OAK = mirror(AFTER_OAK);
+let CELLS = null; // cache: the tree's cells, worked out once
+export function treeCells() {
+  if (CELLS) return CELLS;
+  const { c0, w, stump } = AFTER_TREE, out = [], leaf = new Set();
+  for (let r = -1; r >= -stump; r--) for (let c = c0; c < c0 + w; c++) out.push([c, r, 'stump', 0]);
+  for (let r = -stump - 1; r >= TRUNK_TOP; r--) for (let c = c0; c < c0 + w; c++) out.push([c, r, 'trunk', 0]);
+  const reach = Math.ceil(Math.max(...OAK.map(([, y, r]) => y + r))), low = Math.floor(Math.min(...OAK.map(([, y, r]) => y - r)));
+  const inLobe = (cx, cy) => OAK.some(([x, y, r]) => (cx - x) ** 2 + (cy - y) ** 2 <= r * r);
+  const depth = (cx, cy, k) => Math.hypot(cx - OAK[k][0], cy - OAK[k][1]) - OAK[k][2];
+  for (let y = reach; y >= low; y--) for (let c = -AFTER_OAK_HALF; c < AFTER_OAK_HALF; c++) {
+    const cx = c + 0.5, cy = y - 0.5;
+    if (!inLobe(cx, cy)) continue;
+    let k = 0;
+    for (let j = 1; j < OAK.length; j++) if (depth(cx, cy, j) < depth(cx, cy, k)) k = j;
+    leaf.add(`${c}|${y}`);
+    out.push([c, TRUNK_TOP - y, 'crown', k]);
+  }
+  // Sky the leaves close all round is leaf too (the owner, 2026-10-30: no
+  // hole in the middle of the crown): what open sky can't reach from outside
+  // the crown, laid in the clump it sits deepest in.
+  const open = new Set(), todo = [`${-AFTER_OAK_HALF - 1}|${reach + 1}`];
+  while (todo.length) {
+    const key = todo.pop();
+    if (open.has(key) || leaf.has(key)) continue;
+    const [c, y] = key.split('|').map(Number);
+    if (c < -AFTER_OAK_HALF - 1 || c > AFTER_OAK_HALF || y < low - 1 || y > reach + 1) continue;
+    open.add(key);
+    todo.push(`${c + 1}|${y}`, `${c - 1}|${y}`, `${c}|${y + 1}`, `${c}|${y - 1}`);
+  }
+  for (let y = reach; y >= low; y--) for (let c = -AFTER_OAK_HALF; c < AFTER_OAK_HALF; c++) {
+    const key = `${c}|${y}`;
+    if (open.has(key) || leaf.has(key)) continue;
+    let k = 0;
+    for (let j = 1; j < OAK.length; j++) if (depth(c + 0.5, y - 0.5, j) < depth(c + 0.5, y - 0.5, k)) k = j;
+    leaf.add(key);
+    out.push([c, TRUNK_TOP - y, 'crown', k]);
+  }
+  // The leader: the trunk's two middle columns carried on up under the leaves.
+  for (let c = c0 + 1; c < c0 + w - 1; c++) for (let y = 1; y <= reach && !leaf.has(`${c}|${y}`); y++) out.push([c, TRUNK_TOP - y, 'bough', 0]);
+  // The boughs: from the trunk's top out to each side clump, seen where the
+  // leaves leave them showing.
+  const has = new Set(out.map(q => `${q[0]}|${q[1]}`));
+  for (const [x, y] of OAK) {
+    if (Math.abs(x) < 2) continue;
+    const x0 = Math.sign(x), steps = 24;
+    for (let k = 0; k <= steps; k++) {
+      const c = Math.floor(x0 + (x - x0) * k / steps), yy = Math.ceil(y * k / steps), key = `${c}|${TRUNK_TOP - yy}`;
+      if (yy > 0 && !leaf.has(`${c}|${yy}`) && Math.abs(c + 0.5) > w / 2 - 0.01 && !has.has(key)) { has.add(key); out.push([c, TRUNK_TOP - yy, 'bough', 0]); }
+    }
+  }
+  return (CELLS = out);
 }
-// The stump, [left, width, height] in cells off its plot's trunk column.
-export const STUMP = [-1, 3, 2];
+// The order a tree comes in as it grows (B1): the stump and trunk from the
+// ground up, then the crown from its lowest row up, each row from the middle
+// out.
+let ORDER = null; // cache: the cells in growing order, worked out once
+export function growOrder() {
+  if (ORDER) return ORDER;
+  ORDER = treeCells().slice().sort((a, b) => (b[1] - a[1]) || (Math.abs(a[0] + 0.5) - Math.abs(b[0] + 0.5)) || (a[0] - b[0]));
+  return ORDER;
+}
+// The tree's cells as a set of "c|r", what the hand presses exactly (gaps
+// between the clumps are sky, nobody's).
+let CELL_SET = null; // cache: the tree's cells as keys, worked out once
+export const treeHas = (c, r) => (CELL_SET || (CELL_SET = new Set(treeCells().map(([cc, rr]) => `${cc}|${rr}`)))).has(`${c}|${r}`);
+// The tree as rows [row, from, to] of cells off its plot's line and the floor,
+// and the box round them: the map's.
+let ROWS = null; // cache: the tree's rows, worked out once
+export function treeRows() {
+  if (ROWS) return ROWS;
+  const spans = new Map();
+  for (const [c, r] of treeCells()) { const s = spans.get(r); spans.set(r, s ? [Math.min(s[0], c), Math.max(s[1], c)] : [c, c]); }
+  return (ROWS = [...spans].map(([r, [a, b]]) => [r, a, b]).sort((p, q) => p[0] - q[0]));
+}
+// A plot's soil bed, [from, to) world x.
+export const bedSpan = i => [plotX(i) + AFTER_BED[0] * AP, plotX(i) + (AFTER_BED[1] + 1) * AP];
+// A plot's own ground along the grove, [from, to) world x: from where the
+// next plot's footprint ends to where the shack's gap begins, where its logs rest.
+export const plotSpan = i => [plotX(i) - AFTER_PLOT_STEP + plotReach() * AP, plotX(i) + (AFTER_PLOT_GAP + plotReach()) * AP];
 
 // --- each station's moving part, for the hand ----------------------------------------
-// The handsaw across a grown trunk, in cells off its middle column: the
-// columns its grip and blade span at rest, and the rows (row -1 the bottom)
-// it stands in (docs/mocks/act3-saw-2026-10-18, saw 3, its partner's peg cut).
-export const SAW_SPAN = [-15, 9];
-export const SAW_ROWS = [-8, -2];
-// The grove's icons, [width, height] in their own dots of ICON_DOT px: the
-// saw over a grown tree and the shovel over a stump (render/after/pine.js), a
-// dot a grid cell, so the saw reads at a glance (the owner, 2026-10-20: "too
-// small") and stands on the grid.
-export const ICON_DOT = P;
-export const ICON = { saw: [13, 8], shovel: [5, 13] };
+// The hand saw lying across a grown trunk a log's height up, its blade's edge
+// on the stump's top and its grip on the shack's side (the tree falls the
+// other way): in cells off the plot's line, the columns it sweeps over its
+// whole stroke and the rows it stands in, teeth to grip (track B;
+// after/gestures.js `handSawAt` lays it). At the full push the grip stops
+// flush at the trunk's edge; at the full pull the blade's toe is still a cell
+// inside the trunk, so the stroke is a cell short of the blade.
+const SAW_EDGE = AFTER_TREE.c0 + AFTER_TREE.w, SAW_BLADE = AFTER_SAW.depth.length;
+export const SAW_SPAN = [SAW_EDGE - SAW_BLADE, SAW_EDGE + (SAW_BLADE - 1) + AFTER_SAW.grip - 1];
+export const SAW_ROWS = [-AFTER_TREE.stump - Math.max(...AFTER_SAW.depth), -AFTER_TREE.stump];
 // What the hand's motion at each station aims at (after/gestures.js,
 // `partsOf`), in world px, read off the numbers the drawing uses
 // (render/after/stations.js, pine.js, pedestal.js). Every key has `box`, the
@@ -398,26 +469,20 @@ export function stationParts(key, i = 0) {
   const at = (x0, x, y) => ({ x: x0 + x * AP, y: fl + y * AP });
   const box = (x0, x, y, w, h) => ({ x: x0 + x * AP, y: fl + y * AP, w: w * AP, h: h * AP });
   if (key === 'tree') {
-    // The grown pine as drawn (PINE): its rows' spans off `foot` (its trunk
-    // column's left on the floor line), and the box round them.
-    const bx = plotX(i), rows = pineRows(PINE_GROWN, i >= 0 && treeBig(i));
+    // The grown tree as drawn: its rows' spans off `foot` (its plot's line on
+    // the grove's floor), and the box round them; `sawBox` the handsaw across
+    // its trunk at rest.
+    const bx = plotX(i), rows = treeRows();
     const a = Math.min(...rows.map(r => r[1])), b = Math.max(...rows.map(r => r[2])), top = Math.min(...rows.map(r => r[0]));
-    // `sawBox` the handsaw across its trunk at rest (render/after/pine.js,
-    // SAW: its grip at the near end, its tip past the far side), and `icon`
-    // the saw icon over its crown, a box and its middle.
-    const ic = { w: ICON.saw[0] * ICON_DOT, h: ICON.saw[1] * ICON_DOT };
-    const icon = { x: bx + AP / 2, y: fl + top * AP - P * 2, box: { x: snap(bx + AP / 2 - ic.w / 2), y: fl + top * AP - P * 2 - ic.h, w: ic.w, h: ic.h } };
     return { box: box(bx, a, top, b - a + 1, -top), rows, foot: { x: bx, y: fl }, top: fl + top * AP,
-             sawBox: box(bx, SAW_SPAN[0], SAW_ROWS[0], SAW_SPAN[1] - SAW_SPAN[0] + 1, SAW_ROWS[1] - SAW_ROWS[0] + 1), icon };
+             sawBox: box(bx, SAW_SPAN[0], SAW_ROWS[0], SAW_SPAN[1] - SAW_SPAN[0] + 1, SAW_ROWS[1] - SAW_ROWS[0] + 1) };
   }
   if (key === 'stump') {
-    // `stump` the block as drawn (render/after/pine.js, `stump`); `grip`
-    // round it and up over it, where the hand takes hold to lift it; `icon`
-    // the shovel over it.
-    const bx = plotX(i), ic = { w: ICON.shovel[0] * ICON_DOT, h: ICON.shovel[1] * ICON_DOT };
-    const iy = fl - (STUMP[2] + 2) * AP;
-    return { box: box(bx, -2, -4, 5, 4), at: { x: bx + AP / 2, y: fl }, stump: box(bx, STUMP[0], -STUMP[2], STUMP[1], STUMP[2]),
-             grip: box(bx, -2, -6, 5, 7), icon: { x: bx + P / 2, y: iy, box: { x: snap(bx + P / 2 - ic.w / 2), y: iy - ic.h, w: ic.w, h: ic.h } } };
+    // `stump` the block as drawn, one whole log; `grip` round it and up over
+    // it, where the hand takes hold to lift it.
+    const bx = plotX(i), { c0, w, stump: h } = AFTER_TREE;
+    return { box: box(bx, c0 - 1, -h, w + 2, h), at: { x: bx, y: fl }, stump: box(bx, c0, -h, w, h),
+             grip: box(bx, c0 - 1, -h - 2, w + 2, h + 3) };
   }
   if (key === 'pedestal') {
     const a = speakerAt(0), b = speakerAt(1);
@@ -432,5 +497,4 @@ export function stationParts(key, i = 0) {
                                     nails: [9, 12, 15, 18].map(c => box(x0, c - 0.5, -8.5, 2, 3)) };   // a nail's head and a half cell round it: the gaps between are misses
   return { box: b };
 }
-// Whether plot i's tree was planted big (the grove's bigger trees).
-const treeBig = i => !!(S.after && S.after.plots[i] && S.after.plots[i].big);
+

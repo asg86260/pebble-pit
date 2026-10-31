@@ -21,6 +21,7 @@ import { godFront, restW } from './after/sky.js';
 import { HELL_PLACE } from './hell/place.js';
 import { AFTER_CREW } from './after/bodies.js';
 import { AFTER_LANDING } from './after/piles.js';
+import { plantLand } from './after/seeds.js';
 import { DEEP_LANDING } from './deep/scales.js';
 import { takeAt, takeTopOf } from './after/ground.js';
 import { blockAt, takeUnit, kindOf } from './grid.js';
@@ -63,6 +64,7 @@ const AFTER_GROUND = {
 // body stands on where the eye left it, and the cloud fills under it as the
 // pit did. Its right end is half a window past God's stage's front middle,
 // so the camera's last window is the one his stage stands square in.
+let landing = null; // cache: act 3's landing list with the plant surface in it
 const AFTER_AT_YARD = {
   ...AFTER_PLACE,
   x1: () => godFront() + restW() / 2,
@@ -72,7 +74,10 @@ const AFTER_AT_YARD = {
   get ground() { return AFTER_GROUND; }
 ,
   // Where a good of its own, thrown into the air, comes down (game.js, `stepChips`).
-  get landing() { return AFTER_LANDING; }
+  // the saw mill's bed, then a bare plot's soil bed (an acorn let go over it
+  // is planted, after/seeds.js), then the ground: built on first ask, since
+  // the modules it names import this one
+  get landing() { return (landing ||= { ...AFTER_LANDING, surfaces: [AFTER_LANDING.surfaces[0], plantLand, ...AFTER_LANDING.surfaces.slice(1)] }); }
 };
 // Each place's crew (placebodies.js): its own body list, its JOBS registry,
 // its walk and how the hand takes one of its bodies up. Read through a

@@ -66,6 +66,8 @@ export const purse = money =>
   money === 'spark' ? S.sparks :
   // Every scale lying on the deep's floor, counted by the bed that holds them.
   money === 'scale' ? S.scales :
+  // The fangs held, which the deep's build sign asks (deep/buildbutton.js).
+  money === 'fang' ? S.fangs :
   // Hell's, off its store and its anvil (hell/coins.js).
   isHellCoin(money) ? hellPurse(money) :
   // Act 3's: rebel on the act; timber the mound less the blocks orders have

@@ -38,6 +38,7 @@ import { drawGrove } from './after/pine.js';
 import { DRAW, workerPose, GLYPHS, backOf } from './after/stations.js';
 import { drawFistFlag } from './aftercrowd.js';
 import { heap, heapCells, drawGround, goodBlock } from './after/piles.js';
+import { drawBasket, drawBasketBack } from './after/basket.js';
 import { drawBody } from './crew.js';
 import { onDevice } from './wardrobe.js';
 import { drawPillar, drawPair, drawBubbles, drawRebelPile } from './after/pedestal.js';
@@ -186,7 +187,9 @@ function drawShackOrder() {
 export function drawAfterPiles() {
   const a = A();
   if (!a) return;
+  drawBasketBack();   // behind the acorns it holds
   drawGround(a.t);
+  drawBasket();   // over the acorns it holds, so its body hides their feet
 }
 export function drawAfterCamp() {
   const a = A();

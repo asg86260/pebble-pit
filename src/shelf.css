@@ -811,37 +811,6 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
   .rails .rl-arm { transition: none; }
 }
 
-/* --- the party wave, track BOARD: the floating build button (deep/buildbutton.js)
-   Stands in the deep's water over the next free slot, seated every frame as
-   the call to build the bench is (`#raise`). It fades in and out rather than
-   popping: `on` is the class, and while it is off it is there, unseen and
-   deaf to the pointer, so it can fade out from where it stood. */
-#buildbtn {
-  position: fixed; left: 0; top: auto; bottom: 0; z-index: 11;
-  opacity: 0; visibility: hidden; pointer-events: none;
-  transition: opacity var(--build-fade-ms, 200ms) steps(4, end), visibility 0s linear var(--build-fade-ms, 200ms);
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: var(--pad-m); background: var(--paper) var(--dots); color: var(--ink); border: 2px solid var(--ink);
-  box-shadow: var(--float-shadow);
-  font: inherit; letter-spacing: calc(var(--track-m) * var(--track)); text-transform: uppercase;
-  cursor: pointer; white-space: nowrap;
-}
-#buildbtn.on {
-  opacity: 1; visibility: visible; pointer-events: auto;
-  transition: opacity var(--build-fade-ms, 200ms) steps(4, end), visibility 0s;
-}
-#buildbtn .fang {
-  display: inline-block; width: 9px; height: 9px; background: currentColor;
-  -webkit-mask: var(--fang-mark) 0 0 / 100% 100% no-repeat; mask: var(--fang-mark) 0 0 / 100% 100% no-repeat;
-}
-#buildbtn .count { font-weight: normal; }
-@media (hover: hover) {
-  #buildbtn:hover { background: var(--fill) var(--dots-on-fill); color: var(--on-fill); }
-}
-@media (prefers-reduced-motion: reduce) {
-  #buildbtn, #buildbtn.on { transition: none; }
-}
-
 /* An unlock tile's price is lines that fill as each coin comes in
    (billfill.js, `.fill` in style.css): each coin its own outlined cell, the
    grey behind it growing to the amount, full once the coin is met. */

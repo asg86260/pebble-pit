@@ -174,7 +174,8 @@ export const ROWS = [
   // --- the deep: the pods -----------------------------------------------------
   // The deep's one board of cards. A station of the party sells its ladders
   // on its rails, not as rows (deep/rails.js, test/rails.test.mjs), and is
-  // bought from the floating button, not a board (deep/buildbutton.js).
+  // bought from the build sign in the next free slot, not a board
+  // (deep/buildbutton.js, buildsign.js).
   { key: 'pod', part: 1, reach: deep },
 
   // --- act 3, the afterlife: no lines here --------------------------------------
@@ -184,6 +185,10 @@ export const ROWS = [
   // reads the act back from a save. None is a ladder (DESIGN.md, act 3's
   // call 12) but the pair's podium, a rung a support mark, which it buys
   // rung by rung at its marks and reads back after a reload.
+  // The grove's seeds row (a repeating row like the recruit) and self-seeding
+  // (four rungs) are bought the same way, `__buy` and the member who walks to
+  // the gates, in test/after-grove.test.mjs; their place on the board is
+  // test/after-boards.test.mjs's.
 
   // --- act 4, hell (upgrades/rows-hell.js) -------------------------------------
   // Off every board until hell has begun; its cards are paid in brimstone

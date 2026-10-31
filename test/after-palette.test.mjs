@@ -14,7 +14,7 @@
 // here by name. What still fails is a tone no list names, and two different
 // tones of the clouds' palette too close to tell apart on their page.
 import { group, ok, run, yard } from './helpers.mjs';
-import { GREY, AFTER_TONES, AFTER_DARK, AFTER_GOODS, AFTER_GOODS_DARK, CLOUDS_PALETTE } from '../src/config.js';
+import { GREY, AFTER_TONES, AFTER_DARK, AFTER_GOODS, AFTER_GOODS_DARK, AFTER_LEAVES, AFTER_LEAVES_DARK, CLOUDS_PALETTE } from '../src/config.js';
 import { setPref } from '../src/prefs.js';
 import { inkOf } from '../src/ink.js';
 import { SCENES } from '../src/scenes.js';
@@ -44,7 +44,7 @@ const hex6 = c => {
 const GOODS_ROLES = { log: 'the felled log, bark brown', plank: 'timber, sawn pale wood',
                       sign: 'the sign, a painted slate board' };
 const FOUR = new Set([...Object.values(AFTER_TONES).map(i => hex6(GREY[i])), ...Object.values(CLOUDS_PALETTE.light).map(hex6),
-                      ...Object.values(AFTER_GOODS).flat().map(hex6)]);
+                      ...Object.values(AFTER_GOODS).flat().map(hex6), ...AFTER_LEAVES.map(hex6)]);
 const toHex = (r, g, b) => '#' + [r, g, b].map(v => v.toString(16).padStart(2, '0')).join('');
 
 // A sheet that keeps every tone it is told to lay down, by the scene that
@@ -169,6 +169,16 @@ group("the goods' color families each have a role, four tones, and no two alike"
   }
   out.push(ok(Object.keys(AFTER_GOODS).length === Object.keys(GOODS_ROLES).length, 'every family in the config has a role listed here'));
   return out;
+});
+
+// The grove's crown (track A, DESIGN.md "Act 3's grove, rebuilt", call 4):
+// oak-leaf green, a tone a role, lightest first; on the dark page each lifted.
+const LEAF_ROLES = ['the lit top edges', 'the body', 'the body\'s darker half', 'the undersides and seams'];
+group("the crown's four greens each have a role, no two alike, each lifted on the dark page", async () => {
+  const l = AFTER_LEAVES.map(lightness), d = AFTER_LEAVES_DARK.map(lightness);
+  return LEAF_ROLES.map((role, i) => ok(/^#[0-9a-f]{6}$/i.test(AFTER_LEAVES[i]) && (!i || l[i] < l[i - 1] - 0.02) && d[i] >= l[i] && (!i || d[i] < d[i - 1] - 0.02),
+    `leaf ${i}: ${role}, a clear step off the last, lifted on the dark page`, `${AFTER_LEAVES[i]} ${AFTER_LEAVES_DARK[i]}`))
+    .concat(ok(AFTER_LEAVES.length === LEAF_ROLES.length && AFTER_LEAVES_DARK.length === LEAF_ROLES.length, 'every green has its role listed here'));
 });
 
 // The clouds' palette: each tone named for its role, and on each page every

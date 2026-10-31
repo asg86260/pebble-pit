@@ -80,6 +80,9 @@ export const TESTS = [
         // The timber pile topped up to its brim: it holds no more
         // (after/piles.js), and the tile redrawn affordable before its press.
         window.__afterGrant({ timber: AFTER_PILES.timber.brim });
+        // The seed basket starts full, and the seeds row is greyed while it
+        // is (after/seeds.js): an acorn taken out for room.
+        if (key === 'after-seeds') window.__afterGrant({ seeds: -1 });
         await settle(0.05);
         b.click();
         // A row billed in timber is an order: it lands once members have

@@ -20,10 +20,11 @@ import { afterlifeOn } from '../acts.js';
 import { built, seatsOf, stumpsOn } from './levels.js';
 import { groundOf, closed } from './place.js';
 import { crewAt, bodiesOf, spareMembers, putOn, walkLeft, holds } from './bodies.js';
-import { standing, stumped } from './grove.js';
+import { standing, stumped, plantable } from './grove.js';
 import { pileFull, pileCount } from './piles.js';
 import { lying } from './ground.js';
 import { JOB_NAMES } from './rows.js';
+import { waitsOnSeeds } from './seeds.js';
 
 const stationOf = card => (card === 'grove' ? 'forestry' : card);
 const live = () => afterlifeOn() && !!S.after;
@@ -42,8 +43,18 @@ const SRC = {
 // Why a station's worker stands still, off the same piles its frame reads
 // (bodies.js, mill.js): a message id, or null while it can work.
 const noLogs = pile => pileCount(pile) <= 0 && pileCount('grovelogs') <= 0;
+function woodcutterStall() {
+  const plots = S.after.plots;
+  if (lying().length || (stumpsOn() && plots.some(stumped))) return null;
+  if (plots.some(standing)) return S.after.sawHanded || plantsNext() ? null : 'after-stall-saw';
+  return waitsOnSeeds() ? 'after-stall-seeds' : 'after-stall-trees';
+}
+// An acorn in the basket and a bare plot to set it in: the woodcutter plants.
+const plantsNext = () => pileCount('seeds') > 0 && S.after.plots.some((p, i) => plantable(i));
 const STALL = {
-  woodcutter: () => (!lying().length && !S.after.plots.some(p => standing(p) || (stumpsOn() && stumped(p))) ? 'after-stall-trees' : null),
+  // a bare plot and an empty basket is its own wait (after/seeds.js); a
+  // grown tree with nothing else to do is the saw's, until it is handed over
+  woodcutter: () => woodcutterStall(),
   sawyer: () => (pileFull('timber') ? 'hover-pile-full' : noLogs('logs') ? 'after-stall-logs' : null),
   joiner: () => (pileCount('timber') < AFTER_SIGN_TIMBER && pileCount('signs') < holds('sign') ? 'after-stall-timber' : null)
 };

@@ -12,10 +12,11 @@
 // else (DESIGN.md, "Rules and consequences to check", the save shape).
 
 import { S } from '../state.js';
-import { AFTER_START_BUILT } from '../config.js';
+import { AFTER_START_BUILT, AFTER_SEEDS0 } from '../config.js';
 import { afterlifeOn } from '../acts.js';
 import { stepRebel, clickPlace } from './rebel.js';
 import { stepGrove, blankPlots } from './grove.js';
+import { stepSeeds } from './seeds.js';
 import { stepMill } from './mill.js';
 import { stepPiles, standPiles } from './piles.js';
 import { groundRecord, standGround } from './ground.js';
@@ -44,7 +45,7 @@ import { readOver } from '../placesave.js';
 // added to stand it up: the act's clock (`t`) and its chance (`seed`) and
 // the yard's coins coming up out of the patch (`coins`, rows.js: here so the
 // save reader, which drops what the blank lacks, keeps them), the seed it began with (`begun`, which names the act to the hand work), the
-// axe bought and in hand, the pair's last line (`shout`), each station last
+// saw bought and handed to the woodcutter (`sawBought`, `sawHanded`), the pair's last line (`shout`), each station last
 // worked by hand (`workAt`), the
 // motes coming down, the bodies -- members walking out, at
 // the podium, at their jobs and building -- the throne's speech, the act's
@@ -70,8 +71,12 @@ export const blankAfter = () => ({
   t: 0,
   seed: 1,
   begun: 0,
-  axeBought: false,
-  axe: false,
+  sawBought: false,
+  sawHanded: false,
+  // the grove's seeds (DESIGN.md, "Act 3's grove, rebuilt"; after/seeds.js):
+  // acorns bought and not yet fetched from the gates, and the self-seed debt
+  seedsOwed: 0,
+  selfSeed: 0,
   shout: null,
   workAt: {},
   coins: [],
@@ -99,6 +104,8 @@ export function beginAfter() {
   S.after.begun = S.after.seed;
   S.after.plots = blankPlots();
   S.after.built = [...AFTER_START_BUILT];
+  // the seed basket starts full (the owner, 2026-10-30)
+  S.after.lay = [{ what: 'seeds', n: AFTER_SEEDS0 }];
   standPiles();
   seedCrowd();
   return S.after;
@@ -125,6 +132,7 @@ export function stepAfter(c) {
   S.after.t += secs(c);
   stepRebel(c);
   stepGrove(c);
+  stepSeeds();
   stepBodies(c);
   stepMill(c);
   stepPiles(c);
@@ -134,7 +142,7 @@ export function stepAfter(c) {
 }
 
 // A click on the place, in world pixels: true if it was the afterlife's (a
-// line of the pair's speech, a tree chopped with the axe, a stump dug at).
+// line of the pair's speech).
 // input.js calls it with the camera up here.
 export function clickAfter(wx, wy) {
   if (!afterlifeOn() || !S.after) return false;

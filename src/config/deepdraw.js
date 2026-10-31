@@ -645,7 +645,7 @@ export const EXPOSED_LIFT_HZ = 1.5;  // how often a lifted scale lifts or settle
 // sinking and carried like a scale: a root three cells across narrowing to
 // its point. '#' white, '+' a grey a step down.
 export const FANG_SPRITE = ['###', '.#+', '.#.'];
-// Its mark on the build button is FANG_MARK (config/deepboard.js).
+// Its mark on the deep's build sign is FANG_MARK (config/deepboard.js).
 // The fangs held, on a plate set into the furnace's brick over the door (the
 // owner, 2026-10-16, option B of docs/mocks/fang-counter-2026-10-16), in
 // place of the counter card's fang row: the purse for fangs is the furnace

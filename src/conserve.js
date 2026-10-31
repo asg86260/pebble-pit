@@ -15,7 +15,7 @@ import { isDeepType } from './jobs.js';
 import { sawyerHolds } from './after/mill.js';
 
 // The kinds the census counts, act 3's.
-export const CENSUS_KINDS = ['log', 'plank', 'sign', 'load', 'scale'];
+export const CENSUS_KINDS = ['log', 'plank', 'sign', 'load', 'scale', 'acorn'];
 
 // How many units of each kind exist now in act 3: lying on its ground, in the
 // hand, in the air, in its bodies' arms, and inside the saw mill (the log on

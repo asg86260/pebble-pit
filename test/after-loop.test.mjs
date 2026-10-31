@@ -10,8 +10,8 @@ import { bestMs, group, ok, run, runUntil, yard, P } from './helpers.mjs';
 import { goodCount } from '../src/after/piles.js';
 import { siteLoads } from '../src/after/build.js';
 import { lying } from '../src/after/ground.js';
-import { TREE_CHOPS, AFTER_LOGS_A_TREE, CROWD_FILES, RIM_PIECES, MEET_MEMBERS, AFTER_GATES,
-         ACT_CAPTION_S, AFTER_DIG_CLICKS, AFTER_PODIUM_REBEL, AFTER_PODIUM_CLIMB, AFTER_PODIUM_TOPS, AFTER_PODIUM_U, AFTER_PLOTS0, AFTER_PLOT_MAX,
+import { TREE_CHOPS, AFTER_TREE, CROWD_FILES, RIM_PIECES, MEET_MEMBERS, AFTER_GATES,
+         ACT_CAPTION_S, AFTER_DIG_CLICKS, AFTER_PODIUM_REBEL, AFTER_PODIUM_CLIMB, AFTER_PODIUM_TOPS, AFTER_PODIUM_U, AFTER_PLOTS0, AFTER_PLOT_MAX, AFTER_SELF_SEED,
          AFTER_UPGRADES, AFTER_CARDS, AFTER_YARD_COINS, AFTER_FIRST_MEMBERS, STRIKE_SHARE, AFTER_AGITATE_REBEL, AFTER_AGITATE_S,
          AFTER_BUILD_PIECES, AFTER_LOG_TIMBER, AFTER_MILL, AFTER_SAW_S,
          AFTER_BUILDS, AFTER_SEAT_BILLS, AFTER_WALK, AFTER_SIGN_INK_S, AFTER_BURN_S,
@@ -20,7 +20,7 @@ import { speechTarget } from '../src/after/union.js';
 import { stepAfter } from '../src/after/index.js';
 import { crowdSpan } from '../src/render/after.js';
 import { pileAt, stationBox, plotX, speakerAt, afterFloor, idleSpots, AP } from '../src/after/place.js';
-import { groveIcons } from '../src/after/gestures.js';
+import { sawSpot } from '../src/after/bodies.js';
 import { sawOn, saw, lift, spin, loadBed } from './after-hands.mjs';
 import { millView } from '../src/after/mill.js';
 
@@ -161,6 +161,7 @@ group('a member put on through the roster walks off the podium to the grove in a
   up();
   settle();
   S.after.speech = { next: 1e9, f0: 0, held: null };
+  window.__afterSaw();                       // the woodcutter fells only with the saw handed over
   // Seconds from the press until the member stands at its tree.
   const trip = (job, there) => {
     if (!window.__afterPress(job)) return Infinity;
@@ -168,7 +169,7 @@ group('a member put on through the roster walks off the podium to the grove in a
     while (s < 120) { run(1); s++; const w = S.after.bodies.find(b => b.job === job); if (w && there(w)) return s; }
     return Infinity;
   };
-  const cut = trip('woodcutter', w => Math.abs(w.x - (plotX(0) + AP * 3)) < 1);
+  const cut = trip('woodcutter', w => !!w.sawing && Math.abs(w.x - sawSpot(0)) <= AP);
   window.__actsOn(null);
   // The walk is the camp's length, podium to grove, at the act's pace.
   const far = Math.ceil((stationBox('pedestal').x - plotX(0)) / AFTER_WALK) + 2;
@@ -177,31 +178,28 @@ group('a member put on through the roster walks off the podium to the grove in a
   ];
 });
 
-group('the axe is bought on the grove\'s card, its beat hands it over, and the saw icon puts the saw on a tree', async () => {
+group('the hand saws a tree from the start; the saw is bought on the grove\'s card and its beat hands it to the woodcutter', async () => {
   up();
-  const early = groveIcons().some(c => c.kind === 'saw');
-  window.__afterGrant({ rebel: 50 });
-  const card = window.__afterRows().find(r => r.key === 'after-axe').card;
-  const bought = window.__buy('after-axe');
-  const told = runUntil(() => S.beatsDone.includes('axe'), 4 * ACT_CAPTION_S);
-  run(2 * ACT_CAPTION_S);                    // the beat's caption off the screen
+  // The hand needs nothing bought (the owner, 2026-10-30: "the player can
+  // always cut the tree down, the saw unlocks worker automation").
   const on = sawOn(0);
   saw(0, () => S.after.plots[0].chops >= 1);
+  const chopped = S.after.plots[0].chops;
+  window.__afterGrant({ rebel: 50 });
+  const card = window.__afterRows().find(r => r.key === 'after-saw').card;
+  const before = read().sawHanded;
+  const bought = window.__buy('after-saw');
+  const told = runUntil(() => S.beatsDone.includes('saw'), 4 * ACT_CAPTION_S);
   window.__actsOn(null);
   return [
-    ok(!early, 'before the axe, no saw icon over the tree'),
-    ok(bought && card === 'grove', 'the axe is a row on the grove\'s card, paid in rebel', card),
-    ok(told && read().axe, 'its beat plays and hands the axe over'),
-    ok(on && S.after.plots[0].chops === 1, 'and then the icon puts the saw on the tree, and a stroke is a chop', String(S.after.plots[0].chops))
+    ok(on && chopped === 1, 'before the saw is bought, the hand saw lies across the tree and a stroke is a chop', String(chopped)),
+    ok(!before && bought && card === 'grove', 'the saw is a row on the grove\'s card, paid in rebel', card),
+    ok(told && read().sawHanded, 'its beat plays and hands the saw to the woodcutter')
   ];
 });
 
-group('a felled tree leaves a stump that blocks the plot until it is dug, and digging replants it free', async () => {
+group('a felled tree breaks into its logs and leaves a stump that blocks the plot until it is pulled, and out it comes as a log', async () => {
   up();
-  window.__afterGrant({ rebel: 50 });
-  window.__buy('after-axe');
-  runUntil(() => read().axe, 4 * ACT_CAPTION_S);
-  run(2 * ACT_CAPTION_S);                    // the beat's caption off the screen
   sawOn(0);
   saw(0, () => S.after.plots[0].fall != null);
   const falling = tree(0).falling;
@@ -211,44 +209,51 @@ group('a felled tree leaves a stump that blocks the plot until it is dug, and di
   // Read fresh each time: the harness reads the save back every five seconds.
   const plot = () => S.after.plots[0];
   const p0 = { ...plot() };
-  const down = lying().filter(q => q.i === 0).length === AFTER_LOGS_A_TREE && p0.stump && p0.stage === 0;
+  const down = lying().filter(q => q.i === 0).length === AFTER_TREE.logs && p0.stump && p0.grow == null;
   run(200);
-  const blocked = plot().stump && plot().stage === 0;
-  const r0 = read().rebel;
+  const blocked = plot().stump && plot().grow == null;
+  const logs0 = lying().length;
   lift(0, 3, GESTURE_STRAIN_S * (AFTER_DIG_CLICKS - 0.5));
   const still = plot().stump;
   lift(0, 3, GESTURE_STRAIN_S * 2);
   const p = plot();
+  run(1);
+  const logs1 = lying().length;
   window.__actsOn(null);
   return [
     ok(falling && midFall, `${TREE_CHOPS} strokes start it falling, and it is still coming down half a second later`, `${falling} ${midFall}`),
-    ok(down, 'down, it lies as logs and leaves a stump', JSON.stringify(p0)),
+    ok(down, 'down, it lies as its four logs and leaves a stump', JSON.stringify(p0)),
     ok(blocked, 'the stump blocks the plot: nothing grows there'),
-    ok(still && !p.stump && p.stage === 1, 'lifted and held, its roots give one by one, and out it comes with a sapling set in the plot', 'stage ' + p.stage),
-    ok(read().rebel >= r0, 'the sapling is free: no rebel paid for it')
+    ok(still && !p.stump && p.grow == null, 'lifted and held, its roots give one by one, and out it comes, the plot bare for an acorn', JSON.stringify(p)),
+    ok(logs1 === logs0 + 1, 'the stump out is one more log', `${logs0} -> ${logs1}`)
   ];
 });
 
-group('a woodcutter chops but leaves the stump until stump removal is bought; then the plot cycles', async () => {
+group('a woodcutter fells only once the saw is bought, leaves the stump until stump removal is bought, then pulls it', async () => {
   up();
   settle();
   window.__afterGrant({ rebel: 3000, timber: 400 });
   const post = putOn('woodcutter');
+  run(60);
+  const waited = !S.after.plots[0].stump && S.after.plots[0].fall == null && S.after.plots[0].chops === 0;
+  window.__buy('after-saw');
   const fell = runUntil(() => S.after.plots[0].stump, 240);   // the walk from the podium is the camp's length
+  const by = S.after.plots[0].by;
   run(30);
   const left = S.after.plots[0].stump;
   const upgraded = window.__buy('after-stumps');
   const dug = runUntil(() => !S.after.plots[0].stump, 60);
-  const stage = S.after.plots[0].stage;
+  const bare = S.after.plots[0].grow == null && !S.after.plots[0].stump;
   window.__actsOn(null);
   return [
-    ok(post && fell, 'a woodcutter walks from the podium to the grove and fells the grown tree'),
+    ok(post && waited, 'a woodcutter does not fell a tree before the saw is bought'),
+    ok(fell && by === 'worker', 'with the saw handed over it walks from the podium to the grove and fells the grown tree', String(by)),
     ok(left, 'before stump removal it leaves the stump standing'),
-    ok(upgraded && dug && stage >= 1, 'with stump removal bought it digs the stump out and the plot replants', `stage ${stage}`)
+    ok(upgraded && dug && bare, 'with stump removal bought it pulls the stump out, the plot bare for an acorn')
   ];
 });
 
-group('the grove\'s card clears plots, each with its sapling, to its most', async () => {
+group('the grove\'s card clears plots, each a bare bed, to its most', async () => {
   up();
   window.__afterGrant({ rebel: 3000, timber: 400 });
   const bought = [];
@@ -256,15 +261,13 @@ group('the grove\'s card clears plots, each with its sapling, to its most', asyn
   const plots = S.after.plots;
   topUp();
   const grow = window.__buy('after-grow');
-  landed(); topUp();
-  const big = window.__buy('after-tree');
   window.__actsOn(null);
   return [
     ok(bought.filter(Boolean).length === AFTER_PLOT_MAX - AFTER_PLOTS0 && !bought.at(-1), 'a plot a press, to the most it clears',
        bought.join(' ')),
-    ok(plots.length === AFTER_PLOT_MAX && plots.slice(AFTER_PLOTS0).every(p => p.stage >= 1 && p.at != null),
-       'each new plot has its sapling set (growing since, while the next timber is carried)', plots.map(p => p.stage).join(' ')),
-    ok(grow && big, 'faster growth and bigger trees are on the same card')
+    ok(plots.length === AFTER_PLOT_MAX && plots.slice(AFTER_PLOTS0).every(p => p.grow == null && !p.stump),
+       'each new plot is a bare bed, waiting on an acorn', plots.map(p => p.grow).join(' ')),
+    ok(grow, 'faster growth is on the same card')
   ];
 });
 
@@ -555,11 +558,11 @@ group('every act-3 card sells two or three named upgrades, none of them a ladder
     .map(c => [c, ups.filter(([, u]) => u.card === c).length]);
   // The podium is the one ladder (DESIGN.md, "The level, the two crowds and
   // the flags"): a rung a support mark, not the yard's bands.
-  const long = ups.filter(([k, u]) => u.bills.length > (k === 'after-plot' ? AFTER_PLOT_MAX - AFTER_PLOTS0 : u.marks ? u.marks.length : 1)).map(([k]) => k);
+  const long = ups.filter(([k, u]) => u.bills.length > (k === 'after-plot' ? AFTER_PLOT_MAX - AFTER_PLOTS0 : k === 'after-selfseed' ? AFTER_SELF_SEED.length : u.marks ? u.marks.length : 1)).map(([k]) => k);
   const coins = new Set(ups.flatMap(([, u]) => u.bills.flat().map(([c]) => c)));
   window.__actsOn(null);
   return [
-    ok(perCard.every(([c, n]) => n >= 1 && n <= 5), 'a card\'s upgrades are few (the grove\'s five, the axe among them)', JSON.stringify(perCard)),
+    ok(perCard.every(([c, n]) => n >= 1 && n <= 5), 'a card\'s upgrades are few (the grove\'s five, the saw among them)', JSON.stringify(perCard)),
     ok(long.length === 0, 'each is bought once, but for the grove\'s plots', long.join(', ')),
     ok([...coins].every(c => ['rebel', 'timber', ...AFTER_YARD_COINS].includes(c)), 'paid in rebel, timber and the yard\'s coins', [...coins].join(' ')),
     ok(rows.every(r => !r.bill.some(([c]) => c === 'pledge' || c === 'faith' || c === 'ink')), 'no pledge, no faith, no ink on any bill')

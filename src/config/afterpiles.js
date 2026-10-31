@@ -7,8 +7,13 @@
 
 // A good's block, in art cells square: a log 4x4, a plank of timber 2x2.
 // ...and a construction site's load (after/build.js), two cells a side, the
-// shape the site's piled loads have always been drawn as.
-export const AFTER_BLOCK = { log: 4, plank: 2, sign: 4, load: 2 };
+// shape the site's piled loads have always been drawn as; and the grove's
+// acorn, three cells across.
+export const AFTER_BLOCK = { log: 4, plank: 2, sign: 4, load: 2, acorn: 3 };
+// A block taller than it is wide, its height in art cells (the owner,
+// 2026-10-30: "Teach blocks a height"): the acorn 3x4. Every other block is
+// as tall as it is wide.
+export const AFTER_BLOCK_H = { acorn: 4 };
 // What a log saws into, in timber blocks (16 cells into four 2x2s, a column
 // of the cut each; the owner, 2026-10-29), and the logs a cut takes with the mill's second blade.
 export const AFTER_LOG_TIMBER = 4;
@@ -25,7 +30,13 @@ export const AFTER_PILES = {
   // (after/piles.js, `dropCol`). The saw stops once a cut of four no longer
   // fits, so a pile it fills stands at the brim less three at the least: 21,
   // so every bill of 18 timber can be paid off it.
-  timber:    { good: 'plank', brim: 21, near: true }
+  timber:    { good: 'plank', brim: 21, near: true },
+  // track A: the grove's seed basket by the forestry shack (DESIGN.md, "Act
+  // 3's grove, rebuilt", call 12): five acorns, three across, the count what
+  // is drawn
+  // `rests`: full is its normal state, so it wears no pile-full mark (the
+  // seeds row's dead state says "full" instead)
+  seeds:     { good: 'acorn', brim: 5, cols: 3, rests: true }
 };
 // A pass of the sand rules over a pile, seconds: a block set down rolls off
 // the heap's side a cell a pass, slow enough to be seen rolling (the voted

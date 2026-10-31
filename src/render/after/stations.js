@@ -17,8 +17,12 @@
 // it instead: the hammer on the nail it struck. The saw mill is drawn off
 // its machine (after/mill.js) alone, whoever turns it.
 
-import { P, AFTER_SAW_TEETH, AFTER_ART_SCALE, AFTER_MILL } from '../../config.js';
-import { K, W, PALE, MID, hash, silhouette } from './kit.js';
+// REVIEW act-3-the-cabin-built
+import { P, AFTER_SAW_TEETH, AFTER_ART_SCALE, AFTER_MILL, AFTER_CABIN_SMOKE } from '../../config.js';
+import { K, W, PALE, MID, hash, silhouette, clamp01 } from './kit.js';
+import { ART } from '../../after/art.js';
+import { CABIN } from '../../after/cabin.js';
+import { DOORWAY } from '../../after/doorway.js';
 import { held } from '../../reset.js';
 import { ctx } from '../ctx.js';
 import { goodBlock, goodColor } from './piles.js';
@@ -220,8 +224,12 @@ held('after-stations-drawn', () => { wsLastJx = REST_X; });
 // --- the construction shack: B's cut-out with C's mallet --------------------------
 // One black mass, a lid a cell proud each side, the mallet cut white out of
 // the front (a head ten cells wide, four tall, its corners cut a cell, on a
-// two-by-three handle), the four-cell way in on the handle's axis. A
-// cut-out: nothing on it moves.
+// two-by-three handle), the stations' way in (`wayIn`) on the handle's
+// axis, its left column SHACK_WAY. A cut-out: nothing on it moves.
+// The way in a station cut from one ink mass is entered by (after/doorway.js),
+// its left column `x` in the frame's cells: paper, square-topped, open to the floor.
+const wayIn = (d, x) => d.r(x, -DOORWAY.h, DOORWAY.w, DOORWAY.h, W);
+const SHACK_WAY = 5;
 const SHACK = [
   '##############',
   ' ############ ',
@@ -233,45 +241,68 @@ const SHACK = [
   ' #####..##### ',
   ' #####..##### ',
   ' ############ ',
-  ' ####....#### ',
-  ' ####....#### ',
-  ' ####....#### ',
-  ' ####....#### '
+  ' ############ ',
+  ' ############ ',
+  ' ############ ',
+  ' ############ '
 ];
 function shack(d) {
   SHACK.forEach((row, j) => [...row].forEach((ch, i) => {
     if (ch === '#') d.c(i, j - SHACK.length, K); else if (ch === '.') d.c(i, j - SHACK.length, W);
   }));
+  wayIn(d, SHACK_WAY);
 }
 
 // --- the forestry shack: the grove's, in front of its trees ---------------------------
-// A log cabin (the owner's pick of two, 2026-10-20): a stepped gable over
-// walls of laid logs, a door and a window. '#' ink, 'm' mid, '.' paper, ' '
-// open, sixteen cells by thirteen, its box's left edge eight cells into its
-// ground (after/art.js), the logs' pile on its grove side. A cut-out: nothing
-// on it moves.
-const FORESTRY = [
-  '       ##       ',
-  '     ######     ',
-  '   ##########   ',
-  ' ############## ',
-  '################',
-  ' #mmmmmmmmmmmm# ',
-  ' #............# ',
-  ' #mmm####mmmmm# ',
-  ' #...#..#.###.# ',
-  ' #mmm#..#m#.#m# ',
-  ' #...#..#.###.# ',
-  ' #mmm#..#mmmmm# ',
-  ' #####..####### ',
-];
-const FOREST_X = 8;
-function forestry(d) {
-  const rows = FORESTRY;
-  rows.forEach((row, j) => [...row].forEach((ch, i) => {
-    const tone = ch === '#' ? K : ch === 'm' ? MID : ch === '.' ? W : null;
-    if (tone != null) d.c(FOREST_X + i, j - rows.length, tone);
-  }));
+// The stump house (the owner's pick C, 2026-10-30, "lets drop the small tree
+// on top"; its mock render/after/cabinmock.js on branch a3-review-both): a
+// giant sawn stump hollowed into a house, one ink mass on a flare of roots,
+// its bark's seams and its windows cut out of it in paper, the stations' way
+// in for its door (the owner, 2026-10-30: "use the default doorway"), the cut face
+// edge-on in the pale with its rings in the mid, a shelf fungus on the bark,
+// and a stovepipe whose smoke is the one thing on it that moves. The parts
+// are after/cabin.js's, the house's own cells (i across, h up off the floor),
+// which the camp's plan takes its box off. The shack's frame is turned
+// (after/art.js), as the mock's was, so the stovepipe stands on the grove's
+// side.
+const CAB_X = ART.forestry.box[0];
+function cabinBrush(d) {
+  const px = (x, y, w, h, tone) => d.px(x, y, w, h, tone);
+  return {
+    px, fade: d.fade, sinking: d.sinking,
+    box: ([i, h, w, n], tone = K) => px((CAB_X + i) * P, -(h + n) * P, w * P, n * P, tone),
+    // paper (or a tone) cut out of the mass, 2 px in from its cells' edges
+    cut: ([i, h, w, n], tone = W) => px((CAB_X + i) * P + 2, -(h + n) * P + 2, w * P - 4, n * P - 4, tone)
+  };
+}
+// The stovepipe's smoke (config, AFTER_CABIN_SMOKE): puffs off the cap's top,
+// each rising and drifting at its true position, fading in and out and from
+// the mid grey to the pale. Not part of the house's ground, so never drawn
+// into its silhouette.
+function cabinSmoke(b, t) {
+  if (b.sinking) return;
+  const C = AFTER_CABIN_SMOKE, [ci, ch, cw, cn] = CABIN.cap, x0 = ci + cw / 2 - C.size / 2, y0 = ch + cn;
+  for (let k = 0; k < C.puffs; k++) {
+    const u = ((t / C.life + k / C.puffs) % 1 + 1) % 1;
+    const a = Math.min(1, u * C.fadeIn) * (1 - u) * C.peak;
+    const x = x0 + u * C.drift + Math.sin(t * C.swayRate + k * C.swayPhase) * C.sway, y = y0 + u * C.rise;
+    const f = clamp01((u - C.greyAt) / C.greyFade + 0.5);
+    const puff = tone => () => b.px((CAB_X + x) * P, -(y + C.size) * P, C.size * P, C.size * P, tone);
+    if (f < 1) b.fade(a * (1 - f), puff(MID));
+    if (f > 0) b.fade(a * f, puff(PALE));
+  }
+}
+function forestry(d, work, t) {
+  const b = cabinBrush(d), H = CABIN;
+  for (const p of [...H.mass, ...H.fungus, H.pipe, H.cap]) b.box(p);
+  for (const [i, h, n] of H.seams) b.cut([i, h, 1, n]);
+  b.cut(H.face, PALE);
+  const [, fh, , fn] = H.face;
+  for (const i of H.rings) b.px((CAB_X + i) * P, -(fh + fn) * P + 2, 2, fn * P - 4, MID);
+  wayIn(d, CAB_X + H.door);
+  for (const p of [...H.round, H.small]) b.box(p, W);
+  b.box([...H.cross, 1, 1]);
+  cabinSmoke(b, t || 0);
 }
 
 export const DRAW = { mill, workshop, shack, forestry };

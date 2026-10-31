@@ -41,7 +41,7 @@ import { afterlifeOn, hellOn } from './acts.js';
 import { deepPortal, standOfStation, deepFloor } from './deep/place.js';
 import { stationById } from './deep/party.js';
 import { PROPS } from './deep/props.js';
-import { afterFloor, groundOf, stationBox, stationX0, signBox, plotX, pineRows, PINE_GROWN, ART, pileBox, stairFoot, stationParts, podiumMid, pileX, AP } from './after/place.js';
+import { afterFloor, groundOf, stationBox, stationX0, signBox, plotX, treeRows, ART, pileBox, stairFoot, stationParts, podiumMid, pileX, AP } from './after/place.js';
 import { DRAW } from './render/after/stations.js';
 import { silhouette } from './render/after/kit.js';
 import { furnaceBox, barrierBox } from './hell/place.js';
@@ -284,11 +284,18 @@ function afterParts() {
     out.push({ id: `board:${key}`, rects: [signBox(key)] });
     for (const what of Object.keys(ART[key].pile || {})) out.push({ id: `pile:${what}`, rects: [pileRect(key, what)] });
   }
-  // The grove at its fullest: every plot a big pine (the box the hand reads).
-  const rows = pineRows(PINE_GROWN, true);
+  // The grove: every plot up to the most its card clears, built or not, a
+  // grown tree standing in it, its crown's widest row across and its top
+  // high, off the tree's own cells (place.js, `treeRows`). A felled tree is
+  // claimed by this standing footprint too, never by the sweep of its fall:
+  // its falling drawing and its crown's clumps may pass in front of the
+  // neighbor's (the owner, 2026-10-30, the one named exception), and every
+  // thing that rests comes to rest on its own plot (verify.js, the grove's
+  // rules).
+  const rows = treeRows(), fl3 = groundOf('grove');
   const a = Math.min(...rows.map(r => r[1])), z = Math.max(...rows.map(r => r[2])), top = Math.min(...rows.map(r => r[0]));
   for (let i = 0; i < AFTER_PLOT_MAX; i++)
-    out.push({ id: `pine:${i}`, rects: [rect(plotX(i) + a * AP, fl + top * AP, (z - a + 1) * AP, -top * AP)] });
+    out.push({ id: `tree:${i}`, rects: [rect(plotX(i) + a * AP, fl3 + top * AP, (z - a + 1) * AP, -top * AP)] });
   out.push({ id: 'throne-stair', rects: [rect(stairFoot(), fl - AFTER_STAIR_RISE, AFTER_STAIR_W, AFTER_STAIR_RISE)] });
   if (portalStands('heaven')) {
     const e = portalEnd('heaven', 'after');
@@ -313,9 +320,29 @@ function hellParts() {
 }
 
 const PARTS = { yard: yardParts, deep: deepParts, after: afterParts, hell: hellParts };
+// Everything standing in `place` but the build signs, which are placed
+// against it (buildsign.js).
+export const standingIn = place => PARTS[place]();
 
-// Every object standing in `place` and the ground it takes.
-export const footprints = place => PARTS[place]();
+// The build signs' ground, handed over by buildsign.js (`claimSigns`) rather
+// than imported: the sign asks the shop its questions, and this file is read
+// by pages (the landing page, through the station table) that have no board
+// for the shop to stand on.
+let signRects = () => []; // page: the wiring, handed over once at load; it outlives games
+export const claimSigns = f => { signRects = f; };
+
+// Every object standing in `place` and the ground it takes. A build sign
+// standing in an empty lot (buildsign.js) is the lot's, under its id: what is
+// built there is the same object, so the two may share ground and nothing
+// else may touch either.
+export const footprints = place => {
+  const out = PARTS[place]();
+  for (const s of signRects(place)) {
+    const lot = out.find(o => o.id === s.id);
+    if (lot) lot.rects = [...lot.rects, ...s.rects]; else out.push(s);
+  }
+  return out;
+};
 
 const meet = (a, b) => {
   const w = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);

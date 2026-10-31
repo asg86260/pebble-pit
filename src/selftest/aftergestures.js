@@ -18,6 +18,9 @@ import { station } from '../stations.js';
 import { stationBox } from '../after/place.js';
 import { toScreen } from '../world.js';
 import { shopBoxOf } from '../roster.js';
+// track C: F3a's group
+import { AFTER_DIG_CLICKS, GESTURE_STRAIN_S } from '../config.js';
+import { lying } from '../after/ground.js';
 
 const OPENING = ['house-fall', 'arrive', 'meet-god', 'refuse'];
 // The act up, the camera on the place, the stations wanted standing (the
@@ -266,4 +269,45 @@ export const TESTS = [
       ok(ground === null, 'opened again, a click on open ground puts it away', String(ground))
     ];
   }],
+  // --- track C: F3a, the stump pulled by hand (DESIGN.md, "Act 3's grove, rebuilt", call 10) ---
+  // The real pointer pressed on the stump block itself, dragged up and held:
+  // a root gives each GESTURE_STRAIN_S, and with the last the stump is a log
+  // in the hand, which the release lets go and which lands as a log.
+  ['act 3: F3a, a press and hold on the stump dragged up snaps its roots a strain apart and ends with a log in the hand, which let go lands as a log', async () => {
+    newRun();
+    await settle();
+    await upThere();
+    Object.assign(S.after.plots[0], { grow: null, stump: true, dug: 0 });
+    const s = partsOf('stump', 0).stump;
+    window.__look(s.x + s.w / 2 - S.viewW / 2);
+    await settle(0.2);
+    const logs0 = lying().length, x = s.x + s.w / 2, y = s.y + s.h / 2;
+    point('pointermove', ...glass(x, y), 0);
+    point('pointerdown', ...glass(x, y));
+    const snaps = [];
+    let dug = 0;
+    for (let f = 1; f <= 60 * 8 && S.after.plots[0].stump; f++) {
+      point('pointermove', ...glass(x, y - Math.min(f, 30) * P / 3));
+      window.__fast(1 / 60);
+      const d = S.after.plots[0].stump ? S.after.plots[0].dug : AFTER_DIG_CLICKS;
+      if (d > dug) { snaps.push(S.after.t); dug = d; }
+      if (f % 20 === 0) await raf();
+    }
+    const gaps = snaps.slice(1).map((t, k) => t - snaps[k]);
+    const held = S.held === 1 && S.motes[0]?.kind === 'log' && S.motes[0]?.place === 'after';
+    const at = glass(x - P * 10, y - P * 6);
+    point('pointermove', ...at);
+    await raf();
+    point('pointerup', ...at);
+    for (let f = 0; f < 120; f++) window.__fast(1 / 60);
+    await raf();
+    const landed = lying().length === logs0 + 1 && lying().some(q => (q.kind || 'log') === 'log') && S.held === 0;
+    window.__actsOn(null);
+    return [
+      ok(snaps.length === AFTER_DIG_CLICKS && gaps.every(g => Math.abs(g - GESTURE_STRAIN_S) < 0.05), `its ${AFTER_DIG_CLICKS} roots give a strain apart`, JSON.stringify(gaps)),
+      ok(held, 'out, the stump is a log in the hand', JSON.stringify({ held: S.held })),
+      ok(landed, 'let go, it lands as a log', JSON.stringify({ logs0, now: lying().length }))
+    ];
+  }],
+  // --- end track C ---
 ];

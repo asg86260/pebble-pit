@@ -11,12 +11,17 @@
 import { S } from '../../src/state.js';
 import * as C from '../../src/config.js';
 import { workAfter } from '../../src/after/work.js';
-import { chopTree, digStump, standing, stumped } from '../../src/after/grove.js';
+import { chopTree, digStump, standing, plantable } from '../../src/after/grove.js';
+import { pullable } from '../../src/after/stump.js';
+import { seedsOwed, seedsCarried } from '../../src/after/seeds.js';
+import { pileCount } from '../../src/after/piles.js';
+import { flowBy } from '../../src/flow.js';
+
 import { turnWheel, millView } from '../../src/after/mill.js';
 import { goodsRead, takeBlock } from '../../src/after/piles.js';
 import { lying, stripBox, stripOf, units, counted } from '../../src/after/ground.js';
 import { track, sweep, release } from '../../src/hands.js';
-import { stationX0, groundOf, AP } from '../../src/after/place.js';
+import { stationX0, groundOf, plotX, AP } from '../../src/after/place.js';
 import { afterGround } from '../../src/state.js';
 import { bubbles } from '../../src/after/bubbles.js';
 import { built } from '../../src/after/levels.js';
@@ -51,6 +56,9 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
   const HAND_S = {
     chop: (2 * C.GESTURE_SAW_END * C.GESTURE_SAW_AMP) / C.GESTURE_SAW_VMAX,   // a stroke end to end, a chop
     dig: C.GESTURE_STRAIN_S,                                                   // a root snapping, held up
+    // An acorn pressed off the basket, carried to a bare plot's bed and let go
+    // there (A2): about as long as a log carried onto the mill's bed.
+    plant: 1.5,
     // The real mill (after/mill.js): a unit of hand work is half a second of
     // turning the wheel at the hand's top speed, a stroke a turn; a log is first
     // swept off the pile and let go over the bed (`load`, a second and a half).
@@ -65,20 +73,22 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
   const handS = k => Math.max(0.25, HAND_S[k] / HUMAN);
 
   // --- the plan: what a sensible player buys, in order -------------------------------
-  // The axe and the saw mill first, a woodcutter carrying the felled logs to
+  // The saw and the saw mill first, a woodcutter carrying the felled logs to
   // the forestry shack and a sawyer fetching them on, the workshop and its
   // joiner to get signs into the crowd, then more posts and the upgrades.
   // A post is a member put on that job
   // through the roster under its station (`row`, below), its seat bought
   // first where the job's seats are full; a post named twice is two members.
   const PLAN = [
-    'after-axe', 'after-build-mill', 'after-post-woodcutter', 'after-post-sawyer', 'after-build-workshop',
+    'after-saw', 'after-build-mill', 'after-post-woodcutter', 'after-post-sawyer', 'after-build-workshop',
     'after-post-joiner', 'after-podium', 'after-post-woodcutter', 'after-plot',
     'after-post-joiner', 'after-blade', 'after-plot',
-    'after-stumps', 'after-grow', 'after-post-sawyer', 'after-post-woodcutter',
-    'after-bench', 'after-plot',
-    'after-post-joiner', 'after-tree', 'after-signreach'
+    'after-selfseed', 'after-stumps', 'after-grow', 'after-post-sawyer', 'after-post-woodcutter',
+    'after-selfseed', 'after-bench', 'after-plot',
+    'after-post-joiner', 'after-selfseed', 'after-signreach', 'after-selfseed'
   ];
+  // Seeds are bought past the plan, as the basket runs low (`seedWanted`): a
+  // player keeps an acorn to hand for every plot, less those on their way.
   // Past the plan, a post where the chain is short, as a player watching the
   // piles would put one: a joiner while carriers wait on signs with timber in,
   // a sawyer while logs lie in the grove, a woodcutter while grown trees
@@ -124,7 +134,7 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
     const logs = lying().length + st.grovelogs;
     const open = j => row(`after-post-${j}`).show();
     const pick = (st.timber >= 8 * C.AFTER_SIGN_TIMBER + planNeeds('timber') && open('joiner') ? 'joiner'
-      : st.timber < 10 * C.AFTER_SIGN_TIMBER && logs > 3 * C.AFTER_LOGS_A_TREE * Math.max(1, n('sawyer')) ? 'sawyer'
+      : st.timber < 10 * C.AFTER_SIGN_TIMBER && logs > 3 * C.AFTER_TREE.logs * Math.max(1, n('sawyer')) ? 'sawyer'
       : st.timber < 10 * C.AFTER_SIGN_TIMBER && a.plots.filter(standing).length > n('woodcutter') ? 'woodcutter'
       : 'joiner');
     return open(pick) ? `after-post-${pick}` : null;
@@ -146,7 +156,7 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
     const u = row(key);
     if (!u) return true;
     if (u.post) return u.from() >= n;
-    if (key === 'after-plot') return afterMaxed(u) || u.rung() >= n;
+    if (key === 'after-plot' || key === 'after-selfseed') return afterMaxed(u) || u.rung() >= n;
     return afterMaxed(u);
   }
   function buy(key) {
@@ -188,7 +198,7 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
   }
   function watch() {
     const a = S.after;
-    if (a.axe) mark('axe', 'axe in hand');
+    if (a.sawHanded) mark('saw', 'saw handed over');
     const raised = a.built.filter(k => !C.AFTER_START_BUILT.includes(k));
     if (raised.length) mark('first', `first station (${raised[0]})`);
     for (const k of Object.keys(C.AFTER_BUILDS)) if (built(k)) mark(`b-${k}`, `${k} stands`);
@@ -214,8 +224,11 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
       if (millView().log) return 'mill';
       if (st.logs > 0 && !a.bodies.some(b => b.at === 'mill') && !S.chips.some(c => c.place === 'after' && c.kind === 'log')) return 'load';
     }
-    if (a.axe && a.plots.some(standing)) return 'chop';
-    if (a.plots.some(stumped)) return 'dig';
+    // The hand saws from the start, nothing bought; the saw row only hands
+    // the woodcutter one (the owner, 2026-10-30).
+    if (a.plots.some(standing)) return 'chop';
+    if (a.plots.some(pullable)) return 'dig';
+    if (plantPlot() >= 0 && pileCount('seeds') > 0) return 'plant';
     return null;
   }
   function handWork(dt) {
@@ -228,7 +241,8 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
       handAcc -= s;
       const a = S.after;
       if (job === 'chop') chopTree(a.plots.findIndex(standing), true);
-      else if (job === 'dig') digStump(a.plots.findIndex(stumped), true);
+      else if (job === 'dig') digStump(a.plots.findIndex(pullable), true);
+      else if (job === 'plant') plantByHand(plantPlot());
       else if (job === 'load') loadBed();
       else if (job === 'mill') turnWheel(HAND_S.mill * C.GESTURE_WHEEL_MAX_REV * HUMAN, true);
       else workAfter(job, 1, true);
@@ -250,6 +264,22 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
     const to = { x: stationX0('mill') + (C.AFTER_MILL.seat.x + z / 2) * AP, y: groundOf('mill') + (C.AFTER_MILL.frame.bed - z * 2) * AP };
     S.trail = []; track(to.x, to.y); release(to.x, to.y);
     return true;                      // it falls onto the bed over the next frames
+  }
+  // A bare plot the hand may plant: one no woodcutter is already walking an
+  // acorn to.
+  const plantPlot = () => S.after.plots.findIndex((p, k) => plantable(k) && !S.after.bodies.some(b => b.plant === k));
+  // An acorn planted the player's way (A2): pressed off the seed basket into
+  // the hand, carried over the plot's bed, let go held still; it lands on the
+  // bed over the next frames and is planted there (after/seeds.js, `plantLand`).
+  function plantByHand(i) {
+    if (i < 0) return false;
+    const from = g.__afterPile('forestry', 'seeds'), to = { x: plotX(i), y: groundOf('grove') - AP * 14 };
+    g.__afterHand(from.x, from.y, 'press');
+    if (!S.held) return false;
+    g.__afterHand(to.x, to.y, 'move');
+    S.trail = [];
+    g.__afterHand(to.x, to.y, 'drop');
+    return true;
   }
   // The bubbles: each one popped once, or let go, as it first shows.
   const seen = new Set();
@@ -303,20 +333,31 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
     if (laterKey) out.push(laterKey);
     // Workers are bought out of the souls won (DESIGN.md, "Act 3's workers
     // are bought with rebel"): one first, while fewer than RESERVE stand idle.
+    if (seedWanted()) out.unshift('after-seeds');
     const recruit = afterRow('after-recruit');
     if (free() + walkingOut() < RESERVE && recruit.show() && !recruit.dead()) out.unshift(recruit.key);
     return out;
+  };
+  // An acorn short: fewer in the basket and on their way than the plots the
+  // grove has, and the seeds row open.
+  const seedWanted = () => {
+    const u = afterRow('after-seeds');
+    return !!u && u.show() && !u.dead?.() && pileCount('seeds') + seedsOwed() + seedsCarried() < S.after.plots.length;
   };
   const bought = [];
   let lastBuy = 0, longest = { s: 0, from: 0, by: null };
   const blocked = { act: 0, yard: 0 };      // seconds the plan's next row waited, by who it was short of
   const STEP = 0.5;
+  let emptyNow = 0, emptyMost = 0;
   for (; t < MINUTES * 60 && S.after.gate < C.AFTER_GATES.length; t += STEP) {
     for (const c of YARD_COINS) yardPurse[c] += LATE_YARD[c] * YARD * STEP;
     popBubbles();
     handWork(STEP);
     tick(STEP);
     watch();
+    // A bare plot waiting with the basket empty: the wait on seeds.
+    if (pileCount('seeds') <= 0 && S.after.plots.some((p, k) => plantable(k))) { emptyNow += STEP; emptyMost = Math.max(emptyMost, emptyNow); }
+    else emptyNow = 0;
     // The first thing wanted that can be paid, bought; again while one can.
     for (let k = 0; k < 8; k++) {
       const want = wanted();
@@ -341,6 +382,9 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
   const a = S.after;
   if (t - lastBuy > longest.s) longest = { s: t - lastBuy, from: lastBuy, by: '(the end)' };
   mark('end', a.gate >= C.AFTER_GATES.length ? 'the strike' : `NOT STRUCK in ${MINUTES} min (support ${(support() * 100).toFixed(1)}%)`);
-  return { marks, bought, longest, blocked, yardPaid, handDid, t, struck: a.gate >= C.AFTER_GATES.length,
+  const flows = flowBy();
+  const grove = { felled: (flows['log:tree'] || 0) / C.AFTER_TREE.logs, seeds: a.ups['after-seeds'] || 0,
+                  selfSeeded: flows['acorn:crown'] || 0, emptyBasket: emptyMost };
+  return { marks, bought, longest, blocked, yardPaid, handDid, grove, t, struck: a.gate >= C.AFTER_GATES.length,
            LATE_YARD, YARD_COINS, BANK_S };
 }

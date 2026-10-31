@@ -1,31 +1,21 @@
-// The floating build button (DESIGN.md, "Built first, a recruit, then two
-// choices"): a small button standing in the deep's water over the next free
-// floor slot, wearing the fang's mark and its price, one. It is how a
+// REVIEW build-sign
+// The deep's empty lot (DESIGN.md, "Built first, a recruit, then two
+// choices"): the next free floor slot, and the build sign staked in it
+// (buildsign.js) -- every place's lots wear the one sign. It is how a
 // station is bought: the first one free, at the snatch, and every one after
 // it for a fang, whenever a fang is held and a slot is free. Pressed, its
 // build is queued there at once (`layStation`); what it becomes is picked on
 // its board once it stands (deep/rails.js).
 //
-// It is not on a board: it hangs over the place the station will stand, so
-// what the fang buys and where it goes are one picture. It rides the deep's
-// camera as the roster posts do, and fades in and out (shelf.css,
-// `#buildbtn`), never popping.
+// No board lists it, so its row is its own: offered while `buildOffer` says
+// so, priced a fang (or nothing, the first), and bought by its own press,
+// which spends the fang itself (`layStation`).
 
 import { msg } from '../lang.js';
 import { S } from '../state.js';
-import { toScreen } from '../world.js';
-import { FANG_MARK, BUILD_BUTTON_UP, BUILD_FADE_MS } from '../config.js';
-import { canBuild, nextSlot, layStation } from './party.js';
-import { slotX, deepFloor } from './place.js';
-import { onTap } from '../tap.js';
-
-document.documentElement.style.setProperty?.('--build-fade-ms', `${BUILD_FADE_MS}ms`);
-
-// The fang's pixels as an image the stylesheet can mask with, as the scale's
-// are (`--scale-mark`, board.js).
-const fangInk = FANG_MARK.flatMap((row, y) => [...row].map((c, x) => c === '#' ? `<rect x="${x}" y="${y}" width="1" height="1"/>` : ''));
-document.documentElement.style.setProperty?.('--fang-mark',
-  `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${FANG_MARK[0].length}" height="${FANG_MARK.length}" shape-rendering="crispEdges">${fangInk.join('')}</svg>`)}")`);
+import { PARTY_IDS } from '../config.js';
+import { canBuild, nextSlot, layStation, stationById } from './party.js';
+import { slotX, deepFloor, standOfStation } from './place.js';
 
 // --- what it offers ---------------------------------------------------------------
 // Whether it stands and where: the first lot is free, every one after a fang.
@@ -40,42 +30,37 @@ export function press() {
   return layStation();
 }
 
-// --- the page -----------------------------------------------------------------------
-let btn = null; // page: the button element
-function make() {
-  btn = document.createElement('button');
-  btn.type = 'button';
-  btn.id = 'buildbtn';
-  btn.innerHTML = '<i class="fang"></i><b class="count"></b>';
-  document.body.appendChild(btn);
-  onTap(btn, () => { press(); seatBuildButton(); });
-}
+// The row the sign sells: a station raised at the next free slot.
+const BUILD_ROW = {
+  key: 'deep-build', name: msg('row-raise-station'),
+  bill: () => (buildOffer().first ? [] : [['fang', 1]]),
+  show: () => buildOffer().shown,
+  buy: press
+};
+// Bought by the row's own press: the fang is `layStation`'s to spend.
+function buyOwn(u) { return u.buy() != null; }
 
-// Every frame (a layer in render.js): shown or not, and where. A fade, not a
-// pop: `on` is the class the stylesheet fades on, and the element is never
-// hidden outright, so it can fade out from where it stood.
-let at = { x: null, y: null }; // page: where it stands on the window
-const EDGE = 4;                          // px kept clear of the window's edge, as board.js keeps
-export function seatBuildButton() {
-  if (!btn) make();
-  const offer = buildOffer();
-  const on = offer.shown && S.view === 'deep';
-  btn.classList.toggle('on', on);
-  if (!on) return;
-  // the price, not the purse
-  const count = offer.first ? msg('build-free') : '×1';
-  const say = btn.querySelector('.count');
-  if (say.textContent !== count) say.textContent = count;
-  // Centered over the slot, its foot BUILD_BUTTON_UP over the floor, in the
-  // deep's camera, as `seatCall` seats the call to build the bench, and kept
-  // inside the window, as every board is.
-  const inside = (x, w) => Math.round(Math.max(EDGE, Math.min(x, S.W - w - EDGE)));
-  const w = btn.offsetWidth || 0;
-  const mid = toScreen(slotX(offer.slot), 0).x;
-  const x = inside(mid - w / 2, w);
-  const bottom = Math.round(S.H - toScreen(0, deepFloor() - BUILD_BUTTON_UP).y);
-  if (x !== at.x || bottom !== at.y) {
-    at = { x, y: bottom };
-    btn.style.transform = `translate3d(${x}px, ${-bottom}px, 0)`;
-  }
+// The id the next station is minted under (party.js mints them in order).
+const nextId = () => PARTY_IDS.find(id => !stationById(id)) || null;
+
+// The lot of the party row `id`, for its row in the station table: standing
+// only while `id` is the next to be built, in the ground the station will
+// stand on at the next free slot.
+//
+// A hoisted function, and everything it reads eagerly hoisted too: the
+// station table (stations.js) calls it while it is first evaluated, which can
+// be before this module's body has run (this module reaches stations.js back
+// through party.js), so the lot touches nothing of this module's until it is
+// asked a question.
+export function deepLot(id) {
+  return {
+  id: () => id,
+  row: () => (nextId() === id && nextSlot() >= 0 ? BUILD_ROW : null),
+  box: () => { const slot = nextSlot(); if (slot < 0) return null; const r = standOfStation({ slot, cls: null }); return { x: r.x, w: r.w }; },
+  // what goes up there is a station, its fighter picked once it stands
+  name: () => msg('station-party-lot.sign'),
+  mid: () => slotX(nextSlot()),
+  floor: () => deepFloor(),
+  act: buyOwn
+  };
 }
