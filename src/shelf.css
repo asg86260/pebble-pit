@@ -764,8 +764,12 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
 .rails .rl-fx i { display: block; box-sizing: border-box; width: 10px; height: 10px; margin-top: 2px; }
 .rails .rl-fx i.mv { border: 2px solid currentColor; }
 .rails .rl-fx i.cp { background: var(--accent); }
-.rails .rl-st { text-decoration: underline dotted; text-underline-offset: 2px; cursor: help; }
-.rails .rl-fx.cap .rl-st { color: var(--accent); }
+.rails .rl-st, .rails .rl-sk { text-decoration: underline dotted; text-underline-offset: 2px; cursor: help; }
+.rails .rl-fx.cap .rl-st, .rails .rl-fx.cap .rl-sk { color: var(--accent); }
+/* The skills a fighter has, under its name, side by side in the effects' marks. */
+.rails .rl-skills { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 14px; }
+.rails .rl-skills .rl-fx { display: inline-flex; align-items: center; gap: 6px; }
+.rails .rl-skills .rl-fx i { margin-top: 0; }
 @media (hover: hover) {
   .rails .rl-row:hover:not(:disabled) .rl-st, .rails .rl-row:hover:not(:disabled) .rl-fx i.mv { color: var(--on-fill); }
 }

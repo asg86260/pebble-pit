@@ -28,6 +28,10 @@ try {
   if (t === 'dim') document.documentElement.classList.add('dim');
   if (/[?&]readable\b/.test(location.search) || (p && p.readable)) document.documentElement.classList.add('readable');
 } catch (e) {}
+// A bench frame (the checks' frames) keeps every module's timing, not the
+// browser's first 250, so a boot that never finished can say which module
+// landed last (selftest/boardwords.js, `whyNot`).
+try { if (/[?&]bench\b/.test(location.search)) performance.setResourceTimingBufferSize(4000); } catch (e) {}
 </script>
 </head>
 <body>
@@ -415,6 +419,10 @@ try {
      first frame has been drawn (main.js), so the game comes up out of the
      white the landing page went to rather than appearing -->
 <div id="veil" class="veil up"></div>
-<script type="module" src="./src/main.js"></script>
+<!-- A module graph that could not be fetched fires this element's error and
+     nothing else: no exception, no rejection, the page simply never runs. Said
+     on the window, so a check's frame can tell a boot that failed to load from
+     one still loading (selftest/boardwords.js, `bootFrame`). -->
+<script type="module" src="./src/main.js" onerror="window.__bootErr = 'graph'"></script>
 </body>
 </html>

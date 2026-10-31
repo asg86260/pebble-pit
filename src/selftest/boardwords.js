@@ -20,20 +20,50 @@ import { UNFOLDING, overOf } from '../slotfit.js';
 // contentWindow then throws a cross-origin SecurityError on any read. That is
 // the load failing, not the game: put the address back and wait out what is
 // left of the 20 s.
+//
+// So is a module graph the browser would not fetch. Unbundled, the dev
+// server's game is some 540 modules a frame, fetched beside the suite's own
+// page in one renderer, and on a slow machine Chrome refuses the overflow
+// (net::ERR_INSUFFICIENT_RESOURCES, its cap on one process's outstanding
+// requests). The page's module script then fires `error` and never runs
+// (play.html marks it `__bootErr = 'graph'`). A shipped game is a handful of
+// files and never meets the cap, so this is the bench's load, put back the
+// same way.
 async function bootFrame(f, needBuy, t0) {
   const src = f.src;
   const booted = () => {
-    try { const x = f.contentWindow; return !!(x?.__scene && x.__board && x.__fast && (!needBuy || x.__buy)); }
+    try {
+      const x = f.contentWindow;
+      if (x?.__bootErr === 'graph') return null;
+      return !!(x?.__scene && x.__board && x.__fast && (!needBuy || x.__buy));
+    }
     catch { return null; }
   };
-  let last = 0;
+  let last = 0, reloads = 0;
   while (performance.now() - t0 < 20000) {
     const b = booted();
     if (b) return true;
-    if (b === null && performance.now() - last > 1000) { last = performance.now(); f.src = "about:blank"; await raf(); f.src = src; }
+    if (b === null && performance.now() - last > 1000) { last = performance.now(); reloads++; f.src = "about:blank"; await raf(); f.src = src; }
     await raf();
   }
+  bootFrame.why = whyNot(f, reloads);
   return false;
+}
+// Where a frame that never booted stopped, for the failing check's detail:
+// the step main.js last reached (`__bootAt`), the page's own state, and the
+// modules it had fetched and how long ago the last one landed -- a boot that
+// hangs on the store reads differently from one whose module graph stalled.
+function whyNot(f, reloads) {
+  try {
+    const x = f.contentWindow, now = x.performance.now();
+    const res = x.performance.getEntriesByType('resource');
+    const mods = res.filter(r => r.name.includes('/src/'));
+    const lastAt = res.reduce((m, r) => Math.max(m, r.responseEnd), 0);
+    const short = r => r.name.replace(/^.*?\/src\//, '').replace(/\?.*$/, '');
+    return JSON.stringify({ at: x.__bootAt ?? null, err: x.__bootErr ?? null, ready: x.document.readyState, reloads, resources: res.length, modules: mods.length,
+      console: mods.some(r => short(r) === 'console.js'), lang: mods.some(r => short(r) === 'lang.js'), lastMs: Math.round(now - lastAt),
+      last: [...mods].sort((a, b) => b.responseEnd - a.responseEnd).slice(0, 3).map(short) });
+  } catch (e) { return `unreadable: ${e?.message || e} (${reloads} reloads)`; }
 }
 
 // The yards to read, and the boards in each: every board at its fullest, then
@@ -146,7 +176,7 @@ export const TESTS = [
         // the dev handles come in by dynamic import, a moment after the page
         const booted = await bootFrame(f, false, t0);
         const w = f.contentWindow;
-        if (!booted) { checks.push(ok(false, `${lang} (house type): the game boots in a frame`)); continue; }
+        if (!booted) { checks.push(ok(false, `${lang} (house type): the game boots in a frame`, bootFrame.why)); continue; }
         const said = w.document.documentElement.lang;
         const step = () => new Promise(r => { w.__fast(1 / 60); w.requestAnimationFrame(() => r()); });
         const found = [];
@@ -189,7 +219,7 @@ export const TESTS = [
         const t0 = performance.now();
         const booted = await bootFrame(f, false, t0);
         const w = f.contentWindow;
-        if (!booted) { checks.push(ok(false, `${lang} ${mode}: the game boots in a frame`)); continue; }
+        if (!booted) { checks.push(ok(false, `${lang} ${mode}: the game boots in a frame`, bootFrame.why)); continue; }
         await w.document.fonts.ready;
         const face = w.getComputedStyle(w.document.body).fontFamily;
         const step = () => new Promise(r => { w.__fast(1 / 60); w.requestAnimationFrame(() => r()); });
@@ -238,7 +268,7 @@ export const TESTS = [
       const t0 = performance.now();
       const booted = await bootFrame(f, true, t0);
       const w = f.contentWindow;
-      if (!booted) return [ok(false, 'en (house type): the game boots in a frame')];
+      if (!booted) return [ok(false, 'en (house type): the game boots in a frame', bootFrame.why)];
       await w.document.fonts.ready;
       const step = n => new Promise(r => { w.__fast(n); w.requestAnimationFrame(() => w.requestAnimationFrame(() => r())); });
       w.__scene('boards');
@@ -293,7 +323,7 @@ export const TESTS = [
       const t0 = performance.now();
       const booted = await bootFrame(f, true, t0);
       const w = f.contentWindow;
-      if (!booted) return [ok(false, 'en (house type): the game boots in a frame')];
+      if (!booted) return [ok(false, 'en (house type): the game boots in a frame', bootFrame.why)];
       await w.document.fonts.ready;
       const step = n => new Promise(r => { w.__fast(n); w.requestAnimationFrame(() => w.requestAnimationFrame(() => r())); });
       w.__scene('boards');

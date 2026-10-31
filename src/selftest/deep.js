@@ -488,6 +488,36 @@ TESTS.push(['rails: the rows climb the base unit, the fork takes a class and clo
   ];
 }]);
 
+// A fighter's skills on its board, under its name: the pointer over one, at
+// the spot the page draws it (the thing hit there is the skill), says its
+// line, and the line stands clear of the sheet, covering nothing on it.
+// Which skills are listed at which rung is test/fighter-skills.test.mjs.
+TESTS.push(["rails: a skill under the fighter's name says its line beside the board", async () => {
+  window.__fullSites();
+  window.__party({ stations: [{ kind: 'armory', cls: 'ranger', rung: 8 }] });
+  showPanel('s1', true);
+  await seat();
+  const sk = [...(rails()?.querySelectorAll('.rl-sk') || [])];
+  const cap = sk[1], b = cap?.getBoundingClientRect();
+  const hit = b && document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2);
+  hit?.dispatchEvent(new PointerEvent('pointerover', { bubbles: true, clientX: b.left + b.width / 2, clientY: b.top + b.height / 2 }));
+  hit?.dispatchEvent(new PointerEvent('pointerenter', { clientX: b.left + b.width / 2, clientY: b.top + b.height / 2 }));
+  const tip = [...document.querySelectorAll('.rl-tip')].pop();
+  const said = !tip.hidden && tip.textContent;
+  const t = tip.getBoundingClientRect(), sheet = document.getElementById('panel').getBoundingClientRect();
+  const clear = t.right <= sheet.left || t.left >= sheet.right;
+  hit?.dispatchEvent(new PointerEvent('pointerleave', {}));
+  const gone = tip.hidden;
+  showPanel(null, true);
+  return [
+    ok(sk.map(e => e.textContent).join() === 'Aimed shot,Pinning shot', 'a Ranger at rung 8 lists her move and her capstone', sk.map(e => e.textContent).join()),
+    ok(hit === cap, 'the pointer at the skill is over the skill', `${hit?.className}`),
+    ok(said === 'Pinning shot: Stun (holds still, stops healing)', 'the pointer over it says its line', `${said}`),
+    ok(clear, 'the line stands beside the board, covering nothing on it', `${JSON.stringify(t)} ${JSON.stringify(sheet)}`),
+    ok(gone, 'and goes when the pointer leaves')
+  ];
+}]);
+
 // The first station under a real pointer: it stands from the snatch, free,
 // nothing picked (deep/party.js, `standFirst`), so the build sign in the
 // next free slot (deep/buildbutton.js) has nothing to sell until a fang is held. Its

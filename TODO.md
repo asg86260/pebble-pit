@@ -22,6 +22,29 @@ height, the axe's rename, the migration to SAVE_V 35) is built on branch
 (the stump, F3a-1) and D (seeds) build on it; until B lands the hand still
 puts the saw on a tree by its icon and the woodcutter chops on its old timer.
 
+## A browser shard's whole tab stops answering on CI -- PROBE IN (2026-10-31)
+
+Sometimes a CI browser shard's page stops answering CDP altogether. On
+2026-10-31, `800,600 5/8` (run 41174909950) sat in the suite for its whole
+hour, and `390,844 5/8` (run 41179210914) did not answer for 12 minutes and
+would not even pause, so its renderer was gone or wedged below the script.
+Locally, at 3x CPU throttle, about fifty frame boots in a row in one tab
+twice hung the tab the same way. It is not the frame-boot timeout. That one
+was Chrome refusing module requests (net::ERR_INSUFFICIENT_RESOURCES, its cap
+on one renderer's outstanding requests) while a ~540-module dev graph loaded
+in a frame beside the suite's page; `bootFrame` now sees the failed graph
+(`__bootErr = 'graph'`, play.html) and loads the frame again. The same cap is
+a lead here: the landing-page check once lost `/src/console.js` the same
+way, and a renderer short of resources may be what wedges.
+
+The probe: `tools/headless.mjs` gives a shard 12 minutes (`STALL_MIN`), then
+pauses the page from a second debugger session and prints its stack and
+last console lines. All along it watches the network and lists any request
+still open, slower than five seconds or failed. It reports a renderer crash
+when it happens and samples heap, frames and documents every 30 s. In dev,
+`__bootAt` (main.js, lang.js) names the boot step a frame reached. Blocker:
+the next hung shard, to read the probe.
+
 ## The yard joins the conservation rule (2026-10-28)
 
 "One resource system for every act" is built (DESIGN.md, `(built)`). Its one
