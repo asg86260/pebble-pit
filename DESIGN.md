@@ -24531,9 +24531,9 @@ soul in the crowd** (the one who holds the pick out). A worker of the yard
 is the same kind of speaker as a soul: a body in the world, named by where
 it stands, not by a name of its own.
 
-Where the words go is the shape call (question 1). The three looks, mocked
-in the real game on the review bench (review "dialog: the look", branch
-`a3-review-both`, never merged):
+Where the words go was the shape call (question 1, settled: A, the bubble).
+The three looks, mocked in the real game on the review bench (review
+"dialog: the look", branch `a3-review-both`, never merged):
 
 - **A, a bubble over the speaker**, with a tail down to the head, in the
   world: the line is plainly that body's. It puts words over a body, which
@@ -24668,12 +24668,14 @@ Five to eight lines in all; nothing longer.
 
 ### The calls for the owner
 
-1. **Where do the words go: over the body in the world (A or C) or in the
-   band (B)?** The game's bodies have never said a word -- dots, hearts,
-   bangs, and the pedestal's bubbles carry a symbol, "never a word" (the
-   owner, 2026-10-18). A and C break that for the story's speakers only, and
-   need the camera to glide to whoever speaks; B keeps every word out of the
-   world, at the price of moving the skip hint into the top band.
+1. **Where do the words go?** *Settled (the owner, 2026-10-31, picking A:
+   "lets clean up that speech bubble pointer. otherwise, yes"):* over the
+   speaker, in a bubble with a tail to the head. This is an owner-approved
+   exception to "marks over heads are never words", for dialog only: the
+   crew's marks and the pedestal's bubbles keep their symbols. With it come
+   the camera gliding to whoever speaks (a line's `who` moves the frame) and
+   the skip hint staying where it is. The tail's shape is a second round on
+   the review bench (A1, tapering to a middle point; A2, one straight edge).
 2. **Does a line wait for the player, or run on its own clock?** Proposed:
    its own clock, with a click to go on sooner, so the beat never waits on a
    reader. The other shape (a line holds until clicked) is the classic one,
