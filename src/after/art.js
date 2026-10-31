@@ -18,7 +18,7 @@
 // (`flip`, its width), its box, door and piles turned with it.
 
 import { AFTER_PILES, AFTER_BLOCK, AFTER_BLOCK_H, AFTER_PILE_GAP } from '../config/afterpiles.js';
-import { CABIN_W, CABIN_H } from './cabin.js';
+import { CABIN_W, CABIN_H, CABIN_DOOR } from './cabin.js';
 
 // What a station draws past its box and piles, in its own cells, it names
 // as `reach`, the column past its right end (the saw mill's chute).
@@ -43,7 +43,8 @@ const DRAWN = {
   // basket and the log pile stand on its far side from the grove and its
   // wall faces the first plot. Its box is the stump house's own size, the
   // stovepipe's cap its top (after/cabin.js), so a press anywhere on it opens it.
-  forestry:  { box: [8, CABIN_W, CABIN_H], door: 10, pile: { seeds: 'left', grovelogs: 'left' }, turned: true },
+  // Its door is its way in's middle, where a body at it stands.
+  forestry:  { box: [8, CABIN_W, CABIN_H], door: 8 + CABIN_DOOR, pile: { seeds: 'left', grovelogs: 'left' }, turned: true },
   // Its board's ground on the workshops' side, between the last workshop and
   // the union's crowd: laid there off both by after/place.js, which overrides
   // this column (God's side holds the rebel pile).
