@@ -58,6 +58,7 @@ import { AFTER_TREE } from './config.js';                       // track A: the 
 import { treeCol, tagOf } from './after/ground.js';             // track A: the grove
 import { plotSpan, AP } from './after/place.js';              // track A: the grove
 import { allOverlaps, offGround } from './footprints.js';
+import { held } from './reset.js';
 
 // The pairs allowed to share ground, each with what it is: none. The list is
 // kept as the guard: test/no-overlap.test.mjs is red for an entry that no
@@ -796,6 +797,7 @@ export function verifyWorld() {
 // claims a felled tree by its standing footprint, never its sweep).
 // Read against the frame before, started over when the act's state is replaced.
 let groveWas = null; // held: the plots and the grove's doors last frame, for the rule's books
+held('verify-grove', () => { groveWas = null; });
 export function verifyGrove() {
   if (!afterlifeOn() || !S.after) { groveWas = null; return; }
   const a = S.after, by = flowBy();
