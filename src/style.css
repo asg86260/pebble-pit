@@ -2188,7 +2188,7 @@ body.demo #scroller { overflow: hidden; pointer-events: none; }
 .held button:active:not(:disabled), .held a.store:active, .col button:active:not(:disabled),
 .rows button:not(.tile):active:not(:disabled):not(.stat), .optspop .opt:active, .optspop .for:active:not(.only),
 .queue button.wait:active, #hidedone:active, #modalclose:active, #objective .barrier button:active:not(:disabled),
-#corner > button:active, #hop button:active, #buildbtn:active, .saves .del:active {
+#corner > button:active, #hop button:active, .saves .del:active {
   color: var(--on-fill); background: var(--fill) var(--dots-on-fill);
 }
 .col button.play:active, #raise:active, .toast:active { color: var(--ink); background: var(--paper) var(--dots); }

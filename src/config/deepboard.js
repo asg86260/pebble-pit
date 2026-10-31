@@ -55,7 +55,7 @@ export const SCALE_MARK = [
 // `.`, a blank outside the edge. A solid fang hanging from its root, its tip
 // hooked back as a snake's is (the owner's A, docs/mocks/fang-mark-2026-09-28.html):
 // a hollow tooth read as a triangle at nine pixels.
-// The floating build button wears it (deep/buildbutton.js).
+// The deep's build sign wears it on its price line (buildsign.js).
 export const FANG_MARK = [
   ' #####   ',
   ' ######  ',
@@ -98,12 +98,6 @@ export const FIGHT_STATIONS_MAX = DEEP_SLOTS.length;
 // build, a flag -- keyed by the id rather than the kind, since a kind can
 // stand twice.
 export const PARTY_IDS = Array.from({ length: FIGHT_STATIONS_MAX }, (_, i) => `s${i + 1}`);
-
-// The floating build button: how high over the deep's floor its foot stands,
-// above the slot the station will go up on, and how long it takes to fade in
-// or out.
-export const BUILD_BUTTON_UP = P * 30;
-export const BUILD_FADE_MS = 200;
 // A rail folding away: its height and ink go in this many steps over this
 // long, and at once under reduced motion.
 export const RAIL_FOLD_MS = 200;

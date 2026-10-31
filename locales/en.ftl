@@ -2239,39 +2239,46 @@ station-party-empty = nothing to learn yet
 
 # a station's name: its board's title, the pointer's label, the queue card
 station-casino = the casino
+    .sign = casino
 
 # a station's name
 station-filter = the air filter
+    .sign = air filter
 
 # the air filter's board with nothing on it
 station-filter-empty = nothing to fit
 
 # a station's name
 station-quarry = the quarry
+    .sign = quarry
 
 # the quarry's board with nothing on it
 station-quarry-empty = the quarry is as deep as it goes
 
 # a station's name
 station-farm = the farm
+    .sign = farm
 
 # the farm's board with nothing on it
 station-farm-empty = the ground is all broken
 
 # a station's name
 station-apothecary = the apothecary
+    .sign = apothecary
 
 # the apothecary's board with nothing on it
 station-apothecary-empty = the pot stands cold
 
 # a station's name
 station-tower = the tower
+    .sign = tower
 
 # the tower's board with nothing on it
 station-tower-empty = nothing stirs in here yet
 
 # a station's name
 station-shack = the shack
+    .sign = shack
 
 # the shack's board with nothing on it
 station-shack-empty = the tools are all on the rock
@@ -2281,6 +2288,7 @@ station-bench-empty = nothing to sell
 
 # a station's name
 station-outhouse = the janitor's closet
+    .sign = janitor's closet
 
 # the janitor's closet's board with nothing on it
 station-outhouse-empty = the brooms are all on their hooks
@@ -2333,6 +2341,7 @@ station-party-lot = { $nth ->
         [6] a seventh station
        *[other] a undefined station
     }
+    .sign = station
 
 ## Crew
 
@@ -3174,7 +3183,7 @@ rail-fighter = the fighter
 # the deep: the build of a new fighter's station (the queue card names it)
 row-raise-station = raise a station
 
-# the deep's build button: the first station costs no fang
+# a build sign's price when it asks nothing: the deep's first station costs no fang
 build-free = free
 
 # the serpent's level after the pips on its bar, from level 2 on; $n is the level.
@@ -3608,9 +3617,6 @@ after-sect-seats = seats
 
 # act 3 shack heading (placeholder): the stations to build
 after-sect-build = build
-
-# act 3 ruined station's card heading (placeholder): its rebuild
-after-sect-rebuild = rebuild
 
 # act 3 station card heading (placeholder)
 after-sect-card = upgrades

@@ -214,8 +214,8 @@ export const AFTER_PODIUM_CLIMB = { s: 10, fade: 0.8, rise: [0.2, 0.8], step: [0
 // speak from and the construction shack that sells every other.
 export const AFTER_START_BUILT = ['pedestal', 'shack', 'forestry'];
 // The camp's other stations stand whole from the start, closed until they are
-// built: its board offers its rebuild, the shack's build row for it, and the
-// station works once it is built. The ground each station's board stands
+// built: the build sign staked in each (buildsign.js) and the shack's board
+// sell its build, and the station works once it is built. The ground each station's board stands
 // over, beside it where its shop sign stood until 2026-10-27 (the station is
 // its own shop now), in the act's art cells (AP): `w` by `h` over a gap
 // `post` high, where after/art.js lays it.

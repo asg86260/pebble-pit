@@ -14,11 +14,12 @@
 
 import { held } from '../reset.js';
 import { S } from '../state.js';
-import { P, AFTER_ROSTER_DOWN, AFTER_ROSTER_SHOP_DROP } from '../config.js';
+import { P, AFTER_ROSTER_DOWN, AFTER_ROSTER_SHOP_DROP, AFTER_BUILDS } from '../config.js';
 import { msg } from '../lang.js';
 import { afterlifeOn } from '../acts.js';
 import { built } from './levels.js';
-import { stationBox, groundOf, afterFloor, closed, pilePlace, pileOwner } from './place.js';
+import { stationBox, groundOf, afterFloor, closed, pilePlace, pileOwner, floorAt } from './place.js';
+import { afterRow } from './rows.js';
 import { PILED, pileFull } from './piles.js';
 import { godCampAt, godMid, faceY } from './sky.js';
 import { shopBoxOf, rosterShops } from '../roster.js';
@@ -102,12 +103,29 @@ const row = (card, more) => {
   };
 };
 
+// A station the camp builds, while it is not standing: its lot, for the build
+// sign staked in it (buildsign.js). Its row is the shack's build row for it,
+// listed on the shack's board; the sign stands in the station's drawing at
+// its middle, on the floor as the floor runs under it.
+const lotOf = card => ({
+  id: () => card,
+  row: () => (closed(card) ? afterRow(`after-build-${card}`) : null),
+  board: 'after-shack',
+  box: () => stationBox(card),
+  mid: () => drawnMid(card),
+  floor: floorAt,
+  name: NAMES[card]
+});
+
 // In the order a press asks them: the standing stations, the grove, God's camp.
 const STATION_CARDS = ['mill', 'workshop', 'shack', 'pedestal'];
 export const AFTER_STATION_ROWS = [
   ...STATION_CARDS.map(card => row(card, {
-    // closed too: its board offers its rebuild
-    open: () => live() && (built(card) || closed(card))
+    // Standing only once built: a station not yet built has no board and no
+    // button, and its drawing opens nothing; its build sign is the way in,
+    // and the shack's board the other.
+    open: () => live() && built(card),
+    ...(card in AFTER_BUILDS ? { lot: lotOf(card) } : {})
   })),
   // A press on a tree is the saw's (after/gestures.js).
   row('grove', { open: live }),
@@ -130,7 +148,7 @@ export const AFTER_STATION_ROWS = [
   })
 ];
 // Every station with a board hands its button to the roster, shown while the
-// station's board can be asked for (a station closed for its rebuild too).
+// station's board can be asked for: once it stands.
 const SHOP_ROWS = AFTER_STATION_ROWS.filter(r => r.board && r.line)
   .map(r => ({ board: r.key, place: 'after', show: () => r.open(), line: r.line }));
 rosterShops('after', () => SHOP_ROWS);

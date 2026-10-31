@@ -4837,11 +4837,25 @@
   "text": "the casino"
  },
  {
+  "id": "station-casino.sign",
+  "group": "Stations",
+  "where": "src/stations.js",
+  "context": "a station's name: its board's title, the pointer's label, the queue card",
+  "text": "casino"
+ },
+ {
   "id": "station-filter",
   "group": "Stations",
   "where": "play.html",
   "context": "a station's name",
   "text": "the air filter"
+ },
+ {
+  "id": "station-filter.sign",
+  "group": "Stations",
+  "where": "play.html",
+  "context": "a station's name",
+  "text": "air filter"
  },
  {
   "id": "station-filter-empty",
@@ -4858,6 +4872,13 @@
   "text": "the quarry"
  },
  {
+  "id": "station-quarry.sign",
+  "group": "Stations",
+  "where": "play.html",
+  "context": "a station's name",
+  "text": "quarry"
+ },
+ {
   "id": "station-quarry-empty",
   "group": "Stations",
   "where": "src/stations.js",
@@ -4870,6 +4891,13 @@
   "where": "play.html",
   "context": "a station's name",
   "text": "the farm"
+ },
+ {
+  "id": "station-farm.sign",
+  "group": "Stations",
+  "where": "play.html",
+  "context": "a station's name",
+  "text": "farm"
  },
  {
   "id": "station-farm-empty",
@@ -4886,6 +4914,13 @@
   "text": "the apothecary"
  },
  {
+  "id": "station-apothecary.sign",
+  "group": "Stations",
+  "where": "play.html",
+  "context": "a station's name",
+  "text": "apothecary"
+ },
+ {
   "id": "station-apothecary-empty",
   "group": "Stations",
   "where": "src/stations.js",
@@ -4900,6 +4935,13 @@
   "text": "the tower"
  },
  {
+  "id": "station-tower.sign",
+  "group": "Stations",
+  "where": "play.html",
+  "context": "a station's name",
+  "text": "tower"
+ },
+ {
   "id": "station-tower-empty",
   "group": "Stations",
   "where": "src/stations.js",
@@ -4912,6 +4954,13 @@
   "where": "play.html",
   "context": "a station's name",
   "text": "the shack"
+ },
+ {
+  "id": "station-shack.sign",
+  "group": "Stations",
+  "where": "play.html",
+  "context": "a station's name",
+  "text": "shack"
  },
  {
   "id": "station-shack-empty",
@@ -4933,6 +4982,13 @@
   "where": "play.html",
   "context": "a station's name",
   "text": "the janitor's closet"
+ },
+ {
+  "id": "station-outhouse.sign",
+  "group": "Stations",
+  "where": "play.html",
+  "context": "a station's name",
+  "text": "janitor's closet"
  },
  {
   "id": "station-outhouse-empty",
@@ -5010,6 +5066,13 @@
   "where": "src/stations.js",
   "context": "a deep station not yet given a fighter; $nth counts the empty lots before it (an eighth reads \"undefined\", as the code said)",
   "text": "a undefined station"
+ },
+ {
+  "id": "station-party-lot.sign",
+  "group": "Stations",
+  "where": "src/deep/buildbutton.js",
+  "context": "a deep station not yet given a fighter; $nth counts the empty lots before it (an eighth reads \"undefined\", as the code said)",
+  "text": "station"
  },
  {
   "id": "crew-at-rockhands",
@@ -6918,15 +6981,15 @@
  {
   "id": "row-raise-station",
   "group": "The deep",
-  "where": "src/deep/party.js",
+  "where": "src/deep/buildbutton.js",
   "context": "the deep: the build of a new fighter's station (the queue card names it)",
   "text": "raise a station"
  },
  {
   "id": "build-free",
   "group": "The deep",
-  "where": "src/deep/buildbutton.js",
-  "context": "the deep's build button: the first station costs no fang",
+  "where": "src/buildsign.js",
+  "context": "a build sign's price when it asks nothing: the deep's first station costs no fang",
   "text": "free"
  },
  {
@@ -8314,13 +8377,6 @@
   "where": "src/after/rows.js",
   "context": "act 3 shack heading (placeholder): the stations to build",
   "text": "build"
- },
- {
-  "id": "after-sect-rebuild",
-  "group": "Act 4 (placeholder)",
-  "where": "src/after/rows.js",
-  "context": "act 3 ruined station's card heading (placeholder): its rebuild",
-  "text": "rebuild"
  },
  {
   "id": "after-sect-card",

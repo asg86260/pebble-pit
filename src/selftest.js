@@ -53,6 +53,7 @@ import { TESTS as aftersaw } from './selftest/aftersaw.js';   // track B: act 3'
 import { TESTS as afterseeds } from './selftest/afterseeds.js';   // track D: the seed basket through the pointer
 import { TESTS as playcheck } from './selftest/playcheck.js';   // a play check for each place, by the pointer
 import { TESTS as cutbench } from './selftest/cutbench.js';   // the cutscene bench (cutscenes.html)
+import { TESTS as buildsign } from './selftest/buildsign.js';   // the build sign under a real pointer
 
 // Every group there is, in file order.
 const TESTS = [
@@ -97,6 +98,7 @@ const TESTS = [
   ...afterseeds,
   ...playcheck,
   ...cutbench,
+  ...buildsign,
 ];
 
 // `__test()` runs the lot. `__test('casino')` runs the groups whose name says
