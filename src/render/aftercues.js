@@ -28,7 +28,6 @@ import { drawHeldSaws, workedBy } from './after/saw.js';
 import { K, W, MID } from './after/kit.js';
 // track C: the stump's cue finds its stump itself (trees, imported above)
 import { pullable, PULL_HOLDS } from '../after/stump.js';
-import { drawPlantCueMock } from './after/plantcuemock.js'; // MOCK grove-plant-here
 const pulledBy = i => S.after.bodies.some(b => b.dig && b.target === i && b.pull && PULL_HOLDS.includes(b.pull.ph));
 
 const D = GESTURE_CUE_DOT;
@@ -151,7 +150,6 @@ export function drawAfterCues() {
   if (!view) return;
   const t = now();
   drawHeldSaws();   // track B
-  drawPlantCueMock();   // MOCK grove-plant-here
   shown = {};
   for (const r of view) {
     // One hand: the first uses' cue, or the same hand faint while the
