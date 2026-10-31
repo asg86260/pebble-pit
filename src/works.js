@@ -10,7 +10,7 @@
 
 import { msg } from './lang.js';
 import { S, bench, lab, filter, tower, shack, outhouse } from './state.js';
-import { P, HOUSE_CUBE, RUNGS, BUILD_BANDS, BUILD_ALONE, BUILD_CAP_S, BUILD_REPEAT_HALF, BUILD_EFFORT, PARTY_IDS } from './config.js';
+import { P, HOUSE_CUBE, RUNGS, BUILD_BANDS, BUILD_ALONE, BUILD_CAP_S, BUILD_REPEAT_HALF, BUILD_EFFORT, PARTY_IDS, rungValue } from './config.js';
 import { JOB } from './jobs.js';
 import { sfx } from './audio.js';
 
@@ -45,7 +45,9 @@ export const SITE_JOB = {
 // every board in the game and may not read one back.
 const SITE_SAYS = {};
 export const roomAt = site => Math.max(1, Math.round(SITE_SAYS[site]?.room?.() ?? 1));
-export const effortAt = site => Math.max(0, SITE_SAYS[site]?.effort?.() ?? BUILD_EFFORT);
+// The bench's build-speed ladder multiplies whatever the site says, the lab's
+// own pace included: the lab's kit is its tools, this is the hands.
+export const effortAt = site => Math.max(0, (SITE_SAYS[site]?.effort?.() ?? BUILD_EFFORT) * rungValue('buildspeed', S.buildSpeedLevel));
 
 export const SITES = Object.keys(SITE_JOB);
 

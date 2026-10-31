@@ -1609,6 +1609,11 @@ export const SCENES = {
                  window.__spend(st().stored - 300); window.__fast(1);
                  window.__board('bench');
                  setTimeout(() => document.querySelector('#shop button[data-key^="unlock"]')?.scrollIntoView({ block: 'center' }), 300); } },
+  'bench-building': { about: 'the bench', say: 'the bench open on its building section: the build-speed ladder, two rungs bought',
+    run: () => { window.__reset(); window.__crew(4); window.__answered('props', 'net'); S.autoMine = true;
+                 window.__grant({ dust: 6000, shards: 2, spores: 400 }); window.__levels({ speedLevel: 2, buildSpeedLevel: 2 });
+                 window.__fast(2); window.__board('bench');
+                 setTimeout(() => document.querySelector('#shop button[data-key^="buildspeed"]')?.scrollIntoView({ block: 'center' }), 300); } },
   apron: { about: 'the rock', say: 'the bare strip in front of the hill',
     run: () => { rich(); window.__jump(4);
                  const x = st().rockLeftX;

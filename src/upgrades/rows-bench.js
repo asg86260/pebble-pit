@@ -2,7 +2,7 @@ import { BELT_BILL, RAM_BILL, LADDER } from '../config.js';
 import { JOB } from '../jobs.js';
 import { buyMachine, canBuy, specOf } from '../machines.js';
 import { S } from '../state.js';
-import { kitFull, mineRate, capacity, pickCount, tossRate, tossReach } from '../levels.js';
+import { kitFull, buildSpeed, mineRate, capacity, pickCount, tossRate, tossReach } from '../levels.js';
 import { rebalance } from '../staffing.js';
 import { tierRows, named } from './tiers.js';
 import { msg } from '../lang.js';
@@ -31,6 +31,18 @@ const YOU_SWING = tierRows({
   // faster swings only read as an upgrade once the swinging is automatic
   show: () => S.autoMine,
   bands: named('speed', msg('row-speed'))
+});
+
+// --- building --------------------------------------------------------------
+// How fast a builder works, at every site. Offered with the swing: once the
+// yard runs itself there is a crew to build with.
+const YOU_BUILD = tierRows({
+  field: 'buildSpeedLevel',
+  unit: 'x', pct: true, does: msg('does-build'),
+  value: lvl => buildSpeed(lvl),
+  site: 'bench',
+  show: () => S.autoMine,
+  bands: named('buildspeed', msg('row-buildspeed'))
 });
 
 // --- hold to toss's two ladders ---------------------------------------------
@@ -126,5 +138,6 @@ export const BENCH_ROWS = [
     show: () => !S.autoMine
   },
   ...YOU_SWING,
-  ...YOU_PICK
+  ...YOU_PICK,
+  ...YOU_BUILD
 ];

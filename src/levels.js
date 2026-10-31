@@ -25,6 +25,7 @@ export const capacity = (lvl = S.carryLevel) => rungValue('carry', lvl);
 import { rungCost, DUST_PER } from './upgrades/price.js';
 export { rungCost, DUST_PER };
 
+export const buildSpeed = (lvl = S.buildSpeedLevel) => rungValue('buildspeed', lvl);
 export const mineRate = (lvl = S.speedLevel) => rungValue('speed', lvl);
 export const mineMs = (lvl = S.speedLevel) => Math.max(1, Math.round(1000 / mineRate(lvl)));
 // Hold to toss: how often a held hand lets a handful go, and how far it

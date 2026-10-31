@@ -183,6 +183,7 @@ export const S = {
 
   carryLevel: 0,
   speedLevel: 0,
+  buildSpeedLevel: 0,
   pickLevel: 0,
   autoMine: false,
   autoToss: false,        // a held sweep throws at the hole by itself
@@ -627,6 +628,7 @@ export const SAVED = [
   'stored',               // dust in the hole: the whole point
   'carryLevel',
   'speedLevel',
+  'buildSpeedLevel',
   'autoMine',
   'autoToss', 'tossSpeedLevel', 'tossReachLevel',
   'seenBench', 'seenDrag',

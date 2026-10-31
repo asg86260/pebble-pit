@@ -301,7 +301,7 @@ export const plots = () => {
 };
 
 export const levels = (o = {}) => {             // set upgrade levels, for weighing balance
-  for (const k of ['pickLevel', 'speedLevel', 'carryLevel', 'rockhandSpeedLevel',
+  for (const k of ['pickLevel', 'speedLevel', 'buildSpeedLevel', 'carryLevel', 'rockhandSpeedLevel',
                    'rockhandPickLevel', 'haulCarryLevel', 'haulPaceLevel',
                    'liftLoadLevel', 'liftPaceLevel',
                    'quarryPaceLevel', 'tendLevel', 'benchLevel', 'plotLevel',

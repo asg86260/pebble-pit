@@ -3633,6 +3633,20 @@
   "text": "auto swing"
  },
  {
+  "id": "row-buildspeed",
+  "group": "Boards",
+  "where": "src/upgrades/rows-bench.js",
+  "context": "the bench: the build-speed ladder",
+  "text": "build speed"
+ },
+ {
+  "id": "does-build",
+  "group": "Boards",
+  "where": "src/upgrades/rows-bench.js",
+  "context": "a row's verb, before its gain: how fast a builder works",
+  "text": "pace"
+ },
+ {
   "id": "does-throw",
   "group": "Boards",
   "where": "src/upgrades/rows-bench.js",
@@ -4121,6 +4135,13 @@
   "where": "src/upgrades.js",
   "context": "a heading on the bench's board: the rows that put up a new place",
   "text": "build"
+ },
+ {
+  "id": "sect-building",
+  "group": "Boards",
+  "where": "src/upgrades.js",
+  "context": "the bench: a section heading over the rows that speed up building",
+  "text": "building"
  },
  {
   "id": "row-house",
