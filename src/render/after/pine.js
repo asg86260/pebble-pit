@@ -21,13 +21,11 @@
 // the seed basket (render/after/basket.js).
 
 // REVIEW grove-built
-// MOCK grove-the-crown
 
 import { P, GREY, TREE_CHOPS, AFTER_FALL_S, AFTER_FALL_BOUNCE_S, AFTER_FALL_BOUNCE, AFTER_TREE, AFTER_BED, AFTER_SEED_SINK_S,
          AFTER_CROWN_S, AFTER_CROWN_HOLD_S, AFTER_CROWN_GRAV, AFTER_LEAVES, AFTER_LEAVES_DARK, AFTER_BUILD_FADE_S,
          AFTER_BLOCK, AFTER_BLOCK_H } from '../../config.js';
-import { plotX, groundOf, treeCells, growOrder, TRUNK_TOP, AP, crownLobes } from '../../after/place.js';
-import { crownMock, crownMockKey, CROWN_SUN } from '../../after/crownmock.js'; // MOCK grove-the-crown
+import { plotX, groundOf, treeCells, growOrder, TRUNK_TOP, AP } from '../../after/place.js';
 import { trees } from '../../after/grove.js';
 import { K, SOIL, toneOf, now, inView, clamp01, hash } from './kit.js';
 import { goodTone } from './piles.js';
@@ -59,10 +57,7 @@ const segOf = r => Math.floor((-SH - 1 - r) / LOG_C);
 // middle, so the crown balances. By where it stands in the tree, so it keeps
 // its tone standing, falling and in a broken piece.
 let ROLES = null; // cache: each crown cell's role, worked out once
-let ROLES_FOR = ''; // MOCK grove-the-crown: the option ROLES and PIECES were worked out for
 function roleOf(c, r) {
-  if (ROLES_FOR !== crownMockKey()) { ROLES_FOR = crownMockKey(); ROLES = PIECES = null; }
-  if (!ROLES && crownMock()) ROLES = litRoles();
   if (!ROLES) {
     ROLES = new Map();
     const crown = treeCells().filter(q => q[2] === 'crown'), clump = new Map(crown.map(([cc, rr, , k]) => [`${cc}|${rr}`, k]));
@@ -73,26 +68,7 @@ function roleOf(c, r) {
   }
   return ROLES.get(`${c}|${r}`) ?? 1;
 }
-// MOCK grove-the-crown: each clump lit as a ball from the option's side --
-// the face turned full to it the sun-struck tone (crownmock.js, CROWN_SUN,
-// role 4), round that the lit tone, its middle the body, the side away
-// the darker body, its underside (sky or the next clump under it) the
-// shadow -- with the clumps on the far side of the whole crown a step darker,
-// and a cell's wobble breaking the line between two tones.
-function litRoles() {
-  const m = crownMock(), lobes = crownLobes(), [lx, ly] = m.light, out = new Map();
-  const crown = treeCells().filter(q => q[2] === 'crown'), clump = new Map(crown.map(([cc, rr, , k]) => [`${cc}|${rr}`, k]));
-  const xs = crown.map(q => q[0] + 0.5), mid = (Math.min(...xs) + Math.max(...xs)) / 2, half = (Math.max(...xs) - Math.min(...xs)) / 2;
-  for (const [c, r, , k] of crown) {
-    const [x, y, rad] = lobes[k], cx = c + 0.5, cy = TRUNK_TOP - r - 0.5;
-    const facing = ((cx - x) * lx + (cy - y) * ly) / rad + 0.8 * lx * (cx - mid) / half + (hash(c * 13.1 + r * 7.7) - 0.5) * 0.35;
-    const below = clump.get(`${c}|${r + 1}`);
-    const role = below == null || below !== k ? 3 : facing > 0.6 ? 4 : facing > 0.3 ? 0 : facing > -0.2 ? 1 : facing > -0.75 ? 2 : 3;
-    out.set(`${c}|${r}`, role);
-  }
-  return out;
-}
-const leaf = i => (i === 4 ? (darkPage ? raw(CROWN_SUN[1]) : CROWN_SUN[0]) : darkPage ? raw(AFTER_LEAVES_DARK[i]) : AFTER_LEAVES[i]);
+const leaf = i => (darkPage ? raw(AFTER_LEAVES_DARK[i]) : AFTER_LEAVES[i]);
 const crownTone = (c, r) => leaf(roleOf(c, r));
 // A cell of the tree in its tone.
 const toneAt = (p, [c, r, part]) => (part === 'crown' ? crownTone(c, r) : part === 'bough' ? LOG(BOUGH) : part === 'stump' ? stumpTone(p) : logTone(p, segOf(r)));
@@ -154,7 +130,6 @@ const turnPt = (bx, x, y, th, drop) => ({ x: bx + PIV_C * AP + x * Math.cos(th) 
 // middle, with where that middle is off the pivot.
 let PIECES = null; // cache: the crown's pieces, worked out once
 function crownPieces() {
-  roleOf(0, 0);
   if (PIECES) return PIECES;
   const groups = new Map(), cut = [-PIV_C - 3, -PIV_C, -PIV_C + 3];
   for (const q of crownCells()) {
@@ -183,7 +158,7 @@ function crownBreak(p, bx, t) {
     const vx = -(20 + (h1 - 0.5) * 150), vy = -(60 + h2 * 110), w = (h3 - 0.5) * 6, half = AP * 1.5;
     const x = at.x + vx * (1 - Math.exp(-2.2 * since)) / 2.2;
     const y = Math.min(fl() - half, at.y + vy * since + AFTER_CROWN_GRAV * since * since / 2);
-    const sp = sprite(`piece|${pc.key}|${darkPage}|${crownMockKey()}`, pc.cells.map(([x0, y0, part, c, r]) => [x0, y0, part === 'bough' ? LOG(BOUGH) : crownTone(c, r)]));
+    const sp = sprite(`piece|${pc.key}|${darkPage}`, pc.cells.map(([x0, y0, part, c, r]) => [x0, y0, part === 'bough' ? LOG(BOUGH) : crownTone(c, r)]));
     lay(sp, x, y, th - w * since, a);
   }
 }
@@ -247,7 +222,7 @@ export function drawGrove() {
       stumpBlock(p, bx);
       const { th, drop } = fallPose(p, t), o = turnPt(bx, 0, 0, th, drop);
       if (p.fall != null || t - p.fell < AFTER_FALL_BOUNCE_S) lay(sprite(`trunk|${p.tones}|${darkPage}`, trunkCells(p)), o.x, o.y, th);
-      if (p.fall != null) lay(sprite(`crown|${darkPage}|${crownMockKey()}`, crownCells()), o.x, o.y, th);
+      if (p.fall != null) lay(sprite(`crown|${darkPage}`, crownCells()), o.x, o.y, th);
       else crownBreak(p, bx, t);
     } else if (p.grow != null) {
       if (p.seed != null) sinking(p, bx, t);

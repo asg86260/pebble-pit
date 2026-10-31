@@ -3912,7 +3912,7 @@ Object.assign(SCENES, {
 // members walked out, the rows bought through `__buy`.
 import { clearPlot, chopTree } from './after/grove.js';
 import { lying } from './after/ground.js';
-import { TREE_CHOPS, AFTER_FALL_S } from './config.js';
+import { TREE_CHOPS } from './config.js';
 const grovePeople = n => {
   window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
   window.__afterCrowd((i, v) => (i < n ? 8 : v));
@@ -4067,38 +4067,3 @@ Object.assign(SCENES, {
       standSign('s2', signMid('s2', 'deep').x - S.viewW / 2);
     } }
 });
-
-// The grove's crown, mocked lopsided (src/after/crownmock.js) for the
-// owner's vote: a grown oak beside one growing row by row, framed between
-// the two plots, the option a flag the drawing and the cells both read, so a
-// swap flips it on the game standing. A is today's crown. Each option's
-// `-fall` twin, no review of its own, stops the tree mid-fall for the crops,
-// and its `-break` twin catches the crown breaking on the landing.
-const CROWN_MOCK = [ // MOCK grove-the-crown
-  ['a', 'A today', "Today's crown, OAK-2: a dome of clumps shaded mirror-even about the trunk."],
-  ['b', 'B leaning out', 'The crown leans out over the fall side: its top off to the left, a long low clump reaching there, the shack side kept short; lit from the upper left.'],
-  ['c', 'C windswept', 'The top and a streamer of leaves blown to the right, a low clump trailing on that side, two windows of sky; lit from the upper left.'],
-  ['d', 'D old oak', "An old oak's broken canopy: wide, flat-topped, many small clumps with sky and boughs between them; lit from the upper left."]
-];
-const crownStand = (opt, fall) => { // MOCK grove-the-crown
-  globalThis.__crownMock = opt;
-  window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
-  if (fall) {
-    const p = S.after.plots[0];
-    p.chops = TREE_CHOPS; p.fall = S.after.t - AFTER_FALL_S * 0.6;
-    groveAt(520); window.__still(true); window.__holdShot(); return;
-  }
-  window.__afterGrant({ rebel: 2000 }); yardPurse(); buyAfter('after-plot');
-  window.__afterPlant(1, 0.86);
-  const x = (plotX(0) + plotX(1)) / 2 - S.viewW / 2;
-  pinCamera(x); window.__look(x);
-  window.__fast(0.5); S.wonShown = S.wonSeq | 0; window.__holdShot();
-};
-for (const [opt, option, say] of CROWN_MOCK) { // MOCK grove-the-crown
-  SCENES[`grove-crown-${opt}`] = { about: 'the acts', review: 'grove: the crown', branch: 'a3-review-both',
-    stage: 'mock: throwaway, never merged', option, say,
-    swap: () => { if (S.view !== 'after' || !S.after?.plots?.[1]?.grow) { window.__scene(`grove-crown-${opt}`); return; } globalThis.__crownMock = opt; },
-    run: () => crownStand(opt, false) };
-  SCENES[`grove-crown-${opt}-fall`] = { about: 'the acts', say: `${option}: the oak mid-fall`, run: () => crownStand(opt, true) };
-  SCENES[`grove-crown-${opt}-break`] = { about: 'the acts', say: `${option}: the oak landed, its crown breaking`, run: () => { globalThis.__crownMock = opt; SCENES['after-grove-fell'].run(); } };
-}
