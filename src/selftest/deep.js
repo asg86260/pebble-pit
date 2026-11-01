@@ -490,9 +490,9 @@ TESTS.push(['rails: the rows climb the base unit, the fork takes a class and clo
 
 // A fighter's skills on its board, under its name: the pointer over one, at
 // the spot the page draws it (the thing hit there is the skill), says its
-// line, and the line stands clear of the sheet, covering nothing on it.
+// line, and the line stands right over the skill, inside the sheet.
 // Which skills are listed at which rung is test/fighter-skills.test.mjs.
-TESTS.push(["rails: a skill under the fighter's name says its line beside the board", async () => {
+TESTS.push(["rails: a skill under the fighter's name says its line right over it, inside the board", async () => {
   window.__fullSites();
   window.__party({ stations: [{ kind: 'armory', cls: 'ranger', rung: 8 }] });
   showPanel('s1', true);
@@ -504,8 +504,9 @@ TESTS.push(["rails: a skill under the fighter's name says its line beside the bo
   hit?.dispatchEvent(new PointerEvent('pointerenter', { clientX: b.left + b.width / 2, clientY: b.top + b.height / 2 }));
   const tip = [...document.querySelectorAll('.rl-tip')].pop();
   const said = !tip.hidden && tip.textContent;
-  const t = tip.getBoundingClientRect(), sheet = document.getElementById('panel').getBoundingClientRect();
-  const clear = t.right <= sheet.left || t.left >= sheet.right;
+  const t = tip.getBoundingClientRect(), sheet = rails().closest('.sheet').getBoundingClientRect();
+  const inside = t.left >= sheet.left && t.right <= sheet.right && t.top >= sheet.top && t.bottom <= sheet.bottom;
+  const over = t.bottom <= b.top && b.top - t.bottom <= 8 && t.left < b.right && t.right > b.left;
   hit?.dispatchEvent(new PointerEvent('pointerleave', {}));
   const gone = tip.hidden;
   showPanel(null, true);
@@ -513,7 +514,8 @@ TESTS.push(["rails: a skill under the fighter's name says its line beside the bo
     ok(sk.map(e => e.textContent).join() === 'Aimed shot,Pinning shot', 'a Ranger at rung 8 lists her move and her capstone', sk.map(e => e.textContent).join()),
     ok(hit === cap, 'the pointer at the skill is over the skill', `${hit?.className}`),
     ok(said === 'Pinning shot: Stun (holds still, stops healing)', 'the pointer over it says its line', `${said}`),
-    ok(clear, 'the line stands beside the board, covering nothing on it', `${JSON.stringify(t)} ${JSON.stringify(sheet)}`),
+    ok(inside, 'the line stands inside the sheet', `${JSON.stringify(t)} ${JSON.stringify(sheet)}`),
+    ok(over, 'just above the skill', `${JSON.stringify(t)} ${JSON.stringify(b)}`),
     ok(gone, 'and goes when the pointer leaves')
   ];
 }]);

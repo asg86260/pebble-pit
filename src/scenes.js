@@ -1103,8 +1103,8 @@ const deepScenes = {
       window.__board(S.stations[0].id);
     } },
   // A fighter's skills on her board, under her name, the pointer resting on
-  // her capstone: its line beside the board. Built, on its branch.
-  'fighter-skills': { about: 'the deep', say: "a Ranger at rung 8: her two skills under her name on her board, the capstone hovered, its line beside the board",
+  // her capstone: its line right over it. Built, on its branch.
+  'fighter-skills': { about: 'the deep', say: "a Ranger at rung 8: her two skills under her name on her board, the capstone hovered, its line right over it",
     review: 'fighters: skills on the hover, built', option: 'built', stage: 'built: fighter-skills, not on main yet',
     branch: 'fighter-skills', supersedes: ['fighters: skills on the hover'],
     run: () => {
