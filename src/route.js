@@ -25,7 +25,7 @@ import { S, floor, pit, quarry } from './state.js';
 import { deepTop, deepFloor, deepX0, deepX1, mouthX } from './deep/place.js';
 import { groundAt, rockLeft } from './world.js';
 import { rockTopY, boulderAlive } from './rock.js';
-import { surfaceY, colOf } from './grid.js';
+import { surfaceY, colOf, colBottom } from './grid.js';
 import { cutTop, quarryFace } from './quarry.js';
 import { pitTop, pitLadder, NEAR, FAR } from './pit.js';
 import { frames } from './clock.js';
@@ -96,7 +96,7 @@ export function heapAt(x) {
   if (!floor.grid) return 0;
   const c = colOf(floor, x);
   if (c < 0 || c >= floor.cols) return 0;
-  return Math.max(0, S.groundY - (surfaceY(floor, c) + floor.p));
+  return Math.max(0, colBottom(floor, c) - (surfaceY(floor, c) + floor.p));
 }
 
 // A scatter of loose grains lies all over the yard; it is a bank once it is

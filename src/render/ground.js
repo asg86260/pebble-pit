@@ -111,7 +111,7 @@ export function drawPit() {
 // the ground, through its own painter for the same reason as the pit: an
 // under-staffed yard can leave fifty thousand grains lying about
 export function drawGrid(b) {
-  b.painter.paint(ctx, b.x, b.y, b.cols * b.p, b.rows * b.p);
+  b.painter.paint(ctx, b.x, b.y, b.cols * b.p, b.rows * b.p, b.sink);
 }
 
 // The yard's own floor, which is the one `drawGrid` is asked for in the frame.

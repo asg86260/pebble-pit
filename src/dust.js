@@ -9,7 +9,7 @@ import { rockEdge, rockLeft, pileOf } from './world.js';
 import { rockTopY } from './rock.js';
 import { S, floor, pit, band } from './state.js';
 import { defineMachine, machine } from './machines.js';
-import { at, put, colOf, bottomY, addGrain, settle, topRow, grainsIn, resizeGrid, fillFlat, wake, isDust, REPOSE_DROP } from './grid.js';
+import { at, put, colOf, bottomY, colBottom, addGrain, settle, topRow, grainsIn, resizeGrid, fillFlat, wake, isDust, REPOSE_DROP } from './grid.js';
 import { scoopMs, haulCap } from './levels.js';
 
 import { rand } from './rng.js';
@@ -539,7 +539,7 @@ defineMachine('belt', {
         // Onto the band above where it lay, and then it rides (`loadBelt`,
         // `stepBelt`).
         const x = floor.x + c * P;
-        const y = bottomY(floor) - (r + 1) * P;
+        const y = colBottom(floor, c) - (r + 1) * P;
         loadBelt(x, y, v);
         if (tender) tender.stored = (tender.stored || 0) + 1;
         got++;

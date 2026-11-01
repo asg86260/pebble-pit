@@ -16,7 +16,9 @@ const { beatDone } = await import('../src/beats.js');
 const { cutsceneRunning } = await import('../src/cutscene.js');
 const { ruinX, yardFeet, threshold, underGates, gatesSeen, soulSeen, floatK, pairBodies } = await import('../src/ghosts.js');
 const { craterDip, craterMid } = await import('../src/crater.js');
-const { feetOn, ways } = await import('../src/route.js');
+const { feetOn, ways, groundTop } = await import('../src/route.js');
+const { addGrain, colOf, topRow, colBottom, at } = await import('../src/grid.js');
+const { floor } = await import('../src/state.js');
 const { soulAt, gathered } = await import('../src/mansion.js');
 
 // A frame's walk is at most the pace, called and hurried: past that is a teleport.
@@ -120,6 +122,29 @@ group('the crater is ground: the bowl is walked down into and out of, and the ro
     ok(bottom === S.groundY + ACT_CRATER.depth * P && lip === S.groundY, 'the ground dips by the bowl under the rock and is level past its lip', JSON.stringify(bowl)),
     ok(deepest >= S.groundY + P && out && jump < MOST, 'a body walks up out of the bowl onto the level ground, a step a frame', JSON.stringify(bowl))
   ];
+});
+
+group('dust over the crater rests on the bowl\'s floor, not on the ground line over it', async () => {
+  window.__actsOn(true);
+  window.__crew(2, 2);
+  window.__actsAt('act4');
+  run(1);
+  // grains dropped on every column across the bowl, and let lie
+  const mid = craterMid(), half = ACT_CRATER.half * P;
+  for (let x = mid - half - 2 * P; x < mid + half + 2 * P; x += P) for (let k = 0; k < 3; k++) addGrain(floor, x + P / 2);
+  run(2);
+  const off = [];
+  let dips = 0, lying = 0;
+  for (let c = colOf(floor, mid - half); c < colOf(floor, mid + half); c++) {
+    if (topRow(floor, c) < 0) continue;
+    lying++;
+    const x = floor.x + c * P + P / 2, under = groundTop(x);
+    if (under > S.groundY) dips++;
+    // the lowest grain's foot is the column's floor, which is the ground there
+    if (Math.abs(colBottom(floor, c) - under) > 0.5 || !at(floor, c, 0)) off.push(`${c}: floor ${colBottom(floor, c)} ground ${under}`);
+  }
+  window.__actsOn(null);
+  return [ok(dips > 0 && lying > 0 && off.length === 0, 'every grain at rest in the bowl lies on its floor', off.join('; ') || `${lying} columns with dust, ${dips} of them in the dip`)];
 });
 
 group('act 4\'s freed souls float down from the gates and walk on to their files', async () => {

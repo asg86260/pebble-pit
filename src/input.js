@@ -17,7 +17,7 @@ import { stirAir } from './air.js';
 import { stirSmoke, airReadout } from './smog.js';
 import { dialRect, dialZone } from './render/filter.js';
 import { colAt, muckCols, poopCols, muckFloor } from './smog.js';
-import { at, inside, colOf, bottomY, isDust } from './grid.js';
+import { at, inside, colOf, bottomY, colBottom, isDust } from './grid.js';
 import { showPanel, placeBoard, showTip,
          showTipAt, inSafeZone, onMenu, standRect, openBoard } from './board.js';
 import { station, stationAt, STATIONS, here, nearStation } from './stations.js';
@@ -472,7 +472,7 @@ const inRect = (r, x, y) => !!r && x >= r.x && x <= r.x + r.w && y >= r.y && y <
 function cellAt(b, wx, wy) {
   if (!b.grid) return 0;
   const c = colOf(b, wx);
-  const r = Math.floor((bottomY(b) - wy) / P);
+  const r = Math.floor((colBottom(b, c) - wy) / P);
   return inside(b, c, r) ? at(b, c, r) : 0;
 }
 

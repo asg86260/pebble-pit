@@ -15,7 +15,7 @@ import { S, floor } from './state.js';
 import { noteBite } from './notices.js';
 import { spriteW, spriteH, stackCol, cabRow, cabCol, RAM } from './sprites.js';
 import { defineMachine } from './machines.js';
-import { at, put, depthShade, colOf, bottomY } from './grid.js';
+import { at, put, depthShade, colOf, bottomY, colBottom } from './grid.js';
 import { pastRock, rockLeft, rockEdge, refreshPiles, shakeView, flankX, settleShack } from './world.js';
 import { spawnSpoil, spawnChip, critToss } from './dust.js';
 import { beatRunning } from './beats.js';
@@ -218,7 +218,7 @@ function jolt() {
         const v = at(floor, c, r);
         if (!v) continue;
         put(floor, c, r, 0);
-        spawnChip(floor.x + c * P, bottomY(floor) - (r + 1) * P,
+        spawnChip(floor.x + c * P, colBottom(floor, c) - (r + 1) * P,
                   side * (0.2 + rand() * 0.5), -(1.2 + rand() * 1.4), v);
         left--;
         break;                              // one off the top of each column
@@ -389,7 +389,7 @@ export function clearApron() {
       const v = at(floor, c, r);
       if (!v) continue;
       put(floor, c, r, 0);
-      spawnSpoil(x, bottomY(floor) - (r + 1) * P, v);
+      spawnSpoil(x, colBottom(floor, c) - (r + 1) * P, v);
     }
   }
 }

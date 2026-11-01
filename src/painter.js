@@ -94,7 +94,9 @@ export function makePainter(b) {
     work += (cEnd - c0) * (rEnd - r0);
   };
 
-  const paint = (into, x, y, w, h) => {
+  // `sink(c)` (grid.js), where a grid has one: each run of columns standing
+  // the same depth under the grid's line is blitted that far down.
+  const paint = (into, x, y, w, h, sink = null) => {
     if (!b.grid) return;
     // A grid painted in another map than last time, or on another turn of
     // the page (ink.js, `themeGen`), is painted afresh.
@@ -141,7 +143,17 @@ export function makePainter(b) {
 
     const smooth = into.imageSmoothingEnabled;
     into.imageSmoothingEnabled = false;    // grains are squares, not smudges
-    into.drawImage(canvas, x, y, w, h);
+    if (!sink) into.drawImage(canvas, x, y, w, h);
+    else {
+      const cw = w / b.cols;
+      for (let c0 = 0; c0 < b.cols;) {
+        const d = sink(c0);
+        let c1 = c0 + 1;
+        while (c1 < b.cols && sink(c1) === d) c1++;
+        into.drawImage(canvas, c0, 0, c1 - c0, b.rows, x + c0 * cw, y + d, (c1 - c0) * cw, h);
+        c0 = c1;
+      }
+    }
     into.imageSmoothingEnabled = smooth;
   };
 
