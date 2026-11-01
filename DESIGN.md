@@ -24472,12 +24472,15 @@ over the price, grows to fit the longer line, and has no hover.
   cell at a time either way. Its ground is the lot's in footprints.js.
 
 
-## A dialog system (design, not built)
+## A dialog system (design, approved)
 
 The owner, 2026-10-31, straight after act 3's intro (the meteor on the
 house, the two souls up to heaven's gates, God, the walk to the pedestal):
 "then i think we need to have some dialog to explain the premise of act 3.
-we dont have a dialog system yet though".
+we dont have a dialog system yet though". Approved 2026-11-01 with the
+owner's three calls settled (the end of this section): a bubble over the
+speaker with the A1 tail, a line that waits for a click, and only God
+speaks.
 
 ### What there is today
 
@@ -24514,9 +24517,12 @@ What it must never do:
 - **Block play.** An act beat owns the camera and nothing else, so the yard,
   the deep and the act's own place keep running under every line (the act
   beats' call 1). Dialog adds no owner: it never pauses the frame, never holds
-  the crew, never takes the sheet. A player who reads nothing still gets
-  through on the lines' own clock, and one hold of the space bar ends every
-  line at once.
+  the crew, never takes the sheet. A line waits for a click (call 2), and
+  while it waits the yard, the deep and the act's place go on being
+  worked, building and earning; what waits is the camera, as it waits through
+  every cutscene. Any click, tap or key goes on, and one hold of the space
+  bar ends every line at once, so the player is one press from the act at
+  any moment ("we absolutely cant block players from playing", the owner).
 - **Repeat.** A line heard is heard for good: not again after a reload, not
   again when a beat cut short by a reload plays over ("Stored, and
   remembered", below). The only way to read it twice is to ask for it.
@@ -24525,11 +24531,10 @@ What it must never do:
 
 ### Who speaks, and how they are shown
 
-The speakers are the story's own bodies: **God** (from the throne), **the
-pair** (both at once, or one of the two), and, where a beat wants it, **a
-soul in the crowd** (the one who holds the pick out). A worker of the yard
-is the same kind of speaker as a soul: a body in the world, named by where
-it stands, not by a name of its own.
+**Only God speaks** (call 3). The pair keep their dots and hearts, and the
+crowd its silence; the refusal stays the pick set down. A line's `who` is
+kept in the script all the same (`'god'`), so a later speaker is a frame and
+a head to point at, not a new mechanism.
 
 Where the words go was the shape call (question 1, settled: A, the bubble).
 The three looks, mocked in the real game on the review bench (review
@@ -24554,21 +24559,24 @@ rule asks; nothing scrolls, nothing is a paragraph.
 
 ### How lines advance
 
-- **On their own clock.** Each line holds for a reading time from its length
-  (`DIALOG_READ_S` a line plus `DIALOG_READ_S_CHAR` a character, floored at
-  `DIALOG_MIN_S`), then fades out and the next fades in. Nobody has to press
-  anything: a player away from the keys comes back to the act running.
-- **A click, a tap or a key press goes on to the next line** at once (the
-  current one fades out over `ACT_CAPTION_FADE_S`, not cut). Today a click
-  hurries the beat; while a line is up a click is the line's instead, and
-  once the lines are done it hurries the beat as before (question 2).
+- **A line waits for a click** (call 2). It fades in once the shot has come
+  to rest on the speaker and stays until the player goes on; a small wedge
+  in the bubble's corner says there is more.
+- **A click or a tap anywhere on the game goes on**, not only one on the
+  bubble, and so do Enter and the right arrow. A click elsewhere is not a
+  press on the world under it: while a camera beat holds, every cutscene
+  already takes the click for itself (input.js, `skipCutscene`), and a line
+  takes it the same way, one click a line. The board, the sheet and the
+  page's own buttons are not the game's canvas and answer as always. Once
+  the beat's lines are done a click hurries the beat, as before. The line
+  fades out over `DIALOG_FADE_S`, then the next fades in.
 - **Held space ends them all.** The existing hold and its bar: every line of
   the running beat is marked heard and faded out, and the beat is hurried as
   today. It is the beat's own `skip`, so nothing new learns about the key;
   `skippable()` already says yes while a camera beat runs.
-- **The held sheet** pauses the frame, and a line's clock with it. The line's
-  clock is the beat's (`run.u`, game seconds), so a check turns it with
-  `run(s)` and a GIF steps it with `__still`.
+- **The held sheet** pauses the frame, and a line's fades with it. The fades
+  run on the game's clock (`now()`), so a check turns them with `run(s)` and
+  a GIF steps them with `__still`.
 
 ### Into the beats registry
 
@@ -24577,20 +24585,16 @@ machine of its own:
 
 ```
 { frame: atThrone, lines: [{ who: 'god', id: 'dlg-meet-god-1' },
-                           { who: 'pair', id: 'dlg-meet-god-2' }] }
+                           { who: 'god', id: 'dlg-meet-god-2' }] }
 ```
 
 A phase with `lines` holds until every line has been heard (its `until` is
-"no line left"), the camera framing the phase's box as any phase does. For
-B the frame can stay where the phase put it. For A or C a line's `who` must
-move the frame to that speaker (the frame read per line), so the shot
-glides between God and the pair on its one curve: at meet-god today the
-camera rests on the throne and the pair stand a whole window or more away
-on the cloud floor, so without the glide the pair's line can only speak
-from the window's edge (as the mock shows). The runner's
-`caption` grows from `{ id, args, a }` to `{ id, args, a, who }`, and the one
-drawing (`drawActCaption`, in whichever look) reads it. `say` stays for a
-phase that is a plain label: it is a one-line, speakerless `lines`.
+"no line left"). While a line is up the camera frames its speaker, not
+the phase's box (`who` names a frame), so the shot glides to whoever speaks
+on its one curve and the bubble is drawn over a head that is in the window.
+The runner hands the drawing `{ id, args, a, who }`, and the one drawing
+(render/dialog.js, in the caption's place) puts a speaker's line in a bubble
+and a speakerless `say` in the band as today.
 
 That covers acts 3 and 4. The yard's own beats (the opening, the reunion,
 the shields' answers) do not run on actbeats.js's runner; their bodies are in
@@ -24604,11 +24608,10 @@ first to use it.
 ### Stored, and remembered
 
 - **The words are the owner's, in `locales/en.ftl`,** one message a line:
-  `dlg-<beat>-<n>` (`dlg-meet-god-1`). The speaker's name, if the look shows
-  one, is its own message (`dlg-who-god`, `dlg-who-pair`). Until the owner
-  writes them they are the plainest literal labels, as every act beat's
-  caption is now, listed on the wording board for the owner to edit; never a
-  bracketed placeholder (test/l10n.test.mjs).
+  `dlg-<beat>-<n>` (`dlg-meet-god-1`). The bubble shows no name: the tail
+  says who. Until the owner writes them, the beats' existing captions stand
+  in as God's lines, and no line is added to the game before the owner has
+  written it; never a bracketed placeholder (test/l10n.test.mjs).
 - **The script is data, on the beat's phase,** as `say` is today: who says
   which line, in which order. No separate script file, no branching, no
   choices: the story here is told, not chosen.
@@ -24619,52 +24622,49 @@ first to use it.
   whose lines are all heard is a `skipIf`. A beat in `beatsDone` never plays
   at all, so its lines never come back. It is top level rather than on
   `S.acts` because every act uses it. Built through the save-shape-change
-  skill: an old save reads `heard` as every line of every beat it has done.
-- **Read again only on asking.** The story's card ("The story's objectives")
-  can list the current act's heard lines to read again; nothing replays in
-  the world (question 3's smaller half).
+  skill: an old save reads `heard` as empty, which is right, since a beat it
+  has done never plays again and a beat it was in has heard nothing yet.
+- **Read again only on asking**, later: the story's card could list the
+  act's heard lines. Not built; nothing replays in the world.
 
 ### Accessibility, motion, phone, dark
 
-- **Read, not raced.** The reading time is per character and generous; a
-  player who wants it faster clicks. The words are the page's face at
-  `ACT_CAPTION_FONT_PX` or larger, never smaller than the caption today.
+- **Read, not raced.** A line waits for the reader. The words are the page's
+  face at `ACT_CAPTION_FONT_PX`, never smaller than the caption today.
 - **A screen reader hears it.** Each line is mirrored into a polite live
   region, as `#objective` already is (play.html), as it fades in.
-- **Reduced motion** (`reducedMotion()`, prefs.js): no typing in and no
-  rising; a line fades in whole and fades out whole. Fades stay: they are
-  opacity, not motion.
-- **Phone width.** At 390 px a line wraps to two and the band (B) grows a
-  cell to hold them; a bubble or an under-line (A, C) is clamped inside the
-  window with a cell's gutter, the tail still pointing at the speaker, and a
-  speaker past the window's edge speaks from that edge.
-- **Dark mode.** The band is black on both pages, so B's words keep raw
-  tones there, as the caption does. A bubble and an under-line stand in the
-  world and go through the ink map (`light`), so they turn over with the
-  page like everything else drawn there.
+- **Reduced motion** (`reducedMotion()`, prefs.js): the bubble never moves
+  of itself; it fades in whole and out whole, and fades are opacity, not
+  motion, so they stay.
+- **Phone width.** The bubble wraps to the window less a gutter and stands
+  over the head when there is room under the top band (a phone's tall
+  window), beside it when not (a wide one); its tip touches the head (the
+  crown's top over it, the face's side beside it), so it never lands on one
+  of the rays round him. A speaker past the window's edge speaks from that
+  edge, the tail at it.
+- **Dark mode.** The bubble is the page's own paper and ink (`paper`, `ink`
+  in ink.js), written past the cutscene's recede, so it turns over with the
+  page and stays sharp while the world behind it is drawn pale.
 
 ### The first use: act 3's premise
 
-The slots, with no words in them: who says roughly what, at which moment.
-The owner writes every line.
+As built, the beats God speaks in take their existing captions as his
+lines: `meet-god` (`act-meet-god`) and `hell-told` (`act-hell-told`, the
+same body unmasked). The premise's own lines are slots, with no words in
+them and nothing in the game until the owner writes them:
 
-1. **`arrive`**, the two of them landed on the cloud floor, the crowd at
-   work behind them. No speaker, or a soul in the nearest file: where they
-   are (the slot `act-arrive` holds today).
-2. **`meet-god`**, at the throne. **God**: what this place is -- the yard in
-   the clouds, worked for ever. **God**: what is wanted of the two of them --
-   work (the pick held out by a soul, as "The story, beat by beat" has it).
-3. **`meet-god`**, still at the throne. **The pair**: their answer before
-   the refusal (one line, or none, if the pick set down says it).
-4. **`refuse`**, on the walk to the camp. **The pair**: what they want
-   instead -- God taken down (the story card's line changes here already).
-   **A soul from the player's own oldest line**: that it comes with them
-   (the union's first member).
-5. **On the pedestal** (the refusal's last phase). **The pair**: what the
-   player does now -- win the crowd over to stop working. This is the line
-   the act's loop hangs on, and the last of the premise.
+1. **`meet-god`, God**: what this place is -- the yard in the clouds,
+   worked for ever.
+2. **`meet-god`, God**: what is wanted of the two of them -- work (the
+   pick held out by a soul, as "The story, beat by beat" has it).
+3. **`meet-god`, God** (optional): what becomes of a soul that does not
+   work.
+4. **`strike`, God**, come down the stair to the crowd that will not move:
+   his one line to it.
+5. **`hell-told`, God unmasked**: the truth -- the afterlife was his trap,
+   and God is caged in hell.
 
-Five to eight lines in all; nothing longer.
+The pair answer with their marks, and the refusal is the pick set down.
 
 ### The calls for the owner
 
@@ -24674,15 +24674,11 @@ Five to eight lines in all; nothing longer.
    exception to "marks over heads are never words", for dialog only: the
    crew's marks and the pedestal's bubbles keep their symbols. With it come
    the camera gliding to whoever speaks (a line's `who` moves the frame) and
-   the skip hint staying where it is. The tail's shape is a second round on
-   the review bench (A1, tapering to a middle point; A2, one straight edge).
-2. **Does a line wait for the player, or run on its own clock?** Proposed:
-   its own clock, with a click to go on sooner, so the beat never waits on a
-   reader. The other shape (a line holds until clicked) is the classic one,
-   but it would be the one place in the game that stops and waits, and a
-   click there could no longer hurry the walk under it.
-3. **Do the pair speak in words, or only God?** The pair have talked in dots
-   and hearts since the opening. If only God speaks, the pair answer with
-   their marks (and the refusal stays the pick set down), and the premise is
-   God's lines and the story card. The smaller half: should heard lines be
-   readable again on the story's card?
+   the skip hint staying where it is. The tail: A1, tapering a cell a side
+   every two cells to a middle point (the owner, 2026-11-01, round two).
+2. **Does a line wait for the player?** *Settled (the owner, 2026-11-01):*
+   "Waits for a click." A line stays until a click, a tap, Enter or the
+   right arrow; held space skips them all. The yard never pauses for it
+   ("How lines advance").
+3. **Who speaks?** *Settled (the owner, 2026-11-01):* "Only God." The pair
+   keep their dots and hearts.

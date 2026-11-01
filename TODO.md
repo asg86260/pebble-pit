@@ -4,21 +4,17 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
-## A dialog system -- DESIGNED, AWAITING THE OWNER (2026-10-31)
+## A dialog system -- APPROVED, BUILDING (2026-11-01)
 
 The owner: "we need to have some dialog to explain the premise of act 3. we
-dont have a dialog system yet though". Designed in DESIGN.md, "A dialog
-system (design, not built)": lines as a phase field on the act beats'
-`BODIES` beside `say`, drawn in the caption's place, advanced on their own
-clock or by a click, all ended by the held space bar, each heard line saved
-in `S.heard` so nothing replays after a reload. The owner picked the look on
-2026-10-31: a bubble over the speaker (an approved exception to the marks'
-"never words", for dialog only); its tail is in a second round on the review
-bench (review "dialog: the look", scenes `dialog-a1`, `dialog-a2`, branch
-`a3-review-both`, never merged). Blocker: the tail's pick, the two calls
-still open at the end of the section (whether a line waits for the player,
-whether the pair speak in words), and the lines themselves, which are the
-owner's to write.
+dont have a dialog system yet though". DESIGN.md, "A dialog system (design,
+approved)": lines as a phase field on the act beats' `BODIES` beside `say`,
+in a bubble over God with the A1 tail, each line waiting for a click (the
+yard never pauses), all ended by the held space bar, each heard line saved
+in `S.heard` so nothing replays after a reload. Only God speaks. Building on
+branch `dialog`, with God's existing captions standing in as his lines.
+Blocker: the premise's lines are the owner's to write (the five slots in
+"The first use"); none goes in the game until written.
 
 ## Act 3's grove, rebuilt -- DESIGNED, QUESTIONS SETTLED, READY TO BUILD (2026-10-30)
 
