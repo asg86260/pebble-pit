@@ -504,6 +504,11 @@ TESTS.push(["rails: a skill under the fighter's name says its line right over it
   hit?.dispatchEvent(new PointerEvent('pointerenter', { clientX: b.left + b.width / 2, clientY: b.top + b.height / 2 }));
   const tip = [...document.querySelectorAll('.rl-tip')].pop();
   const said = !tip.hidden && tip.textContent;
+  const bold = [...tip.querySelectorAll('b')].map(e => e.textContent).join();
+  // as wide as its words: no run of nothing after the widest line
+  const words = document.createRange(); words.selectNodeContents(tip);
+  const runs = [...words.getClientRects()], widest = runs.length ? Math.max(...runs.map(q => q.right)) : 0;
+  const snug = tip.getBoundingClientRect().right - widest <= parseFloat(getComputedStyle(tip).paddingRight) + 3;
   const t = tip.getBoundingClientRect(), sheet = rails().closest('.sheet').getBoundingClientRect();
   const inside = t.left >= sheet.left && t.right <= sheet.right && t.top >= sheet.top && t.bottom <= sheet.bottom;
   const over = t.bottom <= b.top && b.top - t.bottom <= 8 && t.left < b.right && t.right > b.left;
@@ -516,6 +521,8 @@ TESTS.push(["rails: a skill under the fighter's name says its line right over it
     ok(said === 'Pinning shot: Stun (holds still, stops healing)', 'the pointer over it says its line', `${said}`),
     ok(inside, 'the line stands inside the sheet', `${JSON.stringify(t)} ${JSON.stringify(sheet)}`),
     ok(over, 'just above the skill', `${JSON.stringify(t)} ${JSON.stringify(b)}`),
+    ok(bold === 'Pinning shot,Stun', 'its names bold, the skill and its status', bold),
+    ok(snug, 'the box as wide as its words', `${JSON.stringify(t)} widest ${widest}`),
     ok(gone, 'and goes when the pointer leaves')
   ];
 }]);
