@@ -329,21 +329,24 @@ function showTip(m, pip) {
   tip.style.fontFamily = cs.fontFamily;
   tip.style.fontSize = cs.getPropertyValue('--rl-text');
   tip.textContent = pip.dataset.line;
+  // A skill's line stays inside the sheet it is on (the owner, 2026-11-01):
+  // as wide as the sheet at most, wrapping past that. The sheet, not the
+  // panel: the panel holds the purse's column beside it too.
+  const sheet = pip.classList.contains('rl-sk') && (el.closest('.sheet') || el).getBoundingClientRect();
+  tip.style.maxWidth = sheet ? `${Math.floor(sheet.width - 2 * TIP_EDGE)}px` : '';
+  tip.style.whiteSpace = sheet ? 'normal' : '';
+  tip.style.boxSizing = sheet ? 'border-box' : '';
+  tip.style.textWrap = sheet ? 'balance' : '';
   tip.hidden = false;
   const b = pip.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight;
   let left = Math.max(TIP_EDGE, Math.min(b.left + b.width / 2 - w / 2, innerWidth - w - TIP_EDGE));
   let top = b.top - h - TIP_GAP >= TIP_EDGE ? b.top - h - TIP_GAP : b.bottom + TIP_GAP;
-  // A skill sits right under the fighter's name, and a line over it hid the
-  // name: its line stands clear of the whole sheet instead, as a row's note
-  // does (board.js, `showTipAt`) -- level with it on the right, else the left;
-  // on a narrow window, over the sheet's top edge, else under its foot.
-  const sheet = pip.classList.contains('rl-sk') && (el.closest('#panel') || el).getBoundingClientRect();
+  // Right over the skill, as every line on the board stands, but kept inside
+  // the sheet rather than the window: under the name where the sheet has no
+  // room above it. It may cover the line above while it is up.
   if (sheet) {
-    const level = Math.max(TIP_EDGE, Math.min(b.top + b.height / 2 - h / 2, innerHeight - h - TIP_EDGE));
-    if (sheet.right + TIP_GAP + w <= innerWidth - TIP_EDGE) [left, top] = [sheet.right + TIP_GAP, level];
-    else if (sheet.left - TIP_GAP - w >= TIP_EDGE) [left, top] = [sheet.left - TIP_GAP - w, level];
-    else if (sheet.top - TIP_GAP - h >= TIP_EDGE) top = sheet.top - TIP_GAP - h;
-    else if (sheet.bottom + TIP_GAP + h <= innerHeight - TIP_EDGE) top = sheet.bottom + TIP_GAP;
+    left = Math.max(sheet.left + TIP_EDGE, Math.min(b.left + b.width / 2 - w / 2, sheet.right - w - TIP_EDGE));
+    top = b.top - h - TIP_GAP >= sheet.top + TIP_EDGE ? b.top - h - TIP_GAP : b.bottom + TIP_GAP;
   }
   tip.style.left = `${Math.round(left)}px`;
   tip.style.top = `${Math.round(top)}px`;
