@@ -29,6 +29,7 @@ import { surfaceY, colOf } from './grid.js';
 import { cutTop, quarryFace } from './quarry.js';
 import { pitTop, pitLadder, NEAR, FAR } from './pit.js';
 import { frames } from './clock.js';
+import { craterDip } from './crater.js';
 
 // --- the surface --------------------------------------------------------------
 // The floor of the yard and nothing else: the ground line, and the deck of the
@@ -43,8 +44,12 @@ import { frames } from './clock.js';
 //
 // A heap of dust is not in here either (`footing`): loose ground is something
 // you pass in front of, not something you stand on top of.
+//
+// The crater the house's rock left (crater.js) is: it is a dip in the ground
+// itself, walked down into and out of.
 export function groundTop(x) {
-  return Math.min(groundAt(x), S.groundY);
+  const dip = craterDip(x);
+  return dip ? S.groundY + dip : Math.min(groundAt(x), S.groundY);
 }
 
 // The surface of the hill, a step per cell. Off its footprint, or in a column

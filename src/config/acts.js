@@ -44,20 +44,105 @@ export const ACT_CAPTION_FADE_S = 0.5;       // in and out, by opacity
 export const ACT_CAPTION_FONT_PX = 13;
 export const ACT_CAPTION_GREY = GREY[0];     // the words, on the letterbox's black
 
-// The house's fall: the rock out of the sky over ACT_ROCK_FALL_S, from
-// ACT_ROCK_FROM over the ground, in held steps; the dust; then the two souls
-// out of the wreck and straight up through the tear, ridden up the road to
-// the cloud floor (below).
-export const ACT_ROCK_FALL_S = 2.2;
-export const ACT_ROCK_FROM = P * 40;
-export const ACT_ROCK_STEPS = 18;
+// The house's fall (docs: review 'act 3: the intro', the owner's G at K's
+// speed, 2026-10-31): a meteor out of the sky onto the house. It falls
+// ACT_ROCK_FALL_S under gravity (its height goes as the square of the time)
+// from a start ACT_METEOR.margin cells above the window's top edge, worked
+// out off the camera as the fall begins; then the impact, held
+// ACT_ROCK_DUST_S; then the two souls out of the wreck, up to the gates and
+// through them onto the cloud floor (below).
+export const ACT_ROCK_FALL_S = 1.5;
 export const ACT_ROCK_W = 16;                // cells, wider than the house's walls
 export const ACT_ROCK_H = 11;
-export const ACT_ROCK_DUST_S = 1.6;
+export const ACT_ROCK_DUST_S = 5.2;
 export const ACT_ROCK_TONES = [GREY[10], GREY[9], GREY[8]];
-export const ACT_SOUL_LIFT_S = 1.5;          // out of the wreck, fading in
-export const ACT_SOUL_RIM = GREY[3];         // a soul's rim, the pale grey (DESIGN.md)
+// The meteor, drawn (render/housefall.js), all in cells and seconds:
+//   margin   how far above the window's top it starts, past its flame
+//   drift    across per down: it comes in a little from the right
+//   trail    the flame's length behind it, `flare` its reach past the rock's
+//            sides; its edge flickers a cell at a time on `flickS` beats
+//   sparks   thrown off the dive, each fading where it was left
+//   shadow   the shadow's opacity on the ground where it will land, beating
+//            faster as it comes
+//   smear    the impact frame held still before the blast is let go
+//   burst    flame cells and `balls` smoke balls thrown out and up
+//   chunks   the house in pieces on arcs, `throw` their speed against a
+//            hand's toss; `ring` how far the dust runs along the ground
+//            either way, `ringRows` its height at its front
+//   column   smoke puffs rising off the rock through the hold
+//   smoulderS  the fire left round it going out, once the hold is over
+//   shake    the throw handed to the yard's shake (world.js, `shakeView`),
+//            which the motion setting turns off
+export const ACT_METEOR = {
+  margin: 6, drift: 0.1, trail: 24, flare: 2, flickS: 0.09, sparks: 60, shadow: 0.9,
+  smear: 0.2, burst: 130, balls: 18, chunks: 36, throw: 1.5, ring: 54, ringRows: 4,
+  column: 34, smoulderS: 20, shake: 20
+};
+// How each piece of it moves and how long it lasts, seconds and cells a
+// second (render/housefall.js); a life ends by opacity, never a cut.
+//   spark    life [shortest, longest], how fast thrown out and up, how fast it drops
+//   ball     a smoke ball's life [shortest, longest], speed [slowest, fastest],
+//            how fast its speed dies, its rise, radius [first, last] and growth
+//   ember    a flame cell's life and speed the same way, and its drop
+//   chunk    the house's pieces: drop, speed across and up [least, most]
+//   ringS    how long the dust ring runs out
+//   puffS    a column puff's life, `rise` and `lean` how it climbs and drifts
+//   burnS    the flame left on the rock after the impact, gone by then
+//   coolOf   the share of the hold the rock's glow takes to go
+//   flick    a smouldering flame's beat; `wisp` its smoke's period
+export const ACT_METEOR_FX = {
+  spark: { life: [0.6, 1.2], out: 10, up: 8, drop: 12 },
+  ball: { life: [1.6, 2.8], speed: [30, 70], damp: 2.2, rise: 4, r: [2.5, 7], grow: 4.5 },
+  ember: { life: [0.5, 1.2], speed: [70, 180], damp: 3, drop: 10 },
+  chunk: { drop: 110, across: [10, 40], up: [42, 76] },
+  ringS: 1.1, puffS: 2.2, puff: { rise: 11, lean: 4 }, burnS: 0.5, coolOf: 0.85,
+  flick: 0.12, wisp: 2.2
+};
+// The flame, hottest first: the meteor's own red (COIN_TONES.spark,
+// palette.js: "out of the sky and still hot"), its brightest against the
+// rock and down the flame's middle, its darkest at the edges and the end of
+// the run; then smoke. White would vanish on the paper.
+export const ACT_FLAME = ['#e8503a', '#d93a25', '#c62d1c', '#9c2214'];
+export const ACT_SMOKE = [GREY[5], GREY[6], GREY[7]];
+// The crater it leaves (route.js, `craterDip`): a bowl ACT_CRATER.depth cells
+// deep under the rock, flat across the rock's width and sloping up to lips
+// `half` cells either side of the house's middle, with a rim of thrown dirt
+// `rim` cells high past each lip. It fills a cell at a time as the rock is
+// broken up for the mansion's blocks (mansion.js), level when the last row
+// goes, so the mansion stands on level ground and nothing pops.
+export const ACT_CRATER = { depth: 2, half: 14, rim: 3 };
+export const CRATER_IN_S = 0.12;             // the bowl's line faded in at the impact, under the blast
+export const ACT_SOUL_LIFT_S = 1.5;          // out of the wreck, where they wait unseen
+// A soul (the owner, 2026-10-30: "float a little bit and be lighter
+// colored"): its rim a mid grey, its clothes paler, a halo of
+// ACT_SOUL_HALO_TONE round it at ACT_SOUL_HALO, all drawn as written on a
+// dark page so they read light there too; and a bob of ACT_SOUL_BOB cells
+// over ACT_SOUL_BOB_S while a soul.
+export const ACT_SOUL_RIM = GREY[4];
+export const ACT_SOUL_CLOTH = { grey: GREY[3], pale: GREY[1] };
+export const ACT_SOUL_HALO_TONE = GREY[3];
+export const ACT_SOUL_HALO = 0.45;
+export const ACT_SOUL_BOB = 1;
+export const ACT_SOUL_BOB_S = 1.8;
 export const ACT_SOUL_PAPER = GREY[0];
+// The rise (the owner's J): the souls float from the ruin up to the gates'
+// step at ACT_FLOAT_PX_S, eased in and out, swaying ACT_FLOAT_SWAY cells
+// either side over ACT_FLOAT_SWINGS swings, still at both ends; the second
+// hangs ACT_FLOAT_LAG cells under the first at the middle. Act 4's way down
+// and the freed souls' come down the same way, reversed. The souls fade in
+// from nothing to whole by ACT_RISE_FADE.soul of the rise; the gates, absent
+// till then, fade in from ACT_RISE_FADE.gatesFrom to `gatesTo` (the owner's
+// K2, 2026-10-31).
+export const ACT_FLOAT_PX_S = P * 9;
+export const ACT_FLOAT_SWAY = 2.5;
+export const ACT_FLOAT_SWINGS = 2.5;
+export const ACT_FLOAT_LAG = 2;
+export const ACT_RISE_FADE = { soul: 0.35, gatesFrom: 0.33, gatesTo: 0.9 };
+// The opening's end (the owner's K2 to God, 2026-11-01): the arrival held
+// ACT_ARRIVE_S with no line, the meeting God's lines (dialog.js), and then
+// the walk to the pedestal in play at ACT_PEDESTAL_K times the road's pace.
+export const ACT_ARRIVE_S = 0.4;
+export const ACT_PEDESTAL_K = 5;
 export const ACT_SLIT_TONES = [GREY[0], PURPLE[13], GREY[1]];          // the slit, white-hot
 
 // --- the ghosts on the road (call 5: carry, not work) -----------------------
@@ -77,19 +162,14 @@ export const ACT_RIM_PIECES = 8;
 export const ACT_RIM_STEP_S = 0.5;
 
 // --- heaven's gates (docs/mocks/act3-gates-2026-10-19, take A; the owner,
-// 2026-10-19, and 2026-10-20: left of the house) ------------------------------
-// Tall pearly gates in a long cloud bank high over the ground, a cloud stair
-// up to them in switchback flights of ACT_STAIR_FLIGHTS steps each, turning
-// on a landing ACT_STAIR_LANDING cells long: the first away from the house,
-// the next back, and so on, an even count so its top comes out over its foot.
-// ACT_STAIR_SIDE is the first flight's way along the ground: the house stands
-// to the gates' right, so away from it is left. A step is ACT_STAIR_TREAD
-// cells along and ACT_STAIR_RISE up, so the bank stands ACT_GATES_SKY, every
-// step's rise, over the ground (the owner, 2026-10-19: higher, the climb
-// longer). The gates are the portal and nothing stands over them: going
-// through the open gates is the trip (the ripple plays as the camera goes
-// through), a body fading into the gateway at one end and out of it at the
-// other over ACT_GATES_PASS cells of walk.
+// 2026-10-31: directly over the house, and no stairway) ------------------------
+// Tall pearly gates in a long cloud bank high over the house: their middle
+// column is the house's middle (portals.js), and the bank stands
+// ACT_GATES_SKY over the ground, worked out below off the mansion that rises
+// there at the end. The gates are the portal and nothing stands over them:
+// going through the open gates is the trip (the ripple plays as the camera
+// goes through), a body fading into the gateway at one end and out of it at
+// the other over ACT_GATES_PASS cells of walk.
 // Two leaves, each ACT_GATES_LEAF cells wide and ACT_GATES_H tall, open by
 // sinking into the bank a bar at a time over ACT_GATES_SINK_S, the meeting
 // stiles first and then outward, so the top edge steps down like a crowd band
@@ -104,12 +184,6 @@ export const ACT_RIM_STEP_S = 0.5;
 // by then so it is seen, and they stand open ACT_GATES_HOLD_S after
 // the camera has come through before they rise shut the same way. The light
 // in the gateway reaches ACT_GATES_LIGHT cells further out at its fullest.
-export const ACT_STAIR_TREAD = 3;
-export const ACT_STAIR_RISE = 2;
-export const ACT_STAIR_FLIGHTS = [5, 5, 5, 5];
-export const ACT_STAIR_LANDING = 6;           // so each flight starts clear of the last one's top
-export const ACT_STAIR_SIDE = -1;
-export const ACT_GATES_SKY = P * ACT_STAIR_RISE * ACT_STAIR_FLIGHTS.reduce((a, n) => a + n, 0);
 export const ACT_GATES_PASS = 6;
 export const ACT_GATES_CLEAR = 4;
 export const ACT_GATES_LEAF = 5;             // a leaf's width, cells
@@ -122,49 +196,26 @@ export const ACT_GATES_LIGHT = 4;
 export const ACT_GATES_STAND_S = ACT_GATES_RALLY.s * (ACT_GATES_REACH / P) / ACT_GATES_RALLY.reach;
 export const ACT_GATES_HOLD_S = 1.5;
 export const ACT_GATES_NEAR = P * 6;         // a body this near the gateway has them open
-// The cloud bank the gates stand in, in cells: its reach on the stair's side
-// of the gates' middle column and on the house's, and its depth under their
-// feet (render/gates.js).
-export const ACT_GATES_BANK = { stair: 20, house: 11, deep: 3 };
-// The stair's foot, in cells off the gates' middle column: a body's left
-// edge standing under the gateway (ghosts.js, `tearX`, a worker three
-// cells wide), and the cells the treads and landings take either side of it.
-export const ACT_STAIR_FOOT = -1;
-export const ACT_STAIR_CELLS = ACT_STAIR_FLIGHTS.reduce((o, n, i) => {
-  const d = ACT_STAIR_SIDE * (i % 2 ? -1 : 1);
-  o.x += d * ACT_STAIR_TREAD * n;
-  o.lo = Math.min(o.lo, o.x); o.hi = Math.max(o.hi, o.x + ACT_STAIR_TREAD - 1);
-  if (i < ACT_STAIR_FLIGHTS.length - 1) {
-    o.x += d * ACT_STAIR_LANDING;
-    o.lo = Math.min(o.lo, o.x); o.hi = Math.max(o.hi, o.x + ACT_STAIR_TREAD - 1);
-  }
-  return o;
-}, { x: 0, lo: 0, hi: ACT_STAIR_TREAD - 1 });
-// The whole stairway, in cells off the gates' middle column: the farthest
-// of the stair, the bank and a gate post on each side, where `lo` is the
-// first cell and `hi` the last. The bank's puffs are drawn over it by a
-// cell or two (render/gates.js), inside ACT_GATES_CLEAR.
+// ...and a soul floating up to them this far under their bank: the sink's
+// time at the float's pace, so they stand open as it reaches the step
+export const ACT_GATES_UNDER = Math.ceil(ACT_GATES_SINK_S * ACT_FLOAT_PX_S / P) * P;
+// The cloud bank the gates stand in, in cells: its reach on its long side
+// of the gates' middle column (ACT_GATES_LONG, -1 the left) and on its short
+// side, and its depth under their feet (render/gates.js).
+export const ACT_GATES_BANK = { long: 20, short: 11, deep: 3 };
+export const ACT_GATES_LONG = -1;
+// The bank's cells off the gates' middle column, `lo` the first and `hi` the
+// last. The bank's puffs are drawn over it by a cell or two (render/gates.js).
 export const ACT_GATES_BANK_CELLS = {
-  lo: -(ACT_STAIR_SIDE < 0 ? ACT_GATES_BANK.stair : ACT_GATES_BANK.house),
-  hi: ACT_STAIR_SIDE < 0 ? ACT_GATES_BANK.house : ACT_GATES_BANK.stair
+  lo: -(ACT_GATES_LONG < 0 ? ACT_GATES_BANK.long : ACT_GATES_BANK.short),
+  hi: ACT_GATES_LONG < 0 ? ACT_GATES_BANK.short : ACT_GATES_BANK.long
 };
-export const ACT_STAIRWAY = {
-  lo: Math.min(ACT_STAIR_FOOT + ACT_STAIR_CELLS.lo, ACT_GATES_BANK_CELLS.lo, -ACT_GATES_REACH / P),
-  hi: Math.max(ACT_STAIR_FOOT + ACT_STAIR_CELLS.hi, ACT_GATES_BANK_CELLS.hi, ACT_GATES_REACH / P - 1)
-};
-// The gates' middle column over the yard, cells off its left edge: the
-// stairway is the first thing at the yard's left end, ACT_GATES_CLEAR of bare
-// ground in from the edge, and the home (the house, the mansion and its
-// blocks) is laid out ACT_GATES_CLEAR past its right end (`HOME_AT`).
-export const ACT_GATES_YARD_CELL = ACT_GATES_CLEAR - ACT_STAIRWAY.lo;
-// The whole stairway's right end, cells off the yard's left edge.
-export const ACT_STAIRWAY_END = ACT_GATES_YARD_CELL + ACT_STAIRWAY.hi + 1;
-// The home's left end, cells off the yard's left edge: past the stairway.
-export const HOME_AT = ACT_STAIRWAY_END + ACT_GATES_CLEAR;
+// The home's left end, cells off the yard's left edge: bare ground the width
+// of the gates' clearance in from the edge, now that nothing stands left of it.
+export const HOME_AT = ACT_GATES_CLEAR;
 // The gates' middle column over the afterlife's cloud floor, cells off its
 // left edge. The camp is laid out from it (config/after.js), so it is its
-// own number: it was the yard's column until the yard's gates moved left of
-// the house (2026-10-20), and the camp stays where it was.
+// own number.
 export const ACT_GATES_CELL = 54;
 
 // --- the mansion (the owner, 2026-10-17 night) ------------------------------
@@ -185,6 +236,12 @@ export const MANSION_WING_FLOORS = 2;
 export const MANSION_MAIN_W = 22;            // the main block
 export const MANSION_TOWER_W = 4;            // each tower, standing at the main block's corners
 export const MANSION_TOWER_FLOORS = 6;
+// The rows over the ground the mansion's drawing holds: its towers and the
+// spires over them (render/mansion.js).
+export const MANSION_TOP_ROWS = MANSION_TOWER_FLOORS * MANSION_FLOOR_ROWS + 4;
+// Heaven's bank over the house stands over the mansion that rises there at
+// the end: its foot ACT_GATES_CLEAR cells over the mansion's top.
+export const ACT_GATES_SKY = P * (MANSION_TOP_ROWS + ACT_GATES_BANK.deep + ACT_GATES_CLEAR);
 export const MANSION_DOOR_W = 4;
 export const MANSION_DOOR_H = 5;
 export const MANSION_WINDOW = [2, 3];        // a window's w and h, cells

@@ -1,8 +1,8 @@
-// Heaven's gates and the cloud stair up to them, drawn (docs/mocks/act3-
-// gates-2026-10-19, take A; portals.js has where they stand and how far open,
-// ghosts.js the walk up the stair). The same gates at both ends: in the yard
-// on a long cloud bank at the top of a switchback stair of cloud at the yard's
-// left end, left of the house, seen from in front; in the afterlife standing on the cloud floor,
+// Heaven's gates, drawn (docs/mocks/act3-gates-2026-10-19, take A;
+// portals.js has where they stand and how far open, ghosts.js the float up
+// to them). The same gates at both ends: in the yard on a long cloud bank
+// high in the sky straight over the house, seen from in front, with no stair
+// (a soul floats up); in the afterlife standing on the cloud floor,
 // seen from behind. The gates are the portal and nothing stands over them:
 // no light going up, none coming up through the floor (the owner,
 // 2026-10-19).
@@ -25,17 +25,18 @@
 // passes, on the grid (`rally`).
 //
 // The yard's end is two layers: what stands behind the bodies (the cloud
-// behind the posts and its rays, the stair, the bank, the light in the
+// behind the posts and its rays, the bank, the light in the
 // gateway), and the gates themselves in front of them (`drawGatesFront`), so
 // the two of them walk into the gateway behind the posts and the leaves.
 
 import { S } from '../state.js';
-import { P, GREY, AFTER_TONES, ACT_GATES_LEAF, ACT_GATES_H, ACT_GATES_BAR, ACT_GATES_RALLY, ACT_GATES_LIGHT, ACT_STAIR_TREAD, ACT_STAIR_RISE, ACT_STAIR_FLIGHTS,
-         ACT_STAIR_LANDING, ACT_STAIR_SIDE, ACT_STAIR_FOOT, ACT_GATES_BANK_CELLS } from '../config.js';
+import { P, GREY, AFTER_TONES, ACT_GATES_LEAF, ACT_GATES_H, ACT_GATES_BAR, ACT_GATES_RALLY, ACT_GATES_LIGHT,
+         ACT_GATES_LONG, ACT_GATES_BANK_CELLS } from '../config.js';
 import { ctx } from './ctx.js';
 import { raw } from '../ink.js';
 import { clamp01, smoothstep } from '../motion.js';
 import { portalOpenK, portalEnd, gatesOpen, gatesLit, gatesStood } from '../portals.js';
+import { gatesSeen } from '../ghosts.js';
 
 // The four, as the page draws them, and the light.
 const TONE = [GREY[AFTER_TONES.paper], GREY[AFTER_TONES.pale], GREY[AFTER_TONES.mid], GREY[AFTER_TONES.ink]];
@@ -197,46 +198,21 @@ function rays(cx, ty, t) {
     }
   }
 }
-// --- the stair -----------------------------------------------------------------------------
-// Its pieces in walk order, in cells, three cells of cloud deep: each tread
-// [left column, right column, top row], and each landing the same with
-// `landing` set -- the cells under the walk (ghosts.js, `stairWalk`) from the
-// foot under the gates (`cx` their middle column), away from the house
-// (ACT_STAIR_SIDE), across a landing and back, flight by flight.
-export function stairPieces(cx, g) {
-  const out = [];
-  let x = cx + ACT_STAIR_FOOT, y = g;
-  ACT_STAIR_FLIGHTS.forEach((n, i) => {
-    const d = ACT_STAIR_SIDE * (i % 2 ? -1 : 1);
-    for (let k = 1; k <= n; k++) {
-      const c = x + d * ACT_STAIR_TREAD * k;
-      out.push({ x0: c, x1: c + ACT_STAIR_TREAD - 1, r: y - ACT_STAIR_RISE * k });
-    }
-    x += d * ACT_STAIR_TREAD * n; y -= ACT_STAIR_RISE * n;
-    if (i < ACT_STAIR_FLIGHTS.length - 1) {
-      const to = x + d * ACT_STAIR_LANDING;
-      out.push({ x0: Math.min(x, to), x1: Math.max(x, to) + ACT_STAIR_TREAD - 1, r: y, landing: true });
-      x = to;
-    }
-  });
-  return out;
-}
-
 // --- in the yard -----------------------------------------------------------------------------
 const yardEnd = () => portalEnd('heaven', 'yard');
-// How far in it is: the stair let down a tread at a time from the foot up,
-// each fading in, and the bank and the gates faded in after it.
-const treadIn = (k, i, n) => Math.max(0, Math.min(1, k * n * 1.6 - i));
-const gatesIn = k => Math.max(0, Math.min(1, (k - 0.5) / 0.5));
+// How far in they are: the portal's opening, and how much of them the
+// opening's story lets be seen (ghosts.js, `gatesSeen`: faded in over the
+// souls' rise), both by opacity.
+const gatesIn = k => Math.max(0, Math.min(1, (k - 0.5) / 0.5)) * gatesSeen();
 
-// The cloud round the gates is laid out with the stair's side to the right
-// and turned to whichever side ACT_STAIR_SIDE puts the stair: `on(d)` is the
-// column `d` cells toward the stair from the gates' middle line.
+// The cloud round the gates is laid out with the bank's long side to the
+// right and turned to whichever side ACT_GATES_LONG puts it: `on(d)` is the
+// column `d` cells toward the long side from the gates' middle line.
 export function drawGatesBehind() {
   const k = portalOpenK('heaven');
   if (k <= 0) return;
-  const e = yardEnd(), cx = Math.round(e.x / P), ty = Math.round(e.feet / P), g = Math.round(S.groundY / P);
-  const on = d => cx + ACT_STAIR_SIDE * d;
+  const e = yardEnd(), cx = Math.round(e.x / P), ty = Math.round(e.feet / P);
+  const on = d => cx + ACT_GATES_LONG * d;
   const lit = gatesLit(), a = gatesIn(k);
   faded(a, () => {
     const m = mask();
@@ -245,20 +221,11 @@ export function drawGatesBehind() {
     paint(m, 21);
     rays(cx, ty, lit);
   });
-  // the stair, from the foot under the gates (a body's left, ghosts.js)
-  const pieces = stairPieces(cx, g);
-  pieces.forEach(({ x0, x1, r, landing }, i) => faded(treadIn(k, i, pieces.length), () => {
-    const m = mask();
-    for (let x = x0 - (landing ? 1 : 0); x <= x1 + (landing ? 1 : 0); x++) for (let y = r; y < r + 3; y++) add(m, x, y);
-    if (landing) puff(m, (x0 + x1 + 1) / 2, r + 3, 2.2);
-    else if (hsh(x0, r, 4) < 0.7) add(m, x0 + Math.floor(hsh(x0, r, 5) * ACT_STAIR_TREAD), r + 3);
-    paint(m, landing ? 33 : 31);
-  }));
-  // the bank they stand in, longer on the stair's side, and the light in the gateway
+  // the bank they stand in, longer on its long side, and the light in the gateway
   faded(a, () => {
     const m = mask(), b = ACT_GATES_BANK_CELLS;
     for (let x = cx + b.lo; x <= cx + b.hi; x++) {
-      const d = (x - cx) * ACT_STAIR_SIDE;
+      const d = (x - cx) * ACT_GATES_LONG;
       add(m, x, ty); add(m, x, ty + 1); if (d > -9 && d < 17) add(m, x, ty + 2);
     }
     puff(m, on(-8), ty + 2, 2.6); puff(m, on(13), ty + 2.5, 3.5); puff(m, on(-1), ty + 3, 3);

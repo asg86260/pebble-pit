@@ -8,7 +8,13 @@
 import { P } from '../config/yard.js';
 import { TYPE } from '../jobs.js';
 import { WORKER } from '../config/crew.js';
-import { FINALE_END_CELLS, FINALE_PAIR_GAP, RETIRED_TURN_S } from '../config/finale.js';
+import { FINALE_PAIR_GAP, RETIRED_TURN_S } from '../config/finale.js';
+
+// The door's cell off the yard's left edge as the yard was laid out then
+// (FINALE_END_CELLS on 2026-10-12): the house has moved twice since, and each
+// move's own migration moves the two of them on from here
+// (2026-10-20-gates-left.js, 2026-11-01-gates-over-house.js).
+const DOOR_THEN = 40;
 
 export default {
   since: '2026-10-12',
@@ -31,7 +37,7 @@ export default {
     if (her) { drop(her); st.fighter = null; st.hung = true; }
     const him = [...who].reverse().find(w => w && w.type === TYPE.GATHER && w.deepHome);
     if (him) drop(him);
-    const x = FINALE_END_CELLS * P;
+    const x = DOOR_THEN * P;
     s.retired = { x: [x, x + WORKER + FINALE_PAIR_GAP], mode: 'sit', left: RETIRED_TURN_S[0], u: 0, home: x };
   }
 };

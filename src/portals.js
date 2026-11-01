@@ -22,7 +22,8 @@
 
 import { S } from './state.js';
 import { P, ACT_PORTAL_R, ACT_HELL_HANG, ACT_PORTAL_OPEN_S, ACT_HAND_FADE_S, ACT_GATES_SKY, ACT_GATES_CELL,
-         ACT_GATES_YARD_CELL, ACT_GATES_H, ACT_GATES_REACH, ACT_GATES_SINK_S, ACT_GATES_STAND_S, ACT_GATES_HOLD_S } from './config.js';
+         ACT_GATES_H, ACT_GATES_REACH, ACT_GATES_SINK_S, ACT_GATES_STAND_S, ACT_GATES_HOLD_S, FINALE_HOUSE_W } from './config.js';
+import { houseX } from './home.js';
 import { smoothstep } from './motion.js';
 import { afterX0, afterFloor } from './after/place.js';
 import { roadX, chamberFloor } from './hell/place.js';
@@ -39,9 +40,9 @@ export const PORTALS = {
   heaven: {
     outer: 'yard', inner: 'after', on: afterlifeOn,
     end: {
-      // The gates on their bank, up the stair at the yard's left end, left
-      // of the house.
-      yard: () => gatesEnd(ACT_GATES_YARD_CELL * P, snap(S.groundY) - ACT_GATES_SKY),
+      // The gates on their bank in the sky straight over the house's middle
+      // (the owner, 2026-10-31), high enough to clear the mansion there.
+      yard: () => gatesEnd(snap(houseX() + FINALE_HOUSE_W * P / 2), snap(S.groundY) - ACT_GATES_SKY),
       // Standing on the cloud floor at the camp's own column.
       after: () => gatesEnd(Math.max(afterX0(), ACT_GATES_CELL * P), snap(afterFloor()))
     }

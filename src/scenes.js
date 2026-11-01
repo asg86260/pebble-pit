@@ -59,6 +59,7 @@ import { afterGround } from './state.js';
 import { FINALE_HOUSE_W, APOTH_POTS_MAX } from './config.js';
 import { houseX } from './home.js';
 import { goOnAlpha } from './actbeats.js';
+import { beginGathering } from './mansion.js';
 import { forceMotion, motionForcedNow } from './prefs.js';
 import { stopById } from './stops.js';
 import { INDEX } from './config/index.js';
@@ -3364,18 +3365,18 @@ export const SCENES = {
   'portal-heaven-up': { about: 'the acts', say: 'heaven\'s gates from behind, standing on the cloud floor',
     run: () => { actsYard('road'); S.beatsDone.push('haunt'); S.acts.pair.mode = 'ghost'; window.__goPlace('after'); window.__fast(2); window.__holdShot(); } },
   // Heaven's gates at work (portals.js, render/gates.js): pressed and half
-  // sunk, before the ripple; the two of them walking up the
-  // stair as souls at the house's fall; the two coming down it as ghosts.
+  // sunk, before the ripple; the two of them floating up to them as souls
+  // at the house's fall; the two floating down from them as ghosts.
   'gates-opening': { about: 'the acts', say: 'heaven\'s gates pressed: the leaves sinking into the cloud from the middle out, the ripple still to come',
     run: () => { actsYard('act4'); window.__fast(2); pinCamera(0); window.__pressPortal('heaven'); window.__fast(0.65); window.__still(true); window.__holdShot(); } },
-  'gates-climb': { about: 'the acts', say: 'the house\'s fall: the two of them as souls walking up the cloud stair to the gates, the gates opening as they come',
+  'gates-climb': { about: 'the acts', say: 'the house\'s fall: the two of them as souls floating up out of the ruin to the gates over it, the gates fading in and opening as they come',
     run: () => {
       actsYard('home');
       for (let i = 0; i < 60 * 30 && !window.__goOn(); i++) window.__fast(1 / 60);
-      for (let i = 0; i < 60 * 90 && !(S.acts?.pair?.route === 'climb' && S.acts.pair.leg >= 18); i++) window.__fast(1 / 60);
+      for (let i = 0; i < 60 * 90 && !(S.acts?.pair?.route === 'float' && S.acts.pair.drift && S.acts.pair.drift.d > S.acts.pair.drift.len * 0.8); i++) window.__fast(1 / 60);
       window.__holdShot();
     } },
-  'gates-road': { about: 'the acts', say: 'the ghost road: the two of them out of the gates and walking down the cloud stair',
+  'gates-road': { about: 'the acts', say: 'the ghost road: the two of them out of the gates and floating down to the ruin',
     run: () => {
       actsYard('road');
       S.beatsDone.push('haunt');
@@ -3383,9 +3384,19 @@ export const SCENES = {
       Object.assign(p, { x: window.__gateWalk().x, y: afterFloor() - P * 3, mode: 'ghost', at: null, top: 0, route: null, then: null });
       window.__sendPair('down', 1);
       window.__view('yard');
-      for (let i = 0; i < 60 * 90 && !(p.route === 'down' && p.leg >= 14); i++) window.__fast(1 / 60);
+      for (let i = 0; i < 60 * 90 && !(p.route === 'down' && p.drift && p.drift.d > p.drift.len * 0.4); i++) window.__fast(1 / 60);
       pinCamera(0);
       window.__holdShot();
+    } },
+  // The ending's freed souls, out of the gates over the mansion and floated
+  // down to the ground under them, then walking on to their files.
+  'souls-down': { about: 'the acts', say: 'the ending: the freed souls out of heaven\'s gates over the mansion, floating down and walking on to their files',
+    run: () => {
+      actsYard('mansion', 999);
+      for (let i = 0; i < 4; i++) { window.__fast(1); window.__nocine(); }
+      window.__view('yard');
+      beginGathering();
+      pinCamera(houseX() + FINALE_HOUSE_W * P / 2 - S.viewW / 2);
     } },
   'after-pair': { about: 'the acts', say: 'act 3 as it stands after the refusal: the pair as souls at the foot of the cloud pillar',
     run: () => { actsYard('fallen'); window.__goPlace('after'); window.__fast(2); window.__look(stationX0('pedestal') - S.viewW / 2); window.__holdShot(); } },
@@ -3394,7 +3405,7 @@ export const SCENES = {
   // The yard's left end at its most crowded, for the map's no-overlap rule
   // (test/no-overlap.test.mjs stands the same yard): every site open and every
   // pot bought, so the casino has stepped as far left as it goes, with the
-  // house standing and heaven's stair and gates beside it; and the same with
+  // house standing and heaven's gates over it; and the same with
   // the mansion on the house's ground.
   'home-end': { about: 'the acts', say: 'the yard\'s left end at its widest: the house, heaven\'s stair and gates, the casino with every pot bought',
     run: () => { widestYard(); window.__actsAt('act4'); window.__fast(2); window.__nocine(); window.__view('yard'); window.__fast(2); pinCamera(0); window.__holdShot(); } },
@@ -3418,6 +3429,19 @@ export const SCENES = {
       actsYard('home');
       for (let i = 0; i < 60 * 30 && goOnAlpha() < 1; i++) window.__fast(1 / 60);
       pinCamera(houseX() + FINALE_HOUSE_W * P / 2 - S.viewW / 2);
+    } },
+  // The act 3 intro as built (review 'act 3: the intro', K2 signed off
+  // 2026-11-01): the go-on card pressed and the opening played from the top
+  // -- the meteor, the crater, the souls floating up as the gates fade in,
+  // through to God, whose line waits for a click -- then the walk to the
+  // pedestal in play.
+  'intro3': { about: 'the acts', review: 'act 3: the intro, built', option: 'built', stage: 'built: intro3, not on main yet',
+    branch: 'intro3', supersedes: ['act 3: the intro'],
+    say: "The meteor in a second and a half, the blast, the shake and the crater; the souls fade up out of the ruin as the gates fade in over the house; through to God, whose line waits for a click; then the two of them walk briskly to the pedestal, the camera yours.",
+    run: () => {
+      actsYard('home');
+      for (let i = 0; i < 60 * 30 && goOnAlpha() < 1; i++) window.__fast(1 / 60);
+      window.__goOn();
     } },
   // The act 3 intro just through the tear (wave shot, track A): the ripple
   // landed in the afterlife, the shot held on the cloud floor where the two of

@@ -5,7 +5,7 @@
 // up, place by place; rule 21 in verify.js asks it once a second of every
 // group in every file. This file stands the yard in the stages the map goes
 // through -- an early yard, a mid yard, the endgame with the casino and
-// heaven's gates and stair, the deep, act 3, hell -- and asks of each:
+// heaven's gates, the deep, act 3, hell -- and asks of each:
 //
 //   - nothing overlaps that is not on KNOWN_OVERLAPS (verify.js), and
 //   - every entry on KNOWN_OVERLAPS is seen to overlap in some stage here, so
@@ -67,22 +67,22 @@ group('a mid yard with its stations and machines built', async () => {
   return stage('yard', ['pit', 'house', 'farm', 'quarry']);
 });
 
-group('the endgame with the casino, heaven\'s gates and stair', async () => {
+group('the endgame with the casino and heaven\'s gates', async () => {
   fullYard();
   window.__actsOn(null);
   window.__actsAt('road');
   run(2);
-  const road = stage('yard', ['casino', 'filter', 'apothecary', 'tower', 'rift', 'home', 'heaven-stairway']);
+  const road = stage('yard', ['casino', 'filter', 'apothecary', 'tower', 'rift', 'home', 'heaven-gates']);
   return road;
 });
 
 // The mansion stands on the fallen house's ground, in its place.
-group('the endgame with the mansion built beside heaven stair', async () => {
+group('the endgame with the mansion built under heaven\'s gates', async () => {
   fullYard();
   window.__actsOn(null);
   window.__actsAt('mansion');
   run(2);
-  return stage('yard', ['mansion', 'mansion-blocks', 'heaven-stairway', 'casino']);
+  return stage('yard', ['mansion', 'mansion-blocks', 'heaven-gates', 'casino']);
 });
 
 group('the deep, with the party and the crusher', async () => {

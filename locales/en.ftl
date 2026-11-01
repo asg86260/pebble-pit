@@ -3411,17 +3411,8 @@ ach-freed-note = finish act 2
 # the card over the house after the finale: pressing it begins act 3 (call 7)
 act-goon = go on
 
-# act beat line, placeholder: the rock falls on the house
-act-house-fall = the house falls
-
-# act beat line, placeholder: the souls arrive on the cloud
-act-arrive = the afterlife
-
 # act beat line, placeholder: God at the throne
 act-meet-god = God holds out a pick
-
-# act beat line, placeholder: the pair refuse the work
-act-refuse = they set the pick down
 
 # act beat line, placeholder: the saw handed to the woodcutter
 act-saw = a saw

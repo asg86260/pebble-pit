@@ -57,6 +57,39 @@ when it happens and samples heap, frames and documents every 30 s. In dev,
 `__bootAt` (main.js, lang.js) names the boot step a frame reached. Blocker:
 the next hung shard, to read the probe.
 
+The request budget again, 2026-11-01 (run 41277243340, `390,844 1/8`, fr,
+then ru on the re-run; run 41278613493, `1920,1080 1/8`, es): the frame came
+up as Chrome's error page reload after reload. Even `play.html` itself was
+refused at once with net::ERR_INSUFFICIENT_RESOURCES for the whole 20 s.
+Nothing here is specific to the 390 shard.
+
+- The cap is Chrome's loaders per initiating process:
+  `kMaxOutstandingRequestsPerProcess = 2700`
+  (services/network/network_context.h). Only a testing setter changes it;
+  there is no switch.
+- The watcher's first refusal saw 269 requests open, all from one frame and
+  all 0.2 s old. Afterwards it saw 2 open while every request was still
+  refused.
+- With every target attached (run 41279554300, `390,844 1/8`, green), a
+  refusal came with 264 open, all one frame on one target. So nothing was
+  hidden on another target: the refusal comes at about 260 outstanding,
+  not 2700, from a cap I have not found in the source. That load recovered
+  on the backed-off retry.
+- Not reproduced locally: ~250 boots unthrottled and at 3x/6x CPU throttle,
+  8 frames booted at once, a cold deps cache, and 200 ms of added latency
+  (`Network.emulateNetworkConditions`: 18 s a boot, no refusal).
+- Lingering removed frames are probably not it: locally over 100 detached
+  documents waited for the collector with no refusal. Each holds only
+  finished loads.
+- In place, not proven to fix it: the language groups boot every language
+  in one frame (fewer live documents, 43 -> 25), and `bootFrame` backs off
+  1, 2, 4 s.
+- One frame's unbundled graph is ~540 module requests. On a slow runner
+  about half are outstanding at once, which reaches the ~260 refusal point
+  by itself. The lasting fix lowers one load's peak, or serves the bench
+  frame a graph with fewer requests. Until then the backed-off retry is
+  what recovers, and a burst that outlasts 20 s still reds the check.
+
 ## The yard joins the conservation rule (2026-10-28)
 
 "One resource system for every act" is built (DESIGN.md, `(built)`). Its one
