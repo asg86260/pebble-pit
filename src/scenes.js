@@ -3415,9 +3415,21 @@ export const SCENES = {
     run: () => {
       actsYard('home');
       for (let i = 0; i < 60 * 30 && !window.__goOn(); i++) window.__fast(1 / 60);
-      for (let i = 0; i < 60 * 400 && !(S.acts?.pair?.route === 'pedestal' && S.acts.pair.leg >= 2); i++) window.__fast(1 / 60);
+      // (God's line at the throne gone on from as it comes up, as a click does)
+      for (let i = 0; i < 60 * 400 && !(S.acts?.pair?.route === 'pedestal' && S.acts.pair.leg >= 2); i++) { window.__goOnLine(); window.__fast(1 / 60); }
       window.__fast(0.6);
       window.__holdShot();
+    } },
+  // The story's dialog, built (dialog.js, render/dialog.js): the opening
+  // played from the go-on card to the meeting, God's line up in its bubble
+  // over his head and waiting for a click; the yard goes on under it.
+  'dialog': { about: 'the acts', review: 'dialog: built', option: 'God\'s line, waiting for a click',
+    stage: 'built: dialog, not on main yet', branch: 'dialog', supersedes: ['dialog: the look'],
+    say: "The built dialog: God's line in its bubble over his head (the A1 tail), waiting. Click, tap, Enter or the right arrow goes on; hold space reads every line at once. The words are the beat's caption standing in until you write his lines.",
+    run: () => {
+      actsYard('home');
+      for (let i = 0; i < 60 * 30 && !window.__goOn(); i++) window.__fast(1 / 60);
+      for (let i = 0; i < 60 * 600 && !(window.__line() && window.__line().out == null); i++) window.__fast(1 / 60);
     } },
   'act3-mid': { about: 'the acts', say: 'act 3 mid: the camp built (saw mill, workshop, posts filled), a fifth of God\'s yard walked out, the saw handed over',
     run: act3Mid },

@@ -32,12 +32,13 @@ group('act 3: go on, the house falls, the souls rise into the afterlife, and the
   const said = sayGoOn();
   // the camera's place every second, to see it never jumps past a ripple
   const views = [];
-  const opened = runUntil(() => { views.push(S.view); return beatDone('refuse'); }, 240);
+  // (God's lines at the throne gone on from as they come up, as a click does)
+  const opened = runUntil(() => { views.push(S.view); window.__goOnLine(); return beatDone('refuse'); }, 240);
   const act3 = { house: S.acts.house, view: S.view, pair: S.acts.pair && { at: S.acts.pair.at, mode: S.acts.pair.mode, place: placeAt(S.acts.pair.y) },
                  after: !!S.after };
   // Track A's strike, as its scaffold fact: the last gate reached.
   S.after.gate = AFTER_GATES.length;
-  const walked = runUntil(() => beatDone('haunt'), 400);
+  const walked = runUntil(() => { window.__goOnLine(); return beatDone('haunt'); }, 400);
   const act4 = { view: S.view, mode: S.acts.pair.mode, place: placeAt(S.acts.pair.y), hell: portalFree('hell'), heaven: portalFree('heaven') };
   window.__actsOn(null);
   const story = ['house-fall', 'arrive', 'meet-god', 'refuse', 'strike', 'unmask', 'hell-told', 'ghost-road', 'haunt'];

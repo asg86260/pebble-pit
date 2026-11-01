@@ -53,6 +53,7 @@ export const S = {
   // ending). A key of `BEATS`, or null.
   beat: { yard: null, camera: null, sheet: null },
   beatsDone: [],          // the keys that have played, each once and never again
+  heard: [],              // the dialog lines read and gone on from, each once and never again (dialog.js)
   // A scene owns the yard: no rock rolls in on its own until the scene drops
   // it. A fact rather than a call into intro.js, so rock.js and core.js can
   // ask without knowing that scenes exist.
@@ -736,6 +737,7 @@ export const SAVED = [
   // The story's progress: which beats have played. An old save's flags fold
   // into it on the way in (persist.js).
   'beatsDone',
+  'heard',                // a line of dialog read is read for good, a beat replayed after a reload included
   // A reload carries the clock on rather than starting it over.
   'buriedMs',
   // The counts, the flags and the ladders that were once read by hand for a
