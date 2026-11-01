@@ -31,25 +31,7 @@ import { deepTop, deepFloor } from './deep/place.js';
 import { portalEnd } from './portals.js';
 import * as HELL from './hell/index.js';
 import { mansionDoorX, soulAt } from './mansion.js';
-import { INTRO3_FLOAT, INTRO3_FADE } from './config.js'; // MOCK act-3-the-intro
-
-// MOCK act-3-the-intro (K): how much of heaven's gates over the yard is
-// seen, and (K2) of the souls: nothing until the souls float, faded in over
-// the rise, whole from then on (`smooth`, below).
-const fadeIn = (u, a, b) => { const k = Math.max(0, Math.min(1, (u - a) / (b - a))); return k * k * (3 - 2 * k); };
-const risen = p => !!p && (p.floated || p.at === 'rise' || p.route === 'rise' || p.mode !== 'soul' || placeAt(p.y) !== 'yard');
-export function intro3GatesK() {
-  if (globalThis.__intro3Float !== 'k' || !S.acts || S.acts.house === 'standing') return 1;
-  const p = S.acts.pair;
-  if (p && p.float) return fadeIn(p.float.u, INTRO3_FADE.gatesFrom, INTRO3_FADE.gatesTo);
-  return risen(p) ? 1 : 0;
-}
-export function intro3SoulK() {
-  if (!globalThis.__intro3SoulFade) return 1;
-  const p = S.acts && S.acts.pair;
-  if (p && p.float) return fadeIn(p.float.u, 0, INTRO3_FADE.soulTo);
-  return risen(p) ? 1 : 0;
-}
+import { INTRO3_FLOAT } from './config.js'; // MOCK act-3-the-intro
 
 // MOCK act-3-the-intro (round 4): the first soul's spot `p.float.u` of the
 // way through the rise from where it stood (`p.float`) to the gates'

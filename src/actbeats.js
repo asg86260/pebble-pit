@@ -46,7 +46,7 @@ import { P, WORKER, FINALE_HOUSE_W, AFTER_GATES, HELL_TIERS, ACT_HURRY, ACT_CAPT
 // reset puts it away.
 // (and when the rock landed, on the game clock: G's fire burns on from it)
 let intro3Landed = null; // held: the mock's landing time
-held('intro3mock', () => { globalThis.__intro3Mock = null; globalThis.__intro3Float = null; globalThis.__intro3SoulFade = null; intro3Landed = null; });
+held('intro3mock', () => { globalThis.__intro3Mock = null; globalThis.__intro3Float = null; intro3Landed = null; });
 export const intro3LandedAt = () => intro3Landed;
 const intro3 = () => INTRO3_MOCK[globalThis.__intro3Mock] || null;
 const fallS = () => intro3()?.fallS ?? ACT_ROCK_FALL_S;
@@ -59,13 +59,6 @@ function startFloat() {
   const p = makePair();
   p.route = null; p.at = null;
   p.float = { x: p.x, y: p.y, u: 0, key: globalThis.__intro3Float };
-}
-// K: the rise framed whole, held: from over the gates' top to the ground
-// under the ruin, so the gates stand clear of the top band all the way up.
-const kRise = () => globalThis.__intro3Float === 'k';
-function riseBox() {
-  const e = portalEnd('heaven', 'yard'), top = e.top - P * 3;
-  return { x: e.x - WORKER * 2, y: top, w: WORKER * 4, h: S.groundY + P - top, place: 'yard' };
 }
 function stepFloat(u) {
   const p = pair(), f = p && p.float, take = floatTake();
@@ -255,8 +248,7 @@ const BODIES = {
     { frame: onPair, s: ACT_SOUL_LIFT_S, enter: makePair, step: u => { pair().lift = Math.min(1, u / ACT_SOUL_LIFT_S); }, skipIf: () => !!pair() && pair().lift >= 1 },
     // up the cloud stair to the gates, followed; they stand open as the two come to them
     // (MOCK act-3-the-intro: or floated straight up to them, round 4)
-    { frame: () => (kRise() ? riseBox() : onPair()), get move() { return kRise() ? 'glide' : 'follow'; },
-      enter: () => { makePair().lift = 1; if (pairAt('climb')) return; if (floatTake()) startFloat(); else sendPair('climb'); },
+    { frame: onPair, move: 'follow', enter: () => { makePair().lift = 1; if (pairAt('climb')) return; if (floatTake()) startFloat(); else sendPair('climb'); },
       step: u => { if (floatTake()) stepFloat(u); }, until: () => pairAt('climb'),
       skipIf: () => !!pair() && (pairAt('rise') || pair().route === 'rise' || placeAt(pair().y) !== 'yard') },
     // through the open gates, the camera after them by the ripple, and out

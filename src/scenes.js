@@ -4198,11 +4198,10 @@ const INTRO3 = [ // MOCK act-3-the-intro
   // A and B dropped in round 2, C-E in round 3, F in round 4, G-I in round
   // 5: the owner took J's rise
   ['g', 'J swaying rise', "Round 4, kept to compare: G's fall, then the paler bobbing souls drift up to the gates up their stair, swaying side to side.", 'j'],
-  ['k', 'K gates over the house', "The meteor in half the time; no gates and no stair over the house through the fall, the blast and the smoulder; the souls (a step darker) sway straight up out of the ruin, and a third of the way up the gates fade in over them, whole just before they reach them.", 'k'],
-  ['k', 'K2 the souls fade up too', "K, with the souls fading in from nothing as they leave the ruin, whole a third of the way up, as the gates fade in over them.", 'k', 'k2']
+  ['k', 'K gates over the house', "The meteor in half the time, still speeding up; the gates directly over the house and no stair, so the souls (a step darker) sway straight up out of the ruin into them.", 'k']
 ];
-for (const [opt, option, say, float = null, tag = null] of INTRO3) {
-  const name = `intro3-${tag || float || opt}`;
+for (const [opt, option, say, float = null] of INTRO3) {
+  const name = `intro3-${float || opt}`;
   SCENES[name] = { about: 'the acts', review: 'act 3: the intro', branch: 'a3-review-both',
     stage: 'mock: throwaway, never merged', option, say,
     swap: () => { window.__scene(name); },
@@ -4210,7 +4209,7 @@ for (const [opt, option, say, float = null, tag = null] of INTRO3) {
       actsYard('home');
       for (let i = 0; i < 60 * 30 && goOnAlpha() < 1; i++) window.__fast(1 / 60);
       window.__unpin();
-      globalThis.__intro3Mock = opt; globalThis.__intro3Float = float; globalThis.__intro3SoulFade = tag === 'k2' || null;
+      globalThis.__intro3Mock = opt; globalThis.__intro3Float = float;
       window.__goOn();
       if (typeof setInterval !== 'function' || typeof window.__scene !== 'function') return;
       let doneAt = 0;

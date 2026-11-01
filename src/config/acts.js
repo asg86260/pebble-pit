@@ -334,12 +334,6 @@ export const INTRO3_GATES_SKY_K = Math.max(ACT_GATES_SKY,
 export const INTRO3_BOB = { bob: 1, bobS: 1.8, halo: 0.45 };
 export const INTRO3_SOUL = { rim: GREY[2], grey: GREY[1], pale: GREY[0] };
 // K's souls a step darker, so they read on the light page
-// K's gates are not there through the fall, the blast and the smoulder: they
-// fade in by opacity while the souls rise, from `gatesFrom` of the rise to
-// `gatesTo`, whole just before the souls reach the step (the owner: "have
-// the gates fade in as they fade up"). K2's souls fade in too, from nothing
-// at the ruin to whole at `soulTo` of the rise.
-export const INTRO3_FADE = { gatesFrom: 0.33, gatesTo: 0.9, soulTo: 0.35 };
 export const INTRO3_SOUL_K = { rim: GREY[4], grey: GREY[3], pale: GREY[1] };
 export const INTRO3_HALO = GREY[3];
 export const INTRO3_FLAME = ['#e8503a', '#d93a25', '#c62d1c', '#9c2214'];
