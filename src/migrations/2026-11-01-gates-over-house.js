@@ -15,9 +15,14 @@
 import { P } from '../config/yard.js';
 import { WORKER } from '../config/crew.js';
 import { GROUND_LEFT } from '../config/sites.js';
+import { FINALE_END_CELLS } from '../config/finale.js';
 import { afterFloor, afterTop } from '../after/place.js';
 
 const DOWN_FLOAT = 2;   // `down`'s float leg (ghosts.js)
+// The door's cell off the yard's left edge before this (FINALE_END_CELLS on
+// 2026-10-20, 2026-10-20-gates-left.js): the two of them at home go with the
+// house by its own move, whether or not the save carries the ground's anchor.
+const DOOR_THEN = 81;
 
 export default {
   since: '2026-11-01',
@@ -41,11 +46,11 @@ export default {
       for (const key of ['chips', 'drops', 'puffs', 'clods']) row0(s[key]);
       if (s.shield) s.shield.x = by(s.shield.x);
       for (const b of s.hell && Array.isArray(s.hell.bodies) ? s.hell.bodies : []) b.x = by(b.x);
-      const r = s.retired;
-      if (r) {
-        r.home = by(r.home);
-        if (Array.isArray(r.x)) r.x = r.x.map(by);
-      }
+    }
+    const r = s.retired, home = (FINALE_END_CELLS - DOOR_THEN) * P;
+    if (r) {
+      if (Number.isFinite(r.home)) r.home += home;
+      if (Array.isArray(r.x)) r.x = r.x.map(x => (Number.isFinite(x) ? x + home : x));
     }
     const p = s.acts && s.acts.pair;
     if (!p) return;

@@ -16,15 +16,21 @@
 // lips `half` cells out; each column's depth whole cells, so its outline
 // steps on the grid.
 
+// REVIEW act-3-the-intro-built
 import { S } from './state.js';
 import { P, ACT_CRATER, ACT_ROCK_W, ACT_ROCK_H, FINALE_END_CELLS, FINALE_DOOR_CELL, FINALE_HOUSE_W } from './config.js';
-import { rockRowsLeft } from './mansion.js';
 
+// How many rows of the rock still lie in it (mansion.js, `rockRowsLeft`),
+// handed over by mansion.js as it loads: the ground (route.js) is read by
+// everything from the first module on, and asking mansion.js for it
+// directly would load the act's whole story ahead of the yard.
+let rowsLeft = () => ACT_ROCK_H; // cache: wired once at load (`craterRows`), never changed after
+export const craterRows = fn => { rowsLeft = fn; };
 // The house's middle, where the rock came down: the bowl's middle line.
 export const craterMid = () => (FINALE_END_CELLS - FINALE_DOOR_CELL) * P + FINALE_HOUSE_W * P / 2;
 // How deep the bowl is under the rock, in cells, for `rows` of rock left on
 // it: the whole of ACT_CRATER.depth under the whole rock, less as it goes.
-export const craterDepth = (rows = rockRowsLeft()) => ACT_CRATER.depth * Math.max(0, Math.min(1, rows / ACT_ROCK_H));
+export const craterDepth = (rows = rowsLeft()) => ACT_CRATER.depth * Math.max(0, Math.min(1, rows / ACT_ROCK_H));
 // The depth under column `i` (the cell from the middle line `i` cells over),
 // in whole cells, of a bowl `deep` cells deep under the rock.
 export function craterCol(i, deep) {

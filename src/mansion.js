@@ -26,6 +26,7 @@ import { P, WORKER, MANSION_AT, MANSION_FLOORS, MANSION_FLOOR_ROWS, MANSION_WING
          MANSION_SOULS, MANSION_SOUL_EVERY_S, MANSION_SHEET_AFTER_S, MANSION_FILE_W, MANSION_FILE_AT,
          ACT_ROCK_H, ACT_ROCK_W, GHOST_PX_S, ACT_FLOAT_PX_S, FINALE_PILE_CELL, FINALE_PILE_W, FINALE_HOUSE_W } from './config.js';
 import { threshold, underGates, driftAt } from './ghosts.js';
+import { craterRows } from './crater.js';
 import { frames } from './clock.js';
 import { commutePace } from './levels.js';
 import { feetOn, ways, keepTo, stepRoute, belowYard } from './route.js';
@@ -120,6 +121,8 @@ export function rockRowsLeft() {
   if (!m) return ACT_ROCK_H;
   return ACT_ROCK_H - mansionPieces().filter((p, i) => p.kind === 'clear' && m.set[i] != null).length;
 }
+// the crater fills as the rock goes (crater.js)
+craterRows(rockRowsLeft);
 export function blocksLeft() {
   const m = M();
   if (!m) return 0;

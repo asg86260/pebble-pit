@@ -179,6 +179,7 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
+- Act 3 opens with a meteor onto the house that leaves a crater, the two souls floating up out of it to heaven's gates, which now stand over the house with no stairway, and ends on God's line before the two of them walk to the pedestal (test/act3-intro.test.mjs, test/heaven-over-house-save.test.mjs).
 - A fighter's board lists the skills it has under its name, its move from rung 4 and its capstone from rung 8, each saying what it does on hover (test/fighter-skills.test.mjs).
 - In act 3 God speaks his lines in a bubble over his head; each waits for a click, tap, Enter or the right arrow while the yard goes on, holding space reads them all, and a line read never comes back after a reload (test/dialog.test.mjs, src/selftest/dialog.js).
 - A "build speed" ladder on the bench, under a new "building" section: eight rungs, two a coin, from one builder-second a second up to double, so every build in every act goes sooner (test/build-speed.test.mjs).

@@ -58,6 +58,7 @@ import { afterGround } from './state.js';
 import { FINALE_HOUSE_W, APOTH_POTS_MAX } from './config.js';
 import { houseX } from './home.js';
 import { goOnAlpha } from './actbeats.js';
+import { beginGathering } from './mansion.js';
 import { forceMotion, motionForcedNow } from './prefs.js';
 import { stopById } from './stops.js';
 import { INDEX } from './config/index.js';
@@ -3365,6 +3366,16 @@ export const SCENES = {
       pinCamera(0);
       window.__holdShot();
     } },
+  // The ending's freed souls, out of the gates over the mansion and floated
+  // down to the ground under them, then walking on to their files.
+  'souls-down': { about: 'the acts', say: 'the ending: the freed souls out of heaven\'s gates over the mansion, floating down and walking on to their files',
+    run: () => {
+      actsYard('mansion', 999);
+      for (let i = 0; i < 4; i++) { window.__fast(1); window.__nocine(); }
+      window.__view('yard');
+      beginGathering();
+      pinCamera(houseX() + FINALE_HOUSE_W * P / 2 - S.viewW / 2);
+    } },
   'after-pair': { about: 'the acts', say: 'act 3 as it stands after the refusal: the pair as souls at the foot of the cloud pillar',
     run: () => { actsYard('fallen'); window.__goPlace('after'); window.__fast(2); window.__look(stationX0('pedestal') - S.viewW / 2); window.__holdShot(); } },
   'portal-hell': { about: 'the acts', say: 'hell\'s white-hot slit in the deep\'s floor, and its hand',
@@ -3396,6 +3407,19 @@ export const SCENES = {
       actsYard('home');
       for (let i = 0; i < 60 * 30 && goOnAlpha() < 1; i++) window.__fast(1 / 60);
       pinCamera(houseX() + FINALE_HOUSE_W * P / 2 - S.viewW / 2);
+    } },
+  // The act 3 intro as built (review 'act 3: the intro', K2 signed off
+  // 2026-11-01): the go-on card pressed and the opening played from the top
+  // -- the meteor, the crater, the souls floating up as the gates fade in,
+  // through to God, whose line waits for a click -- then the walk to the
+  // pedestal in play.
+  'intro3': { about: 'the acts', review: 'act 3: the intro, built', option: 'built', stage: 'built: intro3, not on main yet',
+    branch: 'intro3', supersedes: ['act 3: the intro'],
+    say: "The meteor in a second and a half, the blast, the shake and the crater; the souls fade up out of the ruin as the gates fade in over the house; through to God, whose line waits for a click; then the two of them walk briskly to the pedestal, the camera yours.",
+    run: () => {
+      actsYard('home');
+      for (let i = 0; i < 60 * 30 && goOnAlpha() < 1; i++) window.__fast(1 / 60);
+      window.__goOn();
     } },
   // The act 3 intro just through the tear (wave shot, track A): the ripple
   // landed in the afterlife, the shot held on the cloud floor where the two of
