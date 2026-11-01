@@ -339,13 +339,6 @@ export const INTRO3_SOUL = { rim: GREY[2], grey: GREY[1], pale: GREY[0] };
 // `gatesTo`, whole just before the souls reach the step (the owner: "have
 // the gates fade in as they fade up"). K2's souls fade in too, from nothing
 // at the ruin to whole at `soulTo` of the rise.
-// Round 7, K2 picked (the owner: "it should end after the screen scrolls to
-// god. we'll have some dialog afterwards, but the two main squares should
-// just quickly walk to the podium"): the arrival held `arriveS` with no
-// line, the camera's scroll to God held `godS` once it is there, and the
-// cutscene over; then the pair walk to the pedestal at `briskK` times the
-// road's pace, the player's own camera free.
-export const INTRO3_END = { arriveS: 0.4, godS: 0.5, briskK: 5 };
 export const INTRO3_FADE = { gatesFrom: 0.33, gatesTo: 0.9, soulTo: 0.35 };
 export const INTRO3_SOUL_K = { rim: GREY[4], grey: GREY[3], pale: GREY[1] };
 export const INTRO3_HALO = GREY[3];

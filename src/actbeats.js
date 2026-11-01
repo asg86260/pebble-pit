@@ -39,7 +39,7 @@ import { S } from './state.js';
 import { P, WORKER, FINALE_HOUSE_W, AFTER_GATES, HELL_TIERS, ACT_HURRY, ACT_CAPTION_S, ACT_CAPTION_FADE_S,
          ACT_ROCK_FALL_S, ACT_ROCK_DUST_S, ACT_SOUL_LIFT_S, ACT_RIM_PIECES, ACT_RIM_STEP_S,
          ACT_CALL_K, ACT_GOON_WAIT_S, ACT_GOON_FADE_S, MANSION_FILE_AT, MANSION_FILE_W,
-         ACT_PEDESTAL_FADE_S, INTRO3_MOCK, INTRO3_FLOAT, INTRO3_END } from './config.js';
+         ACT_PEDESTAL_FADE_S, INTRO3_MOCK, INTRO3_FLOAT } from './config.js';
 // MOCK act-3-the-intro: `globalThis.__intro3Mock` ('a'..'c') plays the
 // house's rock as a meteor (render/intro3mock.js) for that option's fall and
 // hold, and the intro's walk at ACT_CALL_K; null is the game as it is, and a
@@ -52,12 +52,6 @@ const intro3 = () => INTRO3_MOCK[globalThis.__intro3Mock] || null;
 const fallS = () => intro3()?.fallS ?? ACT_ROCK_FALL_S;
 const dustS = () => intro3()?.holdS ?? ACT_ROCK_DUST_S;
 const INTRO3_WALKS = ['climb', 'camp', 'pedestal'];
-// Round 7 (K2): the opening ends on the scroll to God, and the walk to the
-// pedestal is the player's to watch or not.
-const k2 = () => !!globalThis.__intro3SoulFade;
-// (a readout for the review's shots, which follow the walk as a player would)
-globalThis.__intro3Follow = () => (S.acts && S.acts.pair && S.view === 'after' ? S.acts.pair.x - S.viewW / 2 : null);
-const godReached = () => Math.abs(S.camX + S.viewW / 2 - godFront()) < P * 3 && !!run && run.u >= INTRO3_END.godS;
 // Round 4: the souls float from the ruin up to the gates (ghosts.js,
 // `floatAt`), the camera following, in place of the climb.
 const floatTake = () => INTRO3_FLOAT[globalThis.__intro3Float] || null;
@@ -270,22 +264,17 @@ const BODIES = {
     { frame: onPair, move: 'follow', enter: () => { makePair().lift = 1; if (!pairAt('rise')) sendPair('rise'); },
       until: () => pairAt('rise') && S.view === 'after' && !gliding() }
   ],
-  // (MOCK act-3-the-intro, K2: the arrival a breath; the meeting is God's
-  // lines, below, built on branch dialog)
-  'arrive': [{ frame: onPair, get s() { return k2() ? INTRO3_END.arriveS : ACT_CAPTION_S; }, enter: beginAct3, get say() { return k2() ? null : 'act-arrive'; } }],
+  'arrive': [{ frame: onPair, s: ACT_CAPTION_S, enter: beginAct3, say: 'act-arrive' }],
   // God's lines, each waiting for a click (dialog.js); the beats' captions
   // stand in until the owner writes them.
   'meet-god': [{ frame: atThrone, lines: [{ who: 'god', id: 'act-meet-god' }] }],
   // To the camp, then up onto the pedestal, where the speech is theirs from
   // then on (after/bubbles.js reads `at === 'pedestal'`).
   'refuse': [
-    // (MOCK act-3-the-intro, K2: sent off to the pedestal on the way out,
-    // and the beat over the same frame, so the walk is played, not shown)
-    { frame: atThrone, enter: () => { if (!onPedestal()) sendPair('pedestal'); }, until: () => true, skipIf: () => !k2() },
     { frame: onPair, move: 'follow', enter: () => sendPair('camp'), until: () => pairAt('camp'), say: 'act-refuse',
-      skipIf: () => k2() || onPedestal() || (!!pair() && pair().route === 'pedestal') },
-    { frame: onPair, move: 'follow', enter: () => { if (!onPedestal()) sendPair('pedestal'); }, until: () => onPedestal() && pair().top >= 1, skipIf: k2 },
-    { frame: onPair, s: 1.5, skipIf: k2 }
+      skipIf: () => onPedestal() || (!!pair() && pair().route === 'pedestal') },
+    { frame: onPair, move: 'follow', enter: () => { if (!onPedestal()) sendPair('pedestal'); }, until: () => onPedestal() && pair().top >= 1 },
+    { frame: onPair, s: 1.5 }
   ],
   'saw': [{ frame: onPair, s: ACT_CAPTION_S, say: 'act-saw' }],
   'strike': [{ frame: atThrone, s: ACT_CAPTION_S + 1, enter: () => { ensureActs().struck = true; }, say: 'act-strike' }],
@@ -493,8 +482,7 @@ export function stepActs(c) {
   }
   if (p && p.route) {
     const base = ghostPace();
-    const k = (k2() && (p.route === 'camp' || p.route === 'pedestal') ? INTRO3_END.briskK // MOCK act-3-the-intro: K2's brisk walk
-      : p.hold || (intro3() && run && INTRO3_WALKS.includes(p.route)) ? ACT_CALL_K : 1) * (run && !run.out ? run.hurry : 1);
+    const k = (p.hold || (intro3() && run && INTRO3_WALKS.includes(p.route)) ? ACT_CALL_K : 1) * (run ? run.hurry : 1);
     stepPair(base * k * c.dt / 1000);
   }
   // The mansion is a standing job from the start of the cage's barrier
