@@ -10,8 +10,8 @@
 import { group, ok, run, runUntil, yard } from './helpers.mjs';
 
 const S = yard.S;
-const { P, WORKER, ACT_GOON_WAIT_S, ACT_GOON_FADE_S, ACT_CRATER, ACT_PEDESTAL_K, GHOST_PX_S, MANSION_SOULS } = await import('../src/config.js');
-const { sayGoOn, goOnAlpha } = await import('../src/actbeats.js');
+const { P, WORKER, ACT_GOON_WAIT_S, ACT_GOON_FADE_S, ACT_CRATER, ACT_PEDESTAL_K, GHOST_PX_S, MANSION_SOULS, ACT_ROCK_DUST_S, ACT_HURRY } = await import('../src/config.js');
+const { sayGoOn, goOnAlpha, actPhase, fallNow } = await import('../src/actbeats.js');
 const { beatDone } = await import('../src/beats.js');
 const { cutsceneRunning } = await import('../src/cutscene.js');
 const { ruinX, yardFeet, threshold, underGates, gatesSeen, soulSeen, floatK, pairBodies } = await import('../src/ghosts.js');
@@ -49,6 +49,22 @@ group('the opening hands play back about twenty-two seconds after the go-on card
     ok(!gatesEarly && gates && gates.k > 0.3 && souls && souls.k < 0.05, 'the souls are seen as they leave the ruin, the gates only a third of the way up', JSON.stringify(end)),
     ok(end.house === 'fallen' && end.dip === ACT_CRATER.depth * P, 'the house lies under the rock in a crater as deep as it should be', JSON.stringify(end))
   ];
+});
+
+group('a click hurries the impact\'s hold as it hurries any phase', async () => {
+  window.__actsOn(true);
+  window.__crew(2, 2);
+  window.__actsAt('home');
+  runUntil(() => goOnAlpha() >= 1, 4 * (ACT_GOON_WAIT_S + ACT_GOON_FADE_S));
+  sayGoOn();
+  for (let i = 0; i < 60 * 20 && !(fallNow() && fallNow().rock >= 1); i++) run(1 / 60);
+  const at = actPhase();
+  window.__skipBeat('camera');
+  let t = 0;
+  for (let i = 0; i < 60 * 10 && actPhase() === at; i++) { run(1 / 60); t += 1 / 60; }
+  const held = { at, t: +t.toFixed(2), next: actPhase() };
+  window.__actsOn(null);
+  return [ok(held.next !== at && t < ACT_ROCK_DUST_S / ACT_HURRY + 0.3, `the hold is over about ${ACT_HURRY} times as soon`, JSON.stringify(held))];
 });
 
 group('after the opening the two of them walk briskly to the pedestal, the camera left where it is', async () => {

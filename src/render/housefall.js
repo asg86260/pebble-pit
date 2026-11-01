@@ -126,7 +126,7 @@ function impact(rest, u) {
     if (!inRock(c, r)) continue;
     cell(rest.x + c * P, rest.y + r * P, fire(1 + (hash(c * 3.3 + r * 1.7) > 0.6 ? 1 : 0)), (1 - q) * 0.75 * (r - H / 3) / (H * 2 / 3));
   }
-  smoulder(rest, Math.min(1, Math.max(0, u - 0.4) / 0.8), u);
+  smoulder(rest, Math.min(1, Math.max(0, u - FX.smoulderIn[0]) / FX.smoulderIn[1]), u);
   sparks(1, rest, ACT_ROCK_FALL_S + u);
   column(rest, u);
   scorch(u);
@@ -199,10 +199,10 @@ function shadow(k, rest, beat) {
 // Held: for `smear` seconds the flame lies flattened out along the ground
 // both ways from the rock's foot, held still, then goes by opacity.
 function smear(rest, u) {
-  const a = u < M.smear ? Math.min(1, u / 0.08) : Math.max(0, 1 - (u - M.smear) / 0.35);
+  const a = u < M.smear ? Math.min(1, u / FX.fadeIn.piece) : Math.max(0, 1 - (u - M.smear) / FX.smear.fadeS);
   if (a <= 0) return;
   const floor = gnd() - P;
-  for (let side = -1; side <= 1; side += 2) for (let j = 0; j < 14; j++) for (let row = 0; row < 4 - Math.floor(j / 4); row++) {
+  for (let side = -1; side <= 1; side += 2) for (let j = 0; j < FX.smear.cells; j++) for (let row = 0; row < FX.smear.rows - Math.floor(j / 4); row++) {
     const x = rest.x + W * P / 2 + side * (W * P / 2 - P * 2 + j * P) - (side < 0 ? P : 0);
     cell(x, floor - row * P, fire(Math.min(3, Math.floor(j / 4) + (row > 1 ? 1 : 0))), a);
   }
@@ -211,7 +211,7 @@ function smear(rest, u) {
 // struck, slowing as they go, held at their first spread through the smear.
 // Each keeps its one tone and fades.
 function burst(rest, u) {
-  const te = u < M.smear ? 0.16 : 0.16 + (u - M.smear), fadeIn = Math.min(1, u / 0.05);
+  const te = u < M.smear ? FX.heldAt : FX.heldAt + (u - M.smear), fadeIn = Math.min(1, u / FX.fadeIn.blast);
   const cx = rest.x + W * P / 2, cy = gnd() - P * 2;
   for (let i = 0; i < M.balls; i++) {
     const h1 = hash(i * 7.9), h2 = hash(i * 3.1), life = lerp(FX.ball.life[0], FX.ball.life[1], h2);
@@ -240,7 +240,7 @@ function burst(rest, u) {
 function chunks(rest, u) {
   const t = u - M.smear;
   if (t <= 0) return;
-  const floor = gnd() - P, g = P * FX.chunk.drop, end = ACT_ROCK_DUST_S - M.smear - 0.3;
+  const floor = gnd() - P, g = P * FX.chunk.drop, end = ACT_ROCK_DUST_S - M.smear - FX.chunk.endS;
   for (let i = 0; i < M.chunks; i++) {
     const side = i % 2 ? 1 : -1, h1 = hash(i * 4.7), h2 = hash(i * 8.3);
     const vx = side * P * lerp(FX.chunk.across[0], FX.chunk.across[1], h1) * M.throw;
@@ -248,8 +248,8 @@ function chunks(rest, u) {
     const x0 = rest.x + W * P / 2 + side * P * (3 + h1 * 4), y0 = floor - P * 3;
     const land = (-vy + Math.sqrt(vy * vy + 2 * g * (floor - y0))) / g, tt = Math.min(t, land);
     const x = x0 + vx * tt, y = Math.min(floor, y0 + vy * tt + g * tt * tt / 2);
-    const life = Math.min(end, land + 0.9 + h2 * 0.6);
-    const a = Math.min(1, t / 0.08) * (t < land ? 1 : Math.max(0, 1 - (t - land) / Math.max(0.1, life - land)));
+    const life = Math.min(end, land + lerp(FX.chunk.rest[0], FX.chunk.rest[1], h2));
+    const a = Math.min(1, t / FX.fadeIn.piece) * (t < land ? 1 : Math.max(0, 1 - (t - land) / Math.max(0.1, life - land)));
     if (a <= 0) continue;
     const tone = i % 5 === 0 ? fire(2) : i % 3 === 0 ? '#000' : FINALE_GREYS[i % 3];
     const wide = h1 > 0.6 ? 3 : h1 > 0.3 ? 2 : 1, tall = h2 > 0.5 ? 2 : 1;
@@ -265,19 +265,19 @@ function ring(rest, u) {
   const e = 1 - (1 - q) * (1 - q), floor = gnd() - P;
   for (let side = -1; side <= 1; side += 2) {
     const front = rest.x + W * P / 2 + side * (W * P / 2 + e * M.ring * P);
-    for (let j = 0; j < 6; j++) {
+    for (let j = 0; j < FX.ringTail; j++) {
       const x = front - side * j * P - (side < 0 ? 0 : P), tall = j < 2 ? M.ringRows : j < 4 ? M.ringRows - 1 : 1;
-      for (let row = 0; row < tall; row++) cell(onPx(x, S.camX), floor - row * P, FINALE_GREYS[Math.min(2, j >> 1)], Math.min(1, t / 0.08) * (1 - q) * (1 - j / 7));
+      for (let row = 0; row < tall; row++) cell(onPx(x, S.camX), floor - row * P, FINALE_GREYS[Math.min(2, j >> 1)], Math.min(1, t / FX.fadeIn.piece) * (1 - q) * (1 - j / (FX.ringTail + 1)));
     }
   }
 }
 // The ground scorched round it, and embers glowing in it, going out over the
 // hold (on the ground's face, under its line).
 function scorch(u) {
-  const life = ACT_ROCK_DUST_S - 0.2, a = Math.min(1, u / 0.15) * Math.max(0, 1 - Math.pow(u / life, 2));
+  const life = ACT_ROCK_DUST_S - FX.fadeIn.puff, a = Math.min(1, u / FX.fadeIn.scorch) * Math.max(0, 1 - Math.pow(u / life, 2));
   if (a <= 0) return;
-  const floor = gnd() + craterNow() * P, cx = craterMid(), half = W / 2 + 7;
-  for (let i = -half; i < half; i++) for (let row = 0; row < 3; row++) {
+  const floor = gnd() + craterNow() * P, cx = craterMid(), half = W / 2 + FX.scorch.reach;
+  for (let i = -half; i < half; i++) for (let row = 0; row < FX.scorch.rows; row++) {
     const h = hash(i * 3.3 + row * 11.9), edge = Math.abs(i + 0.5) / half;
     if (h < 0.15 + edge * 0.6 + row * 0.15) continue;
     const ember = h > 0.9 && edge < 0.8, tw = ember ? 0.65 + 0.35 * Math.sin(u * 5 + i * 1.7) : 1;
@@ -287,13 +287,13 @@ function scorch(u) {
 // A column of smoke off the rock, rising, spreading and leaning off downwind
 // as it goes, each puff gone before the hold ends.
 function column(rest, u) {
-  const life = FX.puffS, last = ACT_ROCK_DUST_S - life - 0.1;
+  const life = FX.puffS, last = ACT_ROCK_DUST_S - life - FX.fadeIn.puff;
   for (let i = 0; i < M.column; i++) {
     const age = u - (i / M.column) * last;
     if (age < 0 || age > life) continue;
-    const a = Math.min(1, age / 0.2) * (1 - age / life) * 0.85;
+    const a = Math.min(1, age / FX.fadeIn.puff) * (1 - age / life) * 0.85;
     const x = rest.x + (W / 2 + (hash(i * 4.1) - 0.5) * W * 0.4) * P + age * age * P * FX.puff.lean;
-    const y = rest.y + P * 2 - age * P * FX.puff.rise, gap = P * (1 + age * 0.8);
+    const y = rest.y + P * 2 - age * P * FX.puff.rise, gap = P * (1 + age * FX.puff.spread);
     for (const [ox, oy] of [[0, 0], [gap, 0], [0, -gap], [gap, -gap], [gap * 0.5, -gap * 2]])
       cell(onPx(x + ox, S.camX), onPx(y + oy, S.camY), ACT_SMOKE[i % 3], a);
   }

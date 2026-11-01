@@ -10,7 +10,7 @@
 import { S } from '../state.js';
 import { P, WORKER, GREY, FINALE_GREYS, FINALE_HOUSE_W, ACT_PORTAL_SPIN_HZ, ACT_ROCK_W, ACT_ROCK_H, AFTER_TONES,
          ACT_ROCK_TONES, ACT_SOUL_RIM, ACT_SOUL_PAPER, ACT_SOUL_CLOTH, ACT_SOUL_HALO, ACT_SOUL_HALO_TONE,
-         ACT_SOUL_BOB, ACT_SOUL_BOB_S,
+         ACT_SOUL_BOB, ACT_SOUL_BOB_S, ACT_SOUL_BOB_APART,
          ACT_SLIT_TONES, ACT_GOON_ABOVE, ACT_GOON_PAD, ACT_GOON_FONT_PX, ACT_CAPTION_FONT_PX, ACT_CAPTION_GREY,
          ACT_RIM_PIECES, MANSION_SOULS, ABYSS_TONES } from '../config.js';
 import { now } from '../clock.js';
@@ -212,7 +212,7 @@ function drawHalo(x, y) {
   });
 }
 // A soul's bob, a cell up and down, each of the two on its own phase.
-const bobAt = i => ACT_SOUL_BOB * P / 2 * Math.sin((now() / 1000) * Math.PI * 2 / ACT_SOUL_BOB_S + i * 1.9);
+const bobAt = i => ACT_SOUL_BOB * P / 2 * Math.sin((now() / 1000) * Math.PI * 2 / ACT_SOUL_BOB_S + i * ACT_SOUL_BOB_APART);
 const RIM = [[0, 0], [1, 0], [2, 0], [2, 1], [2, 2], [1, 2], [0, 2], [0, 1]];
 function drawSoul(x, y, inked, look) {
   drawHalo(x, y);

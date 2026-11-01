@@ -21881,14 +21881,28 @@ a plain label in locales/en.ftl for the owner to rewrite.
   at any time in act 3 (the owner, 2026-10-19: "it should take you back
   down always"); the pair stay up there. Hell's waits for the pair to come
   back as ghosts (`haunt`). The places are stacked, so
-  bodies walk the road, never the portal: the souls rise straight up out of
-  the ruin through the tear onto the cloud; the cloud stair is let down from
-  the tear at `ghost-road`; the act-4 road runs into the drowned pit, down
+  bodies walk the road, never the portal: the souls float straight up out
+  of the ruin to the gates over it and through onto the cloud, and come back
+  down the same way; the act-4 road runs into the drowned pit, down
   the abyss to the deep's floor, along it and down through the slit. The
   camera follows a body across by the ripple.
+- **Heaven's gates over the house, no stairway (built; the owner's K2,
+  review 'act 3: the intro', 2026-11-01).** The gates stand straight over
+  the house's middle, their bank `ACT_GATES_SKY` up, worked out off the
+  mansion that rises there at the end (`MANSION_TOP_ROWS` and a gap). There
+  is no stair: the souls float up from the ruin with a sway (`driftAt`), the
+  gates fading in from a third of the way up the rise; act 4's way down and
+  the freed souls float down the same way. With nothing standing left of the
+  house, the home is laid out from the yard's edge (`HOME_AT`), the whole
+  yard 228 px further left, and a save migration moves everything a save
+  holds with it. The opening: a meteor onto the house in 1.5 s under
+  gravity, a held impact, the yard's shake, a blast, and a crater that is
+  ground (crater.js); then the souls, the gates, God's lines, and the walk
+  to the pedestal in play. The paragraph below is the stair's history.
 - **Heaven's gates (built; the owner's take A of
   docs/mocks/act3-gates-2026-10-19, 2026-10-19; higher and the only way
-  through, the owner's review the same day).** The tear and the ring are
+  through, the owner's review the same day; the stair since taken away,
+  above).** The tear and the ring are
   replaced by pearly gates: in the yard on a long cloud bank 40 cells up
   (`ACT_GATES_SKY`, every step's rise), a switchback cloud stair climbing to
   them in four flights of five steps (`ACT_STAIR_FLIGHTS`) from beside the
@@ -21943,7 +21957,7 @@ a plain label in locales/en.ftl for the owner to rewrite.
   the scaffold carried down last. A set piece fades in; the finished pieces
   are drawn off one cached sheet repainted only when a piece lands. Lives
   returned, the pair walk home and in at its door, the freed souls come down
-  the cloud stair into files beside it, and the end sheet stands.
+  from the gates into files beside it, and the end sheet stands.
 
 Open, for the owner: every word; the look of the tear, the slit, the
 mansion and the souls (mocks); whether the yard's living crew should gather
