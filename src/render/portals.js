@@ -31,6 +31,7 @@ import { drawGatesBehind, drawGatesFront, drawGatesAfter } from './gates.js';
 import { goOnDue, goOnAlpha, fallNow, actCaption } from '../actbeats.js';
 import { rockRowsLeft, soulAt, mansionHeld } from '../mansion.js';
 import { deepFloor } from '../deep/place.js';
+import { drawLine } from './dialog.js';
 
 const snap = v => Math.round(v / P) * P;
 const cellAt = (x, y, tone) => { if (!tone) return; ctx.fillStyle = tone; ctx.fillRect(x, y, P, P); };
@@ -274,11 +275,14 @@ export function drawActBodies(place) {
 }
 
 // --- a beat's line --------------------------------------------------------------------------------
-// In the foot band, white on its black, faded in and out (actbeats.js). The
-// words are the owner's to write: each is a plain label in locales/en.ftl.
+// In the foot band, white on its black, faded in and out (actbeats.js); a
+// speaker's line in a bubble instead. The words are the owner's to write:
+// each is a plain label in locales/en.ftl.
 export function drawActCaption() {
   const c = actCaption();
   if (!c || c.a <= 0 || S.hush <= 0) return;
+  // a speaker's line is a bubble over their head (render/dialog.js)
+  if (c.who) { drawLine(c); return; }
   const band = Math.round(S.hush * bandCells()) * CELL;
   if (band < ACT_CAPTION_FONT_PX) return;
   ctx.save();

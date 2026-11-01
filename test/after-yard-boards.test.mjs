@@ -15,7 +15,8 @@ group('down on the yard in act 3, a yard row can be bought', async () => {
   window.__actsAt('home');
   runUntil(() => goOnAlpha() >= 1, 60);
   sayGoOn();
-  runUntil(() => beatDone('refuse') && S.view === 'after' && !gliding(), 300);
+  // (God's line at the throne gone on from as it comes up, as a click does)
+  runUntil(() => { window.__goOnLine(); return beatDone('refuse') && S.view === 'after' && !gliding(); }, 300);
   const e = portalEnd('heaven', S.view);
   const key = portalAt(e.x, (e.top + e.feet) / 2);
   const down = key === 'heaven' && throughPortal(key);
