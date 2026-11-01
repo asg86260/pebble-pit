@@ -27,7 +27,7 @@
 // REVIEW act-3-the-intro-built
 import { S } from '../state.js';
 import { P, GREY, FINALE_GREYS, FINALE_HOUSE_W, ACT_ROCK_W, ACT_ROCK_H, ACT_ROCK_FALL_S, ACT_ROCK_DUST_S,
-         ACT_METEOR, ACT_METEOR_FX, ACT_FLAME, ACT_SMOKE, ACT_CRATER } from '../config.js';
+         ACT_METEOR, ACT_METEOR_FX, ACT_METEOR_LOOK, ACT_SMOULDER_SPOTS, ACT_FLAME, ACT_SMOKE, ACT_CRATER } from '../config.js';
 import { ctx } from './ctx.js';
 import { hash } from './flicker.js';
 import { light, raw, turnedOver } from '../ink.js';
@@ -38,7 +38,7 @@ import { fallNow, fallLanded } from '../actbeats.js';
 import { rockRowsLeft } from '../mansion.js';
 import { craterNow, craterDepth, craterCol, craterMid } from '../crater.js';
 
-const W = ACT_ROCK_W, H = ACT_ROCK_H, M = ACT_METEOR, FX = ACT_METEOR_FX;
+const W = ACT_ROCK_W, H = ACT_ROCK_H, M = ACT_METEOR, FX = ACT_METEOR_FX, L = ACT_METEOR_LOOK, FL = L.flame;
 const snap = v => Math.round(v / P) * P;
 const gnd = () => snap(S.groundY);
 const lerp = (a, b, k) => a + (b - a) * k;
@@ -109,7 +109,7 @@ function falling(f, rockCells) {
   const rest = restAt();
   if (!start) start = startOf(rest);
   const k = f.rock, t = f.u || 0, at = pathAt(k, rest);
-  shadow(k, rest, 0.7 + 0.3 * Math.cos(Math.PI * 2 * ACT_ROCK_FALL_S * (1.5 * k + 4 * k * k)));
+  shadow(k, rest, L.shadow.pulse[0] + L.shadow.pulse[1] * Math.cos(Math.PI * 2 * ACT_ROCK_FALL_S * (L.shadow.beats[0] * k + L.shadow.beats[1] * k * k)));
   sparks(k, rest, t);
   const x0 = onPx(at.x, S.camX), y0 = onPx(at.y, S.camY);
   flame(x0, y0, M.trail, t, 1);
@@ -122,9 +122,10 @@ function impact(rest, u) {
   // the shadow goes out under it, and its flame and heat burn out on it
   shadow(1, rest, Math.max(0, 1 - u / FX.burnS));
   flame(rest.x, rest.y, M.trail * burn, u + 9, 1 - q, true);
-  for (let r = Math.floor(H / 3); r < H; r++) for (let c = 0; c < W; c++) {
+  const top = H * L.cool.from;
+  for (let r = Math.floor(top); r < H; r++) for (let c = 0; c < W; c++) {
     if (!inRock(c, r)) continue;
-    cell(rest.x + c * P, rest.y + r * P, fire(1 + (hash(c * 3.3 + r * 1.7) > 0.6 ? 1 : 0)), (1 - q) * 0.75 * (r - H / 3) / (H * 2 / 3));
+    cell(rest.x + c * P, rest.y + r * P, fire(1 + (hash(c * 3.3 + r * 1.7) < L.cool.hot ? 1 : 0)), (1 - q) * L.cool.a * (r - top) / (H - top));
   }
   smoulder(rest, Math.min(1, Math.max(0, u - FX.smoulderIn[0]) / FX.smoulderIn[1]), u);
   sparks(1, rest, ACT_ROCK_FALL_S + u);
@@ -150,16 +151,16 @@ function flame(x0, y0, len, t, a, down = false) {
     for (let c = Math.floor(W / 2 - reach); c < Math.ceil(W / 2 + reach); c++) {
       if (inRock(c, r)) continue;
       const al = H / 2 - (r + 0.5), pe = Math.abs(c + 0.5 - W / 2);
-      if (inRock(c, r, 2)) { cell(x0 + c * P, y0 + r * P, fire(al < -R * 0.2 ? 0 : 1), a); continue; }
-      if (al < R * 0.2 || len <= 0) continue;
+      if (inRock(c, r, FL.rim)) { cell(x0 + c * P, y0 + r * P, fire(al < -R * FL.front ? 0 : 1), a); continue; }
+      if (al < R * FL.front || len <= 0) continue;
       const far = Math.max(0, al - R) / len;
-      const sway = (hash(Math.round(al) * 3.1 + beat * 7.7) - 0.5) * 2.2;
-      const half = (hw + flare) * Math.pow(Math.max(0, 1 - far), 1.4) + sway * (0.4 + far);
-      if (pe > half || far > 1 + hash(beat * 1.3 + c * 0.7) * 0.2) continue;
-      if ((pe > half - 1.5 || far > 0.55) && hash(c * 13.1 + r * 7.3 + beat * 3.7) < 0.38) continue;
-      const core = pe < half * 0.4 && far < 0.3, edge = pe > half - 1 ? 1 : 0;
-      if (far < 0.75) cell(x0 + c * P, y0 + r * P, fire(core ? 0 : Math.min(3, 1 + Math.floor(far * 2.7) + edge)), a);
-      else cell(x0 + c * P, y0 + r * P, ACT_SMOKE[1], a * (1 - (far - 0.75) / 0.45));
+      const sway = (hash(Math.round(al) * 3.1 + beat * 7.7) - 0.5) * FL.sway;
+      const half = (hw + flare) * Math.pow(Math.max(0, 1 - far), FL.taper) + sway * (FL.swayFar + far);
+      if (pe > half || far > 1 + hash(beat * 1.3 + c * 0.7) * FL.ragged) continue;
+      if ((pe > half - FL.edge || far > FL.edgeFar) && hash(c * 13.1 + r * 7.3 + beat * 3.7) < FL.flicker) continue;
+      const core = pe < half * FL.core && far < FL.coreFar, edge = pe > half - 1 ? 1 : 0;
+      if (far < FL.smokeAt) cell(x0 + c * P, y0 + r * P, fire(core ? 0 : Math.min(ACT_FLAME.length - 1, 1 + Math.floor(far * FL.steps) + edge)), a);
+      else cell(x0 + c * P, y0 + r * P, ACT_SMOKE[1], a * (1 - (far - FL.smokeAt) / FL.smokeOver));
     }
   }
 }
@@ -167,9 +168,10 @@ function flame(x0, y0, len, t, a, down = false) {
 // ring of red round it, both by opacity.
 function glow(x0, y0, a) {
   if (a <= 0) return;
-  for (let r = -3; r < H + 3; r++) for (let c = -3; c < W + 3; c++) {
-    if (inRock(c, r)) { if (r >= H / 2) cell(x0 + c * P, y0 + r * P, fire(0), a * 0.7 * (r - H / 2) / (H / 2)); }
-    else if (inRock(c, r, 3) && !inRock(c, r, 2)) cell(x0 + c * P, y0 + r * P, fire(1), a * 0.8);
+  const g = L.glow.reach;
+  for (let r = -g; r < H + g; r++) for (let c = -g; c < W + g; c++) {
+    if (inRock(c, r)) { if (r >= H / 2) cell(x0 + c * P, y0 + r * P, fire(0), a * L.glow.core * (r - H / 2) / (H / 2)); }
+    else if (inRock(c, r, g) && !inRock(c, r, g - 1)) cell(x0 + c * P, y0 + r * P, fire(1), a * L.glow.ring);
   }
 }
 // Sparks thrown off the dive, each drifting a little and fading where it
@@ -180,19 +182,19 @@ function sparks(k, rest, t) {
     if (s > k) break;
     const age = t - s * ACT_ROCK_FALL_S, life = lerp(FX.spark.life[0], FX.spark.life[1], hash(i * 3.7));
     if (age < 0 || age > life) continue;
-    const p = pathAt(s, rest), sx = (hash(i * 5.3) - 0.5) * 2, sy = -0.3 - hash(i * 2.9) * 0.7;
-    const x = p.x + W * P / 2 + sx * (W * P * 0.45 + age * P * FX.spark.out);
-    const y = p.y + H * P * 0.4 + sy * age * P * FX.spark.up + age * age * P * FX.spark.drop;
+    const p = pathAt(s, rest), sx = (hash(i * 5.3) - 0.5) * 2, sy = -lerp(L.spark.up[0], L.spark.up[0] + L.spark.up[1], hash(i * 2.9));
+    const x = p.x + W * P / 2 + sx * (W * P * L.spark.across + age * P * FX.spark.out);
+    const y = p.y + H * P * L.spark.at + sy * age * P * FX.spark.up + age * age * P * FX.spark.drop;
     cell(onPx(x, S.camX), onPx(y, S.camY), fire(hash(i * 1.3) < 0.5 ? 0 : 1), 1 - age / life);
   }
 }
 // Its shadow on the ground's face where it will land, under the ground line
 // where nothing standing covers it, swelling as it comes; `beat` its pulse.
 function shadow(k, rest, beat) {
-  const floor = gnd(), cx = rest.x + W * P / 2, tone = shadowTone(), a = M.shadow * Math.min(1, k * 1.4) * beat;
-  const half = Math.max(1, Math.round((W / 2 + 3) * Math.min(1, 0.2 + k)));
+  const sh = L.shadow, floor = gnd(), cx = rest.x + W * P / 2, tone = shadowTone(), a = M.shadow * Math.min(1, k * sh.in) * beat;
+  const half = Math.max(1, Math.round((W / 2 + sh.past) * Math.min(1, sh.from + k)));
   for (let i = -half; i < half; i++) cell(cx + i * P, floor, tone, a);
-  for (let i = -half + 3; i < half - 3; i++) cell(cx + i * P, floor + P, tone, a * 0.6);
+  for (let i = -half + sh.past; i < half - sh.past; i++) cell(cx + i * P, floor + P, tone, a * sh.under);
 }
 
 // --- the impact ------------------------------------------------------------------------
@@ -216,7 +218,7 @@ function burst(rest, u) {
   for (let i = 0; i < M.balls; i++) {
     const h1 = hash(i * 7.9), h2 = hash(i * 3.1), life = lerp(FX.ball.life[0], FX.ball.life[1], h2);
     if (te > life) continue;
-    const ang = -Math.PI * (0.08 + 0.84 * h1), v = P * lerp(FX.ball.speed[0], FX.ball.speed[1], h2);
+    const ang = -Math.PI * (L.burst.balls[0] + L.burst.balls[1] * h1), v = P * lerp(FX.ball.speed[0], FX.ball.speed[1], h2);
     const d = v * (1 - Math.exp(-te * FX.ball.damp)) / FX.ball.damp;
     const bx = cx + Math.cos(ang) * d, by = cy + Math.sin(ang) * d - te * P * FX.ball.rise;
     const r = Math.min(FX.ball.r[1], FX.ball.r[0] + te * FX.ball.grow), a = fadeIn * (1 - te / life) * 0.95, n = Math.ceil(r);
@@ -227,7 +229,7 @@ function burst(rest, u) {
   for (let i = 0; i < M.burst; i++) {
     const h1 = hash(i * 4.3), h2 = hash(i * 9.7), life = lerp(FX.ember.life[0], FX.ember.life[1], h2);
     if (te > life) continue;
-    const ang = -Math.PI * (0.03 + 0.94 * h1), v = P * lerp(FX.ember.speed[0], FX.ember.speed[1], h2);
+    const ang = -Math.PI * (L.burst.embers[0] + L.burst.embers[1] * h1), v = P * lerp(FX.ember.speed[0], FX.ember.speed[1], h2);
     const d = v * (1 - Math.exp(-te * FX.ember.damp)) / FX.ember.damp;
     const x = cx + Math.cos(ang) * d, y = cy + Math.sin(ang) * d + te * te * P * FX.ember.drop;
     const tone = fire(Math.floor(hash(i * 1.7) * 3)), size = h2 > 0.6 ? 2 : 1;
@@ -322,8 +324,7 @@ function drawRim() {
 function smoulder(rest, a, t) {
   if (!(a > 0)) return;
   const g = gnd(), cx = rest.x + W * P / 2, half = ACT_CRATER.half;
-  const spots = [-W / 2 - 1, -W / 2 - 2.6, W / 2, W / 2 + 1.6, -half - 1, half, -W / 2 + 1, W / 2 - 2, -half + 2, half - 3];
-  spots.forEach((s, i) => {
+  ACT_SMOULDER_SPOTS.forEach((s, i) => {
     const beat = Math.floor(t / FX.flick + i * 0.37), x = cx + Math.round(s) * P;
     const lip = Math.abs(s) > half - 0.5;
     const base = lip ? g - ACT_CRATER.rim * P * 0.5 : g + craterCol(Math.round(s), craterNow()) * P;

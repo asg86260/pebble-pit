@@ -17,7 +17,7 @@
 
 import { P, BRUSH, THROW, THROW_MAX, LADDER, TOSS_RISE, TOSS_RISE_VARY, HAND_ARC, TOSS_NEAR, DEEP_THROW, HAND_SWAY, KINDS, TOSS_DELAY } from './config.js';
 import { S, floor, deepBed } from './state.js';
-import { at, put, inside, colOf, bottomY, topRow, takeUnit, kindOf } from './grid.js';
+import { at, put, inside, colOf, bottomY, colBottom, topRow, takeUnit, kindOf } from './grid.js';
 import { spawnChip, aim, bell } from './dust.js';
 import { holeLanding } from './pit.js';
 import { capacity, tossReach } from './levels.js';
@@ -147,7 +147,7 @@ export const heldGoods = () => (S.held && S.motes[0] && S.motes[0].kind ? S.mote
 function* brushCells(mx, my, radius = BRUSH, b = floor) {
   if (b.p !== P) radius = Math.round(radius * P / b.p);
   const c0 = colOf(b, mx);
-  const r0 = Math.floor((bottomY(b) - my) / b.p);
+  const r0 = Math.floor((colBottom(b, c0) - my) / b.p);
   for (let dr = -radius; dr <= radius; dr++) {
     for (let dc = -radius; dc <= radius; dc++) {
       if (dc * dc + dr * dr > radius * radius) continue;
@@ -306,7 +306,7 @@ export function tossFromPile(mx, my = S.groundY) {
       const v = at(floor, c, r);
       put(floor, c, r, 0);
       room--;
-      const fx = floor.x + c * P, fy = bottomY(floor) - (r + 1) * P;
+      const fx = floor.x + c * P, fy = colBottom(floor, c) - (r + 1) * P;
       const land = Math.abs(hole - fx) <= tossReach() ? hole : fx + Math.sign(hole - fx) * tossReach();
       const rise = Math.max(TOSS_RISE, Math.abs(land - fx) * HAND_ARC) * (1 + bell() * TOSS_RISE_VARY * 0.4);
       const vel = aim(fx, fy, land, P, rise);

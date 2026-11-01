@@ -13,7 +13,7 @@ import { noteMet } from './met.js';
 import { S, floor, pit, cut, quarry, bench, rift } from './state.js';
 import { plantPlots } from './farm.js';
 import { stepBreaks } from './break.js';
-import { at, addGrain, colOf, surfaceY, topRow, landed, settleSome, resizeGrid, isDust, bottomY, tickGrid, columnsOf } from './grid.js';
+import { at, addGrain, colOf, surfaceY, topRow, landed, settleSome, resizeGrid, isDust, bottomY, colBottom, tickGrid, columnsOf } from './grid.js';
 import { stepCamera, stepShake, shakeView, blocked, bankCeiling, overPitMouth, overCutMouth, pileAt, layPiles, rockLeft, stepShack, quarryShed, farmShed } from './world.js';
 import { placeRock, overBoulder, topOfRock, knockOff, stepRock, restOnRock, sandTopY, boulderAlive } from './rock.js';
 import { wirePit, setPitGrain, settlePit, bankDust, riftCatch, abyssLine, landRefund } from './pit.js';
@@ -340,7 +340,7 @@ function landedOnFloor() {
   if (topsAt[c] === topsGen && landed.r > tops[c]) tops[c] = landed.r;
 }
 // `surfaceY(floor, c)` off the reading.
-const floorSurface = c => bottomY(floor) - (floorTop(c) + 2) * floor.p;
+const floorSurface = c => colBottom(floor, c) - (floorTop(c) + 2) * floor.p;
 // --- the one landing chain ---------------------------------------------------------
 // A chip in the air comes down on the surfaces its place supplies, asked in
 // the place's order, the first to answer taking it (DESIGN.md, "One resource
@@ -532,7 +532,7 @@ export function surveyFloor() {
       globalThis.__perf.surveyCells += rows;
       for (let r = 0; r < rows; r++) {
         const v = at(floor, c, r);
-        if (v && !isDust(v)) marks.push({ v, x: x + P / 2, y: bottomY(floor) - (r + 1) * P + P / 2 });
+        if (v && !isDust(v)) marks.push({ v, x: x + P / 2, y: colBottom(floor, c) - (r + 1) * P + P / 2 });
       }
     }
     const pile = pileAt(x);

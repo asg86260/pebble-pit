@@ -6,6 +6,7 @@
 //
 //   { x, y, cols, rows, p, grid }        where and how big, and the cells
 //   blocked(c)                           optional: columns dust may not settle in
+//   sink(c)                              optional: how far a column's floor lies under the grid's bottom line, world px
 //   ceiling(c)                           optional: how high a column may stand
 //   fixed(c, r)                          optional: a cell that never moves
 //   onPut(c, r)                          optional: told about every cell written
@@ -197,6 +198,9 @@ export const put = (b, c, r, v) => {
 
 export const inside = (b, c, r) => c >= 0 && c < b.cols && r >= 0 && r < b.rows;
 export const bottomY = b => b.y + b.rows * b.p;    // world y of the grid floor
+// ...and of one column's floor, where the ground under it dips (`sink`): the
+// column's cells stand on it, so a grain at rest lies on the ground there.
+export const colBottom = (b, c) => bottomY(b) + (b.sink ? b.sink(c) : 0);
 export const colOf = (b, x) => Math.floor((x - b.x) / b.p);
 
 export const count = b => { let n = 0; for (const v of b.grid) if (v) n++; return n; };
@@ -217,7 +221,7 @@ export const dustIn = b => b.d != null ? b.d : countDust(b);
 export const grainsIn = b => b.n != null ? b.n : count(b);
 
 // world y where a grain falling down column c would come to rest
-export const surfaceY = (b, c) => bottomY(b) - (topRow(b, c) + 2) * b.p;
+export const surfaceY = (b, c) => colBottom(b, c) - (topRow(b, c) + 2) * b.p;
 
 // the topmost grain in a column, or -1
 export function topRow(b, c) {

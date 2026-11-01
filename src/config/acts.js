@@ -110,6 +110,36 @@ export const ACT_METEOR_FX = {
   smear: { fadeS: 0.35, cells: 14, rows: 4 },
   heldAt: 0.16, ringTail: 6, scorch: { reach: 7, rows: 3 }
 };
+// How the meteor is drawn (render/housefall.js), its shapes as shares and cells:
+//   flame   `rim` cells of red hugging the rock, the run starting `front` of
+//           the rock's half-height behind its middle; its width tapering as
+//           the power `taper` of the way along, swaying `sway` cells (and
+//           `swayFar` more toward its end) on held beats, its end ragged by
+//           `ragged`; its edge cells (within `edge` of it, or past `edgeFar`
+//           of the run) dropped `flicker` of the beats; its core `core` of
+//           its width out to `coreFar` of the run; its tone stepping `steps`
+//           times down the run to smoke at `smokeAt`, gone `smokeOver` after
+//   glow    the heat's opacity over the rock's lower half and on the ring
+//           `reach` cells round it
+//   spark   thrown `across` the rock's width from `at` of its height, up by
+//           `up` [least, most]
+//   shadow  its first width `from` of the whole, swelling in by `in` times
+//           the fall, `past` cells wider than the rock, its second row
+//           `under` as dark; its pulse `pulse` [base, swing] over
+//           `beats` [linear, square] beats of the fall
+//   cool    the glow left on the rock: from `from` of its height down, at
+//           `a`, `hot` of its cells the hotter tone
+//   burst   the blast's arc: smoke balls from `balls` [first, span] of a
+//           half-turn, flame cells from `embers` [first, span]
+export const ACT_METEOR_LOOK = {
+  flame: { rim: 2, front: 0.2, taper: 1.4, sway: 2.2, swayFar: 0.4, ragged: 0.2, edge: 1.5, edgeFar: 0.55, flicker: 0.38,
+           core: 0.4, coreFar: 0.3, steps: 2.7, smokeAt: 0.75, smokeOver: 0.45 },
+  glow: { core: 0.7, ring: 0.8, reach: 3 },
+  spark: { across: 0.45, at: 0.4, up: [0.3, 0.7] },
+  shadow: { from: 0.2, in: 1.4, past: 3, under: 0.6, pulse: [0.7, 0.3], beats: [1.5, 4] },
+  cool: { from: 1 / 3, a: 0.75, hot: 0.4 },
+  burst: { balls: [0.08, 0.84], embers: [0.03, 0.94] }
+};
 // The flame, hottest first: the meteor's own red (COIN_TONES.spark,
 // palette.js: "out of the sky and still hot"), its brightest against the
 // rock and down the flame's middle, its darkest at the edges and the end of
@@ -124,6 +154,10 @@ export const ACT_SMOKE = [GREY[5], GREY[6], GREY[7]];
 // goes, so the mansion stands on level ground and nothing pops.
 export const ACT_CRATER = { depth: 2, half: 14, rim: 3 };
 export const CRATER_IN_S = 0.12;             // the bowl's line faded in at the impact, under the blast
+// Where the fire left in the crater burns, in cells off the house's middle:
+// at the rock's foot either side, on the bowl's lips, and one on each slope.
+export const ACT_SMOULDER_SPOTS = [-ACT_ROCK_W / 2 - 1, -ACT_ROCK_W / 2 - 2.6, ACT_ROCK_W / 2, ACT_ROCK_W / 2 + 1.6,
+  -ACT_CRATER.half - 1, ACT_CRATER.half, -ACT_ROCK_W / 2 + 1, ACT_ROCK_W / 2 - 2, -ACT_CRATER.half + 2, ACT_CRATER.half - 3];
 export const ACT_SOUL_LIFT_S = 1.5;          // out of the wreck, where they wait unseen
 // A soul (the owner, 2026-10-30: "float a little bit and be lighter
 // colored"): its rim a mid grey, its clothes paler, a halo of
