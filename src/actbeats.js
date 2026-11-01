@@ -38,7 +38,7 @@ import { held } from './reset.js';
 import { S } from './state.js';
 import { P, WORKER, FINALE_HOUSE_W, AFTER_GATES, HELL_TIERS, ACT_HURRY, ACT_CAPTION_S, ACT_CAPTION_FADE_S,
          ACT_ROCK_FALL_S, ACT_ROCK_DUST_S, ACT_SOUL_LIFT_S, ACT_RIM_PIECES, ACT_RIM_STEP_S,
-         ACT_CALL_K, ACT_GOON_WAIT_S, ACT_GOON_FADE_S, MANSION_FILE_AT, MANSION_FILE_W, ACT_ARRIVE_S, ACT_PEDESTAL_K, ACT_METEOR,
+         ACT_CALL_K, ACT_GOON_WAIT_S, ACT_GOON_FADE_S, MANSION_FILE_AT, MANSION_FILE_W, ACT_ARRIVE_S, ACT_PEDESTAL_K, ACT_METEOR, ACT_RISE_FRAME_OVER,
          ACT_PEDESTAL_FADE_S } from './config.js';
 import { frameMs, now } from './clock.js';
 import { shakeView } from './world.js';
@@ -175,7 +175,7 @@ const files = () => ({ x: (MANSION_FILE_AT + MANSION_FILE_W * 2) * P, y: S.groun
 // The float up, framed whole: from over the gates' top down to the ground
 // under the ruin, so the gates stand clear of the top band all the way up.
 const riseBox = () => {
-  const e = portalEnd('heaven', 'yard'), top = e.top - P * 3;
+  const e = portalEnd('heaven', 'yard'), top = e.top - P * ACT_RISE_FRAME_OVER;
   return { x: e.x - WORKER * 2, y: top, w: WORKER * 4, h: S.groundY + P - top, place: 'yard' };
 };
 const atHouse = spotted(houseSpot), atThrone = spotted(throne), atTear = spotted(tearAbove),
@@ -197,15 +197,18 @@ function walkThemIn() {
 const indoors = () => !S.retired || (S.retired.mode === 'in' && (S.retired.u || 0) >= IN_DONE_S);
 // When the rock came down, on the game clock: the fire it leaves smoulders
 // on from then (render/housefall.js). This session's: a reload finds it out.
-let landedAt = null; // held: the house's fall's landing, this session's
-held('actbeats-landed', () => { landedAt = null; });
+// And how far into the impact's hold it is, in the beat's own seconds (a
+// click hurries it as it hurries any phase): kept here rather than on the
+// run, so a beat played again after a reload holds only what is left of it.
+let landedAt = null, holdU = null; // held: the house's fall's landing and the hold's seconds, this session's
+held('actbeats-landed', () => { landedAt = null; holdU = null; });
 export const fallLanded = () => landedAt;
-const sinceLanded = () => (landedAt == null ? Infinity : (now() - landedAt) / 1000);
+const inHold = () => holdU != null && holdU < ACT_ROCK_DUST_S;
 // The rock down: the house under it, and the yard's shake handed the throw
 // (world.js, `shakeView`, which the motion setting turns off).
 function houseFalls() {
   ensureActs().house = 'fallen';
-  landedAt = now();
+  landedAt = now(); holdU = 0;
   shakeView(ACT_METEOR.shake);
 }
 const fallen = () => !!A() && A().house !== 'standing';
@@ -231,11 +234,10 @@ const BODIES = {
   'house-fall': [
     { frame: atHouse, enter: walkThemIn, until: indoors, skipIf: fallen },
     { frame: atHouse, s: ACT_ROCK_FALL_S, skipIf: fallen, end: houseFalls },
-    // the impact's hold, timed off the landing so a beat played again after
-    // a reload holds only what is left of it; a fresh page, which has not
-    // seen the landing (`landedAt` is this session's), goes on from the souls
-    { frame: atHouse, until: () => sinceLanded() >= ACT_ROCK_DUST_S, enter: () => openPortal('heaven'),
-      skipIf: () => !!pair() || landedAt == null || sinceLanded() >= ACT_ROCK_DUST_S },
+    // the impact's hold; a fresh page, which has not seen the landing
+    // (`holdU` is this session's), goes on from the souls
+    { frame: atHouse, until: () => !inHold(), step: (u, dt) => { holdU += dt; }, enter: () => openPortal('heaven'),
+      skipIf: () => !!pair() || !inHold() },
     { frame: onPair, s: ACT_SOUL_LIFT_S, enter: () => { openPortal('heaven'); makePair(); }, step: u => { pair().lift = Math.min(1, u / ACT_SOUL_LIFT_S); }, skipIf: () => !!pair() && pair().lift >= 1 },
     // floated up to the gates, the rise framed whole and held so the gates,
     // fading in over it, stand clear of the band; they stand open as the
@@ -415,7 +417,7 @@ function step(key, next, t) {
 export function fallNow() {
   if (!run || run.key !== 'house-fall' || run.out) return null;
   if (run.i === 1) return { rock: Math.min(1, run.u / ACT_ROCK_FALL_S), dust: 0, u: run.u };
-  if (run.i === 2) { const u = Math.min(sinceLanded(), ACT_ROCK_DUST_S); return { rock: 1, dust: u / ACT_ROCK_DUST_S, u }; }
+  if (run.i === 2) { const u = Math.min(holdU ?? ACT_ROCK_DUST_S, ACT_ROCK_DUST_S); return { rock: 1, dust: u / ACT_ROCK_DUST_S, u }; }
   if (run.i === 0) return { rock: -1, dust: 0 };
   return null;
 }

@@ -89,14 +89,26 @@ export const ACT_METEOR = {
 //   puffS    a column puff's life, `rise` and `lean` how it climbs and drifts
 //   burnS    the flame left on the rock after the impact, gone by then
 //   coolOf   the share of the hold the rock's glow takes to go
-//   flick    a smouldering flame's beat; `wisp` its smoke's period
+//   flick    a smouldering flame's beat; `wisp` its smoke's period, and
+//            `smoulderIn` [from, over] when the fire comes up in the hold
+//   fadeIn   how long each piece takes to come up from nothing (never popped)
+//   smear    the held impact's flame: how long it fades, its length either
+//            way and its height, in cells
+//   heldAt   the blast's age, in seconds, it is held at through the smear
+//   chunk    also `endS` short of the hold's end it is gone by, `rest`
+//            [least, most] it lies where it lands
+//   ringTail the dust ring's tail behind its front, cells; `scorch` the
+//            scorched ground's reach past the rock's sides and its depth
 export const ACT_METEOR_FX = {
   spark: { life: [0.6, 1.2], out: 10, up: 8, drop: 12 },
   ball: { life: [1.6, 2.8], speed: [30, 70], damp: 2.2, rise: 4, r: [2.5, 7], grow: 4.5 },
   ember: { life: [0.5, 1.2], speed: [70, 180], damp: 3, drop: 10 },
-  chunk: { drop: 110, across: [10, 40], up: [42, 76] },
-  ringS: 1.1, puffS: 2.2, puff: { rise: 11, lean: 4 }, burnS: 0.5, coolOf: 0.85,
-  flick: 0.12, wisp: 2.2
+  chunk: { drop: 110, across: [10, 40], up: [42, 76], endS: 0.3, rest: [0.9, 1.5] },
+  ringS: 1.1, puffS: 2.2, puff: { rise: 11, lean: 4, spread: 0.8 }, burnS: 0.5, coolOf: 0.85,
+  flick: 0.12, wisp: 2.2, smoulderIn: [0.4, 0.8],
+  fadeIn: { blast: 0.05, piece: 0.08, scorch: 0.15, puff: 0.2 },
+  smear: { fadeS: 0.35, cells: 14, rows: 4 },
+  heldAt: 0.16, ringTail: 6, scorch: { reach: 7, rows: 3 }
 };
 // The flame, hottest first: the meteor's own red (COIN_TONES.spark,
 // palette.js: "out of the sky and still hot"), its brightest against the
@@ -124,6 +136,7 @@ export const ACT_SOUL_HALO_TONE = GREY[3];
 export const ACT_SOUL_HALO = 0.45;
 export const ACT_SOUL_BOB = 1;
 export const ACT_SOUL_BOB_S = 1.8;
+export const ACT_SOUL_BOB_APART = 1.9;       // radians between the two of them's bobs
 export const ACT_SOUL_PAPER = GREY[0];
 // The rise (the owner's J): the souls float from the ruin up to the gates'
 // step at ACT_FLOAT_PX_S, eased in and out, swaying ACT_FLOAT_SWAY cells
@@ -138,6 +151,9 @@ export const ACT_FLOAT_SWAY = 2.5;
 export const ACT_FLOAT_SWINGS = 2.5;
 export const ACT_FLOAT_LAG = 2;
 export const ACT_RISE_FADE = { soul: 0.35, gatesFrom: 0.33, gatesTo: 0.9 };
+// The rise is framed from this many cells over the gates' top down to the
+// ground (actbeats.js, `riseBox`), so the gates stand clear of the band.
+export const ACT_RISE_FRAME_OVER = 3;
 // The opening's end (the owner's K2 to God, 2026-11-01): the arrival held
 // ACT_ARRIVE_S with no line, the meeting God's lines (dialog.js), and then
 // the walk to the pedestal in play at ACT_PEDESTAL_K times the road's pace.

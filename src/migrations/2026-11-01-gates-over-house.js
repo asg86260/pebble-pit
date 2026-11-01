@@ -58,8 +58,9 @@ export default {
     // with the yard
     const inAfter = Number.isFinite(p.y) && p.y + WORKER <= afterFloor() + P && p.y >= afterTop();
     if (!inAfter && d) { p.x = by(p.x); if (p.drift) p.drift.x = by(p.drift.x); }
-    if (p.route === 'climb') { p.route = 'float'; p.leg = 0; delete p.drift; }
-    if (p.at === 'climb') p.at = 'float';
+    // on the stair, or stood at its top where the gates no longer are: on
+    // the float up, from where they are to the gates' step
+    if (p.route === 'climb' || p.at === 'climb') { p.route = 'float'; p.leg = 0; p.at = null; delete p.drift; }
     if (p.route === 'down' && p.leg > DOWN_FLOAT) { p.leg = DOWN_FLOAT; delete p.drift; }
   }
 };
