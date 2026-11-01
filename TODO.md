@@ -58,16 +58,33 @@ when it happens and samples heap, frames and documents every 30 s. In dev,
 the next hung shard, to read the probe.
 
 The request budget again, 2026-11-01 (run 41277243340, `390,844 1/8`, fr,
-then ru on the re-run): the frame came up as Chrome's error page twenty
-reloads running. Even `play.html` itself failed at once with
-net::ERR_INSUFFICIENT_RESOURCES, so the renderer's budget stayed spent for
-the whole 20 s. Two changes: the language groups use one frame for every
-language (a navigation lets the last document go, where a removed frame
-waited for the collector; peak live documents over the cut-words group fell
-from 43 to 25 locally), and `bootFrame` backs off (1, 2, 4 s) instead of
-reloading every second. Not yet shown to be enough: the shard watcher now
-prints, at the first refusal of a burst, how many requests were open, from
-how many frames, and the oldest, so a recurrence says what held the budget.
+then ru on the re-run; run 41278613493, `1920,1080 1/8`, es): the frame came
+up as Chrome's error page reload after reload. Even `play.html` itself was
+refused at once with net::ERR_INSUFFICIENT_RESOURCES for the whole 20 s.
+Nothing here is specific to the 390 shard.
+
+- The cap is Chrome's loaders per initiating process:
+  `kMaxOutstandingRequestsPerProcess = 2700`
+  (services/network/network_context.h). Only a testing setter changes it;
+  there is no switch.
+- The watcher's first refusal saw 269 requests open, all from one frame and
+  all 0.2 s old. Afterwards it saw 2 open while every request was still
+  refused. So about 2400 loaders were held somewhere the page target's
+  Network domain did not show. The watcher now auto-attaches to every
+  target (an error page may be one of its own), and says how many targets
+  the open requests are on.
+- Not reproduced locally: ~250 boots unthrottled and at 3x/6x CPU throttle,
+  8 frames booted at once, a cold deps cache, and 200 ms of added latency
+  (`Network.emulateNetworkConditions`: 18 s a boot, no refusal).
+- Lingering removed frames are probably not it: locally over 100 detached
+  documents waited for the collector with no refusal. Each holds only
+  finished loads.
+- In place, not proven to fix it: the language groups boot every language
+  in one frame (fewer live documents, 43 -> 25), and `bootFrame` backs off
+  1, 2, 4 s.
+- Next red: read the refusal line. If the missing loaders sit on another
+  target, retries cannot recover inside 20 s, and the fix has to lower one
+  load's peak (a frame's unbundled graph is ~540 module requests).
 
 ## The yard joins the conservation rule (2026-10-28)
 
