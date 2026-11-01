@@ -730,6 +730,11 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
   background: var(--fill) var(--dots-on-fill); color: var(--on-fill); padding: var(--pad-s); white-space: nowrap;
 }
 .rl-tip[hidden] { display: none; }
+/* A skill's line: its names bold, wrapping inside the board in even lines,
+   the box as wide as its words (deep/rails.js measures them) and padded as
+   every hover box is. */
+.rl-tip.sk { box-sizing: border-box; white-space: normal; text-wrap: balance; line-height: var(--lh-text); }
+.rl-tip.sk b { font-weight: bold; }
 /* A row: what it is, a line of what it does, its bill in the corner. */
 .rails .rl-row {
   display: grid; grid-template-columns: 1fr auto; gap: 1px 10px; text-align: left;
@@ -764,8 +769,12 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
 .rails .rl-fx i { display: block; box-sizing: border-box; width: 10px; height: 10px; margin-top: 2px; }
 .rails .rl-fx i.mv { border: 2px solid currentColor; }
 .rails .rl-fx i.cp { background: var(--accent); }
-.rails .rl-st { text-decoration: underline dotted; text-underline-offset: 2px; cursor: help; }
-.rails .rl-fx.cap .rl-st { color: var(--accent); }
+.rails .rl-st, .rails .rl-sk { text-decoration: underline dotted; text-underline-offset: 2px; cursor: help; }
+.rails .rl-fx.cap .rl-st, .rails .rl-fx.cap .rl-sk, .rails .rl-fx.cap .rl-sn { color: var(--accent); }
+/* The skills a fighter has, under its name, side by side in the effects' marks. */
+.rails .rl-skills { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 14px; }
+.rails .rl-skills .rl-fx { display: inline-flex; align-items: center; gap: 6px; }
+.rails .rl-skills .rl-fx i { margin-top: 0; }
 @media (hover: hover) {
   .rails .rl-row:hover:not(:disabled) .rl-st, .rails .rl-row:hover:not(:disabled) .rl-fx i.mv { color: var(--on-fill); }
 }

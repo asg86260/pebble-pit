@@ -89,6 +89,29 @@ export const statusLineOf = (key, n) => (ICON_STATUS[key]
 // And its name alone, for its label under the icon.
 export const statusName = key => (ICON_STATUS[key] ? STATUS_NAME[ICON_STATUS[key]] : null);
 const plain = t => t.replace(/\{(\w+)\}/g, (_, k) => STATUS_NAME[k] ?? k);
+// REVIEW fighters-skills-on-the-hover-built
+// What the fighter at station `st` can do, by its rung: its class's move from
+// MOVE_RUNG, its capstone from CAPSTONE_RUNG; a base unit or a Recruit has
+// neither. Each with its line, a status in it said out with what it does, so
+// a skill that is only a status ("Knockout: Stun") still says something.
+const spelled = t => t.replace(/\{(\w+)\}/g, (_, k) => (STATUS[k] ? msg('skill-status', { name: STATUS_NAME[k], does: STATUS[k] }) : k));
+// The same line for the hover, the skill's name and each status's bold: the
+// words are the language file's, marked where the bold goes and escaped.
+const B0 = '\u0001', B1 = '\u0002';
+const marked = t => t.replace(/\{(\w+)\}/g, (_, k) => (STATUS[k] ? msg('skill-status', { name: B0 + STATUS_NAME[k] + B1, does: STATUS[k] }) : k));
+const boldHTML = t => esc(t).replace(/\u0001/g, '<b>').replace(/\u0002/g, '</b>');
+export function skillsOf(st) {
+  const w = st?.cls && WORDS[st.cls];
+  if (!w) return [];
+  const out = [];
+  if (st.rung >= MOVE_RUNG) out.push({ name: w.move[0], raw: w.move[1], does: spelled(w.move[1]), cap: false });
+  if (st.rung >= CAPSTONE_RUNG) out.push({ name: w.cap[0], raw: w.cap[1], does: spelled(w.cap[1]), cap: true });
+  // Only a skill that lays a status says anything on hover (the owner,
+  // 2026-11-01): the rest are their name alone.
+  return out.map(k => ({ ...k, effect: [...k.raw.matchAll(/\{(\w+)\}/g)].some(([, s]) => STATUS[s]),
+                         line: msg('rail-line', { name: k.name, what: k.does }),
+                         html: boldHTML(msg('rail-line', { name: B0 + k.name + B1, what: marked(k.raw) })) }));
+}
 const BASE_DOES = { altar: msg('base-altar-does'), well: msg('base-well-does'), armory: msg('base-armory-does'),
                     circle: msg('base-circle-does'), spire: msg('base-spire-does') };
 const RECRUIT_DOES = msg('recruit-does');
@@ -183,8 +206,10 @@ export function railsOf(id) {
     const w = WORDS[st.cls], cap = next === CAPSTONE_RUNG;
     rows.push(row(st.cls, cap ? w.cap[0] : CLASSES[st.cls].name, cap ? w.cap[1] : worth(st.cls, next)));
   }
+  // The skills it has, under its name: only the reached ones, since the
+  // tree's big pips already say what is coming and when.
   return { id, lot: false, kind: st.kind, cls: st.cls, rung: st.rung, who: st.cls ? CLASSES[st.cls].name : BASES[st.kind],
-           tree: { base, arms }, ask, rows, top: st.rung >= LADDER, reset: { can: !!st.kind } };
+           skills: skillsOf(st), tree: { base, arms }, ask, rows, top: st.rung >= LADDER, reset: { can: !!st.kind } };
 }
 
 // --- the presses ----------------------------------------------------------------
@@ -286,9 +311,17 @@ function recruitHTML(r) {
          `<div class="rl-rail" style="--n:${n}">${ticks}</div><div class="rl-five" style="--n:${n}">${nodes}</div>${pick}`;
 }
 
+// The skills a fighter has, under its name, in the effects' marks -- the
+// move a square, the capstone a purple one -- a skill that lays a status
+// carrying its line, the rest plain.
+const skillsHTML = sk => (sk?.length ? `<div class="rl-skills">${sk.map(k =>
+  `<span class="rl-fx${k.cap ? ' cap' : ''}"><i class="${k.cap ? 'cp' : 'mv'}"></i>` +
+  (k.effect ? `<b class="rl-sk" data-line="${esc(k.line)}" data-html="${esc(k.html)}">${esc(k.name)}</b>` : `<b class="rl-sn">${esc(k.name)}</b>`) +
+  `</span>`).join('')}</div>` : '');
+
 function bodyHTML(r) {
   if (r.recruit) return recruitHTML(r);
-  return `<div class="rl-who">${esc(r.who)}</div>` + treeHTML(r) +
+  return `<div class="rl-who">${esc(r.who)}</div>` + skillsHTML(r.skills) + treeHTML(r) +
          (r.ask ? `<div class="rl-ask">${esc(r.ask)}</div>` : '') +
          r.rows.map(o => rowHTML(o, o.cls ? `data-cls="${o.cls}"` : '')).join('') +
          `<button type="button" class="rl-reset"${r.reset.can ? '' : ' disabled'}>${esc(msg('rail-reset'))}</button>`;
@@ -300,17 +333,43 @@ function bodyHTML(r) {
 // the thing it is about, centered, kept on the glass; under it where there is
 // no room above. In the board's own face and size.
 const TIP_GAP = 6, TIP_EDGE = 4;
+// The widest line a box's words take, and the box's padding across.
+function textWidth(box) {
+  const r = document.createRange();
+  r.selectNodeContents(box);
+  const rects = [...r.getClientRects()];
+  return rects.length ? Math.max(...rects.map(q => q.right)) - Math.min(...rects.map(q => q.left)) : 0;
+}
+const padX = box => { const cs = getComputedStyle(box); return parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight); };
 function showTip(m, pip) {
   const { tip, el } = m;
   if (!pip) { tip.hidden = true; return; }
   const cs = getComputedStyle(el);
   tip.style.fontFamily = cs.fontFamily;
   tip.style.fontSize = cs.getPropertyValue('--rl-text');
-  tip.textContent = pip.dataset.line;
+  // A skill's line stays inside the board it is on (the owner, 2026-11-01):
+  // its names bold, as wide as its words, and no wider than the board's
+  // inside (the rails' own box), wrapping past that (shelf.css, `.rl-tip.sk`).
+  const inner = pip.classList.contains('rl-sk') && el.getBoundingClientRect();
+  tip.classList.toggle('sk', !!inner);
+  if (inner) tip.innerHTML = pip.dataset.html; else tip.textContent = pip.dataset.line;
+  tip.style.width = '';
+  tip.style.maxWidth = inner ? `${Math.floor(inner.width)}px` : '';
   tip.hidden = false;
+  // Wrapped, a box keeps its whole width with a run of nothing after the
+  // words: it is made as wide as its widest line, measured.
+  if (inner) tip.style.width = `${Math.ceil(textWidth(tip) + tip.offsetWidth - tip.clientWidth + padX(tip)) + 1}px`;
   const b = pip.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight;
-  const left = Math.max(TIP_EDGE, Math.min(b.left + b.width / 2 - w / 2, innerWidth - w - TIP_EDGE));
-  const top = b.top - h - TIP_GAP >= TIP_EDGE ? b.top - h - TIP_GAP : b.bottom + TIP_GAP;
+  let left = Math.max(TIP_EDGE, Math.min(b.left + b.width / 2 - w / 2, innerWidth - w - TIP_EDGE));
+  let top = b.top - h - TIP_GAP >= TIP_EDGE ? b.top - h - TIP_GAP : b.bottom + TIP_GAP;
+  // Right over the skill, as every line on the board stands, but kept inside
+  // the sheet rather than the window: under the name where the sheet has no
+  // room above it. It may cover the line above while it is up.
+  if (inner) {
+    const sheet = (el.closest('.sheet') || el).getBoundingClientRect();
+    left = Math.max(inner.left, Math.min(b.left + b.width / 2 - w / 2, inner.right - w));
+    top = b.top - h - TIP_GAP >= sheet.top + TIP_EDGE ? b.top - h - TIP_GAP : b.bottom + TIP_GAP;
+  }
   tip.style.left = `${Math.round(left)}px`;
   tip.style.top = `${Math.round(top)}px`;
 }
@@ -327,7 +386,7 @@ function wire(id, m) {
   const reset = body.querySelector('.rl-reset');
   if (reset) onTap(reset, () => { pressReset(id); refresh(id); });
   // A status's line is a hover's only: most sit inside a row a tap buys.
-  for (const pip of body.querySelectorAll('.rl-tree i, .rl-st')) {
+  for (const pip of body.querySelectorAll('.rl-tree i, .rl-st, .rl-sk')) {
     if (coarse() && pip.classList.contains('rl-st')) continue;
     if (coarse()) onTap(pip, () => showTip(m, m.tip.hidden || m.tip.textContent !== pip.dataset.line ? pip : null));
     else {
