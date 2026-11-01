@@ -57,6 +57,18 @@ when it happens and samples heap, frames and documents every 30 s. In dev,
 `__bootAt` (main.js, lang.js) names the boot step a frame reached. Blocker:
 the next hung shard, to read the probe.
 
+The request budget again, 2026-11-01 (run 41277243340, `390,844 1/8`, fr,
+then ru on the re-run): the frame came up as Chrome's error page twenty
+reloads running. Even `play.html` itself failed at once with
+net::ERR_INSUFFICIENT_RESOURCES, so the renderer's budget stayed spent for
+the whole 20 s. Two changes: the language groups use one frame for every
+language (a navigation lets the last document go, where a removed frame
+waited for the collector; peak live documents over the cut-words group fell
+from 43 to 25 locally), and `bootFrame` backs off (1, 2, 4 s) instead of
+reloading every second. Not yet shown to be enough: the shard watcher now
+prints, at the first refusal of a burst, how many requests were open, from
+how many frames, and the oldest, so a recurrence says what held the budget.
+
 ## The yard joins the conservation rule (2026-10-28)
 
 "One resource system for every act" is built (DESIGN.md, `(built)`). Its one

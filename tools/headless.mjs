@@ -154,11 +154,21 @@ async function watchNetwork(port) {
     const ws = new WebSocket(t.webSocketDebuggerUrl);
     await new Promise(r => ws.addEventListener('open', r));
     const open = new Map(), slow = [];
+    let refusedAt = 0;
     let seen = 0;
     const short = u => u.replace(/^https?:\/\/[^/]+/, '').replace(/\?t=\d+/, '');
     ws.addEventListener('message', e => {
       const m = JSON.parse(e.data), p = m.params;
-      if (m.method === 'Network.requestWillBeSent') seen++, open.set(p.requestId, { url: p.request.url, at: Date.now() });
+      if (m.method === 'Network.requestWillBeSent') seen++, open.set(p.requestId, { url: p.request.url, at: Date.now(), frame: p.frameId, type: p.type });
+      // The first refusal of a burst says what the renderer was holding: how
+      // many requests were open, from how many frames, and the oldest.
+      if (m.method === 'Network.loadingFailed' && /INSUFFICIENT_RESOURCES/.test(p.errorText) && Date.now() - refusedAt > 10000) {
+        refusedAt = Date.now();
+        const all = [...open.values()], now = Date.now(), frames = new Map();
+        for (const q of all) frames.set(q.frame, (frames.get(q.frame) || 0) + 1);
+        const oldest = all.sort((a, b) => a.at - b.at).slice(0, 5).map(q => `${short(q.url)} ${Math.round((now - q.at) / 100) / 10} s`);
+        console.log(`refused (${p.errorText}) with ${all.length} requests open in ${frames.size} frames [${[...frames.values()].sort((a, b) => b - a).slice(0, 8).join(' ')}]; oldest: ${oldest.join(', ')}`);
+      }
       else if (m.method === 'Network.loadingFinished' || m.method === 'Network.loadingFailed') {
         const q = open.get(p.requestId);
         open.delete(p.requestId);
