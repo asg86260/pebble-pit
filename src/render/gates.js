@@ -36,6 +36,7 @@ import { ctx } from './ctx.js';
 import { raw } from '../ink.js';
 import { clamp01, smoothstep } from '../motion.js';
 import { portalOpenK, portalEnd, gatesOpen, gatesLit, gatesStood } from '../portals.js';
+import { intro3GatesK } from '../ghosts.js'; // MOCK act-3-the-intro
 
 // The four, as the page draws them, and the light.
 const TONE = [GREY[AFTER_TONES.paper], GREY[AFTER_TONES.pale], GREY[AFTER_TONES.mid], GREY[AFTER_TONES.ink]];
@@ -232,7 +233,8 @@ const gatesIn = k => Math.max(0, Math.min(1, (k - 0.5) / 0.5));
 // The cloud round the gates is laid out with the stair's side to the right
 // and turned to whichever side ACT_STAIR_SIDE puts the stair: `on(d)` is the
 // column `d` cells toward the stair from the gates' middle line.
-export function drawGatesBehind() {
+export function drawGatesBehind() { faded(intro3GatesK(), drawGatesBehindNow); } // MOCK act-3-the-intro: K's gates fade in over the rise
+function drawGatesBehindNow() {
   const k = portalOpenK('heaven');
   if (k <= 0) return;
   const e = yardEnd(), cx = Math.round(e.x / P), ty = Math.round(e.feet / P), g = Math.round(S.groundY / P);
@@ -269,7 +271,8 @@ export function drawGatesBehind() {
     rally(m, cx);
   });
 }
-export function drawGatesFront() {
+export function drawGatesFront() { faded(intro3GatesK(), drawGatesFrontNow); } // MOCK act-3-the-intro: K's gates fade in over the rise
+function drawGatesFrontNow() {
   const k = portalOpenK('heaven');
   if (k <= 0) return;
   const e = yardEnd();

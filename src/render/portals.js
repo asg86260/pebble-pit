@@ -26,7 +26,7 @@ import { drawHand } from './hand.js';
 import { GREYS, PURPLES } from './deeptones.js';
 import { houseX } from '../home.js';
 import { portalOpenK, portalEnd, handShown, handAlpha, handBox, PORTALS } from '../portals.js';
-import { pairBodies, placeAt, onRoad, passAlpha } from '../ghosts.js';
+import { pairBodies, placeAt, onRoad, passAlpha, intro3SoulK, intro3GatesK } from '../ghosts.js';
 import { drawGatesBehind, drawGatesFront, drawGatesAfter } from './gates.js';
 import { goOnDue, goOnAlpha, fallNow, actCaption } from '../actbeats.js';
 import { rockRowsLeft, soulAt, mansionHeld } from '../mansion.js';
@@ -199,7 +199,7 @@ perPage(() => { HAND_FILL = light(GREY[AFTER_TONES.paper]); });
 export function drawActsGates() {
   if (!S.acts) return;
   drawGatesFront();
-  drawHandAt('heaven', 'yard', HAND_LINE, HAND_FILL);
+  faded(intro3GatesK(), () => drawHandAt('heaven', 'yard', HAND_LINE, HAND_FILL)); // MOCK act-3-the-intro
   ctx.fillStyle = '#000';
 }
 export function drawActsHell() {
@@ -263,7 +263,7 @@ export function drawActBodies(place) {
     // Faded off over the pedestal's own drawing of them while they stand on
     // it (actbeats.js, `top`), and into and out of heaven's gateway going
     // through (ghosts.js, `passAlpha`).
-    const k = Math.min(p.lift ?? 1, 1 - (p.inside || 0), 1 - (p.top || 0), passAlpha(p));
+    const k = Math.min(p.lift ?? 1, 1 - (p.inside || 0), 1 - (p.top || 0), passAlpha(p)) * intro3SoulK(); // MOCK act-3-the-intro: K2's souls fade in
     pair.forEach((b, i) => {
       // on the road up between the yard and the cloud floor, the road's own
       // layer draws them (render/road.js)
