@@ -770,7 +770,7 @@ body.still .rows.shelves > button.tile { transition: none; animation: none; }
 .rails .rl-fx i.mv { border: 2px solid currentColor; }
 .rails .rl-fx i.cp { background: var(--accent); }
 .rails .rl-st, .rails .rl-sk { text-decoration: underline dotted; text-underline-offset: 2px; cursor: help; }
-.rails .rl-fx.cap .rl-st, .rails .rl-fx.cap .rl-sk { color: var(--accent); }
+.rails .rl-fx.cap .rl-st, .rails .rl-fx.cap .rl-sk, .rails .rl-fx.cap .rl-sn { color: var(--accent); }
 /* The skills a fighter has, under its name, side by side in the effects' marks. */
 .rails .rl-skills { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 14px; }
 .rails .rl-skills .rl-fx { display: inline-flex; align-items: center; gap: 6px; }

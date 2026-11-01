@@ -1140,7 +1140,7 @@ const deepScenes = {
       window.__fast(1 / 60);
       S.wonShown = S.wonSeq | 0;
       seatRails();
-      document.querySelectorAll(`.rails[data-station="${id}"] .rl-sk`)[1]?.dispatchEvent(new PointerEvent('pointerenter'));
+      document.querySelectorAll(`.rails[data-station="${id}"] .rl-sk`)[0]?.dispatchEvent(new PointerEvent('pointerenter'));
       window.__holdShot();
     } },
   // Her at the first station in the deep, dressed in the deep's inks, a
