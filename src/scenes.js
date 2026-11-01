@@ -4184,10 +4184,8 @@ Object.assign(SCENES, {
 // the bench loops it; a held clock (`__still`, the GIF tool) never loops.
 const INTRO3 = [ // MOCK act-3-the-intro
   // A and B dropped in round 2, C-E in round 3, F in round 4, G-I in round
-  // 5: the owner took J's rise
-  ['g', 'J swaying rise', "Round 4, kept to compare: G's fall, then the paler bobbing souls drift up to the gates up their stair, swaying side to side.", 'j'],
-  ['k', 'K gates over the house', "The meteor in half the time; no gates and no stair over the house through the fall, the blast and the smoulder; the souls (a step darker) sway straight up out of the ruin, and a third of the way up the gates fade in over them, whole just before they reach them.", 'k'],
-  ['k', 'K2 the souls fade up too', "K, with the souls fading in from nothing as they leave the ruin, whole a third of the way up, as the gates fade in over them.", 'k', 'k2']
+  // 5, J and K in round 7: the owner took K2
+  ['k', 'K2 to God, then the walk', "The meteor and its blast; the souls fade up out of the ruin as the gates fade in over them; through, and the camera scrolls to God, where the cutscene ends (God's lines will go there). Then the two of them walk briskly to the pedestal with the player in control.", 'k', 'k2']
 ];
 for (const [opt, option, say, float = null, tag = null] of INTRO3) {
   const name = `intro3-${tag || float || opt}`;
