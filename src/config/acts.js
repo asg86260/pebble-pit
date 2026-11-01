@@ -252,26 +252,6 @@ export const ACT_KNOBS = [
     get: () => ACT_ROAD_CLOUDS, set: v => { ACT_ROAD_CLOUDS = v; } }
 ];
 
-// MOCK act-3-the-intro
-// Throwaway review numbers, never merged: the house's rock as a meteor, off
-// screen to the ruin with flames (src/render/intro3mock.js), and the
-// intro's walk up the stair and across the cloud floor at ACT_CALL_K's pace.
-// Per option: `fallS` the fall's seconds, `holdS` the impact's hold (the dust
-// phase), `trail` the flame's length behind the rock and `flare` its width
-// past the rock's, in cells; `margin` cells kept clear of the view's edge at
-// the start, so it begins wholly off screen; `ease` the power the fall
-// speeds up by.
-export const INTRO3_MOCK = {
-  a: { fallS: 1.5, holdS: 2.2, trail: 34, flare: 2, margin: 4, ease: 1.7, drift: 0.18 },
-  b: { fallS: 3.2, holdS: 2.8, trail: 18, flare: 1, margin: 4, ease: 1.25, embers: 0.9, smoke: 26 },
-  c: { fallS: 2.6, holdS: 2.6, trail: 12, flare: 1, margin: 30, ease: 1.9, drift: 0.1, shadow: 0.9 }
-};
-// The meteor's flame, hottest first: the meteor's own red (COIN_TONES.spark,
-// palette.js: "out of the sky and still hot"), its brightest against the
-// rock and down the flame's middle, its darkest at the edges and the end of
-// the run, then smoke. White would vanish on the paper.
-export const INTRO3_FLAME = ['#e8503a', '#d93a25', '#c62d1c', '#9c2214'];
-export const INTRO3_SMOKE = [GREY[5], GREY[6], GREY[7]];
 // --- the story's dialog (dialog.js, render/dialog.js; DESIGN.md "A dialog system") ---
 export const DIALOG_FADE_S = 0.4;          // a line in and out, by opacity
 export const DIALOG_STROKE_PX = 2;         // screen px: the bubble's stroke, and the cell its tail is drawn on
