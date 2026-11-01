@@ -106,7 +106,10 @@ export function skillsOf(st) {
   const out = [];
   if (st.rung >= MOVE_RUNG) out.push({ name: w.move[0], raw: w.move[1], does: spelled(w.move[1]), cap: false });
   if (st.rung >= CAPSTONE_RUNG) out.push({ name: w.cap[0], raw: w.cap[1], does: spelled(w.cap[1]), cap: true });
-  return out.map(k => ({ ...k, line: msg('rail-line', { name: k.name, what: k.does }),
+  // Only a skill that lays a status says anything on hover (the owner,
+  // 2026-11-01): the rest are their name alone.
+  return out.map(k => ({ ...k, effect: [...k.raw.matchAll(/\{(\w+)\}/g)].some(([, s]) => STATUS[s]),
+                         line: msg('rail-line', { name: k.name, what: k.does }),
                          html: boldHTML(msg('rail-line', { name: B0 + k.name + B1, what: marked(k.raw) })) }));
 }
 const BASE_DOES = { altar: msg('base-altar-does'), well: msg('base-well-does'), armory: msg('base-armory-does'),
@@ -309,10 +312,12 @@ function recruitHTML(r) {
 }
 
 // The skills a fighter has, under its name, in the effects' marks -- the
-// move a square, the capstone a purple one -- each name carrying its line.
+// move a square, the capstone a purple one -- a skill that lays a status
+// carrying its line, the rest plain.
 const skillsHTML = sk => (sk?.length ? `<div class="rl-skills">${sk.map(k =>
   `<span class="rl-fx${k.cap ? ' cap' : ''}"><i class="${k.cap ? 'cp' : 'mv'}"></i>` +
-  `<b class="rl-sk" data-line="${esc(k.line)}" data-html="${esc(k.html)}">${esc(k.name)}</b></span>`).join('')}</div>` : '');
+  (k.effect ? `<b class="rl-sk" data-line="${esc(k.line)}" data-html="${esc(k.html)}">${esc(k.name)}</b>` : `<b class="rl-sn">${esc(k.name)}</b>`) +
+  `</span>`).join('')}</div>` : '');
 
 function bodyHTML(r) {
   if (r.recruit) return recruitHTML(r);

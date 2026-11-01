@@ -490,15 +490,25 @@ TESTS.push(['rails: the rows climb the base unit, the fork takes a class and clo
 
 // A fighter's skills on its board, under its name: the pointer over one, at
 // the spot the page draws it (the thing hit there is the skill), says its
-// line, and the line stands right over the skill, inside the sheet.
+// line, and the line stands right over the skill, inside the sheet. Only a
+// skill that lays a status has one: the others are plain words.
 // Which skills are listed at which rung is test/fighter-skills.test.mjs.
 TESTS.push(["rails: a skill under the fighter's name says its line right over it, inside the board", async () => {
   window.__fullSites();
   window.__party({ stations: [{ kind: 'armory', cls: 'ranger', rung: 8 }] });
   showPanel('s1', true);
   await seat();
+  const listed = [...(rails()?.querySelectorAll('.rl-skills b') || [])].map(e => e.textContent);
   const sk = [...(rails()?.querySelectorAll('.rl-sk') || [])];
-  const cap = sk[1], b = cap?.getBoundingClientRect();
+  const cap = sk[0], b = cap?.getBoundingClientRect();
+  // the plain one: no dotted line, no help cursor, and nothing on a hover
+  const tip0 = [...document.querySelectorAll('.rl-tip')].pop();
+  const plainEl = rails()?.querySelector('.rl-skills .rl-sn'), pcs = plainEl && getComputedStyle(plainEl);
+  const pb = plainEl?.getBoundingClientRect();
+  const phit = pb && document.elementFromPoint(pb.left + pb.width / 2, pb.top + pb.height / 2);
+  phit?.dispatchEvent(new PointerEvent('pointerenter', { clientX: pb.left + pb.width / 2, clientY: pb.top + pb.height / 2 }));
+  const plain = plainEl?.textContent === 'Aimed shot' && phit === plainEl && !pcs.textDecorationLine.includes('underline') &&
+                pcs.cursor !== 'help' && !plainEl.dataset.line && tip0.hidden;
   const hit = b && document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2);
   hit?.dispatchEvent(new PointerEvent('pointerover', { bubbles: true, clientX: b.left + b.width / 2, clientY: b.top + b.height / 2 }));
   hit?.dispatchEvent(new PointerEvent('pointerenter', { clientX: b.left + b.width / 2, clientY: b.top + b.height / 2 }));
@@ -516,7 +526,10 @@ TESTS.push(["rails: a skill under the fighter's name says its line right over it
   const gone = tip.hidden;
   showPanel(null, true);
   return [
-    ok(sk.map(e => e.textContent).join() === 'Aimed shot,Pinning shot', 'a Ranger at rung 8 lists her move and her capstone', sk.map(e => e.textContent).join()),
+    ok(listed.join() === 'Aimed shot,Pinning shot', 'a Ranger at rung 8 lists her move and her capstone', listed.join()),
+    ok(sk.map(e => e.textContent).join() === 'Pinning shot', 'only the capstone, which lays a status, has a hover', sk.map(e => e.textContent).join()),
+    ok(plain, 'her move is plain words: no dotted line, no help cursor, no line on a hover',
+       `${pcs?.textDecorationLine} ${pcs?.cursor} ${tip0.hidden}`),
     ok(hit === cap, 'the pointer at the skill is over the skill', `${hit?.className}`),
     ok(said === 'Pinning shot: Stun (holds still, stops healing)', 'the pointer over it says its line', `${said}`),
     ok(inside, 'the line stands inside the sheet', `${JSON.stringify(t)} ${JSON.stringify(sheet)}`),

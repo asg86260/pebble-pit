@@ -41,6 +41,8 @@ group('the board lists exactly the skills reached: none at rung 3, the move at 4
     ok(at4.rung === 4 && JSON.stringify(at4.skills) === '["Aimed shot"]', "a Ranger at rung 4 has her move", JSON.stringify(at4)),
     ok(at8.rung === 8 && JSON.stringify(at8.skills) === '["Aimed shot","Pinning shot"]', 'and at rung 8 her capstone too', JSON.stringify(at8)),
     ok(board8.skills[0].line === 'Aimed shot: charged arrow', "a skill's line is its name and what it does", board8.skills[0].line),
-    ok(cap?.line === 'Pinning shot: Stun (holds still, stops healing)', 'a status in it is said out', cap?.line)
+    ok(cap?.line === 'Pinning shot: Stun (holds still, stops healing)', 'a status in it is said out', cap?.line),
+    ok(cap?.effect && !board8.skills[0].effect, 'only the skill that lays a status has a line to show on hover',
+       board8.skills.map(k => `${k.name}:${k.effect}`).join())
   ];
 });
