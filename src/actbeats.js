@@ -86,6 +86,8 @@ import { afterlifeOn, hellOn, owed } from './acts.js';
 import { play, stepShot, release, addScene } from './cutscene.js';
 import { travel, gliding, setView, goDeep, goUp, canGoDown } from './view.js';
 import { beatDone } from './beats.js';
+import { lineDue, stepLines, lineLook, hearAll, forgetLines } from './dialog.js';
+import { aimGliding } from './shot.js';
 import { openPortal, freePortal, portalEnd, portalBetween, stepPortals } from './portals.js';
 import { sendPair, stepPair, pairAt, placeFor, placeAt, ruinX, yardFeet, cageX, takeLoad, LOOP_CAGE, ghostPace,
          tear, seenAt, atGates, STAIR_POINTS, stairFoot, floatAt } from './ghosts.js';
@@ -214,6 +216,10 @@ const files = () => ({ x: (MANSION_FILE_AT + MANSION_FILE_W * 2) * P, y: S.groun
 const atHouse = spotted(houseSpot), atThrone = spotted(throne), atTear = spotted(tearAbove),
       atMansion = spotted(mansionMid), atFiles = spotted(files);
 const storyOf = key => (key in AFTER_STORY ? AFTER_STORY : HELL_STORY);
+// Who can speak a line (dialog.js), and the frame the camera holds while
+// they do: the bubble is drawn over a head in the window. Only God speaks
+// (the owner, 2026-11-01); a name is a frame and a head (render/dialog.js).
+const SPEAKERS = { god: atThrone };
 
 // The house's fall: the two of them walked indoors first (nothing teleports),
 // then held there; the rock, then the house gone under it.
@@ -244,7 +250,8 @@ function leavePedestal() {
 
 // The phases of each beat. `frame` is what the camera frames (and so the
 // place it stands in), and `move` 'follow' for a frame that walks; `s` a hold
-// in seconds, or `until` a fact; `say` the band's line; `enter`, `step` and
+// in seconds, or `until` a fact; `say` the band's line; `lines` the
+// speakers' lines, which hold the phase until each is read (dialog.js); `enter`, `step` and
 // `end` what it does on the way.
 const BODIES = {
   'house-fall': [
@@ -263,12 +270,12 @@ const BODIES = {
     { frame: onPair, move: 'follow', enter: () => { makePair().lift = 1; if (!pairAt('rise')) sendPair('rise'); },
       until: () => pairAt('rise') && S.view === 'after' && !gliding() }
   ],
-  // (MOCK act-3-the-intro, K2: no lines, the arrival a breath and the
-  // meeting over once the camera is at God)
+  // (MOCK act-3-the-intro, K2: the arrival a breath; the meeting is God's
+  // lines, below, built on branch dialog)
   'arrive': [{ frame: onPair, get s() { return k2() ? INTRO3_END.arriveS : ACT_CAPTION_S; }, enter: beginAct3, get say() { return k2() ? null : 'act-arrive'; } }],
-  // DIALOG SEAM (MOCK act-3-the-intro, K2): God's lines go here, on this
-  // phase, the camera standing on him; the cutscene ends with them.
-  'meet-god': [{ frame: atThrone, s: ACT_CAPTION_S + 1, get until() { return k2() ? godReached : undefined; }, get say() { return k2() ? null : 'act-meet-god'; } }],
+  // God's lines, each waiting for a click (dialog.js); the beats' captions
+  // stand in until the owner writes them.
+  'meet-god': [{ frame: atThrone, lines: [{ who: 'god', id: 'act-meet-god' }] }],
   // To the camp, then up onto the pedestal, where the speech is theirs from
   // then on (after/bubbles.js reads `at === 'pedestal'`).
   'refuse': [
@@ -283,7 +290,7 @@ const BODIES = {
   'saw': [{ frame: onPair, s: ACT_CAPTION_S, say: 'act-saw' }],
   'strike': [{ frame: atThrone, s: ACT_CAPTION_S + 1, enter: () => { ensureActs().struck = true; }, say: 'act-strike' }],
   'unmask': [{ frame: atThrone, s: ACT_CAPTION_S + 1, enter: () => openPortal('hell'), say: 'act-unmask' }],
-  'hell-told': [{ frame: atThrone, s: ACT_CAPTION_S + 1, say: 'act-hell-told' }],
+  'hell-told': [{ frame: atThrone, lines: [{ who: 'god', id: 'act-hell-told' }] }],
   'ghost-road': [{ frame: atTear, s: ACT_CAPTION_S, enter: () => { ensureActs().road = true; freePortal('heaven'); }, say: 'act-ghost-road' }],
   'haunt': [
     // Off the pedestal first: the road's drawing faded back on over the
@@ -391,7 +398,9 @@ function step(key, next, t) {
   const phases = BODIES[key];
   const ph = phases[run.i];
   if (ph) {
-    const fr = ph.frame();
+    // a line due frames its speaker: the shot glides to whoever speaks
+    const due = ph.lines ? lineDue(ph.lines) : null;
+    const fr = due && SPEAKERS[due.who] ? SPEAKERS[due.who]() : ph.frame();
     box = fr; moving = ph.move || 'glide';
     // A place the camera cannot stand in (the deep before the wizards'
     // portal, in a yard stood up for a check) is watched from where it is.
@@ -409,8 +418,12 @@ function step(key, next, t) {
     run.u += dt;
     if (ph.step) ph.step(run.u, dt);
     const hold = ph.s ?? ACT_CAPTION_S;
-    caption = ph.say ? { id: ph.say, args: ph.args || null, a: captionAlpha(run.u, ph.until ? Infinity : hold) } : null;
-    const done = ph.until ? ph.until() : run.u >= hold;
+    // A phase's lines: each put up once the shot is at rest on its speaker,
+    // the phase held until the last is read and faded.
+    const talking = ph.lines ? stepLines(ph.lines, !aimGliding(), now()) : false;
+    caption = ph.lines ? lineLook(now())
+      : ph.say ? { id: ph.say, args: ph.args || null, a: captionAlpha(run.u, ph.until ? Infinity : hold) } : null;
+    const done = ph.lines ? !talking : ph.until ? ph.until() : run.u >= hold;
     if (!done) return true;
     if (ph.end) ph.end();
     // the next phase glides the camera from here to what it looks at
@@ -444,8 +457,14 @@ export function actBody(key, next) {
     enter: t => begin(key, t),
     step: t => step(key, next, t),
     // A click or the held space bar: faster, never cut (the walk still has
-    // to be walked). False: the beat carries on.
-    skip: () => { if (run && run.key === key) run.hurry = ACT_HURRY; return false; }
+    // to be walked), and every line of the beat read at once (a click on a
+    // line waiting goes on from that line alone, input.js, before this is
+    // asked). False: the beat carries on.
+    skip: () => {
+      if (run && run.key === key) run.hurry = ACT_HURRY;
+      hearAll(BODIES[key].flatMap(ph => ph.lines || []), now());
+      return false;
+    }
   };
 }
 
@@ -506,5 +525,6 @@ export const SAVE = {
 };
 export function forgetActs() {
   run = null; caption = null;
+  forgetLines();
   forgetMansionHands();
 }

@@ -25,7 +25,8 @@ group('mid-act, a press on heaven\'s gates takes you down to the yard, and one o
   window.__actsAt('home');
   runUntil(() => goOnAlpha() >= 1, 60);
   sayGoOn();
-  const up = runUntil(() => beatDone('refuse') && S.view === 'after' && !gliding(), 300);
+  // (God's line at the throne gone on from as it comes up, as a click does)
+  const up = runUntil(() => { window.__goOnLine(); return beatDone('refuse') && S.view === 'after' && !gliding(); }, 300);
   const free = portalFree('heaven');
   const down = pressGates();
   const landed = runUntil(() => S.view === 'yard' && !gliding(), 30);

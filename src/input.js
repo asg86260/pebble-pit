@@ -48,6 +48,7 @@ import { plotX } from './farm.js';
 import { riftOpen } from './rift.js';
 import { skipCutscene, cutsceneRunning } from './cutscene.js';
 import { holdSkip } from './skip.js';
+import { goOn } from './dialog.js';
 import { markNoticesRead } from './notices.js';
 import { sayStore, showPane, pane } from './settings.js';
 import { isTap } from './tap.js';   // one definition of a tap for the whole page
@@ -160,6 +161,9 @@ const onCoil = (x, y) => {
 canvas.addEventListener('pointerdown', e => {
   // Held, the yard does not answer to anything.
   if (S.paused) return;
+  // A click on a line of dialog waiting goes on to the next, wherever on the
+  // game it lands (dialog.js): the cutscene has the click either way.
+  if (goOn()) return;
   // A click skips a running cutscene and does nothing else: a swing taken
   // while the camera is being handed back lands on whatever is under it.
   if (skipCutscene()) return;
@@ -909,6 +913,9 @@ addEventListener('keydown', e => {
   // The letters and the digits only while not typing: the settings sheet
   // has a box a save is pasted into.
   const key = typing(e.target) ? '' : e.key;
+  // Enter or the right arrow goes on from a line of dialog waiting, and is
+  // nothing else while it does (dialog.js).
+  if ((key === 'Enter' || key === 'ArrowRight') && !S.paused && !e.repeat && goOn()) { e.preventDefault(); return; }
   // The arrows and A/D pan while held (stepPan, once a frame) rather
   // than hopping on every repeat the platform sends: a held key slides
   // the view at one speed instead of stuttering at the repeat rate.

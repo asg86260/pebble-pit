@@ -351,3 +351,13 @@ export const INTRO3_SOUL_K = { rim: GREY[4], grey: GREY[3], pale: GREY[1] };
 export const INTRO3_HALO = GREY[3];
 export const INTRO3_FLAME = ['#e8503a', '#d93a25', '#c62d1c', '#9c2214'];
 export const INTRO3_SMOKE = [GREY[5], GREY[6], GREY[7]];
+// --- the story's dialog (dialog.js, render/dialog.js; DESIGN.md "A dialog system") ---
+export const DIALOG_FADE_S = 0.4;          // a line in and out, by opacity
+export const DIALOG_STROKE_PX = 2;         // screen px: the bubble's stroke, and the cell its tail is drawn on
+export const DIALOG_PAD_CELLS = 2;         // the bubble's inside margin, in CELLs
+export const DIALOG_WIDE_PX = 260;         // the widest a line runs before it wraps
+export const DIALOG_LINE_PX = 3;           // the gap between two wrapped lines
+// The tail (the owner's pick A1, 2026-11-01): its paper's width in stroke
+// cells, row by row out from the box, tapering a cell a side every two rows
+// to a middle point. The first row lies over the box's own stroke.
+export const DIALOG_TAIL = [5, 5, 3, 3, 1, 1];
