@@ -7875,32 +7875,11 @@
   "text": "go on"
  },
  {
-  "id": "act-house-fall",
-  "group": "The shell",
-  "where": "src/actbeats.js",
-  "context": "act beat line, placeholder: the rock falls on the house",
-  "text": "the house falls"
- },
- {
-  "id": "act-arrive",
-  "group": "The shell",
-  "where": "src/actbeats.js",
-  "context": "act beat line, placeholder: the souls arrive on the cloud",
-  "text": "the afterlife"
- },
- {
   "id": "act-meet-god",
   "group": "The shell",
   "where": "src/actbeats.js",
   "context": "act beat line, placeholder: God at the throne",
   "text": "God holds out a pick"
- },
- {
-  "id": "act-refuse",
-  "group": "The shell",
-  "where": "src/actbeats.js",
-  "context": "act beat line, placeholder: the pair refuse the work",
-  "text": "they set the pick down"
  },
  {
   "id": "act-saw",

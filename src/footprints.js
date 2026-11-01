@@ -36,7 +36,6 @@ import { machine } from './machines.js';
 import { houseStands, houseX } from './home.js';
 import { mansionStands, mansionX } from './mansion.js';
 import { portalStands, portalEnd } from './portals.js';
-import { stairPieces } from './render/gates.js';
 import { afterlifeOn, hellOn } from './acts.js';
 import { deepPortal, standOfStation, deepFloor } from './deep/place.js';
 import { stationById } from './deep/party.js';
@@ -132,26 +131,20 @@ function yardParts() {
     add('mansion-blocks', standing(MANSION_BLOCKS_AT * P, MANSION_BLOCKS_W, 2));
   }
 
-  // Heaven's gates over the yard: the leaves and their crest, the cloud bank
-  // under them, and the stair of cloud down to the ground, left of the house.
+  // Heaven's gates over the yard: the leaves and their crest and the cloud
+  // bank under them, in the sky over the house.
   if (afterlifeOn() && portalStands('heaven')) {
     const e = portalEnd('heaven', 'yard');
-    // One object: the stair climbs into the bank, which is where it ends.
-    add('heaven-stairway', rect(e.x - ACT_GATES_REACH, e.top, ACT_GATES_REACH * 2, e.feet - e.top), ...bank(e), ...stairRects(e));
+    add('heaven-gates', rect(e.x - ACT_GATES_REACH, e.top, ACT_GATES_REACH * 2, e.feet - e.top), ...bank(e));
   }
   return out;
 }
 
-// The bank the gates stand in, in cells off the gates' middle column, and the
-// cloud three cells deep under each tread: both are drawn in render/gates.js,
-// off ACT_GATES_BANK_CELLS (config/acts.js) and its exported `stairPieces`.
+// The bank the gates stand in, in cells off the gates' middle column: drawn
+// in render/gates.js off ACT_GATES_BANK_CELLS (config/acts.js).
 function bank(e) {
   const cx = Math.round(e.x / P), ty = Math.round(e.feet / P), b = ACT_GATES_BANK_CELLS;
   return [rect((cx + b.lo) * P, ty * P, (b.hi - b.lo + 1) * P, ACT_GATES_BANK.deep * P)];
-}
-function stairRects(e) {
-  const g = Math.round(S.groundY / P);
-  return stairPieces(Math.round(e.x / P), g).map(({ x0, x1, r }) => rect(x0 * P, r * P, (x1 - x0 + 1) * P, 3 * P));
 }
 
 // --- the deep ---------------------------------------------------------------
