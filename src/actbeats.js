@@ -38,16 +38,19 @@ import { held } from './reset.js';
 import { S } from './state.js';
 import { P, WORKER, FINALE_HOUSE_W, AFTER_GATES, HELL_TIERS, ACT_HURRY, ACT_CAPTION_S, ACT_CAPTION_FADE_S,
          ACT_ROCK_FALL_S, ACT_ROCK_DUST_S, ACT_SOUL_LIFT_S, ACT_RIM_PIECES, ACT_RIM_STEP_S,
-         ACT_CALL_K, ACT_GOON_WAIT_S, ACT_GOON_FADE_S, MANSION_FILE_AT, MANSION_FILE_W,
+         ACT_CALL_K, ACT_GOON_WAIT_S, ACT_GOON_FADE_S, MANSION_FILE_AT, MANSION_FILE_W, ACT_ARRIVE_S, ACT_PEDESTAL_K, ACT_METEOR, ACT_RISE_FRAME_OVER,
          ACT_PEDESTAL_FADE_S } from './config.js';
-import { frameMs } from './clock.js';
+import { frameMs, now } from './clock.js';
+import { shakeView } from './world.js';
 import { afterlifeOn, hellOn, owed } from './acts.js';
 import { play, stepShot, release, addScene } from './cutscene.js';
 import { travel, gliding, setView, goDeep, goUp, canGoDown } from './view.js';
 import { beatDone } from './beats.js';
+import { lineDue, stepLines, lineLook, hearAll, forgetLines } from './dialog.js';
+import { aimGliding } from './shot.js';
 import { openPortal, freePortal, portalEnd, portalBetween, stepPortals } from './portals.js';
 import { sendPair, stepPair, pairAt, placeFor, placeAt, ruinX, yardFeet, cageX, takeLoad, LOOP_CAGE, ghostPace,
-         tear, seenAt, atGates, STAIR_POINTS, stairFoot } from './ghosts.js';
+         tear, seenAt, atGates, DOWN_FLOAT } from './ghosts.js';
 import { beginMansion, mansionDone, mansionX, MANSION_W, beginGathering, gathered, stepMansion, stepGathering,
          forgetMansionHands } from './mansion.js';
 import { houseX, IN_DONE_S } from './home.js';
@@ -85,13 +88,13 @@ export function ensureActs() {
 const A = () => S.acts;
 const pair = () => (S.acts ? S.acts.pair : null);
 
-// The pair, made where they are: two souls rising out of the ruin, facing
-// the stair they will climb.
+// The pair, made where they are: two souls rising out of the ruin, under
+// the gates they will float up to.
 function makePair() {
   const acts = ensureActs();
   if (acts.pair) return acts.pair;
   const x = ruinX();
-  acts.pair = { x, y: yardFeet(x), route: null, leg: 0, hold: null, carry: 0, mode: 'soul', rims: 0, face: Math.sign(stairFoot().x - x) || 1, lift: 0, inside: 0, at: null };
+  acts.pair = { x, y: yardFeet(x), route: null, leg: 0, hold: null, carry: 0, mode: 'soul', rims: 0, face: 1, lift: 0, inside: 0, at: null };
   return acts.pair;
 }
 // A pair stood up for a beat owed with no story behind it (a check, a
@@ -99,11 +102,10 @@ function makePair() {
 function pairForAct4(there = null) {
   const p = makePair();
   if (p.mode === 'soul') { p.mode = 'ghost'; p.lift = 1; }
-  // still up in the cloud, or on the stair: down the road first, walking
-  // (from the stair, down from the step they were making for: `down`'s stair
-  // legs from its third on are the climb's run back)
-  if (p.at === 'climb' || (p.route === 'climb' && p.leg > 0)) {
-    sendPair('down', p.at === 'climb' ? 2 : STAIR_POINTS - p.leg + 1); p.then = 'loop'; return p;
+  // still up in the cloud, or on the float up: down the road first (from
+  // the float, floated back down from where they are: `down`'s last leg)
+  if (p.at === 'float' || p.route === 'float') {
+    p.route = null; sendPair('down', DOWN_FLOAT); p.then = 'loop'; return p;
   }
   if (p.y < tear().y - WORKER) { if (p.route !== 'down') { sendPair('down'); p.then = 'loop'; } return p; }
   // on the loop unless already where the beat wants them
@@ -170,9 +172,19 @@ const chamber = i => spotted(() => ({ x: typeof HELLPLACE.chamberFocusX === 'fun
                                        y: hellFloor() - WORKER }));
 const mansionMid = () => ({ x: mansionX() + MANSION_W * P / 2, y: S.groundY - WORKER });
 const files = () => ({ x: (MANSION_FILE_AT + MANSION_FILE_W * 2) * P, y: S.groundY - WORKER });
+// The float up, framed whole: from over the gates' top down to the ground
+// under the ruin, so the gates stand clear of the top band all the way up.
+const riseBox = () => {
+  const e = portalEnd('heaven', 'yard'), top = e.top - P * ACT_RISE_FRAME_OVER;
+  return { x: e.x - WORKER * 2, y: top, w: WORKER * 4, h: S.groundY + P - top, place: 'yard' };
+};
 const atHouse = spotted(houseSpot), atThrone = spotted(throne), atTear = spotted(tearAbove),
       atMansion = spotted(mansionMid), atFiles = spotted(files);
 const storyOf = key => (key in AFTER_STORY ? AFTER_STORY : HELL_STORY);
+// Who can speak a line (dialog.js), and the frame the camera holds while
+// they do: the bubble is drawn over a head in the window. Only God speaks
+// (the owner, 2026-11-01); a name is a frame and a head (render/dialog.js).
+const SPEAKERS = { god: atThrone };
 
 // The house's fall: the two of them walked indoors first (nothing teleports),
 // then held there; the rock, then the house gone under it.
@@ -183,8 +195,21 @@ function walkThemIn() {
   if (r.mode !== 'in') { r.mode = 'in'; r.u = 0; }
 }
 const indoors = () => !S.retired || (S.retired.mode === 'in' && (S.retired.u || 0) >= IN_DONE_S);
+// When the rock came down, on the game clock: the fire it leaves smoulders
+// on from then (render/housefall.js). This session's: a reload finds it out.
+// And how far into the impact's hold it is, in the beat's own seconds (a
+// click hurries it as it hurries any phase): kept here rather than on the
+// run, so a beat played again after a reload holds only what is left of it.
+let landedAt = null, holdU = null; // held: the house's fall's landing and the hold's seconds, this session's
+held('actbeats-landed', () => { landedAt = null; holdU = null; });
+export const fallLanded = () => landedAt;
+const inHold = () => holdU != null && holdU < ACT_ROCK_DUST_S;
+// The rock down: the house under it, and the yard's shake handed the throw
+// (world.js, `shakeView`, which the motion setting turns off).
 function houseFalls() {
   ensureActs().house = 'fallen';
+  landedAt = now(); holdU = 0;
+  shakeView(ACT_METEOR.shake);
 }
 const fallen = () => !!A() && A().house !== 'standing';
 
@@ -202,36 +227,42 @@ function leavePedestal() {
 
 // The phases of each beat. `frame` is what the camera frames (and so the
 // place it stands in), and `move` 'follow' for a frame that walks; `s` a hold
-// in seconds, or `until` a fact; `say` the band's line; `enter`, `step` and
+// in seconds, or `until` a fact; `say` the band's line; `lines` the
+// speakers' lines, which hold the phase until each is read (dialog.js); `enter`, `step` and
 // `end` what it does on the way.
 const BODIES = {
   'house-fall': [
     { frame: atHouse, enter: walkThemIn, until: indoors, skipIf: fallen },
     { frame: atHouse, s: ACT_ROCK_FALL_S, skipIf: fallen, end: houseFalls },
-    { frame: atHouse, s: ACT_ROCK_DUST_S, enter: () => openPortal('heaven'), say: 'act-house-fall', skipIf: () => !!pair() },
-    { frame: onPair, s: ACT_SOUL_LIFT_S, enter: makePair, step: u => { pair().lift = Math.min(1, u / ACT_SOUL_LIFT_S); }, skipIf: () => !!pair() && pair().lift >= 1 },
-    // up the cloud stair to the gates, followed; they stand open as the two come to them
-    { frame: onPair, move: 'follow', enter: () => { makePair().lift = 1; if (!pairAt('climb')) sendPair('climb'); }, until: () => pairAt('climb'),
+    // the impact's hold; a fresh page, which has not seen the landing
+    // (`holdU` is this session's), goes on from the souls
+    { frame: atHouse, until: () => !inHold(), step: (u, dt) => { holdU += dt; }, enter: () => openPortal('heaven'),
+      skipIf: () => !!pair() || !inHold() },
+    { frame: onPair, s: ACT_SOUL_LIFT_S, enter: () => { openPortal('heaven'); makePair(); }, step: u => { pair().lift = Math.min(1, u / ACT_SOUL_LIFT_S); }, skipIf: () => !!pair() && pair().lift >= 1 },
+    // floated up to the gates, the rise framed whole and held so the gates,
+    // fading in over it, stand clear of the band; they stand open as the
+    // two come to them
+    { frame: riseBox, enter: () => { makePair().lift = 1; if (!pairAt('float')) sendPair('float'); }, until: () => pairAt('float'),
       skipIf: () => !!pair() && (pairAt('rise') || pair().route === 'rise' || placeAt(pair().y) !== 'yard') },
     // through the open gates, the camera after them by the ripple, and out
     // of heaven's onto the cloud floor
     { frame: onPair, move: 'follow', enter: () => { makePair().lift = 1; if (!pairAt('rise')) sendPair('rise'); },
       until: () => pairAt('rise') && S.view === 'after' && !gliding() }
   ],
-  'arrive': [{ frame: onPair, s: ACT_CAPTION_S, enter: beginAct3, say: 'act-arrive' }],
-  'meet-god': [{ frame: atThrone, s: ACT_CAPTION_S + 1, say: 'act-meet-god' }],
-  // To the camp, then up onto the pedestal, where the speech is theirs from
-  // then on (after/bubbles.js reads `at === 'pedestal'`).
-  'refuse': [
-    { frame: onPair, move: 'follow', enter: () => sendPair('camp'), until: () => pairAt('camp'), say: 'act-refuse',
-      skipIf: () => onPedestal() || (!!pair() && pair().route === 'pedestal') },
-    { frame: onPair, move: 'follow', enter: () => { if (!onPedestal()) sendPair('pedestal'); }, until: () => onPedestal() && pair().top >= 1 },
-    { frame: onPair, s: 1.5 }
-  ],
+  // Through the gates, a breath on the cloud floor, and the camera on to God
+  // (the owner's K2, 2026-11-01).
+  'arrive': [{ frame: onPair, s: ACT_ARRIVE_S, enter: beginAct3 }],
+  // God's lines, each waiting for a click (dialog.js); the beats' captions
+  // stand in until the owner writes them. The opening ends with the last.
+  'meet-god': [{ frame: atThrone, lines: [{ who: 'god', id: 'act-meet-god' }] }],
+  // Sent off to the pedestal and over the same frame: the walk there is
+  // played, not shown (ACT_PEDESTAL_K, `stepActs`), and the speech is theirs
+  // once they stand on it (after/bubbles.js reads `at === 'pedestal'`).
+  'refuse': [{ frame: atThrone, enter: () => { if (!onPedestal()) sendPair('pedestal'); }, until: () => true }],
   'saw': [{ frame: onPair, s: ACT_CAPTION_S, say: 'act-saw' }],
   'strike': [{ frame: atThrone, s: ACT_CAPTION_S + 1, enter: () => { ensureActs().struck = true; }, say: 'act-strike' }],
   'unmask': [{ frame: atThrone, s: ACT_CAPTION_S + 1, enter: () => openPortal('hell'), say: 'act-unmask' }],
-  'hell-told': [{ frame: atThrone, s: ACT_CAPTION_S + 1, say: 'act-hell-told' }],
+  'hell-told': [{ frame: atThrone, lines: [{ who: 'god', id: 'act-hell-told' }] }],
   'ghost-road': [{ frame: atTear, s: ACT_CAPTION_S, enter: () => { ensureActs().road = true; freePortal('heaven'); }, say: 'act-ghost-road' }],
   'haunt': [
     // Off the pedestal first: the road's drawing faded back on over the
@@ -339,7 +370,9 @@ function step(key, next, t) {
   const phases = BODIES[key];
   const ph = phases[run.i];
   if (ph) {
-    const fr = ph.frame();
+    // a line due frames its speaker: the shot glides to whoever speaks
+    const due = ph.lines ? lineDue(ph.lines) : null;
+    const fr = due && SPEAKERS[due.who] ? SPEAKERS[due.who]() : ph.frame();
     box = fr; moving = ph.move || 'glide';
     // A place the camera cannot stand in (the deep before the wizards'
     // portal, in a yard stood up for a check) is watched from where it is.
@@ -357,8 +390,12 @@ function step(key, next, t) {
     run.u += dt;
     if (ph.step) ph.step(run.u, dt);
     const hold = ph.s ?? ACT_CAPTION_S;
-    caption = ph.say ? { id: ph.say, args: ph.args || null, a: captionAlpha(run.u, ph.until ? Infinity : hold) } : null;
-    const done = ph.until ? ph.until() : run.u >= hold;
+    // A phase's lines: each put up once the shot is at rest on its speaker,
+    // the phase held until the last is read and faded.
+    const talking = ph.lines ? stepLines(ph.lines, !aimGliding(), now()) : false;
+    caption = ph.lines ? lineLook(now())
+      : ph.say ? { id: ph.say, args: ph.args || null, a: captionAlpha(run.u, ph.until ? Infinity : hold) } : null;
+    const done = ph.lines ? !talking : ph.until ? ph.until() : run.u >= hold;
     if (!done) return true;
     if (ph.end) ph.end();
     // the next phase glides the camera from here to what it looks at
@@ -379,8 +416,8 @@ function step(key, next, t) {
 // null otherwise (render/portals.js draws the rock at rest off `S.acts.house`).
 export function fallNow() {
   if (!run || run.key !== 'house-fall' || run.out) return null;
-  if (run.i === 1) return { rock: Math.min(1, run.u / ACT_ROCK_FALL_S), dust: 0 };
-  if (run.i === 2) return { rock: 1, dust: Math.min(1, run.u / ACT_ROCK_DUST_S) };
+  if (run.i === 1) return { rock: Math.min(1, run.u / ACT_ROCK_FALL_S), dust: 0, u: run.u };
+  if (run.i === 2) { const u = Math.min(holdU ?? ACT_ROCK_DUST_S, ACT_ROCK_DUST_S); return { rock: 1, dust: u / ACT_ROCK_DUST_S, u }; }
   if (run.i === 0) return { rock: -1, dust: 0 };
   return null;
 }
@@ -392,8 +429,14 @@ export function actBody(key, next) {
     enter: t => begin(key, t),
     step: t => step(key, next, t),
     // A click or the held space bar: faster, never cut (the walk still has
-    // to be walked). False: the beat carries on.
-    skip: () => { if (run && run.key === key) run.hurry = ACT_HURRY; return false; }
+    // to be walked), and every line of the beat read at once (a click on a
+    // line waiting goes on from that line alone, input.js, before this is
+    // asked). False: the beat carries on.
+    skip: () => {
+      if (run && run.key === key) run.hurry = ACT_HURRY;
+      hearAll(BODIES[key].flatMap(ph => ph.lines || []), now());
+      return false;
+    }
   };
 }
 
@@ -422,7 +465,9 @@ export function stepActs(c) {
   }
   if (p && p.route) {
     const base = ghostPace();
-    const k = (p.hold ? ACT_CALL_K : 1) * (run ? run.hurry : 1);
+    // up onto the pedestal after the opening, briskly and in play
+    const brisk = p.mode === 'soul' && (p.route === 'pedestal' || p.route === 'camp') && !beatDone('haunt');
+    const k = (p.hold ? ACT_CALL_K : brisk ? ACT_PEDESTAL_K : 1) * (run && !run.out ? run.hurry : 1);
     stepPair(base * k * c.dt / 1000);
   }
   // The mansion is a standing job from the start of the cage's barrier
@@ -453,5 +498,6 @@ export const SAVE = {
 };
 export function forgetActs() {
   run = null; caption = null;
+  forgetLines();
   forgetMansionHands();
 }

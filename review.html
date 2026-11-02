@@ -126,7 +126,8 @@
 </div>
 <div class="right" id="right"><div class="stage" id="stage"><iframe id="yard" src="./play.html?bench" title="the change under review"></iframe></div></div>
 </div>
-<script>
+<script type="module">
+import { reviewState } from "/tools/review-state.mjs";
 const $ = id => document.getElementById(id);
 const f = $('yard'), stage = $('stage');
 const slug = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -224,14 +225,9 @@ const entryOf = x => info.entries.find(e => slug(e.review) === slug(x.name));
 const sceneOfNote = n => (/\(([^()]+)\)\s*$/.exec(n?.option || '') || [])[1];
 // -> { state, what, since, stale, rebuilding (the scene a signed-off review is redoing) }
 function statusOf(x) {
-  const e = entryOf(x), last = notesOf(x).reduce((a, n) => !a || Date.parse(n.at) >= Date.parse(a.at) ? n : a, null), p = printed?.reviews[slug(x.name)];
-  const stale = !!e && Date.now() - Date.parse(e.since) > STALE_MS;
-  const w = e ? { what: e.what, since: e.since, stale } : { what: last?.say || '', since: last?.at, stale: false };
-  if (isLanded(x)) return { state: 'landed', ...w };
-  if (last?.verdict === 'stop') return { state: 'signed', ...w, what: e?.what || '', since: e?.since, rebuilding: e ? sceneOfNote(last) : null };
-  if (e) return { state: e.state === 'building' ? 'building' : 'iterating', ...w };
-  if (last && !(p && p.since > last.at)) return { state: 'iterating', ...w };
-  return { state: 'waiting', what: '', since: null, stale: false };
+  const r = reviewState({ entry: entryOf(x), notes: notesOf(x), changes: changesOf(x), printSince: printed?.reviews[slug(x.name)]?.since, landed: isLanded(x) });
+  if (r.rebuilding) r.rebuilding = sceneOfNote(notesOf(x).reduce((a, n) => !a || Date.parse(n.at) >= Date.parse(a.at) ? n : a, null));
+  return r;
 }
 const COLS = [['waiting', 'Waiting on you', 1], ['iterating', 'Iterating', 0], ['building', 'Building', 0], ['signed', 'Signed off', 0]];
 // Every review the board knows: the scenes' reviews plus any a status entry

@@ -134,11 +134,19 @@ function frame() {
 // Boot, in this order: the world is laid out first, because everything below
 // stands in it (the ground's sand is allocated here). Then the save, then the
 // shop rows it decides, then anybody the counts say is missing.
+// How far the boot got, for a check whose frame never boots
+// (selftest/boardwords.js, `bootFrame`): a hang names its step, and a
+// rejected import its error (`__bootErr`). lang.js names the steps before
+// this module runs: `lang`, `lang-read`, `face`, `face-read`. Dev only.
+const bootAt = step => { if (DEV) globalThis.__bootAt = step; };
+bootAt('layout');
 relayout();
+bootAt('store');
 // The store is read once and answered from memory after (`primeStore`):
 // IndexedDB answers in its own time and the yard reads the store as if it
 // did not.
 await primeStore();
+bootAt('stored');
 // Asked to be kept: a browser short of disk evicts the storage of origins
 // nobody asked it to keep, least recently used first. The answer changes
 // nothing here.
@@ -154,7 +162,8 @@ const demo = params.has('demo');
 // the game in the next tab stand aside and reload. Dev only, like the scenes
 // themselves: a build folds this to false and drops every branch under it.
 const bench = import.meta.env.DEV && params.has('bench');
-if (!demo && !bench) await cloudBoot();   // wave-cloud SYNC: the cloud's newer copies, before the yard is read
+if (!demo && !bench) await cloudBoot();
+bootAt('restore');   // wave-cloud SYNC: the cloud's newer copies, before the yard is read
 if (demo) {
   document.body.classList.add('demo');
   veil.remove();
@@ -213,8 +222,9 @@ addEventListener('storage', e => {
 // A build-time constant, so a build drops these imports and everything under
 // them.
 if (import.meta.env.DEV) {
+  bootAt('handles');
   import('./dev.js');
-  import('./console.js');
+  import('./console.js').then(() => bootAt('booted'), e => { bootAt('handles-failed'); globalThis.__bootErr = String(e?.message || e); throw e; });
   import('./scenesheet.js');
 }
 

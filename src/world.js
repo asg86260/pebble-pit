@@ -5,6 +5,7 @@
 // are placed by one walk of the SITES table (config/sites.js), so adding one is
 // a row there and a `seat` in `seatSites`.
 
+import { groundTop } from './route.js';
 import { P, CELL, SKY, SKY_UP, SKY_R, TO_BENCH, TO_QUARRY, TO_LEDGE, GROUND_LEFT,
         ROCK_CLEAR, BANK_SLOPE, ROCK_PILE_TO, PILE_GAP, PILE_STANDOFF, heapBase, PIT_H,
         SITES, TO_FIRST_SITE, STATION_GAP, SHACK_SHIELD_CLEAR, SHACK_EAVE, shieldReach, SHACK_RISE, SHACK_SCOOT, SHACK_CLEAR, RAM_CLEAR,
@@ -640,6 +641,10 @@ export function resize(after) {
   };
   floor.cols = Math.ceil(S.worldW / P);
   floor.y = S.groundY - floor.rows * P;
+  // Where the ground lies under the line (route.js, `groundTop`: the crater
+  // the house's rock leaves), a column's floor lies with it, so the dust on
+  // it rests on the ground and not on the line over it.
+  floor.sink = c => Math.max(0, groundTop(floor.x + c * P + P / 2) - S.groundY);
 
   // the pit floor rests on the bottom of the window; everything above it is sky
   S.camY = S.worldH - S.viewH;

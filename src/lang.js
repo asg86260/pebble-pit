@@ -85,7 +85,12 @@ export const LANG = pickLanguage({
   files: LANGS,
   table: LANGUAGES,
 });
+// The boot's step, for a frame that never boots (main.js, `bootAt`): this
+// module's two waits are the only ones before main.js runs. Dev only.
+const bootAt = step => { if (VITE && import.meta.env.DEV) globalThis.__bootAt = step; };
+bootAt('lang');
 const active = LANG === SOURCE ? english : bundleOf(LANG, await source(LANG));
+bootAt('lang-read');
 
 // The face the canvas writes in (DESIGN.md, "Localization phase two", section
 // 3): the house mono (Courier Prime, bundled; Courier New for what it does not
@@ -105,7 +110,9 @@ if (FAMILY && FACES && typeof FontFace === 'function' && typeof document !== 'un
   if (url) {
     const face = new FontFace(FAMILY, `url(${url})`, { weight: '400 700' });
     document.fonts.add(face);
+    bootAt('face');
     try { await face.load(); } catch (e) { console.warn(`${FAMILY}: the face did not load`, e); }
+    bootAt('face-read');
   }
 }
 

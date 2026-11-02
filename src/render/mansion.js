@@ -12,7 +12,7 @@
 
 import { S } from '../state.js';
 import { P, MANSION_GREYS, MANSION_LIT, MANSION_WINDOW, MANSION_WINDOW_EVERY, MANSION_FLOOR_ROWS, MANSION_POLES,
-         MANSION_FLOORS, MANSION_BLOCKS_AT, MANSION_BLOCK_CELLS, MANSION_BLOCKS_W, MANSION_TOWER_FLOORS, FINALE_PILE_W, FINALE_GREYS, ACT_ROCK_TONES } from '../config.js';
+         MANSION_FLOORS, MANSION_BLOCKS_AT, MANSION_BLOCK_CELLS, MANSION_BLOCKS_W, MANSION_TOWER_FLOORS, MANSION_TOP_ROWS, FINALE_PILE_W, FINALE_GREYS, ACT_ROCK_TONES } from '../config.js';
 import { ctx } from './ctx.js';
 import { themeGen } from '../ink.js';
 import { pieces } from '../home.js';
@@ -20,7 +20,7 @@ import { hash } from './flicker.js';
 import { mansionPieces, mansionStands, mansionX, MANSION_W, pieceIn, poleUp, blocksLeft, woodLeft, woodX } from '../mansion.js';
 
 const [INK, G1, G2, G3] = MANSION_GREYS;
-const TOP = (MANSION_TOWER_FLOORS * MANSION_FLOOR_ROWS) + 4;   // rows over the ground the sheet must hold
+const TOP = MANSION_TOP_ROWS;   // rows over the ground the sheet must hold
 // The woodpile's rows at the house's fall: one for each scaffold piece the
 // finale carried down onto it (home.js).
 const woodRows = () => pieces().filter(p => p.off != null).length;

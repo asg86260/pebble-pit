@@ -4,6 +4,18 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
+## A dialog system -- APPROVED, BUILDING (2026-11-01)
+
+The owner: "we need to have some dialog to explain the premise of act 3. we
+dont have a dialog system yet though". DESIGN.md, "A dialog system (design,
+approved)": lines as a phase field on the act beats' `BODIES` beside `say`,
+in a bubble over God with the A1 tail, each line waiting for a click (the
+yard never pauses), all ended by the held space bar, each heard line saved
+in `S.heard` so nothing replays after a reload. Only God speaks. Building on
+branch `dialog`, with God's existing captions standing in as his lines.
+Blocker: the premise's lines are the owner's to write (the five slots in
+"The first use"); none goes in the game until written.
+
 ## Act 3's grove, rebuilt -- DESIGNED, QUESTIONS SETTLED, READY TO BUILD (2026-10-30)
 
 The owner's fifteen calls from the live grove review (mock branch
@@ -21,6 +33,62 @@ height, the axe's rename, the migration to SAVE_V 35) is built on branch
 `grove-a`, not on main yet. Blocker: tracks B (the woodcutter's saw, F1), C
 (the stump, F3a-1) and D (seeds) build on it; until B lands the hand still
 puts the saw on a tree by its icon and the woodcutter chops on its old timer.
+
+## A browser shard's whole tab stops answering on CI -- PROBE IN (2026-10-31)
+
+Sometimes a CI browser shard's page stops answering CDP altogether. On
+2026-10-31, `800,600 5/8` (run 41174909950) sat in the suite for its whole
+hour, and `390,844 5/8` (run 41179210914) did not answer for 12 minutes and
+would not even pause, so its renderer was gone or wedged below the script.
+Locally, at 3x CPU throttle, about fifty frame boots in a row in one tab
+twice hung the tab the same way. It is not the frame-boot timeout. That one
+was Chrome refusing module requests (net::ERR_INSUFFICIENT_RESOURCES, its cap
+on one renderer's outstanding requests) while a ~540-module dev graph loaded
+in a frame beside the suite's page; `bootFrame` now sees the failed graph
+(`__bootErr = 'graph'`, play.html) and loads the frame again. The same cap is
+a lead here: the landing-page check once lost `/src/console.js` the same
+way, and a renderer short of resources may be what wedges.
+
+The probe: `tools/headless.mjs` gives a shard 12 minutes (`STALL_MIN`), then
+pauses the page from a second debugger session and prints its stack and
+last console lines. All along it watches the network and lists any request
+still open, slower than five seconds or failed. It reports a renderer crash
+when it happens and samples heap, frames and documents every 30 s. In dev,
+`__bootAt` (main.js, lang.js) names the boot step a frame reached. Blocker:
+the next hung shard, to read the probe.
+
+The request budget again, 2026-11-01 (run 41277243340, `390,844 1/8`, fr,
+then ru on the re-run; run 41278613493, `1920,1080 1/8`, es): the frame came
+up as Chrome's error page reload after reload. Even `play.html` itself was
+refused at once with net::ERR_INSUFFICIENT_RESOURCES for the whole 20 s.
+Nothing here is specific to the 390 shard.
+
+- The cap is Chrome's loaders per initiating process:
+  `kMaxOutstandingRequestsPerProcess = 2700`
+  (services/network/network_context.h). Only a testing setter changes it;
+  there is no switch.
+- The watcher's first refusal saw 269 requests open, all from one frame and
+  all 0.2 s old. Afterwards it saw 2 open while every request was still
+  refused.
+- With every target attached (run 41279554300, `390,844 1/8`, green), a
+  refusal came with 264 open, all one frame on one target. So nothing was
+  hidden on another target: the refusal comes at about 260 outstanding,
+  not 2700, from a cap I have not found in the source. That load recovered
+  on the backed-off retry.
+- Not reproduced locally: ~250 boots unthrottled and at 3x/6x CPU throttle,
+  8 frames booted at once, a cold deps cache, and 200 ms of added latency
+  (`Network.emulateNetworkConditions`: 18 s a boot, no refusal).
+- Lingering removed frames are probably not it: locally over 100 detached
+  documents waited for the collector with no refusal. Each holds only
+  finished loads.
+- In place, not proven to fix it: the language groups boot every language
+  in one frame (fewer live documents, 43 -> 25), and `bootFrame` backs off
+  1, 2, 4 s.
+- One frame's unbundled graph is ~540 module requests. On a slow runner
+  about half are outstanding at once, which reaches the ~260 refusal point
+  by itself. The lasting fix lowers one load's peak, or serves the bench
+  frame a graph with fewer requests. Until then the backed-off retry is
+  what recovers, and a burst that outlasts 20 s still reds the check.
 
 ## The yard joins the conservation rule (2026-10-28)
 

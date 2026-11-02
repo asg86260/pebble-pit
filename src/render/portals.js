@@ -1,5 +1,5 @@
 // The acts' connective tissue, drawn (actbeats.js, portals.js, ghosts.js):
-// heaven's gates up their cloud stair beside the ruin (render/gates.js), the rock out of the sky and lying on the ruin, the go-on card, hell's
+// heaven's gates over the ruin (render/gates.js), the rock out of the sky and lying on the ruin (render/housefall.js), the go-on card, hell's
 // white-hot slit in the deep's floor, each portal's far end, the pointing
 // hands, the two of them as souls and ghosts on the road, the freed souls
 // coming down to the mansion, the blocks in the builders' hands, and a beat's
@@ -9,7 +9,8 @@
 
 import { S } from '../state.js';
 import { P, WORKER, GREY, FINALE_GREYS, FINALE_HOUSE_W, ACT_PORTAL_SPIN_HZ, ACT_ROCK_W, ACT_ROCK_H, AFTER_TONES,
-         ACT_ROCK_FROM, ACT_ROCK_STEPS, ACT_ROCK_TONES, ACT_SOUL_RIM, ACT_SOUL_PAPER,
+         ACT_ROCK_TONES, ACT_SOUL_RIM, ACT_SOUL_PAPER, ACT_SOUL_CLOTH, ACT_SOUL_HALO, ACT_SOUL_HALO_TONE,
+         ACT_SOUL_BOB, ACT_SOUL_BOB_S, ACT_SOUL_BOB_APART,
          ACT_SLIT_TONES, ACT_GOON_ABOVE, ACT_GOON_PAD, ACT_GOON_FONT_PX, ACT_CAPTION_FONT_PX, ACT_CAPTION_GREY,
          ACT_RIM_PIECES, MANSION_SOULS, ABYSS_TONES } from '../config.js';
 import { now } from '../clock.js';
@@ -17,7 +18,7 @@ import { ctx } from './ctx.js';
 import { fillDots } from './dots.js';
 import { hash } from './flicker.js';
 import { msg, FACE } from '../lang.js';
-import { raw, light, perPage } from '../ink.js';
+import { raw, light, perPage, themeNow } from '../ink.js';
 import { bandCells } from '../cutscene.js';
 import { CELL } from '../config.js';
 import { drawBody, lookFor } from './crew.js';
@@ -26,11 +27,14 @@ import { drawHand } from './hand.js';
 import { GREYS, PURPLES } from './deeptones.js';
 import { houseX } from '../home.js';
 import { portalOpenK, portalEnd, handShown, handAlpha, handBox, PORTALS } from '../portals.js';
-import { pairBodies, placeAt, onRoad, passAlpha } from '../ghosts.js';
+import { pairBodies, placeAt, onRoad, passAlpha, soulSeen } from '../ghosts.js';
+import { drawHouseFall } from './housefall.js';
+import { groundTop } from '../route.js';
 import { drawGatesBehind, drawGatesFront, drawGatesAfter } from './gates.js';
-import { goOnDue, goOnAlpha, fallNow, actCaption } from '../actbeats.js';
+import { goOnDue, goOnAlpha, actCaption } from '../actbeats.js';
 import { rockRowsLeft, soulAt, mansionHeld } from '../mansion.js';
 import { deepFloor } from '../deep/place.js';
+import { drawLine } from './dialog.js';
 
 const snap = v => Math.round(v / P) * P;
 const cellAt = (x, y, tone) => { if (!tone) return; ctx.fillStyle = tone; ctx.fillRect(x, y, P, P); };
@@ -69,15 +73,15 @@ function drawHandAt(key, place, line, fill) {
 export function drawActsYard() {
   if (!S.acts) { drawGoOn(); return; }
   drawRuin();
-  drawRock();
+  drawHouseFall(rockCells);
   drawGatesBehind();
   drawGoOn();
   ctx.fillStyle = '#000';
 }
 
-// The rock out of the sky: coming down in held steps while the fall plays,
-// then lying on the ruin, a row lighter for every row the mansion's builders
-// have broken off it (mansion.js). Its cells a tone each off where they are.
+// The rock out of the sky (render/housefall.js has it falling and lying in
+// its crater), a row lighter for every row the mansion's builders have
+// broken off it (mansion.js). Its cells a tone each off where they are.
 function rockCells(x0, y0, rows) {
   const w = ACT_ROCK_W, h = ACT_ROCK_H;
   for (let r = h - rows; r < h; r++) {
@@ -88,39 +92,16 @@ function rockCells(x0, y0, rows) {
     }
   }
 }
-function drawRock() {
-  const f = fallNow();
-  const x0 = snap(houseX() + FINALE_HOUSE_W * P / 2 - ACT_ROCK_W * P / 2);
-  const rest = Math.round(S.groundY / P) * P - ACT_ROCK_H * P;
-  if (f && f.rock < 0) return;
-  if (f && f.rock < 1) {
-    const k = Math.floor(f.rock * ACT_ROCK_STEPS) / ACT_ROCK_STEPS;
-    rockCells(x0, snap(rest - ACT_ROCK_FROM * (1 - k)), ACT_ROCK_H);
-    return;
-  }
-  if (S.acts.house === 'standing') return;
-  const rows = rockRowsLeft();
-  if (rows > 0) rockCells(x0, rest, rows);
-  if (f && f.dust > 0) drawDust(x0, rest, f.dust);
-}
-// The dust off the fall: a ring of grey cells going out along the ground and
-// up, thinning, in held steps.
-function drawDust(x0, y, k) {
-  const n = 14, step = Math.floor(k * 8) / 8;
-  faded(1 - step, () => {
-    for (let i = 0; i < n; i++) {
-      const side = i % 2 ? 1 : -1, j = Math.floor(i / 2);
-      const x = snap(x0 + ACT_ROCK_W * P / 2 + side * (ACT_ROCK_W * P / 2 + step * P * (6 + j * 2)));
-      cellAt(x, snap(y + ACT_ROCK_H * P - P - step * P * (1 + (j % 3)) * 3), FINALE_GREYS[3 + (j % 3)]);
-    }
-  });
-}
-// The ruin: boards of the house broken and lying out from under the rock.
+// The ruin: boards of the house broken and lying out from under the rock, on
+// the ground where it lies (down the crater's side, crater.js).
 function drawRuin() {
   if (S.acts.house !== 'fallen') return;
-  const gy = Math.round(S.groundY / P) * P - P, hx = houseX();
+  const hx = houseX();
   const bits = [[-1, 0, 3], [1, -1, 2], [FINALE_HOUSE_W - 2, 0, 3], [FINALE_HOUSE_W, -1, 2], [FINALE_HOUSE_W + 1, 0, 2]];
-  for (const [c, r, w] of bits) for (let i = 0; i < w; i++) cellAt(hx + (c + i) * P, gy + r * P, (c + i) % 2 ? '#000' : FINALE_GREYS[1]);
+  for (const [c, r, w] of bits) for (let i = 0; i < w; i++) {
+    const x = hx + (c + i) * P;
+    cellAt(x, Math.round(groundTop(x + P / 2) / P) * P - P + r * P, (c + i) % 2 ? '#000' : FINALE_GREYS[1]);
+  }
 }
 
 // --- the go-on card (call 7) ---------------------------------------------------------------
@@ -210,25 +191,34 @@ export function drawActsHell() {
 }
 
 // --- the bodies on the road ---------------------------------------------------------------------
-// A soul: the body's square with its rim's eight cells in the pale grey,
-// those inked in black (lives coming back a piece at a time), what it wears
-// drawn in the same pale inks.
-// On the dark page the pale greys are drawn at the light page's own
-// lightness (`light`, past the map), so a soul is a pale thing on either
-// page: mapped as the yard maps every grey they would land beside the black
-// and read as ink. The middle stays paper and an inked piece ink, as a
+// A soul (the owner, 2026-10-30: lighter, and floating a little): the body's
+// square with its rim's eight cells in a mid grey, those inked in black
+// (lives coming back a piece at a time), what it wears in paler greys, and a
+// faint halo round it. On a dark page the greys are drawn as written, past
+// the yard's map, which would land them near the black: a soul is a pale
+// thing on either page. The middle stays paper and an inked piece ink, as a
 // body's are in the yard.
-const seen = light;
-let SOUL_RIM;   // cache: the page's tones, worked out again at each turn (ink.js, perPage)
+const pale = c => (themeNow() !== 'light' ? raw(c) : c);
 const SOUL_INKS = {};
-perPage(() => {
-  SOUL_RIM = seen(ACT_SOUL_RIM);
-  Object.assign(SOUL_INKS, { ink: SOUL_RIM, paper: ACT_SOUL_PAPER, grey: seen(GREY[2]), pale: seen(GREY[1]) });
-});
+const soulInks = () => Object.assign(SOUL_INKS, { ink: pale(ACT_SOUL_RIM), paper: ACT_SOUL_PAPER, grey: pale(ACT_SOUL_CLOTH.grey), pale: pale(ACT_SOUL_CLOTH.pale) });
+// The halo: the ring of cells one out from the body's square, its corners off.
+function drawHalo(x, y) {
+  faded(ACT_SOUL_HALO, () => {
+    const tone = pale(ACT_SOUL_HALO_TONE);
+    for (let c = -1; c <= 3; c++) for (let r = -1; r <= 3; r++) {
+      const side = c === -1 || c === 3, end = r === -1 || r === 3;
+      if ((side || end) && !(side && end)) cellAt(x + c * P, y + r * P, tone);
+    }
+  });
+}
+// A soul's bob, a cell up and down, each of the two on its own phase.
+const bobAt = i => ACT_SOUL_BOB * P / 2 * Math.sin((now() / 1000) * Math.PI * 2 / ACT_SOUL_BOB_S + i * ACT_SOUL_BOB_APART);
 const RIM = [[0, 0], [1, 0], [2, 0], [2, 1], [2, 2], [1, 2], [0, 2], [0, 1]];
 function drawSoul(x, y, inked, look) {
+  drawHalo(x, y);
   if (look) dressBehind(ctx, x, y, look);
-  RIM.forEach(([c, r], i) => cellAt(x + c * P, y + r * P, i < inked ? '#000' : SOUL_RIM));
+  const rim = pale(ACT_SOUL_RIM);
+  RIM.forEach(([c, r], i) => cellAt(x + c * P, y + r * P, i < inked ? '#000' : rim));
   cellAt(x + P, y + P, ACT_SOUL_PAPER);
   if (look) { dressOn(ctx, x, y, look); dressHead(ctx, x, y, look); }
 }
@@ -239,28 +229,31 @@ export function drawActBodies(place) {
     // Faded off over the pedestal's own drawing of them while they stand on
     // it (actbeats.js, `top`), and into and out of heaven's gateway going
     // through (ghosts.js, `passAlpha`).
-    const k = Math.min(p.lift ?? 1, 1 - (p.inside || 0), 1 - (p.top || 0), passAlpha(p));
+    // And while the opening's souls rise, faded in from nothing over it
+    // (ghosts.js, `soulSeen`).
+    const k = Math.min(p.lift ?? 1, 1 - (p.inside || 0), 1 - (p.top || 0), passAlpha(p)) * soulSeen(p);
     pair.forEach((b, i) => {
       // on the road up between the yard and the cloud floor, the road's own
       // layer draws them (render/road.js)
       if ((placeAt(b.y) || (onRoad(b.y) ? 'road' : null)) !== place) return;
       // Up there, a body standing on the cloud floor stands on its puffs.
-      const x = Math.round(b.x), y = Math.round(b.y);
+      // a soul floats a little over where it stands, bobbing
+      const x = Math.round(b.x), y = p.mode === 'soul' ? b.y - P / 2 + bobAt(i) : Math.round(b.y);
       const look = lookFor(WHO[i], {}, b.x, { face: p.face || null, deep: place === 'deep' });
       faded(k, () => {
         if (p.mode === 'alive') drawBody(x, y, look);
-        else drawSoul(x, y, Math.min(ACT_RIM_PIECES, p.rims || 0), look && { ...look, inks: SOUL_INKS });
+        else drawSoul(x, y, Math.min(ACT_RIM_PIECES, p.rims || 0), look && { ...look, inks: soulInks() });
       });
       // a load of the yard's dust in the first one's hands, on the way down
       if (i === 0 && p.carry > 0) for (let c = 0; c < 2; c++) cellAt(x + c * P + P / 2, y - P, FINALE_GREYS[2]);
     });
   }
   if (place !== 'yard') { ctx.fillStyle = '#000'; return; }
-  // the freed souls coming down the stair to the mansion
+  // the freed souls floating down from the gates to the mansion
   for (let i = 0; i < MANSION_SOULS; i++) {
     const s = soulAt(i);
     if (!s) continue;
-    faded(s.k ?? 1, () => drawSoul(snap(s.x), Math.round(s.y), 0, null));
+    faded(s.k ?? 1, () => drawSoul(Math.round(s.x), Math.round(s.y), 0, null));
   }
   // what the mansion's builders carry: a block over the head, a pole upright
   for (const w of S.workers) {
@@ -274,11 +267,14 @@ export function drawActBodies(place) {
 }
 
 // --- a beat's line --------------------------------------------------------------------------------
-// In the foot band, white on its black, faded in and out (actbeats.js). The
-// words are the owner's to write: each is a plain label in locales/en.ftl.
+// In the foot band, white on its black, faded in and out (actbeats.js); a
+// speaker's line in a bubble instead. The words are the owner's to write:
+// each is a plain label in locales/en.ftl.
 export function drawActCaption() {
   const c = actCaption();
   if (!c || c.a <= 0 || S.hush <= 0) return;
+  // a speaker's line is a bubble over their head (render/dialog.js)
+  if (c.who) { drawLine(c); return; }
   const band = Math.round(S.hush * bandCells()) * CELL;
   if (band < ACT_CAPTION_FONT_PX) return;
   ctx.save();

@@ -1,6 +1,8 @@
 // The ground line, the hole in it and what is lying in the hole.
 
-import { GROUND_INK, GROUND_TEXTURE, GROUND_TILE, P } from '../config.js';
+import { GROUND_INK, GROUND_TEXTURE, GROUND_TILE, P, ACT_CRATER, CRATER_IN_S } from '../config.js';
+import { craterNow, craterMid, craterCol } from '../crater.js';
+import { fallNow } from '../actbeats.js';
 import { themeGen } from '../ink.js';
 import { pitDepth } from '../pit.js';
 import { S, floor, pit } from '../state.js';
@@ -9,15 +11,41 @@ import { ctx } from './ctx.js';
 // The ground runs up to the lip and picks up again past the far wall. Drawn
 // before the rock, so the couple of cells the rock sinks below the line read
 // as the rock being in front of the ground rather than buried in it.
+// Where the house's rock lies the line runs down round the crater it made
+// (crater.js), a cell a column, the ground's face above it the bowl's far
+// bank; knocked in at the impact, faded in over its first frames.
 export function drawGroundLine() {
   ctx.lineWidth = 2;
   ctx.strokeStyle = '#000';
+  const deep = craterNow(), c = craterMid(), half = ACT_CRATER.half * P, y = S.groundY + 1;
+  const f = fallNow(), a = f && f.rock >= 1 ? Math.min(1, (f.u || 0) / CRATER_IN_S) : 1;
   ctx.beginPath();
-  ctx.moveTo(0, S.groundY + 1);
-  ctx.lineTo(pit.x - 1, S.groundY + 1);
-  ctx.moveTo(pit.x + pit.w + 1, S.groundY + 1);
-  ctx.lineTo(S.worldW, S.groundY + 1);
+  ctx.moveTo(0, y);
+  if (deep > 0) {
+    ctx.lineTo(c - half, y);
+    ctx.moveTo(c + half, y);
+  }
+  ctx.lineTo(pit.x - 1, y);
+  ctx.moveTo(pit.x + pit.w + 1, y);
+  ctx.lineTo(S.worldW, y);
   ctx.stroke();
+  if (deep <= 0) return;
+  const was = ctx.globalAlpha;
+  if (a < 1) {
+    ctx.globalAlpha = was * (1 - a);
+    ctx.beginPath(); ctx.moveTo(c - half, y); ctx.lineTo(c + half, y); ctx.stroke();
+  }
+  ctx.globalAlpha = was * a;
+  ctx.beginPath();
+  ctx.moveTo(c - half, y);
+  for (let i = -ACT_CRATER.half; i < ACT_CRATER.half; i++) {
+    const d = y + craterCol(i, deep) * P;
+    ctx.lineTo(c + i * P, d);
+    ctx.lineTo(c + (i + 1) * P, d);
+  }
+  ctx.lineTo(c + half, y);
+  ctx.stroke();
+  ctx.globalAlpha = was;
 }
 
 // The ground's grain: a repeating tile of cell-sized marks below the line
@@ -83,7 +111,7 @@ export function drawPit() {
 // the ground, through its own painter for the same reason as the pit: an
 // under-staffed yard can leave fifty thousand grains lying about
 export function drawGrid(b) {
-  b.painter.paint(ctx, b.x, b.y, b.cols * b.p, b.rows * b.p);
+  b.painter.paint(ctx, b.x, b.y, b.cols * b.p, b.rows * b.p, b.sink);
 }
 
 // The yard's own floor, which is the one `drawGrid` is asked for in the frame.

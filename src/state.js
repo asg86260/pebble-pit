@@ -53,6 +53,7 @@ export const S = {
   // ending). A key of `BEATS`, or null.
   beat: { yard: null, camera: null, sheet: null },
   beatsDone: [],          // the keys that have played, each once and never again
+  heard: [],              // the dialog lines read and gone on from, each once and never again (dialog.js)
   // A scene owns the yard: no rock rolls in on its own until the scene drops
   // it. A fact rather than a call into intro.js, so rock.js and core.js can
   // ask without knowing that scenes exist.
@@ -736,6 +737,7 @@ export const SAVED = [
   // The story's progress: which beats have played. An old save's flags fold
   // into it on the way in (persist.js).
   'beatsDone',
+  'heard',                // a line of dialog read is read for good, a beat replayed after a reload included
   // A reload carries the clock on rather than starting it over.
   'buriedMs',
   // The counts, the flags and the ladders that were once read by hand for a
@@ -947,7 +949,7 @@ export const EPHEMERAL = [
 // `n` is the live count of occupied cells, kept by `put`, repaired by
 // `recount` after anything that writes the cells wholesale, and watched by
 // rule 7 in verify.js.
-export const floor = { x: 0, y: 0, cols: 0, rows: 90, p: P, grid: null, painter: null, n: 0, colsOf: null, colN: null, colOdd: null, topsOf: null, tops: null, topSure: null, awake: null, awakeOf: null, awakeN: 0, awakeList: null };
+export const floor = { x: 0, y: 0, cols: 0, rows: 90, p: P, grid: null, painter: null, sink: null, n: 0, colsOf: null, colN: null, colOdd: null, topsOf: null, tops: null, topSure: null, awake: null, awakeOf: null, awakeN: 0, awakeList: null };
 // The deep's floor: the scales lying on it, a plot of sand like the pit's,
 // laid under the deep by `wireBed` in deep/scales.js. Every cell is a scale.
 export const deepBed = { x: 0, y: 0, cols: 0, rows: 0, p: P, grid: null, painter: null, n: 0, awake: null, awakeOf: null, awakeN: 0, awakeList: null };

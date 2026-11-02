@@ -64,15 +64,20 @@ group('a crowd of any size costs the frame the same bounded fills', async () => 
 
 // Timed against a crowd a twentieth the size on the same machine: the claim is
 // that a soul costs the frame nothing, and a runner's speed is not the code's.
+// The two sizes are timed in turns, five rounds, and each keeps its fastest:
+// a runner busy with the shard's other files slows whichever size it lands
+// on, and one such round timed once read as a crowd twice as dear (CI,
+// 2026-10-31: 2.2 -> 4.0 ms, where a quiet machine reads 0.98 -> 1.15).
 group('a 24,000-soul crowd steps and draws as fast as a crowd of 1,200', async () => {
   up();
   lookAt(afterEnd());
   const frame = n => {
     crowd(n, i => (i % 9 === 0 ? 9 : i % 4 === 0 ? 1 : 0));
     run(1); draw();
-    return bestMs(() => { stepAfter({ now: 0, dt: 1000 / 60 }); draw(); });
+    return bestMs(() => { stepAfter({ now: 0, dt: 1000 / 60 }); draw(); }, 100);
   };
-  const small = frame(1200), big = frame(24000);
+  let small = Infinity, big = Infinity;
+  for (let k = 0; k < 5; k++) { small = Math.min(small, frame(1200)); big = Math.min(big, frame(24000)); }
   window.__actsOn(null);
   return [
     ok(big < small * 1.5 + 0.1, 'the step and the whole sky\'s drawing cost no more with 24000 souls', `${small.toFixed(3)} -> ${big.toFixed(3)} ms`),

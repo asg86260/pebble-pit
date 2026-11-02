@@ -2,8 +2,9 @@
 // "Acts 3 and 4", "The story, beat by beat"). Act 3 starts the way a player
 // starts it, by the go-on card over the house (call 7: what the card's click
 // calls, `sayGoOn`); the house falls with the two of them indoors, their souls
-// walk up the cloud stair to heaven's gates and rise through them, the camera
-// riding up with them into the afterlife. The union's last gate (Track A's, stood here by its
+// float up to heaven's gates over the house and through them, the camera
+// riding up with them into the afterlife; God's lines, and the opening is
+// over, the two of them walking on to the pedestal in play. The union's last gate (Track A's, stood here by its
 // scaffold fact, `S.after.gate`) plays the strike through to the road; the
 // pair walk down it as ghosts. Each beat fires once, in order, from its own
 // trigger, never a cut and never twice.
@@ -32,12 +33,15 @@ group('act 3: go on, the house falls, the souls rise into the afterlife, and the
   const said = sayGoOn();
   // the camera's place every second, to see it never jumps past a ripple
   const views = [];
-  const opened = runUntil(() => { views.push(S.view); return beatDone('refuse'); }, 240);
+  // (God's lines at the throne gone on from as they come up, as a click does)
+  const opened = runUntil(() => { views.push(S.view); window.__goOnLine(); return beatDone('refuse'); }, 240);
+  // the opening over, they walk on up to the pedestal in play
+  runUntil(() => S.acts.pair.at === 'pedestal', 60);
   const act3 = { house: S.acts.house, view: S.view, pair: S.acts.pair && { at: S.acts.pair.at, mode: S.acts.pair.mode, place: placeAt(S.acts.pair.y) },
                  after: !!S.after };
   // Track A's strike, as its scaffold fact: the last gate reached.
   S.after.gate = AFTER_GATES.length;
-  const walked = runUntil(() => beatDone('haunt'), 400);
+  const walked = runUntil(() => { window.__goOnLine(); return beatDone('haunt'); }, 400);
   const act4 = { view: S.view, mode: S.acts.pair.mode, place: placeAt(S.acts.pair.y), hell: portalFree('hell'), heaven: portalFree('heaven') };
   window.__actsOn(null);
   const story = ['house-fall', 'arrive', 'meet-god', 'refuse', 'strike', 'unmask', 'hell-told', 'ghost-road', 'haunt'];
@@ -76,40 +80,38 @@ group('the walls and the cage play from hell\'s barriers, each once and in order
 });
 
 // Heaven's road is walked (the owner's take A, 2026-10-19): the two of them
-// go up the cloud stair to the gates and through them, and come back down
-// the same way, every frame a step from the last, the second on the walk
-// behind the first, and the gates standing open as they go through. The gates
-// are the portal (the owner, later that day): going through, a body fades
-// into the gateway at one end and out of it at the other, and that is the one
-// move a frame may make past a step, and only while it cannot be seen.
-const { pairBodies, threshold, stairFoot, campX, passAlpha } = await import('../src/ghosts.js');
+// float up to the gates over the house and through them, and come back down
+// the same way, every frame a step from the last, the second beside the
+// first, and the gates standing open as they go through. The gates are the
+// portal (the owner, later that day): going through, a body fades into the
+// gateway at one end and out of it at the other, and that is the one move a
+// frame may make past a step, and only while it cannot be seen.
+const { pairBodies, threshold, ruinX, yardFeet, campX, passAlpha } = await import('../src/ghosts.js');
 const { gatesOpen, portalEnd } = await import('../src/portals.js');
 const { floorAt } = await import('../src/after/place.js');
-const { P, WORKER, GHOST_GAP } = await import('../src/config.js');
+const { P, WORKER, GHOST_GAP, ACT_FLOAT_LAG } = await import('../src/config.js');
 // What a walk did, frame by frame: the most either body moved in one, the
-// farthest the two stood apart, whether each stood at the gates' threshold and
-// at the stair's foot, and whether the gates stood open with the first at them.
+// farthest the two stood apart, whether the first stood at the gates' step
+// and at the ruin, and whether the gates stood open with the first at them.
 // The pair is read afresh each frame: the harness's reloads put a new one in
 // its place.
 function walkWatch() {
-  const w = { jump: 0, apart: 0, top: [false, false], foot: [false, false], open: false, through: 0 };
+  const w = { jump: 0, apart: 0, top: false, ruin: false, open: false, through: 0 };
   let was = null, wasSeen = 1;
   return {
     w,
     see() {
       const b = pairBodies();
       if (!b) return;
-      const t = threshold(), f = stairFoot(), seen = passAlpha();
+      const t = threshold(), r = { x: ruinX(), y: yardFeet(ruinX()) }, seen = passAlpha();
       // the hop between the two gateways, unseen at both ends of it
       const ends = [portalEnd('heaven', 'yard'), portalEnd('heaven', 'after')];
       const atGate = q => ends.some(e => Math.abs(q.x + WORKER / 2 - e.x) < GHOST_GAP + P && Math.abs(q.y + WORKER - e.feet) < P);
       const hop = was && seen < 0.2 && wasSeen < 0.2 && b.every(atGate) && was.every(atGate);
       if (hop && b.some((q, i) => Math.hypot(q.x - was[i].x, q.y - was[i].y) > MOST)) w.through++;
-      b.forEach((q, i) => {
-        if (Math.hypot(q.x - t.x, q.y - t.y) < 1) w.top[i] = true;
-        if (Math.hypot(q.x - f.x, q.y - f.y) < 1) w.foot[i] = true;
-        if (was && !hop) w.jump = Math.max(w.jump, Math.hypot(q.x - was[i].x, q.y - was[i].y));
-      });
+      if (Math.hypot(b[0].x - t.x, b[0].y - t.y) < 1) w.top = true;
+      if (Math.hypot(b[0].x - r.x, b[0].y - r.y) < 1) w.ruin = true;
+      b.forEach((q, i) => { if (was && !hop) w.jump = Math.max(w.jump, Math.hypot(q.x - was[i].x, q.y - was[i].y)); });
       wasSeen = seen;
       w.apart = Math.max(w.apart, Math.hypot(b[0].x - b[1].x, b[0].y - b[1].y));
       if (Math.abs(b[0].x - t.x) < P * 4 && Math.abs(b[0].y - t.y) < P * 4 && gatesOpen() === 1) w.open = true;
@@ -119,7 +121,9 @@ function walkWatch() {
 }
 // A frame's walk is at most the pace, called and hurried: a jump past that is a teleport.
 const MOST = P * 4;
-group('heaven\'s road up: the souls up the cloud stair at the fall and through the gates, walked', async () => {
+// Floating, the second hangs under the first by up to ACT_FLOAT_LAG cells.
+const APART = Math.hypot(GHOST_GAP, ACT_FLOAT_LAG * P) + 1;
+group('heaven\'s road up: the souls float up out of the ruin at the fall and through the gates', async () => {
   window.__actsOn(true);
   window.__crew(2, 2);
   window.__actsAt('home');
@@ -131,15 +135,13 @@ group('heaven\'s road up: the souls up the cloud stair at the fall and through t
   runUntil(() => beatDone('house-fall'), 60);
   window.__actsOn(null);
   return [
-    // the second stops a step short on the bank and follows the first in
-    ok(rising.foot.every(Boolean) && rising.top[0],
-       'at the fall both souls walk onto the stair at its foot, and up it to the gates', JSON.stringify(rising)),
+    ok(rising.ruin && rising.top, 'at the fall the souls float up from the ruin to the gates\' step', JSON.stringify(rising)),
     ok(rising.open && rising.through === 1 && rising.at === 'rise' && rising.place === 'after' && rising.view === 'after',
        'and through the open gates, once and unseen between, onto the cloud floor, the camera with them', JSON.stringify(rising)),
-    ok(rising.jump < MOST && rising.apart <= GHOST_GAP + 1, 'every frame a step from the last, the second a step behind', JSON.stringify(rising))
+    ok(rising.jump < MOST && rising.apart <= APART, 'every frame a step from the last, the second beside the first', JSON.stringify(rising))
   ];
 });
-group('heaven\'s road down: the ghosts down through the gates and the cloud stair to the ruin, walked', async () => {
+group('heaven\'s road down: the ghosts down through the gates, floated down to the ruin', async () => {
   window.__actsOn(true);
   window.__crew(2, 2);
   // from the camp along the cloud floor to the gates, as the haunt sends them;
@@ -154,8 +156,8 @@ group('heaven\'s road down: the ghosts down through the gates and the cloud stai
   const came = { at: p.at, place: placeAt(p.y), ...down.w };
   window.__actsOn(null);
   return [
-    ok(came.at === 'down' && came.place === 'yard' && came.top[0] && came.foot.every(Boolean) && came.open && came.through === 1,
-       'the ghosts come down through the open gates and the whole stair to the ruin', JSON.stringify(came)),
-    ok(came.jump < MOST && came.apart <= GHOST_GAP + 1, 'walked, every frame, the second a step behind', JSON.stringify(came))
+    ok(came.at === 'down' && came.place === 'yard' && came.top && came.ruin && came.open && came.through === 1,
+       'the ghosts come down through the open gates and float down to the ruin', JSON.stringify(came)),
+    ok(came.jump < MOST && came.apart <= APART, 'every frame a step from the last, the second beside the first', JSON.stringify(came))
   ];
 });

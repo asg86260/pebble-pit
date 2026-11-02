@@ -51,6 +51,7 @@ import { setReadyLights, setFlashFace } from './config/casino.js';
 import { persist, restore, reset as resetGame, switchSlot } from './persist.js';
 import { skipIntro } from './intro.js';
 import { holdSkip, skipScene } from './skip.js';
+import { goOn, lineShown } from './dialog.js';
 import { sendBirds, BIRDS } from './weather.js';
 import { smogReport } from './smog.js';
 import { advance, restart as restartClock } from './clock.js';
@@ -1011,6 +1012,8 @@ export const HANDLES = {
   __coarse: forceCoarse,
   // The space bar: held down or let go, and the skip it ends in.
   __holdSkip: holdSkip, __skip: skipScene,
+  // a line of dialog: going on from it, as a click does (input.js), and what is up
+  __goOnLine: () => goOn(), __line: () => lineShown(),
   // One owner's beat cut, the way its own click would (the sheet's button, a
   // click on a cutscene): the yard's, the camera's or the sheet's.
   __skipBeat: owner => skipBeat(clockNow(), owner),
@@ -1406,8 +1409,12 @@ import { ruinX, yardFeet, sendPair, threshold } from './ghosts.js';
 // pair sent off on a route from where they stand, for the scenes about them.
 HANDLES.__pressPortal = key => throughPortal(key);
 HANDLES.__sendPair = (route, leg = 0) => sendPair(route, leg);
-// The top of heaven's stair, where the walk goes in at the gates (ghosts.js).
+// The gates' step over the yard, where a float up goes in at the gates (ghosts.js).
 HANDLES.__gateWalk = () => threshold();
+// Where the first of the pair stands, and the camera's left edge that would
+// put them in the window's middle: for a shot that follows them as a player's
+// scrolling would.
+HANDLES.__pairSpot = () => (S.acts && S.acts.pair ? { x: S.acts.pair.x, y: S.acts.pair.y, look: S.acts.pair.x - S.viewW / 2 } : null);
 import { speakerAt as actsSpeakerAt, AP } from './after/place.js';
 import { WORKER as ACTS_WORKER, ACT_RIM_PIECES, MANSION_FADE_S } from './config.js';
 import { WALL_BEATS } from './hell/story.js';

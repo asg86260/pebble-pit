@@ -10,8 +10,8 @@
 //     what the camera may frame;
 //   - the frame the shot is on never off the window for longer than one glide;
 // and the way up as the owner chose it (2026-10-19, heaven's gates are the
-// portal): the two of them between the bands on every frame of the climb up
-// the cloud stair, and one ripple, out of the gates into the afterlife, as
+// portal): the two of them between the bands on every frame of the float up
+// to the gates, and one ripple, out of the gates into the afterlife, as
 // they go through.
 //
 // Frames are turned with `__fast` rather than `run`: a reload drops a scene
@@ -35,7 +35,7 @@ group('the act 3 intro follows them up the stair and through the gates, its band
 
   const full = bandCells();
   let frames = 0, banded = false, thin = null, zoomed = null, under = null, over = null;
-  let off = 0, offMost = 0, offAt = null, lost = null, climbFrames = 0, wasZoom = S.zoomShow;
+  let off = 0, offMost = 0, offAt = null, lost = null, riseFrames = 0, wasZoom = S.zoomShow;
   const ripples = [];
   let wasTo = null;
   const places = new Set();
@@ -65,10 +65,10 @@ group('the act 3 intro follows them up the stair and through the gates, its band
       && fr.y >= sh.camY - 0.5 && fr.y + fr.h <= sh.camY + sh.viewH + 0.5;
     off = fr && !inside ? off + 1 : 0;
     if (off > offMost) { offMost = off; offAt = at; }
-    // the climb: both of them between the bands every frame
+    // the float up: both of them between the bands every frame
     const p = S.acts && S.acts.pair, bodies = pairBodies();
-    if (p && p.route === 'climb' && p.leg > 0) {
-      climbFrames++;
+    if (p && p.route === 'float' && p.drift) {
+      riseFrames++;
       for (const b of bodies) {
         const seen = b.x >= sh.camX && b.x + WORKER <= sh.camX + sh.viewW && b.y >= sh.camY + band && b.y + WORKER <= sh.camY + sh.viewH - band;
         if (!seen && !lost) lost = `${at}: body at ${b.x.toFixed(0)},${b.y.toFixed(0)}`;
@@ -87,7 +87,7 @@ group('the act 3 intro follows them up the stair and through the gates, its band
     ok(!under, 'what shows between the bands is never under the floor of what may be framed', under || ''),
     ok(!over, 'and never over the top of its sky', over || ''),
     ok(offMost <= glideMost, 'the frame is never off the window for longer than one glide', `${offMost} frames at ${offAt}`),
-    ok(climbFrames > 0 && !lost, 'both of them between the bands on every frame of the climb up the stair', lost || `${climbFrames} frames`)
+    ok(riseFrames > 0 && !lost, 'both of them between the bands on every frame of the float up to the gates', lost || `${riseFrames} frames`)
   ];
 });
 

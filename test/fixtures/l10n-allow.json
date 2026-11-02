@@ -36,7 +36,7 @@
   "src/deep/rails.js": [
    "<button type=\"button\" class=\"rl-node${}${}\"",
    " data-look=\"${}\"${}><span class=\"rl-ic\">${}</span>${}</button>",
-   ".rl-tree i, .rl-st"
+   ".rl-tree i, .rl-st, .rl-sk"
   ],
   "src/objbarrier.js": [
    "pay one"

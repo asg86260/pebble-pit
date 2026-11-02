@@ -1084,3 +1084,12 @@ export function drawFistFlag(px, foot, U, lettered = 1, pole = 0) {
   blit(flagSprite(U, phase, W), x, y - A);
   ctx.restore();
 }
+
+// God's head in the world, for a line he speaks (render/dialog.js): its
+// middle across, the top of his crown, the top of his face square and its
+// bottom, and the square's width. Null with no act 3.
+export function godHead() {
+  if (!S.after) return null;
+  camFrame();
+  return { x: gx(), top: F.gy0 - GOD_CROWN.up * H, face: F.gy0, bottom: F.gy0 + GOD_N * H, w: GOD_N * H };
+}

@@ -26,7 +26,7 @@ import { tierRows, tierLevel } from './upgrades/tiers.js';
 import { spawnSpoil, critToss } from './dust.js';
 import { critRoll } from './crit.js';
 import { critBoost, speedBoost, stronger } from './apothecary.js';
-import { at, put, topRow, colOf, bottomY } from './grid.js';
+import { at, put, topRow, colOf, bottomY, colBottom } from './grid.js';
 import { tidyStep } from './tidy.js';
 import { rand } from './rng.js';
 import { registerRows, ahead } from './works.js';
@@ -144,7 +144,7 @@ export const farmPatch = () => ({
     put(floor, c, r, 0);
     return v;
   },
-  yOf: c => bottomY(floor) - (topRow(floor, c) + 1) * P
+  yOf: c => colBottom(floor, c) - (topRow(floor, c) + 1) * P
 });
 
 // the plot most worth walking to: the one furthest along that nobody else has

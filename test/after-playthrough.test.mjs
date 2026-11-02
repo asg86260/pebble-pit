@@ -143,8 +143,11 @@ group('act 3 from the go-on card to the strike, played as a player plays it', as
   const cardIn = until(() => goOnAlpha() >= 1, 60, 0.25);
   const goOn = window.__goOn();
   // The opening, each beat to its end: the camera handed back, no sheet up.
-  const opened = until(() => beatDone('refuse') && !S.beat.camera && !S.beat.sheet, 300);
+  // (God's line at the throne gone on from as it comes up: a click, input.js)
+  const opened = until(() => { window.__goOnLine(); return beatDone('refuse') && !S.beat.camera && !S.beat.sheet; }, 300);
   const camped = until(() => read().walking === 0 && read().camp >= AFTER_FIRST_MEMBERS, 120);
+  // the opening over, the two of them walk on up onto the pedestal in play
+  until(() => S.acts.pair.at === 'pedestal' && S.acts.pair.top >= 1, 60);
   const stood = { view: S.view, at: S.acts.pair && S.acts.pair.at, top: S.acts.pair && S.acts.pair.top, house: S.acts.house };
   note(`opened ${opened} ${JSON.stringify(stood)} camp ${read().camp}`);
 
