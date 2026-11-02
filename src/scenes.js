@@ -4210,3 +4210,58 @@ Object.assign(SCENES, {
       standSign('s2', signMid('s2', 'deep').x - S.viewW / 2);
     } }
 });
+
+// The workshop as it stands today, for the polish pass against the saw
+// mill (the owner, 2026-11-01: "the sign station ... the same polish as the
+// saw mill"): working (a joiner on its post, a member hauling its timber and
+// carrying its signs out), idle (standing, nobody on it, no timber) and
+// full (its rack of signs at its brim, nobody to carry them). Framed on the
+// shed and its two piles as the mill's scenes frame the mill.
+function workshopStage({ members = 0, join = false, grant = {}, until = null, hold = true, run = 0 }) {
+  window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+  if (members) window.__afterCrowd((i, v) => (i < members ? 8 : v));
+  for (let k = 0; k < 90 && window.__afterRead().walking > 0; k++) window.__fast(1);
+  for (const k of ['mill', 'workshop']) if (!S.after.built.includes(k)) S.after.built.push(k);
+  window.__afterGrant(grant);
+  if (join) window.__afterPress(AFTER_JOB.JOIN);
+  for (let k = 0; until && k < 60 * 60 && !until(); k++) window.__fast(1 / 60);
+  for (let k = 0; k < run * 60; k++) window.__fast(1 / 60);
+  const b = stationBox('workshop'), x = b.x + b.w / 2 + P * 12 - S.viewW / 2;
+  pinCamera(x); window.__look(x);
+  S.wonShown = S.wonSeq | 0;
+  if (hold) { window.__still(true); window.__holdShot(); }
+}
+// the joiner's blow just struck: the hammer held plumb on the nail
+const wsStruck = () => { const g = (sawView() || []).find(r => r.key === 'workshop'); return !!g && g.hit != null && S.after.t - g.strike > 0.07 && S.after.t - g.strike < 0.1 && g.nails.some(n => n > 0); };
+Object.assign(SCENES, {
+  'after-ws-work': { about: 'the acts', say: "the workshop today, working: the joiner at its bench, a blow just struck, timber walked to its pile and signs in its rack",
+    run: () => workshopStage({ members: 2, join: true, grant: { timber: 12, benchtimber: 8, signs: 1 }, until: wsStruck }) },
+  'after-ws-idle': { about: 'the acts', say: 'the workshop today, idle: standing, nobody on it, no timber on its pile',
+    run: () => workshopStage({}) },
+  'after-ws-full': { about: 'the acts', say: "the workshop today, full: its rack of signs at its brim and its timber pile full, nobody to carry them out",
+    run: () => workshopStage({ grant: { benchtimber: 8, signs: 4 }, run: 2 }) }
+});
+
+// MOCK the-sign-station-polish: how a sign is made, followed through the
+// shed as the log is through the saw mill (render/after/signsmock.js), never
+// merged. The real workshop with three members in the camp to haul its
+// timber and carry its signs out; the mock's joiner makes the signs. `swap`
+// flips the option on the yard standing, the make begun again.
+import { startSignsMock, stepSignsMock } from './render/after/signsmock.js'; // MOCK the-sign-station-polish
+const SIGNS_MOCK = [ // MOCK the-sign-station-polish
+  ['a', 'A by hand: hammer and brush', "The joiner fetches four timber blocks off its pile, sets them on the bench as a square, nails them, then brushes each column slate and carries the sign to the rack."],
+  ['b', 'B through a mangle: hammer and roller', "Fetched and nailed the same; then the joiner turns a crank and the board is fed under a paint roller, slate past the roller, out toward the rack, as the log goes through the blade."]
+];
+function signsMockStage(o) { // MOCK the-sign-station-polish
+  workshopStage({ members: 3, grant: { timber: 21, benchtimber: 8 }, hold: false });
+  startSignsMock(o);
+  const i = STEPS.findIndex(q => q.name === 'signsmock');
+  if (i >= 0) STEPS.splice(i, 1);
+  STEPS.push({ name: 'signsmock', step: stepSignsMock });
+}
+for (const [o, option, say] of SIGNS_MOCK) { // MOCK the-sign-station-polish
+  const name = `after-signs-${o}`;
+  SCENES[name] = { about: 'the acts', review: 'the sign station: polish', option, stage: 'mock: throwaway, never merged', branch: 'a3-review-both', say,
+    swap: () => { if (S.view !== 'after' || !S.after || !globalThis.__signsMock) { window.__scene(name); return; } startSignsMock(o); },
+    run: () => signsMockStage(o) };
+}

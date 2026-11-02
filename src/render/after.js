@@ -46,6 +46,7 @@ import { drawUnionCrowd } from './after/unioncrowd.js';
 import { drawRoster, drawShops } from '../roster.js';
 import { now as wallNow } from '../clock.js';
 import { motePos } from './cursor.js';
+import { signsMockOn, drawSignsMock, drawSignsMockJoiner } from './after/signsmock.js'; // MOCK the-sign-station-polish
 
 const A = () => S.after;
 const snap = v => Math.round(v / P) * P;
@@ -160,7 +161,7 @@ function drawStation(key) {
   const a = A(), r = a.raising[key];
   // Each drawn on its paper backing, so the camp's crowd behind it does not
   // show through its open parts; the pillar is paper through already.
-  const draw = key === 'pedestal' ? drawPillar : (d, work, t) => { backing(d, backOf(key)); DRAW[key](d, work, t, hands[key], atStation(key).length > 0, extras(key)); };
+  const draw = key === 'pedestal' ? drawPillar : (d, work, t) => { backing(d, backOf(key)); if (key === 'workshop' && signsMockOn()) drawSignsMock(d); else DRAW[key](d, work, t, hands[key], atStation(key).length > 0, extras(key)); }; // MOCK the-sign-station-polish
   // Closed, or just built and its closed look still fading off as the last
   // piece lands: its loads on the spot while it goes up.
   const opened = openedOf(key);
@@ -283,6 +284,7 @@ function drawMember(w) {
 export function drawAfterMembers() {
   const a = A();
   if (!a) return;
+  drawSignsMockJoiner();   // MOCK the-sign-station-polish
   // Those out on the way to God's camp are drawn in depth, among his crowd
   // (render/aftercrowd.js), crossed over from here in the way's first cells.
   // Each faded as it steps out of our crowd or walks back into it. One the

@@ -253,6 +253,7 @@ const DEFS = {
     },
     down(g, k) {
       const t = T();
+      if (globalThis.__signsMock) return 'tap';   // MOCK the-sign-station-polish  the mock's joiner makes the signs
       // A tap off a nail, or a nail already flush, is a miss: nothing.
       if (k == null || k < 0 || t - g.strike < GESTURE_SWING_S) return 'tap';
       if (benchShort() && g.nails.every(n => n === 0)) return 'tap';   // no blank without timber
@@ -268,6 +269,7 @@ const DEFS = {
       // blow every AFTER_SIGN_S shared over a sign's taps; a fresh blank
       // only with the timber for it.
       const t = T(), joiner = S.after.bodies.some(b => b.at === 'workshop');
+      if (globalThis.__signsMock) return;   // MOCK the-sign-station-polish
       const every = AFTER_SIGN_S / (GESTURE_NAILS * GESTURE_NAIL_TAPS);
       if (!joiner || t - g.last < GESTURE_JOINER_WAIT_S || t - g.auto < every) return;
       if (g.nails.every(n => n === 0) && benchShort()) return;
