@@ -66,7 +66,8 @@ function loop() {
 function typeOf() {
   const cs = getComputedStyle(tipEl());
   // the tone halfway between the tip's ink and its paper
-  const rgb = v => (v.match(/[\d.]+/g) || [0, 0, 0]).slice(0, 3).map(Number);
+  // (a page without a stylesheet, the node yard's, has no colors to read)
+  const rgb = v => (String(v || '').match(/[\d.]+/g) || [0, 0, 0]).slice(0, 3).map(Number);
   const a = rgb(cs.color), b = rgb(cs.backgroundColor);
   const mid = `rgb(${a.map((x, i) => Math.round((x + b[i]) / 2)).join(', ')})`;
   return { ink: cs.color, mid, font: `${cs.fontSize} ${cs.fontFamily}`, track: cs.letterSpacing,
