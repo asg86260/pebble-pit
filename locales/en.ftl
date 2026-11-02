@@ -3429,7 +3429,7 @@ draft-god-a-3 = everyone who died down there is here, working.
 draft-god-a-4 = nobody ages here, so the work never stops.
 
 # MOCK draft, the owner's to rewrite: God's opening lines, script A, warm, line 5
-draft-god-a-5 = here's a pick. you never have to leave.
+draft-god-a-5 = here's your pick. and you never have to leave.
 
 # MOCK draft, the owner's to rewrite: God's opening lines, script B, brisk, line 1
 draft-god-b-1 = you two. you're dead.
@@ -3441,7 +3441,7 @@ draft-god-b-2 = the afterlife. same as down there: you keep working.
 draft-god-b-3 = a pick each. yard's that way.
 
 # MOCK draft, the owner's to rewrite: God's opening lines, script B, brisk, line 4
-draft-god-b-4 = no breaks. no end. nobody leaves.
+draft-god-b-4 = no end to it. nobody leaves.
 
 # MOCK draft, the owner's to rewrite: God's opening lines, script C, grand, line 1
 draft-god-c-1 = rise, and be welcome.

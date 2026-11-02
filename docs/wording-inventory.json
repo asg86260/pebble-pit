@@ -7928,7 +7928,7 @@
   "group": "The shell",
   "where": "src/dialogdrafts.js",
   "context": "MOCK draft, the owner's to rewrite: God's opening lines, script A, warm, line 5",
-  "text": "here's a pick. you never have to leave."
+  "text": "here's your pick. and you never have to leave."
  },
  {
   "id": "draft-god-b-1",
@@ -7956,7 +7956,7 @@
   "group": "The shell",
   "where": "src/dialogdrafts.js",
   "context": "MOCK draft, the owner's to rewrite: God's opening lines, script B, brisk, line 4",
-  "text": "no breaks. no end. nobody leaves."
+  "text": "no end to it. nobody leaves."
  },
  {
   "id": "draft-god-c-1",

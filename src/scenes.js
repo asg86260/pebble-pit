@@ -3484,7 +3484,7 @@ export const SCENES = {
   // The page's line editor rewrites the script (`script`).
   ...Object.fromEntries([
     ['a', 'A warm', "Warm and welcoming, the con: God greets them, names the afterlife, says everyone who died is here working and nobody ages, so the work never stops; 'you never have to leave' reads as a kindness now and a trap after the unmasking."],
-    ['b', 'B brisk', "A brisk foreman: you're dead, this is the afterlife and you keep working, a pick each, no breaks, no end, nobody leaves. Says the premise flat, and 'nobody leaves' is the trap said out loud."],
+    ['b', 'B brisk', "A brisk foreman: you're dead, this is the afterlife, same as down there, you keep working, a pick each, no end to it, nobody leaves. Says the premise flat, and 'nobody leaves' is the trap said out loud."],
     ['c', 'C grand', "Grand and ceremonial: rise and be welcome, this is the afterlife where every soul is kept, the dead work for ever and the tithe climbs to him, then one word: work. 'Kept' and the tithe read as the jailer's after the unmasking."]
   ].map(([k, option, say]) => [`gods-opening-lines-${k}`, { about: 'the acts', review: 'god\'s opening lines', option, say,
     stage: 'mock: throwaway, never merged', branch: 'a3-review-both', script: `draft-god-${k}`,
