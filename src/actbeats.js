@@ -308,6 +308,16 @@ for (let i = 0; i < lastWall; i++) {
 }
 export const ACT_BEAT_KEYS = Object.keys(BODIES);
 
+// MOCK gods-opening-lines
+// A beat's speakers' lines swapped for a draft script (src/dialogdrafts.js,
+// the review bench), each phase with lines taking the script whole; a new game
+// puts the beat's own lines back.
+const OWN_LINES = new Map(Object.entries(BODIES).map(([k, phs]) => [k, phs.map(ph => ph.lines)]));
+export function setBeatLines(key, lines) {
+  for (const ph of BODIES[key] || []) if (ph.lines) ph.lines = lines;
+}
+held('actbeats-lines', () => { for (const [k, own] of OWN_LINES) BODIES[k].forEach((ph, i) => { ph.lines = own[i]; }); });
+
 // --- the runner ----------------------------------------------------------------------
 // The beat playing: its key, phase, seconds into it, how hurried, the place
 // its scene was last framed in, and whether it is on its way out. This

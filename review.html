@@ -83,6 +83,16 @@
   .strip b { font-weight: 700; }
   .stage { border: 2px solid var(--line); overflow: hidden; }
   iframe { border: 0; display: block; background: #fff; width: 800px; height: 600px; transform-origin: 0 0; image-rendering: pixelated; }
+  /* a draft dialog's lines, editable (a scene with a `script`) */
+  .lines { border: 2px solid var(--line); padding: 6px 8px; margin: 0 0 8px; }
+  .lines ol { margin: 6px 0; padding-left: 1.6em; display: flex; flex-direction: column; gap: 6px; }
+  .lines li > div { display: flex; gap: 4px; align-items: center; margin-top: 2px; }
+  .lines textarea { display: block; width: 100%; font: inherit; color: var(--fg); background: var(--bg); border: 2px solid var(--line); padding: 2px 6px; resize: vertical; }
+  .lines li button { padding: 0 6px; }
+  .lines .fit { font-size: 11px; color: var(--dim); flex: 1; min-width: 0; }
+  .lines .fit.long { color: var(--fg); font-weight: 700; }
+  .lines .fit.long:before { content: "! "; }
+  .lines .lbtns { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
   .empty { border: 2px dashed var(--line); padding: 16px; max-width: 700px; background: var(--bg); }
   @media (max-width: 900px) { body { height: auto; overflow: auto; } #board { max-height: none; } .work { flex-direction: column; } .work .detail { flex: none; width: 100%; max-height: none; } .right { height: auto; width: 100%; } .kan { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 </style></head><body>
@@ -121,6 +131,12 @@
   <p id="stage-say"></p>
   <div class="bar" id="bar"></div>
   <p id="say"></p>
+  <!-- MOCK gods-opening-lines: the line editor, for an option whose scene names a `script` (src/dialogdrafts.js) -->
+  <div class="lines" id="lines" hidden>
+    <div><b>the lines</b> <span class="dim">each is one click in the game. save writes locales/en.ftl and plays them again.</span></div>
+    <ol id="lineList"></ol>
+    <div class="lbtns"><button type="button" id="lineAdd">+ add a line</button><button type="button" id="lineSave">save and replay</button><button type="button" id="lineUndo" title="back to what is saved">undo edits</button><span id="lineSaid" aria-live="polite"></span></div>
+  </div>
   <form class="note" id="note"><textarea id="words" placeholder="what to change (or why this one)"></textarea><div class="btns"><button type="button" id="stop">stop: pick this one</button><button type="button" id="keep">keep iterating</button></div><span id="sent" aria-live="polite"></span></form>
   <div class="hist" id="hist"></div>
 </div>
@@ -327,6 +343,7 @@ function stand(scene) {
     }
   }
   $('say').textContent = o ? o.say : '';
+  openLines(o && o.script);
   const from = rev.options.find(x => x.scene === was);
   if (!(sameRev && was !== scene && from?.swap && o?.swap && f.contentWindow.__sceneSwap?.(scene))) f.contentWindow.__scene(scene);
 }
@@ -354,7 +371,7 @@ async function refresh() {
   drawBoard(); drawHead();
 }
 addEventListener('keydown', e => {
-  if (!rev || /TEXTAREA/.test(e.target.tagName)) return;
+  if (!rev || /TEXTAREA|INPUT/.test(e.target.tagName)) return;
   const i = Number(e.key) - 1;
   if (i >= 0 && i < rev.options.length) stand(rev.options[i].scene);
   if (e.key === 'r') stand(cur);
@@ -385,6 +402,80 @@ async function decide(verdict) {
 const DRAFT = 'review-draft';
 try { $('words').value = sessionStorage.getItem(DRAFT) || ''; } catch {}
 $('words').addEventListener('input', () => { try { sessionStorage.setItem(DRAFT, $('words').value); } catch {} });
+// --- a draft dialog's lines (MOCK gods-opening-lines) -------------------------
+// An option whose scene names a `script` gets its lines here: edit, add, cut,
+// move, then save, which the dev server writes into locales/en.ftl and the
+// script's list in src/dialogdrafts.js (tools/dialog-drafts.mjs); that write
+// reloads the game, which plays the lines again. Unsaved edits outlive a
+// reload in this tab. Each line says how many rows it wraps to in the bubble,
+// measured in the game, and warns past the two a line may take.
+const ROWS_MAX = 2;
+let script = null, lines = [], savedLines = [];
+const LDRAFT = k => `review-lines-${k}`;
+const keepDraft = () => { try { sessionStorage.setItem(LDRAFT(script), JSON.stringify(lines)); } catch {} };
+const dropDraft = () => { try { sessionStorage.removeItem(LDRAFT(script)); } catch {} };
+async function openLines(key) {
+  $('lines').hidden = !key;
+  if (!key || key === script) return;
+  script = key; lines = []; savedLines = []; drawLines();
+  try {
+    const r = await fetch(`/__dialog?script=${encodeURIComponent(key)}`, { cache: 'no-store' }), j = await r.json();
+    if (!r.ok) throw new Error(j.error || r.status);
+    if (script !== key) return;
+    savedLines = j.lines.map(l => l.text);
+    let kept = null; try { kept = JSON.parse(sessionStorage.getItem(LDRAFT(key)) || 'null'); } catch {}
+    const has = Array.isArray(kept) && kept.length && JSON.stringify(kept) !== JSON.stringify(savedLines);
+    lines = has ? kept : savedLines.slice();
+    $('lineSaid').textContent = has ? 'unsaved edits kept from before' : '';
+  } catch (e) { $('lineSaid').textContent = `could not read the lines (${e.message})`; }
+  drawLines();
+}
+function fitSay(el, text) {
+  const fit = f.contentWindow && f.contentWindow.__dialogFit;
+  el.className = 'fit'; el.textContent = '';
+  if (!fit) return;
+  if (!text.trim()) { el.className = 'fit long'; el.textContent = 'empty: type a line or cut it'; return; }
+  const r = fit(text), wide = r.wide.length, phone = r.phone.length, long = Math.max(wide, phone) > ROWS_MAX;
+  el.className = long ? 'fit long' : 'fit';
+  el.textContent = long ? `too long for the bubble: ${wide} rows at 800x600, ${phone} on a phone (two at most)`
+    : `${wide} row${wide > 1 ? 's' : ''} at 800x600, ${phone} on a phone`;
+}
+const dirty = () => { $('lineSave').classList.toggle('on', JSON.stringify(lines) !== JSON.stringify(savedLines)); };
+function drawLines() {
+  const ol = $('lineList'); ol.innerHTML = '';
+  lines.forEach((t, i) => {
+    const li = document.createElement('li'), row = document.createElement('div');
+    const inp = document.createElement('textarea'); inp.rows = 2; inp.value = t; inp.setAttribute('aria-label', `line ${i + 1}`);
+    inp.onkeydown = e => { if (e.key === 'Enter') e.preventDefault(); };
+    const fit = document.createElement('div');
+    inp.oninput = () => { lines[i] = inp.value; keepDraft(); fitSay(fit, inp.value); dirty(); };
+    const btn = (label, title, fn, off) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.title = title; b.disabled = !!off; b.onclick = fn; return b; };
+    const move = d => { const j = i + d; [lines[i], lines[j]] = [lines[j], lines[i]]; keepDraft(); drawLines(); };
+    row.append(fit, btn('up', 'move up', () => move(-1), i === 0), btn('down', 'move down', () => move(1), i === lines.length - 1),
+      btn('cut', 'cut this line', () => { lines.splice(i, 1); keepDraft(); drawLines(); }, lines.length === 1));
+    li.append(inp, row); ol.append(li);
+    fitSay(fit, t);
+  });
+  dirty();
+}
+$('lineAdd').onclick = () => { lines.push(''); keepDraft(); drawLines(); const all = $('lineList').querySelectorAll('textarea'); all[all.length - 1].focus(); };
+$('lineUndo').onclick = () => { lines = savedLines.slice(); dropDraft(); drawLines(); $('lineSaid').textContent = 'back to what is saved'; };
+$('lineSave').onclick = async () => {
+  if (!script) return;
+  $('lineSaid').textContent = 'saving';
+  try {
+    const r = await fetch('/__dialog', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ script, lines }) });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || r.status);
+    savedLines = j.lines.map(l => l.text); lines = savedLines.slice(); dropDraft(); drawLines();
+    $('lineSaid').textContent = `saved ${savedLines.length} lines; replaying`;
+    // the write to src/ reloads the game; on a server that does not, the frame is reloaded here
+    f.contentWindow.__beforeSave = true;
+    setTimeout(() => { if (f.contentWindow.__beforeSave) f.contentWindow.location.reload(); }, 1500);
+  } catch (e) { $('lineSaid').textContent = `not saved: ${e.message}`; }
+};
+// the rows are measured in the game, so they are said again once it stands
+f.addEventListener('load', () => setTimeout(() => { if (script) drawLines(); }, 800));
 $('stop').onclick = () => decide('stop');
 $('keep').onclick = () => decide('keep');
 </script></body></html>

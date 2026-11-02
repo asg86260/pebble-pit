@@ -59,6 +59,7 @@ import { afterGround } from './state.js';
 import { FINALE_HOUSE_W, APOTH_POTS_MAX } from './config.js';
 import { houseX } from './home.js';
 import { goOnAlpha } from './actbeats.js';
+import { playScript } from './dialogdrafts.js';
 import { beginGathering } from './mansion.js';
 import { forceMotion, motionForcedNow } from './prefs.js';
 import { stopById } from './stops.js';
@@ -3477,7 +3478,23 @@ export const SCENES = {
       for (let i = 0; i < 60 * 30 && !window.__goOn(); i++) window.__fast(1 / 60);
       for (let i = 0; i < 60 * 600 && !(window.__line() && window.__line().out == null); i++) window.__fast(1 / 60);
     } },
-  'act3-mid': { about: 'the acts', say: 'act 3 mid: the camp built (saw mill, workshop, posts filled), a fifth of God\'s yard walked out, the saw handed over',
+  // God's opening lines, drafted (src/dialogdrafts.js): the opening played
+  // from the go-on card to the meeting with a draft script in place of the
+  // beat's line, its first line up and waiting; a click goes on line by line.
+  // The page's line editor rewrites the script (`script`).
+  ...Object.fromEntries([
+    ['a', 'A warm', "Warm and welcoming, the con: God greets them, names the afterlife, says everyone who died is here working and nobody ages, so the work never stops; 'you never have to leave' reads as a kindness now and a trap after the unmasking."],
+    ['b', 'B brisk', "A brisk foreman: you're dead, this is the afterlife and you keep working, a pick each, no breaks, no end, nobody leaves. Says the premise flat, and 'nobody leaves' is the trap said out loud."],
+    ['c', 'C grand', "Grand and ceremonial: rise and be welcome, this is the afterlife where every soul is kept, the dead work for ever and the tithe climbs to him, then one word: work. 'Kept' and the tithe read as the jailer's after the unmasking."]
+  ].map(([k, option, say]) => [`gods-opening-lines-${k}`, { about: 'the acts', review: 'god\'s opening lines', option, say,
+    stage: 'mock: throwaway, never merged', branch: 'a3-review-both', script: `draft-god-${k}`,
+    run: () => {
+      actsYard('home');
+      playScript(`draft-god-${k}`);
+      for (let i = 0; i < 60 * 30 && !window.__goOn(); i++) window.__fast(1 / 60);
+      for (let i = 0; i < 60 * 600 && !(window.__line() && window.__line().out == null); i++) window.__fast(1 / 60);
+    } }])),
+  'act3-mid': { about: 'the acts', say: 'act 3 mid:the camp built (saw mill, workshop, posts filled), a fifth of God\'s yard walked out, the saw handed over',
     run: act3Mid },
   // Track C: each of act 3's boards open in the yard's sheet over the act-3-mid
   // camp, as a plain click on its station opens it, the station framed so

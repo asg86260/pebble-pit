@@ -12,6 +12,7 @@ import { appendFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { prints } from './review-prints.mjs';
 import { readStatus, readChanges } from './review-status.mjs';
+import { readScript, writeScript } from './dialog-drafts.mjs';
 
 export const notesPath = root => join(root, 'shots', 'review', 'notes.jsonl');
 
@@ -69,6 +70,26 @@ export function reviewPlugin(root) {
         res.setHeader('content-type', 'application/json');
         res.setHeader('cache-control', 'no-store');
         res.end(JSON.stringify({ entries: readStatus(root), notes, changes: readChanges(root) }));
+      });
+      // A draft dialog's lines (tools/dialog-drafts.mjs): GET reads a script
+      // out of the language file, POST writes the owner's lines back, and the
+      // write to src/ reloads the bench, which stands the scene again.
+      server.middlewares.use('/__dialog', (req, res) => {
+        const send = (code, body) => { res.statusCode = code; res.setHeader('content-type', 'application/json'); res.setHeader('cache-control', 'no-store'); res.end(JSON.stringify(body)); };
+        if (req.method === 'GET') {
+          const key = new URL(req.url, 'http://x').searchParams.get('script') || '';
+          try { send(200, { lines: readScript(root, key) }); } catch (e) { send(400, { error: e.message }); }
+          return;
+        }
+        if (req.method !== 'POST') { res.statusCode = 405; res.end(); return; }
+        let s = '';
+        req.on('data', c => { s += c; if (s.length > 64e3) req.destroy(); });
+        req.on('end', () => {
+          try {
+            const { script, lines } = JSON.parse(s);
+            send(200, { lines: writeScript(root, String(script), lines) });
+          } catch (e) { send(400, { error: e.message }); }
+        });
       });
       server.middlewares.use('/__review', (req, res) => {
         if (req.method !== 'POST') { res.statusCode = 405; res.end(); return; }

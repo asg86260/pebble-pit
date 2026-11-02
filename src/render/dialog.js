@@ -54,6 +54,16 @@ function wrap(text, max) {
   return out;
 }
 
+// The rows `text` wraps to in a bubble on a window `W` px wide, measured in
+// the bubble's own face (the review bench's line editor warns off it).
+export function lineRows(text, W = S.W) {
+  ctx.save();
+  ctx.font = `${FONT}px ${FACE}`;
+  const rows = wrap(text, Math.min(W - CELL * 8, DIALOG_WIDE_PX));
+  ctx.restore();
+  return rows;
+}
+
 // Where the bubble stands for a line of `w` by `h` px: its top-left, which
 // side its tail leaves from, and where across that side the tip points.
 export function bubbleAt(who, w, h) {
