@@ -126,7 +126,8 @@
 </div>
 <div class="right" id="right"><div class="stage" id="stage"><iframe id="yard" src="./play.html?bench" title="the change under review"></iframe></div></div>
 </div>
-<script>
+<script type="module">
+import { reviewState } from "/tools/review-state.mjs";
 const $ = id => document.getElementById(id);
 const f = $('yard'), stage = $('stage');
 const slug = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
