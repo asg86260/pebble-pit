@@ -58,20 +58,20 @@ const OFF = 20;                             // the stand's end, where it steps d
 const BOARD = { x: 9, y: -7 };              // the board's top left on the bench: four 2x2 blocks
 const SLOTS = [[0, 2], [2, 2], [0, 0], [2, 0]];   // each block's cell in it, laid bottom row first
 const REST = { hammer: 20, brush: 17 };     // where each tool lies on the stand, its head's column
-const DRUM = { x: 18, y: -8, r: 1, crank: 1.5 };  // option b: the paint roller and its crank
+const DRUM = { x: 18, y: -8.5, r: 1.5, crank: 2 };  // option b: the paint roller and its crank, on the board's top
 const BOARD_OUT = DRUM.x;                   // option b: the board's left column once it is through
 const over = col => col - 1;                // the spot standing over a column's middle
 const atRest = tool => REST[tool] - 0.5;    // the spot a tool on the stand is reached from
 // --- the beats, seconds ---------------------------------------------------------------
 const T = { lift: 0.3, set: 0.5, held: 0.2, reach: 0.3, blow: 0.5, up: 0.2, swing: 0.05, strike: 0.18,
-            col: 0.45, colHeld: 0.1, raise: 0.4, puff: 0.3, ticks: 0.2, nailIn: 0.15, tint: 0.5 };
+            col: 0.45, colHeld: 0.1, raise: 0.4, puff: 0.3, ticks: 0.2, nailIn: 0.15, flush: 0.3, tint: 0.5 };
 const SLIDE_V = 4;                          // option b: cells a second the mangle feeds the board
 const V = AFTER_WALK / AP;                  // cells a second, every body up here
 const SHUFFLE = V / 2;                      // along the stand, a step at a time
 const SHANK = [8, 4, 0];                    // a nail's shank standing proud, px, after 0, 1, 2 blows
 
 const fresh = () => ({ ph: 'wait', t: 0, n: 0, jx: SPOT, wFrom: SPOT, wTo: SPOT, wDur: 0, held: [], laid: [null, null, null, null],
-                       nails: [0, 0, 0, 0], nailAt: [null, null, null, null], tool: null, blow: 0, col: 0, paint: 0, slide: 0,
+                       nails: [0, 0, 0, 0], nailAt: [null, null, null, null], flushAt: [null, null, null, null], tool: null, blow: 0, col: 0, paint: 0, slide: 0,
                        sign: null, signV: cellOf('sign'), prevV: null, tintAt: -1e9, setAt: null, path: null, from: null });
 const ease = u => u * u * (3 - 2 * u);
 const lenOf = pts => pts.slice(1).reduce((n, p, i) => n + Math.hypot(p[0] - pts[i][0], p[1] - pts[i][1]), 0);
@@ -89,7 +89,8 @@ const cx = x => (x - x0()) / AP;
 const cy = y => (y - groundOf('workshop')) / AP;
 const floorTop = col => cy(floorAt(x0() + (col + 1.5) * AP)) - 3;   // a body's top row standing on the floor at col
 const pileCol = what => cx(pileMid('workshop', what)) - 1.5;
-const rackCol = () => cx(dropSpot('signs').at) - 1.5;
+// beside the rack, toward the shed, so the sign is swung down onto it clear of the body
+const rackCol = () => cx(dropSpot('signs').at) - 2 - 3;
 // Off the stand to the floor at column c and back.
 const down = (from, c) => { const f = floorTop(c); return [[from, STAND_Y], [OFF, STAND_Y], [OFF, f], [c, f]]; };
 
@@ -140,7 +141,7 @@ export function stepSignsMock(c) {
     else if (ph === 'rack') go('set');
     else {
       M.n++; M.jx = SPOT; M.prevV = M.signV; M.signV = cellOf('sign'); M.tintAt = S.after.t;
-      M.nails = [0, 0, 0, 0]; M.nailAt = [null, null, null, null]; M.paint = 0; M.slide = 0; M.col = 0; M.blow = 0;
+      M.nails = [0, 0, 0, 0]; M.nailAt = [null, null, null, null]; M.flushAt = [null, null, null, null]; M.paint = 0; M.slide = 0; M.col = 0; M.blow = 0;
       go('wait');
     }
     return;
@@ -181,7 +182,7 @@ export function stepSignsMock(c) {
     if (!stepped()) return;
     const k = Math.floor(M.blow / 2), s = own();
     if (M.nailAt[k] == null) M.nailAt[k] = S.after.t;
-    if (s >= T.up + T.swing && M.nails[k] < 1 + (M.blow % 2)) M.nails[k] = 1 + (M.blow % 2);
+    if (s >= T.up + T.swing && M.nails[k] < 1 + (M.blow % 2)) { M.nails[k] = 1 + (M.blow % 2); if (M.nails[k] === 2) M.flushAt[k] = S.after.t; }
     if (s >= T.blow) {
       M.blow++;
       if (M.blow >= 8) go('put', atRest('hammer'));
@@ -299,12 +300,15 @@ function boardCells(d, bx, by) {
     }
   });
 }
-// The nails along the board's top, a column each, standing proud until driven.
+// The nails along the board's top, a column each, standing proud until
+// driven; a nail driven flush is in the board, its head eased out with the
+// blow's ticks, so the sign carried is the plain 4x4 the rack holds.
 function nails(d, bx, by) {
   M.nails.forEach((n, i) => {
     if (M.nailAt[i] == null) return;
     const sh = SHANK[n], top = by * P - sh - 2, x = (bx + i) * P;
-    d.fade(clamp01((S.after.t - M.nailAt[i]) / T.nailIn), () => {
+    const a = clamp01((S.after.t - M.nailAt[i]) / T.nailIn) * (M.flushAt[i] == null ? 1 : 1 - clamp01((S.after.t - M.flushAt[i]) / T.flush));
+    if (a > 0) d.fade(a, () => {
       if (sh) d.px(x + 2, top + 2, 2, sh, K);
       d.px(x + 1, top, P - 2, 2, K);
     });
@@ -314,10 +318,12 @@ const crankAngle = () => M.slide / DRUM.r + Math.PI;
 const knob = () => ({ x: DRUM.x + Math.cos(crankAngle()) * DRUM.crank, y: DRUM.y + Math.sin(crankAngle()) * DRUM.crank });
 function mangle(d) {
   d.px(DRUM.x * P - 2, DRUM.y * P, 4, (-3 - DRUM.y) * P, K);                 // its post off the bench, behind the board
-  // the drum, inked in the slate it lays, a notch of paper turning with it
-  paint(d, tone => d.px((DRUM.x - DRUM.r) * P, (DRUM.y - DRUM.r) * P, 2 * DRUM.r * P, 2 * DRUM.r * P, tone));
+  // the drum, an ink rim round the slate it lays, a notch of paper turning in it
+  const z = 2 * DRUM.r * P, dx0 = (DRUM.x - DRUM.r) * P, dy0 = (DRUM.y - DRUM.r) * P;
+  d.px(dx0, dy0, z, z, K);
+  paint(d, tone => d.px(dx0 + 2, dy0 + 2, z - 4, z - 4, tone));
   const a = crankAngle() - Math.PI;
-  d.px(Math.round((DRUM.x + Math.cos(a) * 0.55) * P - 2), Math.round((DRUM.y + Math.sin(a) * 0.55) * P - 2), 4, 4, W);
+  d.px(Math.round((DRUM.x + Math.cos(a) * 0.8) * P - 2), Math.round((DRUM.y + Math.sin(a) * 0.8) * P - 2), 4, 4, W);
   // the crank off the hub, its knob at its true position
   const k = knob();
   d.line(DRUM.x, DRUM.y, k.x, k.y, 2, K);
@@ -336,7 +342,8 @@ export function drawSignsMock(d) {
   if (opt() === 'b') mangle(d);
   if (M.tool !== 'hammer') hammerAt(d, REST.hammer * P, -10 * P, true);
   if (opt() === 'a' && M.tool !== 'brush') paint(d, tone => brushAt(d, REST.brush * P, -10 * P, true, tone));
-  if (M.laid.some(v => v != null)) { boardCells(d, boardX(), BOARD.y); nails(d, boardX(), BOARD.y); }
+  // (the board lifted off the bench is the members' pass's from the lift's first frame)
+  if (M.laid.some(v => v != null) && !(M.ph === 'raise' && own() >= 0)) { boardCells(d, boardX(), BOARD.y); nails(d, boardX(), BOARD.y); }
   if (M.setAt != null) puff(d, BOARD.x, S.after.t - M.setAt);
 }
 // The members' pass: the joiner, what it carries, the tool in its hand.
