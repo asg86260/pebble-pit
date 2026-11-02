@@ -122,13 +122,15 @@ Object.assign(window, {
   // each a button labelled by its `option`, in the order they are written.
   // `text` is everything the option's look says about itself -- its fields
   // and its setup's source -- which the page has the dev server fingerprint
-  // to tell the owner what changed since they last looked.
+  // to tell the owner what changed since they last looked. A `script` (a
+  // draft dialog's key in src/dialogdrafts.js) gives the option the page's
+  // line editor.
   __reviews: () => {
     const by = new Map();
     for (const [name, sc] of Object.entries(SCENES)) if (sc.review) {
       if (!by.has(sc.review)) by.set(sc.review, []);
       const text = [sc.option, sc.say, sc.stage, String(sc.run), String(sc.swap || '')].join('\n');
-      by.get(sc.review).push({ scene: name, label: sc.option || name, say: sc.say, swap: !!sc.swap, stage: sc.stage || null, text });
+      by.get(sc.review).push({ scene: name, label: sc.option || name, say: sc.say, swap: !!sc.swap, stage: sc.stage || null, script: sc.script || null, text });
     }
     // A review's `branch`/`branches` (where its build lives) and `supersedes`
     // (the review names a built one replaces) are gathered over its scenes:

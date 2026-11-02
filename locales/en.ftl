@@ -3414,6 +3414,49 @@ act-goon = go on
 # act beat line, placeholder: God at the throne
 act-meet-god = God holds out a pick
 
+# --- MOCK draft-god: begin. God's opening lines at meet-god, drafted for review; the review bench's dialog editor rewrites everything between begin and end ---
+
+# MOCK draft, the owner's to rewrite: God's opening lines, script A, warm, line 1
+draft-god-a-1 = welcome. you made it.
+
+# MOCK draft, the owner's to rewrite: God's opening lines, script A, warm, line 2
+draft-god-a-2 = this is the afterlife.
+
+# MOCK draft, the owner's to rewrite: God's opening lines, script A, warm, line 3
+draft-god-a-3 = everyone who died down there is here, working.
+
+# MOCK draft, the owner's to rewrite: God's opening lines, script A, warm, line 4
+draft-god-a-4 = nobody ages here, so the work never stops.
+
+# MOCK draft, the owner's to rewrite: God's opening lines, script A, warm, line 5
+draft-god-a-5 = here's your pick. and you never have to leave.
+
+# MOCK draft, the owner's to rewrite: God's opening lines, script B, brisk, line 1
+draft-god-b-1 = you two. you're dead.
+
+# MOCK draft, the owner's to rewrite: God's opening lines, script B, brisk, line 2
+draft-god-b-2 = the afterlife. same as down there: you keep working.
+
+# MOCK draft, the owner's to rewrite: God's opening lines, script B, brisk, line 3
+draft-god-b-3 = a pick each. yard's that way.
+
+# MOCK draft, the owner's to rewrite: God's opening lines, script B, brisk, line 4
+draft-god-b-4 = no end to it. nobody leaves.
+
+# MOCK draft, the owner's to rewrite: God's opening lines, script C, grand, line 1
+draft-god-c-1 = rise, and be welcome.
+
+# MOCK draft, the owner's to rewrite: God's opening lines, script C, grand, line 2
+draft-god-c-2 = this is the afterlife, where every soul is kept.
+
+# MOCK draft, the owner's to rewrite: God's opening lines, script C, grand, line 3
+draft-god-c-3 = here the dead work for ever, and the tithe climbs to me.
+
+# MOCK draft, the owner's to rewrite: God's opening lines, script C, grand, line 4
+draft-god-c-4 = take up the pick. work.
+
+# --- MOCK draft-god: end ---
+
 # act beat line, placeholder: the saw handed to the woodcutter
 act-saw = a saw
 

@@ -7896,6 +7896,97 @@
   "text": "God holds out a pick"
  },
  {
+  "id": "draft-god-a-1",
+  "group": "The shell",
+  "where": "src/dialogdrafts.js",
+  "context": "MOCK draft, the owner's to rewrite: God's opening lines, script A, warm, line 1",
+  "text": "welcome. you made it."
+ },
+ {
+  "id": "draft-god-a-2",
+  "group": "The shell",
+  "where": "src/dialogdrafts.js",
+  "context": "MOCK draft, the owner's to rewrite: God's opening lines, script A, warm, line 2",
+  "text": "this is the afterlife."
+ },
+ {
+  "id": "draft-god-a-3",
+  "group": "The shell",
+  "where": "src/dialogdrafts.js",
+  "context": "MOCK draft, the owner's to rewrite: God's opening lines, script A, warm, line 3",
+  "text": "everyone who died down there is here, working."
+ },
+ {
+  "id": "draft-god-a-4",
+  "group": "The shell",
+  "where": "src/dialogdrafts.js",
+  "context": "MOCK draft, the owner's to rewrite: God's opening lines, script A, warm, line 4",
+  "text": "nobody ages here, so the work never stops."
+ },
+ {
+  "id": "draft-god-a-5",
+  "group": "The shell",
+  "where": "src/dialogdrafts.js",
+  "context": "MOCK draft, the owner's to rewrite: God's opening lines, script A, warm, line 5",
+  "text": "here's your pick. and you never have to leave."
+ },
+ {
+  "id": "draft-god-b-1",
+  "group": "The shell",
+  "where": "src/dialogdrafts.js",
+  "context": "MOCK draft, the owner's to rewrite: God's opening lines, script B, brisk, line 1",
+  "text": "you two. you're dead."
+ },
+ {
+  "id": "draft-god-b-2",
+  "group": "The shell",
+  "where": "src/dialogdrafts.js",
+  "context": "MOCK draft, the owner's to rewrite: God's opening lines, script B, brisk, line 2",
+  "text": "the afterlife. same as down there: you keep working."
+ },
+ {
+  "id": "draft-god-b-3",
+  "group": "The shell",
+  "where": "src/dialogdrafts.js",
+  "context": "MOCK draft, the owner's to rewrite: God's opening lines, script B, brisk, line 3",
+  "text": "a pick each. yard's that way."
+ },
+ {
+  "id": "draft-god-b-4",
+  "group": "The shell",
+  "where": "src/dialogdrafts.js",
+  "context": "MOCK draft, the owner's to rewrite: God's opening lines, script B, brisk, line 4",
+  "text": "no end to it. nobody leaves."
+ },
+ {
+  "id": "draft-god-c-1",
+  "group": "The shell",
+  "where": "src/dialogdrafts.js",
+  "context": "MOCK draft, the owner's to rewrite: God's opening lines, script C, grand, line 1",
+  "text": "rise, and be welcome."
+ },
+ {
+  "id": "draft-god-c-2",
+  "group": "The shell",
+  "where": "src/dialogdrafts.js",
+  "context": "MOCK draft, the owner's to rewrite: God's opening lines, script C, grand, line 2",
+  "text": "this is the afterlife, where every soul is kept."
+ },
+ {
+  "id": "draft-god-c-3",
+  "group": "The shell",
+  "where": "src/dialogdrafts.js",
+  "context": "MOCK draft, the owner's to rewrite: God's opening lines, script C, grand, line 3",
+  "text": "here the dead work for ever, and the tithe climbs to me."
+ },
+ {
+  "id": "draft-god-c-4",
+  "group": "The shell",
+  "where": "src/dialogdrafts.js",
+  "context": "MOCK draft, the owner's to rewrite: God's opening lines, script C, grand, line 4",
+  "text": "take up the pick. work."
+ },
+ {
   "id": "act-saw",
   "group": "The shell",
   "where": "src/actbeats.js",
