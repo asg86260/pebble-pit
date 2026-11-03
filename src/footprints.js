@@ -40,7 +40,7 @@ import { afterlifeOn, hellOn } from './acts.js';
 import { deepPortal, standOfStation, deepFloor } from './deep/place.js';
 import { stationById } from './deep/party.js';
 import { PROPS } from './deep/props.js';
-import { afterFloor, groundOf, stationBox, stationX0, signBox, plotX, treeRows, ART, pileBox, stairFoot, stationParts, podiumMid, pileX, AP } from './after/place.js';
+import { afterFloor, groundOf, stationBox, stationX0, signBox, plotX, treeRows, ART, pileBox, stairFoot, stationParts, podiumMid, pileX, AP, closed } from './after/place.js'; // MOCK the-sign-station-polish  closed
 import { DRAW } from './render/after/stations.js';
 import { silhouette } from './render/after/kit.js';
 import { furnaceBox, barrierBox } from './hell/place.js';
@@ -274,9 +274,14 @@ function afterParts() {
   for (const key of Object.keys(ART)) {
     const rs = stationRects(key, false);
     if (!rs) continue;
-    out.push({ id: key, rects: rs });
+    // MOCK the-sign-station-polish: a lot not yet built holds its piles' floor
+    // as its own ground, empty, so its build sign (claimed as the lot's,
+    // `footprints`) may stand over it: with the workshop's timber moved to its
+    // left, a pile each side left its sign no room between them
+    const piles = Object.keys(ART[key].pile || {}), lot = closed(key);
+    out.push({ id: key, rects: lot ? [...rs, ...piles.map(what => pileRect(key, what))] : rs });
     out.push({ id: `board:${key}`, rects: [signBox(key)] });
-    for (const what of Object.keys(ART[key].pile || {})) out.push({ id: `pile:${what}`, rects: [pileRect(key, what)] });
+    if (!lot) for (const what of piles) out.push({ id: `pile:${what}`, rects: [pileRect(key, what)] });
   }
   // The grove: every plot up to the most its card clears, built or not, a
   // grown tree standing in it, its crown's widest row across and its top

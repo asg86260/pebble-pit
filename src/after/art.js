@@ -34,7 +34,7 @@ const DRAWN = {
   mill:      { box: [11, 39, 26], door: 8, reach: 60, pile: { logs: 6, timber: null } },
   // The workshop's signs in its rack, and past them the timber walked to it
   // off the timber mound: laid off the shed and each other (`layPiles`).
-  workshop:  { box: [5, 21, 22], door: 13, pile: { signs: null, benchtimber: null } },
+  workshop:  { box: [5, 21, 22], door: 13, pile: { signs: null, benchtimber: 'left' } },   // MOCK the-sign-station-polish  its timber on the shed's left, the mill's side
   shack:     { box: [0, 14, 14], door: 7, pile: {} },
   // The forestry shack beside the grove's first plot (the owner, 2026-10-20;
   // rebuilt 2026-10-30): the grove's board; its seed basket, and past it the

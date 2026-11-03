@@ -4235,7 +4235,10 @@ Object.assign(SCENES, {
 // full (its rack of signs at its brim, nobody to carry them). Framed on the
 // shed and its two piles as the mill's scenes frame the mill.
 function workshopStage({ members = 0, join = false, grant = {}, until = null, hold = true, run = 0 }) {
-  window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+  window.__reset(); window.__actsOn(null); window.__goPlace('after');
+  // standing before the first frame, so no build sign is staked in its lot to fade off
+  for (const k of ['mill', 'workshop']) if (S.after && !S.after.built.includes(k)) S.after.built.push(k);
+  window.__fast(1);
   if (members) window.__afterCrowd((i, v) => (i < members ? 8 : v));
   for (let k = 0; k < 90 && window.__afterRead().walking > 0; k++) window.__fast(1);
   for (const k of ['mill', 'workshop']) if (!S.after.built.includes(k)) S.after.built.push(k);
@@ -4266,8 +4269,7 @@ Object.assign(SCENES, {
 // flips the option on the yard standing, the make begun again.
 import { startSignsMock, stepSignsMock } from './render/after/signsmock.js'; // MOCK the-sign-station-polish
 const SIGNS_MOCK = [ // MOCK the-sign-station-polish
-  ['a', 'A by hand: hammer and brush', "The joiner fetches four timber blocks off its pile, sets them on the bench as a square, nails them, then brushes each column slate and carries the sign to the rack."],
-  ['b', 'B through a mangle: hammer and roller', "Fetched and nailed the same; then the joiner turns a crank and the board is fed under a paint roller, slate past the roller, out toward the rack, as the log goes through the blade."]
+  ['a', 'A shaped by the nails', "The joiner fetches four timber blocks off its pile, left of the shed, and sets them on the bench as a square. Each nail it drives changes the piece a little: the pole goes up, then the cloth climbs it, and the last nail makes it the flag. It carries the flag to the rack, and the members carry it out the same."]
 ];
 function signsMockStage(o) { // MOCK the-sign-station-polish
   workshopStage({ members: 3, grant: { timber: 21, benchtimber: 8 }, hold: false });

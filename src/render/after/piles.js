@@ -50,6 +50,7 @@ export function goodBlock(x, y, kind, v) {
   // the acorn is no flat block but its own small drawing (render/after/pine.js)
   if (kind === 'acorn') { drawAcorn(x, y); return; }
   const z = AFTER_BLOCK[kind] * AP;
+  if (kind === 'sign' && globalThis.__signsFlag?.(x, y + z, v)) return;   // MOCK the-sign-station-polish  a sign is the flag, stood on its slot's foot
   ctx.fillStyle = goodColor(kind, v); ctx.fillRect(x, y, z, z);
 }
 // Every good on the act's ground (after/ground.js), piles and open floor

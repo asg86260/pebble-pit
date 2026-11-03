@@ -235,6 +235,9 @@ function drawLoad(x, y, kind, n, load = null) {
   } else if (kind === 'log' || kind === 'plank') {
     const z = AFTER_BLOCK[kind] * AP, lx = x + 1.5 * P - z / 2;
     for (let k = 0; k < n; k++) goodBlock(lx, y - (k + 1) * z, kind, load && load[k]);
+  } else if (kind === 'sign' && globalThis.__signsMock && globalThis.__signsFlag) {
+    // MOCK the-sign-station-polish: the flag the bench made, held at the side by its pole, the rest behind it
+    for (let k = Math.min(n, 2) - 1; k >= 0; k--) globalThis.__signsFlag(x + 3 * P - k * P, y + 3 * P, load && load[k]);
   } else if (kind === 'sign') {
     // The one in front held up on its post; the rest boards on the shoulder.
     drawFistFlag(x + P, y + P * 2, AFTER_SIGN_FLAG_U.held, 1, AFTER_SIGN_FLAG_U.up * P);

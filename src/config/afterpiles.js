@@ -51,7 +51,7 @@ export const AFTER_PILE_SETTLE_S = 0.07;
 // a body carries each out to the crowd.
 Object.assign(AFTER_PILES, {
   benchtimber: { good: 'plank', brim: 8, cols: 2 },
-  signs:       { good: 'sign', brim: 4, cols: 2 }
+  signs:       { good: 'sign', brim: 4, cols: 4 }   // MOCK the-sign-station-polish  flags stood in one row, each taller than its slot
 });
 // The floor a pile keeps clear round it, in art cells: a station's piles that
 // name no column are laid this far past what stands before them (after/art.js,
