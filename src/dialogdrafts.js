@@ -31,7 +31,9 @@ export const SCRIPTS = {
     { who: 'god', id: 'draft-god-c-1' },
     { who: 'god', id: 'draft-god-c-2' },
     { who: 'god', id: 'draft-god-c-3' },
-    { who: 'god', id: 'draft-god-c-4' }
+    { who: 'god', id: 'draft-god-c-4' },
+    { who: 'god', id: 'draft-god-c-5' },
+    { who: 'god', id: 'draft-god-c-6' }
   ]
   // END SCRIPTS
 };

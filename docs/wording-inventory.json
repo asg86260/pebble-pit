@@ -7963,28 +7963,42 @@
   "group": "The shell",
   "where": "src/dialogdrafts.js",
   "context": "MOCK draft, the owner's to rewrite: God's opening lines, script C, grand, line 1",
-  "text": "rise, and be welcome."
+  "text": "come, and be welcome"
  },
  {
   "id": "draft-god-c-2",
   "group": "The shell",
   "where": "src/dialogdrafts.js",
   "context": "MOCK draft, the owner's to rewrite: God's opening lines, script C, grand, line 2",
-  "text": "this is the afterlife, where every soul is kept."
+  "text": "to the afterlife, an eternal paradise"
  },
  {
   "id": "draft-god-c-3",
   "group": "The shell",
   "where": "src/dialogdrafts.js",
   "context": "MOCK draft, the owner's to rewrite: God's opening lines, script C, grand, line 3",
-  "text": "here the dead work for ever, and the tithe climbs to me."
+  "text": "your eternal paradise"
  },
  {
   "id": "draft-god-c-4",
   "group": "The shell",
   "where": "src/dialogdrafts.js",
   "context": "MOCK draft, the owner's to rewrite: God's opening lines, script C, grand, line 4",
-  "text": "take up the pick. work."
+  "text": "you've worked so hard, right until the end"
+ },
+ {
+  "id": "draft-god-c-5",
+  "group": "The shell",
+  "where": "src/dialogdrafts.js",
+  "context": "MOCK draft, the owner's to rewrite: God's opening lines, script C, grand, line 5",
+  "text": "i can tell you love to work. so work for me now"
+ },
+ {
+  "id": "draft-god-c-6",
+  "group": "The shell",
+  "where": "src/dialogdrafts.js",
+  "context": "MOCK draft, the owner's to rewrite: God's opening lines, script C, grand, line 6",
+  "text": "eternally"
  },
  {
   "id": "act-saw",
