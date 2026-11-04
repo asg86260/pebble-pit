@@ -230,7 +230,7 @@ function leavePedestal() {
 // in seconds, or `until` a fact; `say` the band's line; `lines` the
 // speakers' lines, which hold the phase until each is read (dialog.js); `enter`, `step` and
 // `end` what it does on the way.
-const BODIES = {
+export const BODIES = {
   'house-fall': [
     { frame: atHouse, enter: walkThemIn, until: indoors, skipIf: fallen },
     { frame: atHouse, s: ACT_ROCK_FALL_S, skipIf: fallen, end: houseFalls },

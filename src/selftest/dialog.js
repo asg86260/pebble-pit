@@ -6,12 +6,13 @@
 
 import { S } from '../state.js';
 import { DIALOG_STROKE_PX, DIALOG_TAIL } from '../config.js';
-import { ok, settle, frames, canvas, point } from './kit.js';
+import { ok, settle, frames, canvas, point, raf } from './kit.js';
 import { draw } from '../render.js';
 import { ctx } from '../render/ctx.js';
 import { SCENES } from '../scenes.js';
 import { bubbleSeen } from '../render/dialog.js';
 import { lineShown } from '../dialog.js';
+import { BODIES } from '../actbeats.js';
 
 const U = DIALOG_STROKE_PX;
 
@@ -31,7 +32,71 @@ const lum = (x, y) => {
   return least;
 };
 
+// Any CSS color the page computes, as [r, g, b] in 0..255.
+const pen = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
+pen.canvas.width = pen.canvas.height = 1;
+const rgb = css => { pen.clearRect(0, 0, 1, 1); pen.fillStyle = '#000'; pen.fillStyle = css; pen.fillRect(0, 0, 1, 1); return [...pen.getImageData(0, 0, 1, 1).data].slice(0, 3); };
+const lumOf = c => c.map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }).reduce((a, v, i) => a + v * [0.2126, 0.7152, 0.0722][i], 0);
+const ratio = (a, b) => { const [hi, lo] = [lumOf(a), lumOf(b)].sort((x, y) => y - x); return (hi + 0.05) / (lo + 0.05); };
+// A word drawn by `difference` comes out |word - what is under it|, per channel.
+const differ = (a, b) => a.map((v, i) => Math.abs(v - b[i]));
+
+// The skip hint's words, read as they come out on its card and on the bar
+// filling under them, in a frame of the dark page (`?dark`).
+async function skipHintInDark() {
+  const f = document.createElement('iframe');
+  f.src = './play.html?bench&dark';
+  f.style.cssText = 'position:fixed;left:0;top:0;width:1000px;height:700px;border:0;opacity:0;pointer-events:none;z-index:-1';
+  document.body.appendChild(f);
+  try {
+    const t0 = performance.now();
+    const booted = () => !!f.contentWindow?.__scene && !!f.contentWindow.document.getElementById('skip');
+    while (!booted() && performance.now() - t0 < 20000) await raf();
+    if (!booted()) return [ok(false, 'the game boots in a frame')];
+    const w = f.contentWindow, d = w.document;
+    const hint = w.getComputedStyle(d.getElementById('skip')), say = w.getComputedStyle(d.querySelector('#skip .say')),
+          bar = w.getComputedStyle(d.querySelector('#skip .bar'));
+    const card = rgb(hint.backgroundColor), words = rgb(say.color), fill = rgb(bar.backgroundColor);
+    const through = say.mixBlendMode === 'difference' ? differ : a => a;
+    const onCard = through(words, card), onBar = through(words, fill);
+    return [
+      ok(d.documentElement.classList.contains('dark'), 'the frame is the dark page'),
+      ok(ratio(onCard, card) >= 4.5, 'the hint\'s words read on its card, dark', `${ratio(onCard, card).toFixed(2)}:1 ${onCard} on ${card}`),
+      ok(ratio(onBar, fill) >= 4.5, 'and on the bar filling under them, dark', `${ratio(onBar, fill).toFixed(2)}:1 ${onBar} on ${fill}`)
+    ];
+  } finally { f.remove(); }
+}
+
 export const TESTS = [
+  ["a quick second click while a line fades out is the line's, and never skips the rest of the speech", async () => {
+    SCENES.dialog.run();
+    await settle(0.6);
+    // God's speech, two lines long for this check (the second a real message)
+    const phase = BODIES['meet-god'][0];
+    phase.lines.push({ who: 'god', id: 'act-hell-told' });
+    try {
+      const r = canvas().getBoundingClientRect();
+      const cx = r.left + r.width / 2, cy = r.top + r.height * 0.7;
+      const click = () => { point('pointerdown', cx, cy); point('pointerup', cx, cy); };
+      click();                                           // goes on from the first line, which fades out
+      await frames(3);
+      const fading = !!lineShown() && lineShown().id === 'act-meet-god' && lineShown().out != null;
+      click();                                           // a second click, quick: the line's, nothing else
+      const skipped = S.heard.includes('act-hell-told');
+      await frames(90);
+      const second = lineShown();
+      const up = !!second && second.id === 'act-hell-told' && second.out == null;
+      click();
+      const read = S.heard.includes('act-hell-told');
+      return [
+        ok(fading, 'the first click put the first line to fading', JSON.stringify(lineShown())),
+        ok(!skipped, 'the second click, mid-fade, did not read the rest of the speech', String(skipped)),
+        ok(up, 'the second line comes up on its own, waiting', JSON.stringify(second)),
+        ok(read, 'and the next click goes on from it, one line a click', String(read))
+      ];
+    } finally { phase.lines.pop(); }
+  }],
+  ["the skip hint's words are readable on its card and on the bar, in the dark page", skipHintInDark],
   ["God's line stands in a bubble whose tail points at his head, and a click on the game goes on from it", async () => {
     SCENES.dialog.run();
     await settle(0.6);                                // the line's fade in, done

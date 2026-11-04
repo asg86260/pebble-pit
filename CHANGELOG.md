@@ -229,6 +229,8 @@ this section; the release that switches it on moves these under Unreleased.
 - Every build takes 10 to 20 seconds at one pair of hands, the biggest (a new station, a machine, the last shield) 30 at most, by one rule off a row's place in its ladder instead of a figure a row (test/build-times.test.mjs).
 - The sphere costs 1.75 times the dearest other machine in every coin, so it is the last machine you can afford (test/sphere.test.mjs).
 
+- A quick second click while God's line fades out no longer skips the rest of his speech; each click goes on one line (src/selftest/dialog.js, "a quick second click while a line fades out").
+- "Hold space to skip" is readable on the dark page, dark words on its light card instead of light on light (src/selftest/dialog.js, "the skip hint's words are readable").
 - On the dark and dim pages act 3's raised shelves and the cloud's edge are the cloud's own dark tone again, not a light grey slab (src/selftest/afterpage.js, "act 3's raised shelves stand on the cloud's own tone").
 - Pulling a stump, its roots give a steady strain apart even when the game stutters (test/after-gestures.test.mjs).
 - The log on the saw mill's bed no longer loses a sliver as the blade starts on its last column (test/after-pair-stays.test.mjs).
