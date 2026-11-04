@@ -369,3 +369,32 @@ export const DIALOG_LINE_PX = 3;           // the gap between two wrapped lines
 // cells, row by row out from the box, tapering a cell a side every two rows
 // to a middle point. The first row lies over the box's own stroke.
 export const DIALOG_TAIL = [5, 5, 3, 3, 1, 1];
+
+// MOCK dialog-sauce
+// Throwaway review numbers, never merged: the dialog spruced up (the owner,
+// 2026-11-03, "give it sauce"), mocked on the review bench (review "dialog:
+// sauce", src/dialogsauce.js, src/render/dialogsauce.js).
+// The typewriter, per option: `cps` letters a second, `comma` / `stop` the
+// held pause after a comma and after a full stop (or ? !), `fade` a letter's
+// own fade in; a `~slow~` letter fades in over `slow`.
+export const SAUCE_TYPE = {
+  steady: { cps: 26, comma: 0, stop: 0, fade: 0.08, slow: 0.7 },
+  paced: { cps: 38, comma: 0.22, stop: 0.42, fade: 0.08, slow: 0.7 }
+};
+// The words' effects: the wave's height in px and its rate (Hz) and the step
+// along the word (radians a letter); the shake's reach in px and how long it
+// holds a pose; the glow's halo tone (a rung of GREY) and its opacity's
+// swing and rate.
+export const SAUCE_FX = { waveH: 2, waveHz: 1.1, waveStep: 0.7, shake: 1, shakeHoldS: 0.07,
+                          glowRung: 2, glowA: [0.25, 0.6], glowHz: 0.6 };
+// Heaven's gates stand `gateOff` cells right of God's throne on the cloud
+// floor, and the two walk out of them to before him. His light on them,
+// fading in and out over
+// `lightS`, a see-through fill of GREY[`tone`]: the cone from his face down
+// to them (`top` px wide under his face, `pool` px past them either side at
+// the floor, the soft edge `edges` steps of `edge` px, opacity `a` at its
+// brightest), or the ring on the cloud floor round their feet (`w` px past
+// the two either side, `h` px deep, the same edge).
+export const SAUCE_PAIR = { lightS: 0.6, tone: 2, gateOff: 14,
+                            cone: { top: 18, pool: 14, edges: 3, edge: 6, a: 0.6 },
+                            ring: { w: 30, h: 12, edges: 3, edge: 6, a: 0.8 } };

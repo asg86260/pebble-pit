@@ -26,6 +26,8 @@ import { P, ACT_PORTAL_R, ACT_HELL_HANG, ACT_PORTAL_OPEN_S, ACT_HAND_FADE_S, ACT
 import { houseX } from './home.js';
 import { smoothstep } from './motion.js';
 import { afterX0, afterFloor } from './after/place.js';
+import { godFront } from './after/sky.js'; // MOCK dialog-sauce
+import { SAUCE_PAIR } from './config.js'; // MOCK dialog-sauce
 import { roadX, chamberFloor } from './hell/place.js';
 import { deepFloor } from './deep/place.js';
 import { afterlifeOn, hellOn } from './acts.js';
@@ -44,7 +46,11 @@ export const PORTALS = {
       // (the owner, 2026-10-31), high enough to clear the mansion there.
       yard: () => gatesEnd(snap(houseX() + FINALE_HOUSE_W * P / 2), snap(S.groundY) - ACT_GATES_SKY),
       // Standing on the cloud floor at the camp's own column.
-      after: () => gatesEnd(Math.max(afterX0(), ACT_GATES_CELL * P), snap(afterFloor()))
+      // MOCK dialog-sauce: with an option up, on the floor in front of God's
+      // throne (the owner, 2026-11-03: "have them spawn in front of god"), a
+      // few steps to its right (the gates' hand clear of them), so the souls
+      // step out and walk left into his light.
+      after: () => gatesEnd(globalThis.__dialogSauce ? snap(godFront() + SAUCE_PAIR.gateOff * P) : Math.max(afterX0(), ACT_GATES_CELL * P), snap(afterFloor()))
     }
   },
   hell: {

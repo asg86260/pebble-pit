@@ -29,6 +29,7 @@ import { afterFloor, floorAt, afterTop, stationBox, stationX0, speakerAt } from 
 import { hellTop, chamberFloor, chamberAtX, chamberFocusX, storeX as hellStoreX } from './hell/place.js';
 import { deepTop, deepFloor } from './deep/place.js';
 import { portalEnd } from './portals.js';
+import { godFront } from './after/sky.js'; // MOCK dialog-sauce
 import * as HELL from './hell/index.js';
 import { mansionDoorX, soulAt } from './mansion.js';
 
@@ -99,6 +100,8 @@ function tearX() { return snap(tear().x - WORKER / 2); }
 // The same spot under the gates on the cloud floor, which stand at the
 // camp's own column (portals.js), not over the yard's.
 const afterGateX = () => snap(portalEnd('heaven', 'after').x - WORKER / 2);
+// MOCK dialog-sauce: the two of them before God's throne, their middle on its front
+const beforeGod = () => snap(godFront() - WORKER / 2 + GHOST_GAP / 2);
 export const yardFeet = x => feetOn(ways().yard, x);
 const afterFeet = x => (x == null ? afterFloor() : floorAt(x)) - WORKER;
 const deepFeet = () => deepFloor() - WORKER;
@@ -112,7 +115,9 @@ const hellFeet = x => chamberFloor(Math.max(0, chamberAtX(x))) - WORKER;
 const ROUTES = {
   // out of the ruin, floated up to the gates; then through them
   float: [{ float: threshold }],
-  rise: [{ through: 'after' }],
+  // (MOCK dialog-sauce: with an option up the gates stand a few steps short
+  // of God's throne, and the two walk out of them to stand before him)
+  rise: [{ through: 'after' }, { h: () => (globalThis.__dialogSauce ? beforeGod() : S.acts.pair.x), y: afterFeet }],
   camp: [{ h: campX, y: afterFeet }],
   // up the pillar's face onto its top, and back down
   pedestal: [{ h: pillarFootX, y: afterFeet }, { v: pillarFeet }, { h: speakerX, y: pillarFeet }],

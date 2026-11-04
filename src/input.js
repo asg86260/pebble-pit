@@ -48,7 +48,7 @@ import { plotX } from './farm.js';
 import { riftOpen } from './rift.js';
 import { skipCutscene, cutsceneRunning } from './cutscene.js';
 import { holdSkip } from './skip.js';
-import { goOn } from './dialog.js';
+import { goOn, lineShown } from './dialog.js';
 import { markNoticesRead } from './notices.js';
 import { sayStore, showPane, pane } from './settings.js';
 import { isTap } from './tap.js';   // one definition of a tap for the whole page
@@ -163,7 +163,9 @@ canvas.addEventListener('pointerdown', e => {
   if (S.paused) return;
   // A click on a line of dialog waiting goes on to the next, wherever on the
   // game it lands (dialog.js): the cutscene has the click either way.
-  if (goOn()) return;
+  // (and one while a line fades out is still the line's, so a quick second
+  // click never lands on the cutscene's skip and reads the rest at once)
+  if (goOn() || lineShown()) return;
   // A click skips a running cutscene and does nothing else: a swing taken
   // while the camera is being handed back lands on whatever is under it.
   if (skipCutscene()) return;
