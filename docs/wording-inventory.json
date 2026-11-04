@@ -8012,7 +8012,7 @@
   "group": "The shell",
   "where": "src/dialogdrafts.js",
   "context": "MOCK draft, the owner's to rewrite: God's opening lines, script D, C with effects, line 2",
-  "text": "to the afterlife, an *eternal* ^paradise^"
+  "text": "to the afterlife, an *eternal paradise*"
  },
  {
   "id": "draft-god-d-3",
@@ -8026,7 +8026,7 @@
   "group": "The shell",
   "where": "src/dialogdrafts.js",
   "context": "MOCK draft, the owner's to rewrite: God's opening lines, script D, C with effects, line 4",
-  "text": "you've worked so hard, right until ~the end~"
+  "text": "you've worked so hard, all the way to the ~end~"
  },
  {
   "id": "draft-god-d-5",
@@ -8040,7 +8040,7 @@
   "group": "The shell",
   "where": "src/dialogdrafts.js",
   "context": "MOCK draft, the owner's to rewrite: God's opening lines, script D, C with effects, line 6",
-  "text": "*eternally*"
+  "text": "_eternally_"
  },
  {
   "id": "act-saw",
