@@ -3474,7 +3474,7 @@ draft-god-d-3 = your *eternal* ^paradise^
 draft-god-d-4 = you've worked so hard, right until ~the end~
 
 # MOCK draft, the owner's to rewrite: God's opening lines, script D, C with effects, line 5
-draft-god-d-5 = i can tell you love to work. so _work_ for me now
+draft-god-d-5 = so _work_ for me now
 
 # MOCK draft, the owner's to rewrite: God's opening lines, script D, C with effects, line 6
 draft-god-d-6 = *eternally*
