@@ -41,7 +41,7 @@ import { colX, rowY } from '../../after/ground.js';
 import { built } from '../../after/levels.js';
 import { cellOf } from '../../grid.js';
 import { source, sink } from '../../flow.js';
-import { shaper, stepGlide } from './signhand.js'; // MOCK the-sign-station-by-hand
+import { shaper } from './signhand.js'; // MOCK the-sign-station-by-hand
 
 let M = null; // page: the mock's cycle, stood up by startSignsMock
 held('signs-mock', () => { globalThis.__signsMock = null; M = null; });
@@ -461,9 +461,9 @@ function stepHand(dt) {
   h.oa = h.oa.map((a, i) => { const want = M.laid[i] != null || M.step > 0 ? 0 : plank && (nextSlot < 0 || i === nextSlot) ? 1 : HAND.faint; return a + Math.max(-r, Math.min(r, want - a)); });
   const nw = k >= 0 ? (hm.held ? 1 : HAND.faint) : 0;
   h.na += Math.max(-r, Math.min(r, nw - h.na));
-  // MOCK the-sign-station-by-hand: the way's own motion, and the camera in while the bench is worked
+  // MOCK the-sign-station-by-hand: the way's own motion
   const sh = shaper();
-  if (sh) { sh.step(dt); stepGlide(!!heldGoods() || laidN() > 0 || M.step > 0, dt); return; }
+  if (sh) { sh.step(dt); return; }
   if (hm.held) {
     // the head hangs from the grip, at its true position; brought down on the
     // nail it strikes, as hard as it came, and rests there till lifted
@@ -590,7 +590,7 @@ globalThis.__signsAt = what => {
   else if (what === 'nail') { const k = nextNail(); w = k >= 0 && nailW(k); }
   else if (what === 'hammer') w = headOf(M.hand.hm);
   else if (what === 'flag') w = flagMid();
-  else if (what === 'part') w = shaper()?.at();   // MOCK the-sign-station-by-hand
+  else if (what === 'part' || what === 'track') w = shaper()?.at(what);   // MOCK the-sign-station-by-hand
   else if (what === 'rack') { const r = dropSpot('signs'); w = { x: r.at, y: r.top - AP * 5 }; }
   if (!w) return null;
   const sc = toScreen(w.x, w.y);
@@ -633,7 +633,7 @@ function drawHandBench(d) {
 }
 // Over everything but the cues: the hammer in the hand, and a blow's ticks.
 function drawHandTools() {
-  if (shaper()) return;   // MOCK the-sign-station-by-hand
+  if (shaper()) { shaper().drawTop?.(); return; }   // MOCK the-sign-station-by-hand  (its indicator, over the members)
   const d = wsFrame(), h = M.hand, t = S.after.t, z = Z(), b = HB();
   const ws = (x, y) => ({ x: cx(x) * P, y: cy(y) * P });   // a world point in the frame's px
   const hm = h.hm;

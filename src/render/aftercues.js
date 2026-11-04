@@ -214,7 +214,7 @@ export function drawAfterCues() {
     const ink = r.open && !r.held && !demoHand.pose ? Math.max(r.cueA, (r.hintA || 0) * GESTURE_CUE_HOVER) * GESTURE_CUE_ALPHA : 0;
     const at = ink > 0.01 && cueAt(r.key, r);
     shown[r.key] = at ? ink : 0;
-    if (at && at.x >= S.camX - P * 4 && at.x <= S.camX + S.viewW + P * 4) { ctx.globalAlpha = ink; handOn(ctx, at.x, at.y, at.pose); }
+    if (at && at.x >= S.camX - P * 4 && at.x <= S.camX + S.viewW + P * 4) { ctx.globalAlpha = ink; handOn(ctx, at.x, at.y, at.pose, at.z || D); }   // MOCK the-sign-station-by-hand  (a cue may ask for a bigger dot)
     for (const m of r.marks) markOn(ctx, m, t, P);
   }
   ctx.globalAlpha = 1;

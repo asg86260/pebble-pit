@@ -1,58 +1,60 @@
 // MOCK the-sign-station-by-hand
-// Throwaway review code, never merged: the owner on the sign station's hand
-// work (2026-11-03): "ok i dont like the swinging hammer aspect. what are
-// some other ways we can do manual work? lets have a new slate". No hammer of
-// any kind. The planks still reach the bench by the one hand (signsmock.js:
-// pressed off the timber pile, let go anywhere over the shed, caught into the
-// dashed slots), and the made flag is still taken by hand to the rack; what
-// changes is how four planks become the flag. Each way is one gesture on a
-// big target, and every step of the shaping is the player's own motion:
+// Throwaway review code, never merged: the hand's work at the sign station
+// without a hammer (the owner, 2026-11-03: "i dont like the swinging hammer
+// aspect ... lets have a new slate"). The planks still reach the bench by the
+// one hand (signsmock.js: pressed off the timber pile, let go anywhere over
+// the shed, caught into the dashed square), and the made flag is still taken
+// by hand to the rack. Round 1 tried five ways; the owner kept C, the heave
+// (2026-11-04: "lets roll with this for now. lets keep polishing it. the
+// indicator to pull up and hold needs to be bigger. i kind of want to revisit
+// that control scheme"). Round 2, on C:
 //
-//   hoist   a rope runs from the top of the square over the shed's ceiling
-//           to a toggle at the bench's right end. Take the toggle and pull it
-//           down: the square's top three rows ride up with it, and a plank
-//           cell slides in under them to stand as the pole. A pull to the
-//           bottom of the stroke locks a row; let the toggle up and pull again.
-//           Three pulls and the cloth is at the top of its pole.
-//   heave   the stump's pull (after/stump.js, `strainStep`): take the square
-//           and draw it up. Past the strain height it holds, straining, and a
-//           row gives every strain, as a root does; keep holding and it climbs
-//           to the top.
-//   toss    take the square and flick it up (hands.js, `track`/`throwVel`,
-//           the hand's own flick): the cloth flies a row up its pole and lands
-//           there, held; a slow lift drops back. Three flicks.
-//   stack   no square: the dashed slots are the flag's own four parts, the
-//           pole's foot, then the cloth row by row from the bottom up. Each
-//           plank let go over the shed settles into the next and takes that
-//           part's shape as it lands; the landing is the making.
-//   glide   heave, with the camera gliding in on the shed (world.js,
-//           `setZoomFree`, and the place's held height, `S.camLockY`) the
-//           first time a plank is taken off the pile, and back out once the
-//           flag is in the rack: the station's own size kept, the view brought
-//           to it while the hand works it.
+//   heave  C as round 1 built it: take the square and draw it up, the
+//          stump's pull (after/stump.js, `strainStep`); past the strain
+//          height it holds, straining, and a row gives each strain.
+//   c1     the same pull, with a big dashed arrow rising out of the square
+//          through the roof to a hold line: the arrow fills as the square is
+//          drawn up, and once it reaches the line the line fills with the
+//          strain, a row giving each time it is full.
+//   c2     the same pull, with a track down the shed's right side: a grip at
+//          its foot rises with the pull to a notch, the hold line, and the
+//          track over the notch fills with the strain. The track is a handle
+//          too: its grip can be taken instead of the square.
+//   c3     the same pull, with the ghost hand drawn twice the size acting it
+//          out slowly (take the top, draw it up, hold), and three marks over
+//          the roof, a row each, filling one by one as it is held.
+//   c4     a different scheme: press and hold on the square, no drag. The
+//          strain builds while held and a row gives each strain; c2's track,
+//          the whole of it a meter, and c3's big ghost hand pressing and
+//          holding.
+//   c5     a different scheme: pumps. Held on the square, each short stroke
+//          up lifts a row, the square riding up with the hand and locking at
+//          the top of the stroke; down again and up for the next. c1's
+//          arrow, filling with each stroke to its line, and the big ghost
+//          hand pumping.
 //
-// hoist, heave and toss share one shaping (`rise`): the square's top three
-// rows are one block, moved whole at their true position, rising a row a
-// step; under it, a bottom-row plank cell slides up and across into the
-// pole's gap each step. Three steps and every cell is where the flag has it.
-// The last one lands and the piece fades into the flag in the sign's slate.
+// The planks become the flag the same way in every one (`rise`): the
+// square's top three rows are one block, moved whole at their true position,
+// a row up a step; under it a bottom-row plank cell slides up and across into
+// the pole's gap. Three steps and every cell is where the flag has it, and the
+// piece fades into the flag in the sign's slate.
 //
-// `globalThis.__signHand` is the way; a reset puts it away.
+// The indicators are drawn in the ghost hand's language (render/aftercues.js):
+// a mid-tone dashed line at the cue's own dot, paper under it, faint at
+// GESTURE_CUE_ALPHA while the square waits and full ink while the hand is on
+// it, eased in and out over GESTURE_CUE_FADE_S. `globalThis.__signHand` is the
+// way; a reset puts it away.
 
 import { S } from '../../state.js';
-import { P, GREY, GESTURE_STUMP_DRAG, GESTURE_STRAIN_LIFT, GESTURE_STRAIN_S, THROW_MAX } from '../../config.js';
+import { P, GESTURE_STUMP_DRAG, GESTURE_STRAIN_LIFT, GESTURE_STRAIN_S, GESTURE_CUE_ALPHA, GESTURE_CUE_FADE_S, GESTURE_CUE_DOT } from '../../config.js';
 import { held } from '../../reset.js';
-import { ctx } from '../ctx.js';
 import { K, W, MID, clamp01 } from './kit.js';
 import { goodColor } from './piles.js';
-import { groundOf, AP } from '../../after/place.js';
+import { AP } from '../../after/place.js';
 import { strainStep } from '../../after/stump.js';
-import { track, throwVel } from '../../hands.js';
-import { setZoomFree, clampCam } from '../../world.js';
-import { toScreen } from '../../world.js';
-import { signsM, wsFrame, HB, FLAG, flag, fillCell, x0 } from './signsmock.js';
+import { signsM, wsFrame, HB, FLAG, flag, fillCell } from './signsmock.js';
 
-held('sign-hand', () => { globalThis.__signHand = null; cam = null; });
+held('sign-hand', () => { globalThis.__signHand = null; });
 
 const ease = u => u * u * (3 - 2 * u);
 const T = () => S.after.t;
@@ -107,14 +109,12 @@ function ticks(d, at, bx, by, row, dur = 0.25) {
   const y = (by + row * Z) * P - 2 * Z;
   d.fade(1 - k, () => { d.px((bx - 1) * P - 4, y, 3 * Z, 2 * Z, K); d.px((bx + 4 * Z + 1) * P - 2, y, 3 * Z, 2 * Z, K); });
 }
-// The block's box on the bench at `rise`, in the world: what hoist's rope ties
-// to, and what heave and toss take hold of (a cell's slack round it).
+// The block's box on the bench at `rise`, in the world (a cell's slack round it).
 function blockBox(rise, slack = 1) {
   const b = HB(), d = wsFrame(), a = d.world(b.x - slack, b.y + (3 - rise) * Z - slack), e = d.world(b.x + 4 * Z + slack, b.y + 7 * Z + slack);
   return { x: a.x, y: a.y, w: e.x - a.x, h: e.y - a.y };
 }
 const inBox = (x, y, r) => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
-const riseInit = () => ({ locked: 0, rise: 0, want: 0, lockAt: -9, doneAt: null, held: false });
 function riseStep(h, dt) { h.rise += (h.want - h.rise) * Math.min(1, dt * FOLLOW); if (Math.abs(h.want - h.rise) < 1e-3) h.rise = h.want; }
 function riseDraw(d, h) {
   const b = HB();
@@ -123,207 +123,207 @@ function riseDraw(d, h) {
   ticks(d, h.lockAt, b.x, b.y, 6 - h.locked);
 }
 
-// --- hoist: the rope and its toggle ---------------------------------------------------
-// The toggle hangs at the bench's right end, the rope from it up to the
-// ceiling, along it, and down to the block's top at the pole's column. Its
-// stroke runs from TOG.top to TOG.bottom (rows); a pull to the bottom locks a
-// row, and the next pull wants it let back up first.
-const TOG = { x: 20, w: 2, top: -13, bottom: -4.5, ceil: -16, rearm: 0.2 };
-const strokePx = () => (TOG.bottom - TOG.top) * AP;
-const hoist = {
-  init: () => ({ ...riseInit(), ty: TOG.top, grabDy: 0, armed: true, py: 0, bornAt: S.after ? T() : 0 }),
-  // the toggle and the rope's whole run down the right end, a cell's slack round them
-  grab(x, y) {
-    const h = signsM().hand.sh, d = wsFrame(), a = d.world(TOG.x - 1, TOG.ceil), e = d.world(TOG.x + TOG.w + 1, h.ty + TOG.w + 1.5);
-    return x >= a.x && x <= e.x && y >= a.y && y <= e.y ? 'toggle' : null;
-  },
-  down(what, x, y) { const h = signsM().hand.sh, ty = wsFrame().world(0, h.ty).y; Object.assign(h, { held: true, grabDy: ty - y, py: y }); return true; },
-  move(x, y) { signsM().hand.sh.py = y; },
-  up() { signsM().hand.sh.held = false; },
-  step(dt) {
-    const h = signsM().hand.sh;
-    if (h.doneAt != null) { h.ty += (TOG.top - h.ty) * Math.min(1, dt * 8); riseStep(h, dt); return; }
-    const top = wsFrame().world(0, TOG.top).y;
-    if (h.held) h.ty = TOG.top + Math.max(0, Math.min(strokePx(), h.py + h.grabDy - top)) / AP;
-    else h.ty += (TOG.top - h.ty) * Math.min(1, dt * 10);   // let go, it rides back up on the rope
-    const k = (h.ty - TOG.top) / (TOG.bottom - TOG.top);
-    if (!h.armed && k <= TOG.rearm) h.armed = true;
-    if (h.armed && h.held && k >= 0.999) { h.armed = false; lock(h); }
-    h.want = h.locked + (h.armed && h.held ? k : 0);
-    riseStep(h, dt);
-  },
-  draw(d) { riseDraw(d, signsM().hand.sh); },
-  // the rope and toggle stand from the start, so the bench says what it is
-  // worked with before the square is whole; faded off once it is the flag,
-  // and back on with the next bench
-  under(d) {
-    const h = signsM().hand.sh, b = HB(), pole = b.x + Z / 2, rx = TOG.x + TOG.w / 2, top = b.y + (3 - h.rise) * Z;
-    const a = h.doneAt == null ? clamp01((T() - h.bornAt) / FADE_S) : 1 - clamp01((T() - h.doneAt) / FADE_S);
-    if (a <= 0) return;
-    d.fade(a, () => {
-      // the rope: down from the ceiling to the block's top, along the ceiling, down to the toggle
-      const c = TOG.ceil + 0.2;
-      if (top > c + 0.1) d.line(pole, c, pole, top, 2, K);
-      d.line(pole, c, rx, c, 2, K);
-      d.line(rx, c, rx, h.ty, 2, K);
-      // the two pegs it runs over, under the ceiling
-      d.r(Math.floor(pole) , TOG.ceil, 1, 1, K); d.r(Math.floor(rx) - 0.5, TOG.ceil, 1, 1, K);
-      // the toggle: a ring two cells square, paper through its middle, hung under the rope
-      d.r(TOG.x, h.ty, TOG.w, TOG.w, K);
-      d.px(TOG.x * P + 3, h.ty * P + 3, TOG.w * P - 6, TOG.w * P - 6, W);
-    });
-  },
-  cue(u) {
-    const d = wsFrame(), x = d.world(TOG.x + TOG.w / 2, 0).x;
-    const y0 = d.world(0, TOG.top + 1).y, y1 = d.world(0, TOG.bottom + 1).y;
-    const k = u < 0.15 ? 0 : u < 0.75 ? ease((u - 0.15) / 0.6) : 1;
-    return { x, y: y0 + (y1 - y0) * k, pose: 'grab' };
-  },
-  at() { const h = signsM().hand.sh, d = wsFrame(); return d.world(TOG.x + TOG.w / 2, h.ty + 1); },
-  busy: () => signsM().hand.sh.held
-};
+// --- the indicators' drawing, in the cue's language ----------------------------------------
+// A dashed line in frame px from (x0, y0) to (x1, y1), its dashes `th` px
+// square, `acc` the dash phase carried from the last segment (returned).
+const DOT = GESTURE_CUE_DOT * 2;   // the indicators' dash, twice the ghost hand's dot: read at the yard's scale
+const ON = DOT * 2, PER = DOT * 4;
+function dashSeg(d, x0, y0, x1, y1, tone, acc = 0) {
+  const len = Math.hypot(x1 - x0, y1 - y0), n = Math.max(1, Math.round(len / (DOT / 2)));
+  for (let i = 0; i <= n; i++) {
+    const s = acc + (len * i) / n;
+    if (s % PER < ON) d.px(x0 + (x1 - x0) * i / n - DOT / 2, y0 + (y1 - y0) * i / n - DOT / 2, DOT, DOT, tone);
+  }
+  return acc + len;
+}
+function dashPath(d, pts, tone) { let acc = 0; for (let i = 1; i < pts.length; i++) acc = dashSeg(d, pts[i - 1][0] * P, pts[i - 1][1] * P, pts[i][0] * P, pts[i][1] * P, tone, acc); }
+// a solid run of cells (frame cells), for the fills
+const solid = (d, x, y, w, h, tone) => { if (w > 0 && h > 0) d.px(x * P, y * P, w * P, h * P, tone); };
+// The indicator's ink: faint while the square waits for the hand, full while
+// it is held, out once it is the flag; eased, never popped.
+function inkStep(h, dt) {
+  const want = h.doneAt != null || !squareFull() ? 0 : h.held ? 1 : GESTURE_CUE_ALPHA, r = dt / GESTURE_CUE_FADE_S;
+  h.ia += Math.max(-r, Math.min(r, want - h.ia));
+}
+const squareFull = () => { const M = signsM(); return !!M.laid && M.laid.every(v => v != null); };
+const CX = () => HB().x + 2 * Z;   // the square's middle across, in frame cells
 
-// --- heave: the stump's strain ----------------------------------------------------------
-// Drawn up past the strain height (GESTURE_STRAIN_LIFT, the drag scaled as
-// the stump's by GESTURE_STUMP_DRAG), the block stands half a row up and
-// strains; every GESTURE_STRAIN_S held there a row gives (`strainStep`, the
-// stump's own rule), and the hand still up, the next starts straining.
-const heave = {
-  init: () => ({ ...riseInit(), y0: 0, lift: 0, strain: 0 }),
-  grab(x, y) { const h = signsM().hand.sh; return inBox(x, y, blockBox(h.rise, 1.5)) ? 'block' : null; },
-  down(what, x, y) { const h = signsM().hand.sh; Object.assign(h, { held: true, y0: y, lift: 0, strain: 0 }); return true; },
-  move(x, y) { const h = signsM().hand.sh; h.lift = Math.max(0, (h.y0 - y) * GESTURE_STUMP_DRAG); },
-  up() { const h = signsM().hand.sh; Object.assign(h, { held: false, lift: 0, strain: 0 }); },
-  step(dt) {
-    const h = signsM().hand.sh;
-    if (h.doneAt == null) {
-      if (strainStep(h, dt, h.held, h.lift)) lock(h);
-      h.want = h.doneAt != null ? STEPS_RISE : h.locked + (h.held ? 0.5 * clamp01(h.lift / GESTURE_STRAIN_LIFT) : 0);
+// c1, c5: the arrow. Its shaft rises out of the square's top, through the
+// roof, to a head; over the head the hold line. `fill` how far up it is
+// filled (0..1), `line` how much of the hold line is filled (0..1), `hit`
+// the moment the line was last reached in full (a held mark, faded off).
+const ARROW = { half: 1.5, shaftTop: -26, head: [4, 3, 2, 1], line: -31.5, lineHalf: 5 };
+// The arrow drawn as the ghost hand is: a mid outline a dash thick round a
+// paper middle, in dots, its head stepped on the cell grid a row a step
+// narrower. Filled in full ink from the square up to `fill` of its height.
+function drawArrowShape(d, cx, yb, fill) {
+  const A = ARROW, tip = A.shaftTop - A.head.length, q = DOT / 2;
+  const inside = (x, y) => {      // frame cells
+    if (y > yb || y < tip) return false;
+    if (y >= A.shaftTop) return Math.abs(x - cx) < A.half;
+    return Math.abs(x - cx) < A.head[Math.min(A.head.length - 1, Math.floor(A.shaftTop - y))];
+  };
+  const yf = yb + (tip - yb) * fill, th = DOT / P;
+  // paper, then the fill, as whole runs (a dot at a time seams at the yard's scale), then the rim in dots
+  const runs = [[cx - A.half, A.shaftTop, 2 * A.half, yb - A.shaftTop], ...A.head.map((w, k) => [cx - w, A.shaftTop - k - 1, 2 * w, 1])];
+  for (const [x, y, w, h] of runs) solid(d, x, y, w, h, W);
+  for (const [x, y, w, h] of runs) { const top = Math.max(y, yf); solid(d, x, top, w, y + h - top, K); }   // the fill in full ink, to read in both themes
+  for (let Y = tip * P; Y < yb * P; Y += q) for (let X = (cx - A.head[0]) * P; X < (cx + A.head[0]) * P; X += q) {
+    const x = (X + q / 2) / P, y = (Y + q / 2) / P;
+    if (!inside(x, y)) continue;
+    if (!inside(x - th, y) || !inside(x + th, y) || !inside(x, y - th)) d.px(X, Y, q, q, MID);
+  }
+}
+function drawArrow(d, h, fill, line, hit) {
+  const cx = CX(), yb = HB().y + (3 - h.rise) * Z - 0.5, A = ARROW;
+  d.fade(h.ia, () => {
+    drawArrowShape(d, cx, yb, fill);
+    // the hold line over its tip: dashed, filled solid from its middle out as the strain builds
+    dashPath(d, [[cx - A.lineHalf, A.line], [cx + A.lineHalf, A.line]], MID);
+    if (line > 0) solid(d, cx - A.lineHalf * line, A.line - 0.35, 2 * A.lineHalf * line, 0.7, K);
+  });
+  const k = (T() - hit) / 0.3;
+  if (k >= 0 && k < 1) d.fade(h.ia * (1 - k), () => solid(d, cx - A.lineHalf, A.line - 0.35, 2 * A.lineHalf, 0.7, K));
+}
+
+// c2, c4: the track down the shed's right side. With a grip (c2) its foot is
+// the grip's travel to the notch and the rest over it the strain's meter;
+// without (c4) the whole track is the meter.
+const TRACK = { x: 20, w: 2, top: -15, foot: -3, notch: -9 };
+function trackBox() { const d = wsFrame(), a = d.world(TRACK.x - 1, TRACK.top - 1), e = d.world(TRACK.x + TRACK.w + 1, TRACK.foot + 1); return { x: a.x, y: a.y, w: e.x - a.x, h: e.y - a.y }; }
+function drawTrack(d, h, grip, rise, meter) {
+  const X = TRACK.x, W2 = TRACK.w;
+  d.fade(h.ia, () => {
+    const from = grip == null ? TRACK.foot : TRACK.notch, m = (from - TRACK.top) * meter;
+    solid(d, X + 0.4, from - m, W2 - 0.8, m, K);
+    dashPath(d, [[X, TRACK.foot], [X, TRACK.top], [X + W2, TRACK.top], [X + W2, TRACK.foot], [X, TRACK.foot]], MID);
+    if (grip != null) {
+      dashPath(d, [[X - 0.6, TRACK.notch], [X + W2 + 0.6, TRACK.notch]], MID);
+      // the grip: a bar across the track, ridden up from its foot to the notch
+      const gy = TRACK.foot - 1.5 - (TRACK.foot - 1.5 - TRACK.notch) * rise;
+      solid(d, X - 0.3, gy, W2 + 0.6, 1.5, K);
     }
-    riseStep(h, dt);
-  },
-  draw(d) {
-    const h = signsM().hand.sh, b = HB();
-    riseDraw(d, h);
-    // straining: two marks at the block's foot coming in as the strain builds
-    if (h.doneAt == null && h.held && h.lift >= GESTURE_STRAIN_LIFT) {
-      const k = clamp01(h.strain / GESTURE_STRAIN_S), y = (b.y + (6 - h.locked) * Z) * P;
-      d.fade(0.25 + 0.75 * k, () => { for (const s of [-1, 1]) d.px((b.x + (s < 0 ? -1 : 4 * Z) ) * P + (s < 0 ? 0 : 2), y - Z * P / 2, P - 2, 2, MID); });
+  });
+}
+
+// c3: three marks over the roof, a row each: given ones solid, the one being
+// strained filling with the strain; outlined dashed.
+const MARKS = { y: -29, w: 3, gap: 1 };
+function drawMarks(d, h, n, part) {
+  const cx = CX(), x0 = cx - (3 * MARKS.w + 2 * MARKS.gap) / 2;
+  d.fade(h.ia, () => {
+    for (let k = 0; k < 3; k++) {
+      const x = x0 + k * (MARKS.w + MARKS.gap), f = k < n ? 1 : k === n ? part : 0;
+      solid(d, x, MARKS.y, MARKS.w, MARKS.w, W);   // paper under it, so it reads over the sky
+      if (f > 0) solid(d, x + 0.4, MARKS.y + 0.4 + (MARKS.w - 0.8) * (1 - f), MARKS.w - 0.8, (MARKS.w - 0.8) * f, K);
+      dashPath(d, [[x, MARKS.y], [x + MARKS.w, MARKS.y], [x + MARKS.w, MARKS.y + MARKS.w], [x, MARKS.y + MARKS.w], [x, MARKS.y]], MID);
     }
-  },
-  cue(u) {
-    const h = signsM().hand.sh, r = blockBox(h.rise, 0);
-    const k = u < 0.15 ? 0 : u < 0.55 ? ease((u - 0.15) / 0.4) : 1;
-    return { x: r.x + r.w / 2, y: r.y + AP * Z - k * AP * 5, pose: 'grab' };
-  },
-  at() { const h = signsM().hand.sh, r = blockBox(h.rise, 0); return { x: r.x + r.w / 2, y: r.y + AP * Z }; },
-  busy: () => signsM().hand.sh.held
-};
+  });
+}
 
-// --- toss: the hand's flick -------------------------------------------------------------
-// Held, the block lifts a little toward the hand; let go on a flick upward
-// (the hand's own flick: `throwVel`, past a share of the hardest throw) it
-// flies a row up, over and down onto its new row, and holds there a beat.
-const TOSS = { lift: 0.3, liftPx: 40, min: 0.25, fly: 0.34, over: 0.7 };
-const toss = {
-  init: () => ({ ...riseInit(), y0: 0, dy: 0, fly: null }),
-  grab(x, y) { const h = signsM().hand.sh; return !h.fly && inBox(x, y, blockBox(h.rise, 1.5)) ? 'block' : null; },
-  down(what, x, y) { const h = signsM().hand.sh; Object.assign(h, { held: true, y0: y, dy: 0 }); track(x, y); return true; },
-  move(x, y) { const h = signsM().hand.sh; h.dy = Math.max(0, h.y0 - y); track(x, y); },
-  up() {
-    const h = signsM().hand.sh, { vy } = throwVel();
-    h.held = false;
-    if (vy <= -TOSS.min * THROW_MAX && h.locked < STEPS_RISE) h.fly = { at: T(), from: h.rise, to: h.locked + 1 };
-  },
-  step(dt) {
-    const h = signsM().hand.sh;
-    if (h.fly) {
-      const u = clamp01((T() - h.fly.at) / TOSS.fly);
-      // up past the row and back down onto it: a toss's arc, on the act's clock
-      h.rise = h.fly.from + (h.fly.to - h.fly.from) * u + Math.sin(u * Math.PI) * TOSS.over;
-      h.want = h.rise;
-      if (u >= 1) { h.rise = h.want = h.fly.to; h.fly = null; lock(h); }
-      return;
-    }
-    if (h.doneAt == null) h.want = h.locked + (h.held ? TOSS.lift * clamp01(h.dy / TOSS.liftPx) : 0);
-    riseStep(h, dt);
-  },
-  draw(d) { riseDraw(d, signsM().hand.sh); },
-  cue(u) {
-    const h = signsM().hand.sh, r = blockBox(h.rise, 0), x = r.x + r.w / 2, y = r.y + AP * Z;
-    // pressed, held a beat, then flicked up fast
-    if (u < 0.45) return { x, y, pose: 'grab' };
-    const k = clamp01((u - 0.45) / 0.12);
-    return { x, y: y - k * AP * 7, pose: k < 1 ? 'grab' : 'point' };
-  },
-  at() { const h = signsM().hand.sh, r = blockBox(h.rise, 0); return { x: r.x + r.w / 2, y: r.y + AP * Z }; },
-  busy: () => signsM().hand.sh.held || !!signsM().hand.sh.fly
-};
+// --- the big ghost hand's acting, on its own slow loop -------------------------------------
+// (render/aftercues.js draws it, at twice its dot, where `cue` puts it)
+const GHOST = { z: GESTURE_CUE_DOT * 2, loop: 2.8 };
+const gu = () => (T() % GHOST.loop) / GHOST.loop;
+// The phases of c3's and c4's loop: taken (0..take), drawn up (..lift),
+// held (..hold), and the marks filling a third of the hold each.
+const PH = { take: 0.12, lift: 0.32, hold: 0.92 };
+const holdPart = u => clamp01((u - PH.lift) / (PH.hold - PH.lift));
 
-// --- stack: the slots are the flag's parts ------------------------------------------------
-// Slot 0 the pole's foot (a column of four), slots 1 to 3 the cloth's rows
-// with the pole's top, bottom row first. A plank caught settles into its
-// slot, its four cells moving from the 2x2 it fell as into the part's line.
-const STACK_FLY = 0.3;
-const partCells = k => (k === 0 ? [0, 1, 2, 3].map(q => [0, 3 + q]) : [0, 1, 2, 3].map(q => [q, 3 - k]));
-const stack = {
-  init: () => ({ doneAt: null }),
-  slot(k) { const b = HB(); return k === 0 ? { x: b.x, y: b.y + 3 * Z, w: Z, h: 4 * Z } : { x: b.x, y: b.y + (3 - k) * Z, w: 4 * Z, h: Z }; },
-  // where the ghost hand and the driver let a plank go: over the next part
-  benchAt() {
-    const M = signsM(), k = M.laid.findIndex(v => v == null), s = stack.slot(Math.max(0, k)), b = HB();
-    return wsFrame().world(b.x + 2 * Z, Math.min(s.y + s.h / 2, b.y + 4 * Z));
-  },
-  landed() { const M = signsM(); if (M.laid.every(v => v != null) && M.hand.sh.doneAt == null) { M.hand.sh.doneAt = T() + STACK_FLY; M.step = 4; } M.hand.uses++; },
-  step() {},
-  grab: () => null,
-  draw(d) {
-    const M = signsM(), h = M.hand, b = HB(), t = T();
-    const plank = () => M.laid.forEach((v, k) => {
-      if (v == null) return;
-      const f = h.fly[k], u = f ? ease(clamp01((t - f.at) / STACK_FLY)) : 1;
-      partCells(k).forEach(([c, r], q) => {
-        const sx = f ? f.x + (q % 2) : 0, sy = f ? f.y + Math.floor(q / 2) : 0, tx = b.x + c * Z, ty = b.y + r * Z;
-        const w = 1 + (Z - 1) * u;
-        fillCell(d, f ? sx + (tx - sx) * u : tx, f ? sy + (ty - sy) * u : ty, w, w, goodColor('plank', v));
-      });
-    });
-    if (h.sh.doneAt != null && t >= h.sh.doneAt) drawDone(d, plank); else plank();
-  },
-  cue: () => null,
-  at: () => null,
-  busy: () => false
-};
+// --- the heave and its five round-two shapes -----------------------------------------------
+// `control` how the hand works it: 'drag' (round 1's: press, draw up past the
+// strain height, hold), 'hold' (press and hold where it is), 'pump' (strokes
+// up); `ind` the indicator; `ghost` the ghost hand's acting.
+const PUMP_PX = AP * 7;   // a stroke, world px: the pointer's travel up for a row
+function heaveOf({ control = 'drag', ind = null, ghost = 'small' }) {
+  const H = () => signsM().hand.sh;
+  return {
+    init: () => ({ locked: 0, rise: 0, want: 0, lockAt: -9, doneAt: null, held: false, y0: 0, py: 0, lift: 0, strain: 0, armed: true, ia: 0, hitAt: -9 }),
+    // the square, a cell and a half round it; c2's track and grip too
+    grab(x, y) {
+      const h = H();
+      if (inBox(x, y, blockBox(h.rise, 1.5))) return 'block';
+      return ind === 'track' && inBox(x, y, trackBox()) ? 'track' : null;
+    },
+    down(what, x, y) { Object.assign(H(), { held: true, y0: y, py: y, lift: 0, strain: 0, armed: true }); return true; },
+    move(x, y) { const h = H(); h.py = y; if (control === 'drag') h.lift = Math.max(0, (h.y0 - y) * GESTURE_STUMP_DRAG); },
+    up() { Object.assign(H(), { held: false, lift: 0, strain: 0 }); },
+    step(dt) {
+      const h = H();
+      if (h.doneAt == null) {
+        if (control === 'pump') {
+          // a stroke up to its top locks the row; the next wants the hand back down first
+          const k = h.held ? clamp01((h.y0 - h.py) / PUMP_PX) : 0;
+          if (!h.armed && k <= 0.25) h.armed = true;
+          if (h.armed && h.held && k >= 1) { h.armed = false; h.hitAt = T(); lock(h); }
+          h.want = h.doneAt != null ? STEPS_RISE : h.locked + (h.armed && h.held ? k : 0);
+        } else {
+          if (control === 'hold') h.lift = h.held ? GESTURE_STRAIN_LIFT : 0;
+          if (strainStep(h, dt, h.held, h.lift)) { h.hitAt = T(); lock(h); }
+          h.want = h.doneAt != null ? STEPS_RISE : h.locked + (h.held ? 0.5 * clamp01(h.lift / GESTURE_STRAIN_LIFT) : 0);
+        }
+      }
+      riseStep(h, dt);
+      inkStep(h, dt);
+    },
+    draw(d) {
+      const h = H(), b = HB();
+      riseDraw(d, h);
+      // straining: two marks at the block's foot coming in as the strain builds
+      if (control !== 'pump' && h.doneAt == null && h.held && h.lift >= GESTURE_STRAIN_LIFT) {
+        const k = clamp01(h.strain / GESTURE_STRAIN_S), y = (b.y + (6 - h.locked) * Z) * P;
+        d.fade(0.25 + 0.75 * k, () => { for (const s of [-1, 1]) d.px((b.x + (s < 0 ? -1 : 4 * Z)) * P + (s < 0 ? 0 : 2), y - Z * P / 2, P - 2, 2, MID); });
+      }
+    },
+    drawTop() {
+      const h = H();
+      if (!ind || h.ia <= 0.01) return;
+      const d = wsFrame(), strained = h.held && h.lift >= GESTURE_STRAIN_LIFT, part = strained ? clamp01(h.strain / GESTURE_STRAIN_S) : 0;
+      const pull = clamp01(h.lift / GESTURE_STRAIN_LIFT);
+      if (ind === 'arrow' && control === 'pump') {
+        // the fill is where the hand is in its stroke, up and back down
+        drawArrow(d, h, h.held ? clamp01((h.y0 - h.py) / PUMP_PX) : 0, 0, h.hitAt);
+      } else if (ind === 'arrow') drawArrow(d, h, h.held ? pull : 0, part, h.hitAt);
+      else if (ind === 'track') drawTrack(d, h, control === 'drag' ? 0 : null, h.held ? pull : 0, part);
+      else if (ind === 'marks') {
+        // while the square waits, the marks act out the ghost hand's hold
+        if (h.held) drawMarks(d, h, h.locked, part);
+        else { const p = holdPart(gu()) * 3; drawMarks(d, h, h.locked + Math.floor(p), p % 1); }
+      }
+    },
+    cue(u) {
+      const h = H(), r = blockBox(h.rise, 0), x = r.x + r.w / 2, y = r.y + AP * Z;
+      if (ghost === 'small') {
+        const k = u < 0.15 ? 0 : u < 0.55 ? ease((u - 0.15) / 0.4) : 1;
+        return { x, y: y - k * AP * 5, pose: 'grab' };
+      }
+      const v = gu();
+      if (ghost === 'pump') {
+        // two strokes up a loop, each a quick lift and a let-down
+        const s = (v * 2) % 1, k = s < 0.15 ? 0 : s < 0.5 ? ease((s - 0.15) / 0.35) : s < 0.65 ? 1 : 1 - ease((s - 0.65) / 0.35);
+        return { x, y: y - k * PUMP_PX, pose: 'grab', z: GHOST.z };
+      }
+      // c3 lifts and holds; c4 only presses and holds
+      const lift = ghost === 'lift' ? AP * 6 : 0;
+      const k = v < PH.take ? 0 : v < PH.lift ? ease((v - PH.take) / (PH.lift - PH.take)) : v < PH.hold ? 1 : 1 - ease((v - PH.hold) / (1 - PH.hold));
+      return { x, y: y - k * lift, pose: v < PH.take * 0.5 ? 'point' : 'grab', z: GHOST.z };
+    },
+    at(what) {
+      const h = H(), r = blockBox(h.rise, 0);
+      if (what === 'track') { const b = trackBox(); return { x: b.x + b.w / 2, y: b.y + b.h - AP * 2.5 }; }
+      return { x: r.x + r.w / 2, y: r.y + AP * Z };
+    },
+    busy: () => H().held
+  };
+}
 
-export const SHAPERS = { hoist, heave, toss, stack, glide: heave };
+export const SHAPERS = {
+  heave: heaveOf({}),
+  c1: heaveOf({ ind: 'arrow' }),
+  c2: heaveOf({ ind: 'track' }),
+  c3: heaveOf({ ind: 'marks', ghost: 'lift' }),
+  c4: heaveOf({ control: 'hold', ind: 'track', ghost: 'hold' }),
+  c5: heaveOf({ control: 'pump', ind: 'arrow', ghost: 'pump' })
+};
 // The way up now, while the hand mock stands at its twice-size bench.
 export const shaper = () => (globalThis.__signsMock === 'b4' && SHAPERS[globalThis.__signHand]) || null;
-export const shaperZ = Z;
-
-// --- glide: the camera in on the shed while it is worked ---------------------------------
-// In from the first plank taken off the pile, back out once the flag is in
-// the rack: the zoom on the glass eased (world.js, `setZoomFree`, the aim's
-// own unsnapped zoom) about a middle that travels from where the window was
-// to the square's on the bench, and the height held there (`S.camLockY`, a place's held
-// height). Nothing else moves the camera while it is in.
-const CAM = { in: 2.5, s: 0.7, midUp: 5 };
-let cam = null; // page: the glide's state, from its first plank to its flag racked
-export function stepGlide(want, dt) {
-  if (globalThis.__signHand !== 'glide') return;
-  if (!cam) {
-    if (!want) return;
-    cam = { k: 0, z0: S.zoomShow, c0: { x: S.camX + S.viewW / 2, y: S.camY + S.viewH / 2 } };
-    window.__unpin?.();
-  }
-  cam.k = clamp01(cam.k + (want ? 1 : -1) * dt / CAM.s);
-  const e = ease(cam.k), c1 = { x: x0() + 15.5 * AP, y: groundOf('workshop') - CAM.midUp * AP };
-  setZoomFree(cam.z0 + (cam.z0 * CAM.in - cam.z0) * e);
-  const mx = cam.c0.x + (c1.x - cam.c0.x) * e, my = cam.c0.y + (c1.y - cam.c0.y) * e;
-  S.camTo = null;
-  S.camX = mx - S.viewW / 2;
-  S.camLockY = cam.k > 0 ? my - S.viewH / 2 : null;
-  clampCam();
-  if (!want && cam.k <= 0) cam = null;
-}
-// for the shot tools: a world point on the glass
-export const onGlass = w => (w ? toScreen(w.x, w.y) : null);

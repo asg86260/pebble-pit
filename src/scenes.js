@@ -4321,27 +4321,29 @@ for (const [o, option, say] of SIGNS_MOCK) { // MOCK the-sign-station-polish
 // MOCK the-sign-station-by-hand: a new slate for the hand's work at the sign
 // station (the owner, 2026-11-03: "i dont like the swinging hammer aspect.
 // what are some other ways we can do manual work?"), no hammer of any kind
-// (render/after/signhand.js). The planks still come off the pile by the one
+// (render/after/signhand.js). Round 2 on the owner's pick, C (2026-11-04:
+// "the indicator to pull up and hold needs to be bigger. i kind of want to
+// revisit that control scheme"): three indicators and two other controls. The planks still come off the pile by the one
 // hand into the dashed slots, the bench work twice the size, and the flag
 // still goes to the rack by hand. The joiner (A) is the polish round's own,
 // kept here unchanged so it is not put away with the hand ways it outlived.
 const SIGN_HAND = [ // MOCK the-sign-station-by-hand
   ['a', 'A the joiner, kept from the polish round', "Unchanged from the polish round: the joiner fetches four blocks off the pile, lays them as a square in the middle of the shed, and each nail shapes it a step into the flag; it carries the flag to the rack."],
-  ['hoist', 'B raise it: pull the rope', "Planks off the pile into the dashed square as before. A rope runs from the square's top over the ceiling to a toggle at the bench's right end: take the toggle and pull it down. The top of the square rides up with it and a plank slides in under as the pole. Pull to the bottom to lock a row, let it up, pull again: three pulls and the cloth is at the top of its pole."],
-  ['heave', "C heave it up: the stump's pull", "Planks into the square as before. Take the square and draw it up, the stump's pull: past the strain it holds, straining, and a row gives each strain while you hold, the pole growing under it. Keep holding and it climbs to the top: one press, one drag up, three rows."],
-  ['toss', 'D toss it up the pole', "Planks into the square as before. Take the square and flick it up: the cloth flies a row up and lands on its pole, held a beat, a plank sliding in under it. A slow lift drops back. Three flicks."],
-  ['stack', 'E stack it: each plank is a part', "No square and no second gesture: the dashed slots are the flag's own parts, the pole's foot first, then the cloth row by row from the bottom up. Each plank let go over the shed settles into the next and takes its shape as it lands. This reopens the four-block square, which was settled."],
-  ['glide', 'F heave, with the camera in', "C's heave, with the camera gliding in on the shed (two and a half times as close) the moment the first plank comes off the pile, and back out once the flag is in the rack. The pile, the shed and the rack all stay in the window while it is in."]
+  ['heave', "C heave it up, as you picked it", "Round 1's C, unchanged, to compare against: take the square and draw it up, the stump's pull; past the strain it holds and a row gives each strain while you hold. The ghost hand is the small one."],
+  ['c1', 'C1 indicator: the arrow and its hold line', "The same pull. A big dashed arrow rises out of the square through the roof to a hold line. Draw the square up and the arrow fills; at the line it is straining, and the line fills while you hold, a row giving each time it is full."],
+  ['c2', 'C2 indicator: the track and its grip', "The same pull. A dashed track down the shed's right side: its grip rides up with your pull to the notch, the hold line, and the track over the notch fills while you hold, a row each time it is full. You can take the grip instead of the square."],
+  ['c3', 'C3 indicator: the big ghost hand', "The same pull. The ghost hand is drawn twice the size and acts it out slowly: take the top, draw it up, hold. Three marks over the roof, a row each, fill one by one while it holds, and the same while you do."],
+  ['c4', 'C4 control: press and hold, no drag', "A different control: press on the square and hold where you are. The strain builds while you hold and a row gives each time; let go and it stops. C2's track is the whole meter here, and the big ghost hand presses and holds."],
+  ['c5', 'C5 control: pump it up', "A different control: hold on the square and pump. Each short stroke up lifts a row, the square riding up with your hand and locking at the top; down again, and up for the next. Three pumps. C1's arrow fills with each stroke, and the big ghost hand pumps."]
 ];
 for (const [k, option, say] of SIGN_HAND) { // MOCK the-sign-station-by-hand
   const name = `after-signhand-${k}`, hand = k !== 'a';
   SCENES[name] = { about: 'the acts', review: 'the sign station: by hand', option, stage: 'mock: throwaway, never merged', branch: 'a3-review-both', say,
     ...(hand ? { supersedes: ['the sign station: polish'] } : {}),
     // between two hand ways on the yard standing, the way flipped and the bench begun again;
-    // the joiner, or the camera's glide, stood up afresh
+    // the joiner stood up afresh
     swap: () => {
-      const glide = k === 'glide' || globalThis.__signHand === 'glide';
-      if (S.view !== 'after' || !S.after || globalThis.__signsMock !== 'b4' || !hand || glide) { window.__scene(name); return; }
+      if (S.view !== 'after' || !S.after || globalThis.__signsMock !== 'b4' || !hand) { window.__scene(name); return; }
       globalThis.__signHand = k; startSignsMock('b4');
     },
     run: () => (hand ? signsMockStage('b4', k) : signsMockStage('a')) };
