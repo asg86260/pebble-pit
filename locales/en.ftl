@@ -3444,16 +3444,22 @@ draft-god-b-3 = a pick each. yard's that way.
 draft-god-b-4 = no end to it. nobody leaves.
 
 # MOCK draft, the owner's to rewrite: God's opening lines, script C, grand, line 1
-draft-god-c-1 = rise, and be welcome.
+draft-god-c-1 = come, and be welcome
 
 # MOCK draft, the owner's to rewrite: God's opening lines, script C, grand, line 2
-draft-god-c-2 = this is the afterlife, where every soul is kept.
+draft-god-c-2 = to the afterlife, an eternal paradise
 
 # MOCK draft, the owner's to rewrite: God's opening lines, script C, grand, line 3
-draft-god-c-3 = here the dead work for ever, and the tithe climbs to me.
+draft-god-c-3 = your eternal paradise
 
 # MOCK draft, the owner's to rewrite: God's opening lines, script C, grand, line 4
-draft-god-c-4 = take up the pick. work.
+draft-god-c-4 = you've worked so hard, right until the end
+
+# MOCK draft, the owner's to rewrite: God's opening lines, script C, grand, line 5
+draft-god-c-5 = i can tell you love to work. so work for me now
+
+# MOCK draft, the owner's to rewrite: God's opening lines, script C, grand, line 6
+draft-god-c-6 = eternally
 
 # --- MOCK draft-god: end ---
 
