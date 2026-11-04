@@ -4297,9 +4297,8 @@ Object.assign(SCENES, {
 import { startSignsMock, stepSignsMock } from './render/after/signsmock.js'; // MOCK the-sign-station-polish
 const SIGNS_MOCK = [ // MOCK the-sign-station-polish
   ['a', 'A the joiner, centered', "The joiner fetches four timber blocks off its pile, left of the shed, and sets them on the bench as a square, in the middle of the shed. Each nail it drives changes the piece a little: the pole goes up, then the cloth climbs it, and the last nail makes it the flag. It carries the flag to the rack, and the members carry it out the same."],
-  ['b1', 'B1 by hand: press and flick', "Nobody at the bench, so you make it: sweep timber off the pile onto the bench, then press on the nail and flick down to drive it, two flicks a nail. Each nail shapes the piece a row; take the flag to the rack."],
-  ['b2', 'B2 by hand: click', "Nobody at the bench, so you make it: sweep timber off the pile onto the bench. Over the bench your hand is a hammer: click the nail, two clicks a nail. Each nail shapes the piece a row; take the flag to the rack."],
-  ['b3', 'B3 by hand: swing the hammer', "Nobody at the bench, so you make it: sweep timber off the pile onto the bench, pick up the hammer and bring it down on the nail. Fast drives it home in one, slower takes two. Each nail shapes the piece a row; take the flag to the rack."]
+  ['b3', 'B3 by hand: swing the hammer', "Nobody at the bench, so you make it: sweep timber off the pile and let it go anywhere over the shed; each block settles into the next dashed slot. Take the hammer and bring it down on the dashed nail spot: fast drives it home in one, slower takes two. Each nail shapes the piece a row; take the flag to the rack."],
+  ['b3big', 'B3-big: the bench work twice the size', "The same, with the bench work drawn twice the size: the stand gone, the square, its dashed slots, the nails and the hammer two cells a cell, filling the shed's opening. A plank grows into its slot as it settles, and the flag is the rack's size again once in your hand."]
 ];
 function signsMockStage(o) { // MOCK the-sign-station-polish
   workshopStage({ members: /^b/.test(o) ? 2 : 3, grant: { timber: 21, benchtimber: 8 }, hold: false });
