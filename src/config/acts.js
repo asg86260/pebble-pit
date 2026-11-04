@@ -377,24 +377,33 @@ export const DIALOG_TAIL = [5, 5, 3, 3, 1, 1];
 // The typewriter, per option: `cps` letters a second, `comma` / `stop` the
 // held pause after a comma and after a full stop (or ? !), `fade` a letter's
 // own fade in; a `~slow~` letter fades in over `slow`.
+// Round 2: a `|drop|` letter falls in over `dropS`; a `#boom#` word comes in
+// whole over `boomS` and the line holds `boomHold` after it; a `@trail@`
+// word's letters come `trail` times the pace apart, each `trailGrow` slower
+// again than the last, fading in over `trailFade`.
+const SAUCE_TYPE_FX = { dropS: 0.28, boomS: 0.16, boomHold: 0.45, trail: 2.5, trailGrow: 0.18, trailFade: 0.3 };
 export const SAUCE_TYPE = {
-  steady: { cps: 26, comma: 0, stop: 0, fade: 0.08, slow: 0.7 },
-  paced: { cps: 38, comma: 0.22, stop: 0.42, fade: 0.08, slow: 0.7 }
+  steady: { cps: 26, comma: 0, stop: 0, fade: 0.08, slow: 0.7, ...SAUCE_TYPE_FX },
+  paced: { cps: 38, comma: 0.22, stop: 0.42, fade: 0.08, slow: 0.7, ...SAUCE_TYPE_FX }
 };
 // The words' effects: the wave's height in px and its rate (Hz) and the step
 // along the word (radians a letter); the shake's reach in px and how long it
 // holds a pose; the glow's halo tone (a rung of GREY) and its opacity's
 // swing and rate.
+// Round 2: the rainbow's rate through its colors (Hz) and the step along the
+// word (colors a letter); the pulse's swell (a share of the size) and rate;
+// the nervous letters' reach in px and their hold, each letter its own
+// between the two; the drop's height in px; the boom's size as it lands.
 export const SAUCE_FX = { waveH: 2, waveHz: 1.1, waveStep: 0.7, shake: 1, shakeHoldS: 0.07,
-                          glowRung: 2, glowA: [0.25, 0.6], glowHz: 0.6 };
-// Heaven's gates stand `gateOff` cells right of God's throne on the cloud
-// floor, and the two walk out of them to before him. His light on them,
-// fading in and out over
+                          glowRung: 2, glowA: [0.25, 0.6], glowHz: 0.6,
+                          rainbowHz: 0.8, rainbowStep: 0.35, pulse: 0.14, pulseHz: 0.5,
+                          nervous: 1, nervousHoldS: [0.05, 0.16], dropH: 12, boomK: 1.8 };
+// God's light on the two of them before him, fading in and out over
 // `lightS`, a see-through fill of GREY[`tone`]: the cone from his face down
 // to them (`top` px wide under his face, `pool` px past them either side at
 // the floor, the soft edge `edges` steps of `edge` px, opacity `a` at its
 // brightest), or the ring on the cloud floor round their feet (`w` px past
 // the two either side, `h` px deep, the same edge).
-export const SAUCE_PAIR = { lightS: 0.6, tone: 2, gateOff: 14,
+export const SAUCE_PAIR = { lightS: 0.6, tone: 2,
                             cone: { top: 18, pool: 14, edges: 3, edge: 6, a: 0.6 },
                             ring: { w: 30, h: 12, edges: 3, edge: 6, a: 0.8 } };

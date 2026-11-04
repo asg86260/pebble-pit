@@ -92,6 +92,8 @@
   .lines .fit { font-size: 11px; color: var(--dim); flex: 1; min-width: 0; }
   .lines .fit.long { color: var(--fg); font-weight: 700; }
   .lines .fit.long:before { content: "! "; }
+  .lines .cheat { font-size: 11px; color: var(--dim); margin: 0 0 6px; display: grid; grid-template-columns: max-content 1fr; gap: 0 10px; }
+  .lines .cheat code { color: var(--fg); font: inherit; font-weight: 700; }
   .lines .lbtns { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
   .empty { border: 2px dashed var(--line); padding: 16px; max-width: 700px; background: var(--bg); }
   @media (max-width: 900px) { body { height: auto; overflow: auto; } #board { max-height: none; } .work { flex-direction: column; } .work .detail { flex: none; width: 100%; max-height: none; } .right { height: auto; width: 100%; } .kan { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -135,6 +137,8 @@
   <div class="lines" id="lines" hidden>
     <div><b>the lines</b> <span class="dim">each is one click in the game. save writes locales/en.ftl and plays them again.</span></div>
     <ol id="lineList"></ol>
+    <!-- MOCK dialog-sauce: every effect's marks, read off the game (src/dialogsauce.js, FX_MARKS) -->
+    <div class="cheat" id="lineMarks" hidden></div>
     <div class="lbtns"><button type="button" id="lineAdd">+ add a line</button><button type="button" id="lineSave">save and replay</button><button type="button" id="lineUndo" title="back to what is saved">undo edits</button><span id="lineSaid" aria-live="polite"></span></div>
   </div>
   <form class="note" id="note"><textarea id="words" placeholder="what to change (or why this one)"></textarea><div class="btns"><button type="button" id="stop">stop: pick this one</button><button type="button" id="keep">keep iterating</button></div><span id="sent" aria-live="polite"></span></form>
@@ -441,7 +445,23 @@ function fitSay(el, text) {
     : `${wide} row${wide > 1 ? 's' : ''} at 800x600, ${phone} on a phone`;
 }
 const dirty = () => { $('lineSave').classList.toggle('on', JSON.stringify(lines) !== JSON.stringify(savedLines)); };
+// MOCK dialog-sauce: the marks a line may carry, as the game lists them
+function drawMarks() {
+  const marks = f.contentWindow && f.contentWindow.__dialogMarks, el = $('lineMarks');
+  el.hidden = !marks; el.innerHTML = '';
+  const DOES = { wave: 'the letters rise and fall in a wave', shake: 'a tremble, a pixel either way', glow: 'bold, a soft light behind it',
+    slow: 'each letter fades in slowly', rainbow: "the letters run through the game's colors", pulse: 'swells and settles, slowly',
+    nervous: 'each letter jitters on its own', drop: 'each letter drops in from above and lands',
+    boom: 'the word lands at once, heavy, and holds', trail: 'drawn out, each letter slower than the last' };
+  for (const [m, name] of marks || []) {
+    const does = DOES[name] || '';
+    const c = document.createElement('code'); c.textContent = `${m}${name}${m}`;
+    const d = document.createElement('span'); d.textContent = does;
+    el.append(c, d);
+  }
+}
 function drawLines() {
+  drawMarks();
   const ol = $('lineList'); ol.innerHTML = '';
   lines.forEach((t, i) => {
     const li = document.createElement('li'), row = document.createElement('div');

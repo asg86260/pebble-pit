@@ -25,9 +25,8 @@ import { P, ACT_PORTAL_R, ACT_HELL_HANG, ACT_PORTAL_OPEN_S, ACT_HAND_FADE_S, ACT
          ACT_GATES_H, ACT_GATES_REACH, ACT_GATES_SINK_S, ACT_GATES_STAND_S, ACT_GATES_HOLD_S, FINALE_HOUSE_W } from './config.js';
 import { houseX } from './home.js';
 import { smoothstep } from './motion.js';
-import { afterX0, afterFloor } from './after/place.js';
-import { godFront } from './after/sky.js'; // MOCK dialog-sauce
-import { SAUCE_PAIR } from './config.js'; // MOCK dialog-sauce
+import { afterX0, afterFloor, stairFoot } from './after/place.js'; // MOCK dialog-sauce (stairFoot)
+import { unionSpan } from './after/sky.js'; // MOCK dialog-sauce
 import { roadX, chamberFloor } from './hell/place.js';
 import { deepFloor } from './deep/place.js';
 import { afterlifeOn, hellOn } from './acts.js';
@@ -46,11 +45,13 @@ export const PORTALS = {
       // (the owner, 2026-10-31), high enough to clear the mansion there.
       yard: () => gatesEnd(snap(houseX() + FINALE_HOUSE_W * P / 2), snap(S.groundY) - ACT_GATES_SKY),
       // Standing on the cloud floor at the camp's own column.
-      // MOCK dialog-sauce: with an option up, on the floor in front of God's
-      // throne (the owner, 2026-11-03: "have them spawn in front of god"), a
-      // few steps to its right (the gates' hand clear of them), so the souls
-      // step out and walk left into his light.
-      after: () => gatesEnd(globalThis.__dialogSauce ? snap(godFront() + SAUCE_PAIR.gateOff * P) : Math.max(afterX0(), ACT_GATES_CELL * P), snap(afterFloor()))
+      // MOCK dialog-sauce: with an option up, between the two camps (the
+      // owner, 2026-11-04: "move it to the left, so it sits between the camps
+      // a bit"): in the middle of the open floor from the union's right end
+      // (its crowd, the pedestal and the pair on it) to the foot of God's
+      // stair, each the nearest thing standing either side; the souls step
+      // out there and walk on into his light (ghosts.js, `rise`).
+      after: () => gatesEnd(globalThis.__dialogSauce ? snap((unionSpan()[1] + stairFoot()) / 2) : Math.max(afterX0(), ACT_GATES_CELL * P), snap(afterFloor()))
     }
   },
   hell: {

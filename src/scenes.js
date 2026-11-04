@@ -3506,7 +3506,9 @@ export const SCENES = {
     ['b', 'B paced type, a ring of light', 'draft-god-c', { type: 'paced', light: 'ring' },
      "Script C typed a little faster with a held beat at each comma and full stop. The two step out of the gates before God and stand in a ring of his light on the cloud floor. Click while it types to finish the line, click again to go on; hold space to skip all."],
     ['c', 'C effects on the words', 'draft-god-d', { type: 'paced', light: 'cone' },
-     "A proposal you can reject: your script C word for word, with effects marked in -- ^welcome^ and ^paradise^ glow, *eternal* and *eternally* wave, _work_ shakes, ~the end~ fades in slowly. Type the marks in the line editor to move them: *wave*, _shake_, ^glow^, ~slow~."]
+     "A proposal you can reject: your script C word for word, with effects marked in -- ^welcome^ and ^paradise^ glow, *eternal* and *eternally* wave, _work_ shakes, ~the end~ fades in slowly. Type the marks in the line editor to move them; the editor lists every mark."],
+    ['d', 'D every effect', 'draft-god-e', { type: 'paced', light: 'cone' },
+     "Every effect, each line only the effects' own names, so nothing is said: wave, shake, glow, slow, rainbow (the game's colors), pulse, nervous, drop, boom and trail. Each is a pair of its mark round words, listed in the line editor."]
   ].map(([k, option, script, look, say]) => [`dialog-sauce-${k}`, { about: 'the acts', review: 'dialog: sauce', option, say,
     stage: 'mock: throwaway, never merged', branch: 'a3-review-both', script,
     swap: () => {

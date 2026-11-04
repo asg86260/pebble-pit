@@ -8043,6 +8043,41 @@
   "text": "_eternally_"
  },
  {
+  "id": "draft-god-e-1",
+  "group": "The shell",
+  "where": "src/dialogdrafts.js",
+  "context": "MOCK draft, the owner's to rewrite: God's opening lines, script E, every effect by its own name, line 1",
+  "text": "*wave* _shake_ ^glow^"
+ },
+ {
+  "id": "draft-god-e-2",
+  "group": "The shell",
+  "where": "src/dialogdrafts.js",
+  "context": "MOCK draft, the owner's to rewrite: God's opening lines, script E, every effect by its own name, line 2",
+  "text": "~slow~ =rainbow= +pulse+"
+ },
+ {
+  "id": "draft-god-e-3",
+  "group": "The shell",
+  "where": "src/dialogdrafts.js",
+  "context": "MOCK draft, the owner's to rewrite: God's opening lines, script E, every effect by its own name, line 3",
+  "text": "%nervous% |drop|"
+ },
+ {
+  "id": "draft-god-e-4",
+  "group": "The shell",
+  "where": "src/dialogdrafts.js",
+  "context": "MOCK draft, the owner's to rewrite: God's opening lines, script E, every effect by its own name, line 4",
+  "text": "#boom#"
+ },
+ {
+  "id": "draft-god-e-5",
+  "group": "The shell",
+  "where": "src/dialogdrafts.js",
+  "context": "MOCK draft, the owner's to rewrite: God's opening lines, script E, every effect by its own name, line 5",
+  "text": "@trail@"
+ },
+ {
   "id": "act-saw",
   "group": "The shell",
   "where": "src/actbeats.js",

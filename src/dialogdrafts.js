@@ -11,7 +11,7 @@
 
 import { setBeatLines } from './actbeats.js';
 import { lineRows } from './render/dialog.js';
-import { parseMarks } from './dialogsauce.js'; // MOCK dialog-sauce
+import { parseMarks, FX_MARKS } from './dialogsauce.js'; // MOCK dialog-sauce
 
 export const SCRIPTS = {
   // BEGIN SCRIPTS (written by the review bench's dialog editor)
@@ -43,6 +43,13 @@ export const SCRIPTS = {
     { who: 'god', id: 'draft-god-d-4' },
     { who: 'god', id: 'draft-god-d-5' },
     { who: 'god', id: 'draft-god-d-6' }
+  ],
+  'draft-god-e': [
+    { who: 'god', id: 'draft-god-e-1' },
+    { who: 'god', id: 'draft-god-e-2' },
+    { who: 'god', id: 'draft-god-e-3' },
+    { who: 'god', id: 'draft-god-e-4' },
+    { who: 'god', id: 'draft-god-e-5' }
   ]
   // END SCRIPTS
 };
@@ -54,4 +61,6 @@ export const playScript = key => setBeatLines('meet-god', SCRIPTS[key]);
 // For the bench's line editor: the rows a line wraps to in the bubble at the
 // scene shots' 800 wide and a phone's 360, measured by the drawing itself.
 // (MOCK dialog-sauce: measured without the effects' marks, which are not drawn)
+// (and the effects' marks, for the editor's cheat sheet)
+if (typeof window !== 'undefined') window.__dialogMarks = FX_MARKS;
 if (typeof window !== 'undefined') window.__dialogFit = text => { const t = parseMarks(text).plain; return { wide: lineRows(t, 800), phone: lineRows(t, 360) }; };
