@@ -134,7 +134,7 @@ function cueAt(key, r) {
     return { x: w.x + Math.cos(turn) * w.r, y: w.y + Math.sin(turn) * w.r, pose: 'grab' };
   }
   if (key === 'workshop') {
-    if (globalThis.__signsMock) return null;   // MOCK the-sign-station-polish  no ghost hand on the mock's bench
+    if (globalThis.__signsMock) return globalThis.__signsHand?.cue(u) ?? null;   // MOCK the-sign-station-polish  the mock's own next step
     const nails = partsOf('workshop').nails, k = r.nails.findIndex(n => n < 2);
     const n = nails[Math.max(0, k)];
     return { x: n.x + n.w / 2, y: n.y + (tapDown() ? D * 2 : 0), pose: 'point' };

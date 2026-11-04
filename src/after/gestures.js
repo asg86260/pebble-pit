@@ -247,12 +247,14 @@ const DEFS = {
     init: () => ({ nails: new Array(GESTURE_NAILS).fill(0), strike: -1e9, hit: null, last: -1e9, auto: -1e9 }),
     open: () => built('workshop'),
     grab(g, x, y) {
+      if (SIGNS()) return SIGNS().grab(x, y);   // MOCK the-sign-station-polish
       const p = stationParts('workshop');
       for (let k = 0; k < p.nails.length; k++) if (inBox(x, y, p.nails[k]) && g.nails[k] < GESTURE_NAIL_TAPS) return k;
       return inBox(x, y, p.sign, G_S) ? -1 : null;
     },
-    down(g, k) {
+    down(g, k, x, y) {
       const t = T();
+      if (SIGNS()) return SIGNS().down(k, x, y);   // MOCK the-sign-station-polish
       if (globalThis.__signsMock) return 'tap';   // MOCK the-sign-station-polish  the mock's joiner makes the signs
       // A tap off a nail, or a nail already flush, is a miss: nothing.
       if (k == null || k < 0 || t - g.strike < GESTURE_SWING_S) return 'tap';
@@ -269,7 +271,7 @@ const DEFS = {
       // blow every AFTER_SIGN_S shared over a sign's taps; a fresh blank
       // only with the timber for it.
       const t = T(), joiner = S.after.bodies.some(b => b.at === 'workshop');
-      if (globalThis.__signsMock) return;   // MOCK the-sign-station-polish
+      if (globalThis.__signsMock) { for (let n = SIGNS() ? SIGNS().takeUses() : 0; n > 0; n--) used(g); return; }   // MOCK the-sign-station-polish
       const every = AFTER_SIGN_S / (GESTURE_NAILS * GESTURE_NAIL_TAPS);
       if (!joiner || t - g.last < GESTURE_JOINER_WAIT_S || t - g.auto < every) return;
       if (g.nails.every(n => n === 0) && benchShort()) return;
@@ -278,8 +280,13 @@ const DEFS = {
       g.auto = t; g.strike = t; g.hit = k; g.nails[k] += 1;
       settleSign(g);
     },
+    move(g, x, y) { if (SIGNS()) SIGNS().move(x, y); },   // MOCK the-sign-station-polish
+    up(g, x, y) { if (SIGNS()) SIGNS().up(x, y); },       // MOCK the-sign-station-polish
   }
 };
+// MOCK the-sign-station-polish: the manual work's mock (render/after/signsmock.js)
+// worked through this station's motion while it is up
+const SIGNS = () => (globalThis.__signsMock && /^b/.test(globalThis.__signsMock) && globalThis.__signsHand) || null;
 // The timber a blank is cut from: the workshop's own bench pile where it has
 // one (track B's `benchtimber`), else the timber mound.
 const benchTimber = () => pileCount('benchtimber');

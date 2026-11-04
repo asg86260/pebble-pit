@@ -4269,11 +4269,15 @@ Object.assign(SCENES, {
 // flips the option on the yard standing, the make begun again.
 import { startSignsMock, stepSignsMock } from './render/after/signsmock.js'; // MOCK the-sign-station-polish
 const SIGNS_MOCK = [ // MOCK the-sign-station-polish
-  ['a', 'A shaped by the nails', "The joiner fetches four timber blocks off its pile, left of the shed, and sets them on the bench as a square. Each nail it drives changes the piece a little: the pole goes up, then the cloth climbs it, and the last nail makes it the flag. It carries the flag to the rack, and the members carry it out the same."]
+  ['a', 'A the joiner, centered', "The joiner fetches four timber blocks off its pile, left of the shed, and sets them on the bench as a square, in the middle of the shed. Each nail it drives changes the piece a little: the pole goes up, then the cloth climbs it, and the last nail makes it the flag. It carries the flag to the rack, and the members carry it out the same."],
+  ['b1', 'B1 by hand: press and flick', "Nobody at the bench, so you make it: sweep timber off the pile onto the bench, then press on the nail and flick down to drive it, two flicks a nail. Each nail shapes the piece a row; take the flag to the rack."],
+  ['b2', 'B2 by hand: click', "Nobody at the bench, so you make it: sweep timber off the pile onto the bench. Over the bench your hand is a hammer: click the nail, two clicks a nail. Each nail shapes the piece a row; take the flag to the rack."],
+  ['b3', 'B3 by hand: swing the hammer', "Nobody at the bench, so you make it: sweep timber off the pile onto the bench, pick up the hammer and bring it down on the nail. Fast drives it home in one, slower takes two. Each nail shapes the piece a row; take the flag to the rack."]
 ];
 function signsMockStage(o) { // MOCK the-sign-station-polish
-  workshopStage({ members: 3, grant: { timber: 21, benchtimber: 8 }, hold: false });
+  workshopStage({ members: /^b/.test(o) ? 2 : 3, grant: { timber: 21, benchtimber: 8 }, hold: false });
   startSignsMock(o);
+  globalThis.__demoHand = demoHand;   // the shot tools' real pointer draws its cursor with it
   const i = STEPS.findIndex(q => q.name === 'signsmock');
   if (i >= 0) STEPS.splice(i, 1);
   STEPS.push({ name: 'signsmock', step: stepSignsMock });

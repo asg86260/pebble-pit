@@ -170,6 +170,8 @@ export const AFTER_LANDING = {
     ch => (!S.after || !G.grid || !KINDS[ch.kind] ? 1 : 0),
     // a log let go over the saw mill's bed, set down there (mill.js)
     ch => (ch.vy > 0 && bedLand(ch) ? 1 : 0),
+    // MOCK the-sign-station-polish: a block of timber let go over the workshop's bench
+    ch => (ch.vy > 0 && globalThis.__signsBenchLand?.(ch) ? 1 : 0),
     // once its foot comes down on the ground's top under it, set down there --
     // on a pile of its kind with room, into it; on a pile of another good, on its
     // mound; on a pile full, beside it; on open ground, where it falls, to roll by the heap
