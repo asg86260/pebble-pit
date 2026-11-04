@@ -108,7 +108,9 @@ export function readWords(win) {
     }
     for (const l of layers.reverse()) under = over(l, l[3], under);
     const ink = rgba(cs.color);
-    const fg = over(ink, ink[3] * fade, under);
+    let fg = over(ink, ink[3] * fade, under);
+    // words drawn by `difference` (the skip hint's) come out |ink - what is under them|
+    if (cs.mixBlendMode === 'difference') fg = fg.map((c, i) => (i < 3 ? Math.abs(c - under[i]) : 1));
     const size = parseFloat(cs.fontSize), bold = +cs.fontWeight >= 700;
     const large = size >= TEXT_LARGE || (bold && size >= TEXT_LARGE_BOLD);
     const ratio = contrast(fg, under);
