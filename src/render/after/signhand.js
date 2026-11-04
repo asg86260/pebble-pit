@@ -304,9 +304,9 @@ export const shaperZ = Z;
 // In from the first plank taken off the pile, back out once the flag is in
 // the rack: the zoom on the glass eased (world.js, `setZoomFree`, the aim's
 // own unsnapped zoom) about a middle that travels from where the window was
-// to the shed's, and the height held there (`S.camLockY`, a place's held
+// to the square's on the bench, and the height held there (`S.camLockY`, a place's held
 // height). Nothing else moves the camera while it is in.
-const CAM = { in: 2.5, s: 0.7, midUp: 9 };
+const CAM = { in: 2.5, s: 0.7, midUp: 5 };
 let cam = null; // page: the glide's state, from its first plank to its flag racked
 export function stepGlide(want, dt) {
   if (globalThis.__signHand !== 'glide') return;
