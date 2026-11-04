@@ -20,6 +20,8 @@ import { S } from './state.js';
 import { held } from './reset.js';
 import { now } from './clock.js';
 import { DIALOG_FADE_S } from './config.js';
+import { msg } from './lang.js';
+import { sauce, typedBy } from './dialogsauce.js'; // MOCK dialog-sauce
 
 let shown = null; // held: the line on show { id, who, args, at, out }, this session's
 held('dialog', () => { shown = null; });
@@ -51,6 +53,8 @@ export function stepLines(lines, ready, t = now()) {
 // line waiting, so the click is somebody else's.
 export function goOn(t = now()) {
   if (!lineWaiting()) return false;
+  // MOCK dialog-sauce: a click while the line types in finishes it
+  if (sauce() && !shown.full && !typedBy(msg(shown.id), (t - shown.at) / 1000)) { shown.full = true; return true; }
   hear(shown.id);
   shown.out = t;
   return true;
@@ -69,7 +73,8 @@ export function lineLook(t = now()) {
   if (!shown) return null;
   const k = (t - shown.at) / 1000 / DIALOG_FADE_S;
   const o = shown.out == null ? 1 : 1 - (t - shown.out) / 1000 / DIALOG_FADE_S;
-  return { id: shown.id, who: shown.who, args: shown.args, a: Math.max(0, Math.min(1, k, o)) };
+  return { id: shown.id, who: shown.who, args: shown.args, a: Math.max(0, Math.min(1, k, o)),
+           u: (t - shown.at) / 1000, full: !!shown.full };   // (MOCK dialog-sauce: how far it has typed)
 }
 
 // A new game, or a save read in: nothing on show.

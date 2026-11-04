@@ -35,6 +35,7 @@ import { goOnDue, goOnAlpha, actCaption } from '../actbeats.js';
 import { rockRowsLeft, soulAt, mansionHeld } from '../mansion.js';
 import { deepFloor } from '../deep/place.js';
 import { drawLine } from './dialog.js';
+import { drawSauceLight } from './dialogsauce.js'; // MOCK dialog-sauce
 
 const snap = v => Math.round(v / P) * P;
 const cellAt = (x, y, tone) => { if (!tone) return; ctx.fillStyle = tone; ctx.fillRect(x, y, P, P); };
@@ -271,6 +272,7 @@ export function drawActBodies(place) {
 // speaker's line in a bubble instead. The words are the owner's to write:
 // each is a plain label in locales/en.ftl.
 export function drawActCaption() {
+  if (globalThis.__dialogSauce) drawSauceLight(); // MOCK dialog-sauce: God's light on the two of them
   const c = actCaption();
   if (!c || c.a <= 0 || S.hush <= 0) return;
   // a speaker's line is a bubble over their head (render/dialog.js)

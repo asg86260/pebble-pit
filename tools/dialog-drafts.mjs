@@ -55,7 +55,12 @@ function clean(t) {
   if (!s) throw new Error('a line is empty: cut it instead');
   if (s.length > MAX_CHARS) throw new Error(`a line is over ${MAX_CHARS} characters`);
   if (/[{}]/.test(s)) throw new Error('a line has a { or }');
-  if (/^[[*.]/.test(s)) throw new Error('a line starts with [, * or .');
+  if (/^[[.]/.test(s)) throw new Error('a line starts with [ or .');
+  // MOCK dialog-sauce: the words' effects are marks in pairs round a word --
+  // *wave*, _shake_, ^glow^, ~slow~ (src/dialogsauce.js) -- so a * may open a
+  // line when it opens an effect, and every mark must be closed
+  if (/^\*/.test(s) && !/^\*[^*]+\*/.test(s)) throw new Error('a line starts with a * that opens no effect');
+  for (const m of '*_^~') if ((s.split(m).length - 1) % 2) throw new Error(`a line has a ${m} not closed: effects come in pairs, *wave* _shake_ ^glow^ ~slow~`);
   if (/\[owner'?s words/i.test(s)) throw new Error('a line is a placeholder');
   return s;
 }

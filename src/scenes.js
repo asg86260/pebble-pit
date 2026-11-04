@@ -3494,6 +3494,33 @@ export const SCENES = {
       for (let i = 0; i < 60 * 30 && !window.__goOn(); i++) window.__fast(1 / 60);
       for (let i = 0; i < 60 * 600 && !(window.__line() && window.__line().out == null); i++) window.__fast(1 / 60);
     } }])),
+  // MOCK dialog-sauce: the dialog spruced up (src/dialogsauce.js,
+  // render/dialogsauce.js), each option playing the owner's script C at the
+  // meeting -- the souls stepping out of heaven's gates in front of God, under
+  // his light, his lines typed in letter by letter -- C's with the words'
+  // effects marked in as a proposal (script D, the same words). The line
+  // editor edits each option's script. Never merged.
+  ...Object.fromEntries([
+    ['a', 'A steady type, his light a cone', 'draft-god-c', { type: 'steady', light: 'cone' },
+     "Script C typed in at one steady pace, each letter fading in. The two step out of heaven's gates right in front of God, and a soft cone of his light falls from his face onto them. Click while it types to finish the line, click again to go on; hold space to skip all. After his last line they take the brisk walk to the pedestal."],
+    ['b', 'B paced type, a ring of light', 'draft-god-c', { type: 'paced', light: 'ring' },
+     "Script C typed a little faster with a held beat at each comma and full stop. The two step out of the gates before God and stand in a ring of his light on the cloud floor. Click while it types to finish the line, click again to go on; hold space to skip all."],
+    ['c', 'C effects on the words', 'draft-god-d', { type: 'paced', light: 'cone' },
+     "A proposal you can reject: your script C word for word, with effects marked in -- ^welcome^ and ^paradise^ glow, *eternal* and *eternally* wave, _work_ shakes, ~the end~ fades in slowly. Type the marks in the line editor to move them: *wave*, _shake_, ^glow^, ~slow~."]
+  ].map(([k, option, script, look, say]) => [`dialog-sauce-${k}`, { about: 'the acts', review: 'dialog: sauce', option, say,
+    stage: 'mock: throwaway, never merged', branch: 'a3-review-both', script,
+    swap: () => {
+      const on = globalThis.__dialogSauce;
+      if (!on || on.script !== script || S.beat.camera !== 'meet-god') { window.__scene(`dialog-sauce-${k}`); return; }
+      Object.assign(on, look);
+    },
+    run: () => {
+      actsYard('home');
+      playScript(script);
+      globalThis.__dialogSauce = { ...look, script };
+      for (let i = 0; i < 60 * 30 && !window.__goOn(); i++) window.__fast(1 / 60);
+      for (let i = 0; i < 60 * 600 && !(window.__line() && window.__line().out == null); i++) window.__fast(1 / 60);
+    } }])),
   'act3-mid': { about: 'the acts', say: 'act 3 mid:the camp built (saw mill, workshop, posts filled), a fifth of God\'s yard walked out, the saw handed over',
     run: act3Mid },
   // Track C: each of act 3's boards open in the yard's sheet over the act-3-mid

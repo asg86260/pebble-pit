@@ -8001,6 +8001,48 @@
   "text": "eternally"
  },
  {
+  "id": "draft-god-d-1",
+  "group": "The shell",
+  "where": "src/dialogdrafts.js",
+  "context": "MOCK draft, the owner's to rewrite: God's opening lines, script D, C with effects, line 1",
+  "text": "come, and be ^welcome^"
+ },
+ {
+  "id": "draft-god-d-2",
+  "group": "The shell",
+  "where": "src/dialogdrafts.js",
+  "context": "MOCK draft, the owner's to rewrite: God's opening lines, script D, C with effects, line 2",
+  "text": "to the afterlife, an *eternal* ^paradise^"
+ },
+ {
+  "id": "draft-god-d-3",
+  "group": "The shell",
+  "where": "src/dialogdrafts.js",
+  "context": "MOCK draft, the owner's to rewrite: God's opening lines, script D, C with effects, line 3",
+  "text": "your *eternal* ^paradise^"
+ },
+ {
+  "id": "draft-god-d-4",
+  "group": "The shell",
+  "where": "src/dialogdrafts.js",
+  "context": "MOCK draft, the owner's to rewrite: God's opening lines, script D, C with effects, line 4",
+  "text": "you've worked so hard, right until ~the end~"
+ },
+ {
+  "id": "draft-god-d-5",
+  "group": "The shell",
+  "where": "src/dialogdrafts.js",
+  "context": "MOCK draft, the owner's to rewrite: God's opening lines, script D, C with effects, line 5",
+  "text": "i can tell you love to work. so _work_ for me now"
+ },
+ {
+  "id": "draft-god-d-6",
+  "group": "The shell",
+  "where": "src/dialogdrafts.js",
+  "context": "MOCK draft, the owner's to rewrite: God's opening lines, script D, C with effects, line 6",
+  "text": "*eternally*"
+ },
+ {
   "id": "act-saw",
   "group": "The shell",
   "where": "src/actbeats.js",

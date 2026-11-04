@@ -25,6 +25,8 @@ import { raw, paper, ink } from '../ink.js';
 import { bandCells } from '../shot.js';
 import { toScreen } from '../world.js';
 import { godHead } from './aftercrowd.js';
+import { sauce, parseMarks, typedBy } from '../dialogsauce.js'; // MOCK dialog-sauce
+import { drawTyped } from './dialogsauce.js'; // MOCK dialog-sauce
 
 const FONT = ACT_CAPTION_FONT_PX, U = DIALOG_STROKE_PX;
 let seen = null; // cache: the bubble as last drawn, for the checks (`bubbleSeen`)
@@ -101,7 +103,11 @@ export function drawLine(c) {
   ctx.globalAlpha = c.a;
   ctx.font = `${FONT}px ${FACE}`;
   const pad = CELL * DIALOG_PAD_CELLS, lh = FONT + DIALOG_LINE_PX;
-  const lines = wrap(c.args ? msg(c.id, c.args) : msg(c.id), Math.min(S.W - CELL * 8, DIALOG_WIDE_PX));
+  const said = c.args ? msg(c.id, c.args) : msg(c.id);
+  // MOCK dialog-sauce: the marks taken out, the whole line measured from its
+  // first letter so the bubble never grows as the letters come in
+  const typing = !!sauce();
+  const lines = wrap(typing ? parseMarks(said).plain : said, Math.min(S.W - CELL * 8, DIALOG_WIDE_PX));
   // a whole number of cells across and down, so the box's corners and the
   // tail's cells sit on one lattice
   const more = U * 6;
@@ -129,9 +135,12 @@ export function drawLine(c) {
     // the words, and a still wedge in the corner: there is a click to go on
     ctx.fillStyle = INK;
     ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-    lines.forEach((s, k) => ctx.fillText?.(s, x + pad, y + pad + k * lh));
+    if (typing) drawTyped(said, lines, x + pad, y + pad, lh, c.u || 0, c.full, INK);   // MOCK dialog-sauce
+    else lines.forEach((s, k) => ctx.fillText?.(s, x + pad, y + pad + k * lh));
     const mx = x + w - pad / 2 - U * 5, my = y + h - pad / 2 - U * 3;
-    for (let r = 0; r < 3; r++) ctx.fillRect(Math.round(mx) + r * U, Math.round(my) + r * U, (5 - 2 * r) * U, U);
+    ctx.fillStyle = INK;
+    if (!typing || c.full || typedBy(said, c.u || 0))   // (MOCK dialog-sauce: the wedge once it has all typed in)
+      for (let r = 0; r < 3; r++) ctx.fillRect(Math.round(mx) + r * U, Math.round(my) + r * U, (5 - 2 * r) * U, U);
     seen = { x, y, w, h, dir: b.dir, at: b.at, head: b.sp };
   }
   ctx.restore();

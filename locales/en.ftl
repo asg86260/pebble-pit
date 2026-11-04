@@ -3461,6 +3461,24 @@ draft-god-c-5 = i can tell you love to work. so work for me now
 # MOCK draft, the owner's to rewrite: God's opening lines, script C, grand, line 6
 draft-god-c-6 = eternally
 
+# MOCK draft, the owner's to rewrite: God's opening lines, script D, C with effects, line 1
+draft-god-d-1 = come, and be ^welcome^
+
+# MOCK draft, the owner's to rewrite: God's opening lines, script D, C with effects, line 2
+draft-god-d-2 = to the afterlife, an *eternal* ^paradise^
+
+# MOCK draft, the owner's to rewrite: God's opening lines, script D, C with effects, line 3
+draft-god-d-3 = your *eternal* ^paradise^
+
+# MOCK draft, the owner's to rewrite: God's opening lines, script D, C with effects, line 4
+draft-god-d-4 = you've worked so hard, right until ~the end~
+
+# MOCK draft, the owner's to rewrite: God's opening lines, script D, C with effects, line 5
+draft-god-d-5 = i can tell you love to work. so _work_ for me now
+
+# MOCK draft, the owner's to rewrite: God's opening lines, script D, C with effects, line 6
+draft-god-d-6 = *eternally*
+
 # --- MOCK draft-god: end ---
 
 # act beat line, placeholder: the saw handed to the woodcutter
