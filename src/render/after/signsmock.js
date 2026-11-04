@@ -1,4 +1,5 @@
 // MOCK the-sign-station-polish
+// MOCK the-sign-station-by-hand  (its ways of shaping the planks: signhand.js, under 'b4')
 // Throwaway review code, never merged: the owner's "start looking at the sign
 // station to give it the same polish as the saw mill" (2026-11-01), round 2
 // on the owner's pick A (2026-11-02: "the resource pile should be on the left
@@ -40,6 +41,7 @@ import { colX, rowY } from '../../after/ground.js';
 import { built } from '../../after/levels.js';
 import { cellOf } from '../../grid.js';
 import { source, sink } from '../../flow.js';
+import { shaper, stepGlide } from './signhand.js'; // MOCK the-sign-station-by-hand
 
 let M = null; // page: the mock's cycle, stood up by startSignsMock
 held('signs-mock', () => { globalThis.__signsMock = null; M = null; });
@@ -132,11 +134,12 @@ export function startSignsMock(o) {
     const blocks = [...M.held, ...(M.laid || [])];
     if (M.from) blocks.push(M.from.v);
     if (M.sign != null || M.step > 0) { if (setBlock('signs', null, M.signV)) source('sign', 1, 'signsmock'); }
-    else for (const v of blocks) if (setBlock('benchtimber', null, v)) source('plank', 1, 'signsmock');
+    else for (const v of blocks.filter(v => v != null)) if (setBlock('benchtimber', null, v)) source('plank', 1, 'signsmock');
   }
   globalThis.__signsMock = o;
   M = fresh();
   if (handMode()) Object.assign(M, { ph: 'hand', laid: [null, null, null, null], hand: freshHand() });
+  if (M.hand) M.hand.sh = shaper()?.init() || null;   // MOCK the-sign-station-by-hand
 }
 function go(ph, to = M.jx) {
   M.ph = ph; M.t = 0;
@@ -266,7 +269,7 @@ function shed(d, stand = true) {
   d.r(6, -17, 19, 17, K); d.r(8, -16, 15, 16, W);
   cut(d, 10, -20, 11, 2);
   const cw = 11 * P, gap = 8, pw = 6, px0 = 10 * P + Math.round((cw - (4 * pw + 3 * gap)) / 2), py0 = -20 * P + Math.round((2 * P - pw) / 2);
-  M.nails.forEach((n, i) => {
+  if (!shaper()) M.nails.forEach((n, i) => {   // MOCK the-sign-station-by-hand  (no nails: the panel stands blank)
     const x = px0 + i * (pw + gap);
     d.px(x, py0, pw, pw, K);
     if (n === 0) d.px(x + 1, py0 + 1, pw - 2, pw - 2, W); else if (n === 1) d.px(x + 1, py0 + 1, pw - 2, 2, W);
@@ -413,7 +416,7 @@ export function drawSignsMockJoiner() {
 import { holdUnit, heldGoods } from '../../hands.js';
 import { toScreen } from '../../world.js';
 function handMode() { return /^b/.test(globalThis.__signsMock || ''); }
-const big = () => globalThis.__signsMock === 'b3big';
+const big = () => globalThis.__signsMock === 'b3big' || globalThis.__signsMock === 'b4';
 const Z = () => (big() ? 2 : 1);
 // The piece's box in the hand's bench: its four columns centered in the
 // shed's opening, standing on the bench's top (row -2).
@@ -427,7 +430,7 @@ const freshHand = () => ({ strikeAt: -9, strikeK: null, uses: 0, oa: [0, 0, 0, 0
 const wsFrame = () => frame(x0(), groundOf('workshop'), 0, null, AFTER_ART_SCALE);
 const laidN = () => (M.laid || []).filter(v => v != null).length;
 // The next nail: once the square is whole, the first not driven home.
-const nextNail = () => (laidN() === 4 && M.step < SHAPE.length ? M.nails.findIndex(n => n < 2) : -1);
+const nextNail = () => (!shaper() && laidN() === 4 && M.step < SHAPE.length ? M.nails.findIndex(n => n < 2) : -1);
 const nailW = k => { const [col, row] = NAILS_AT[k], b = HB(), z = Z(); return wsFrame().world(b.x + (col + 0.5) * z, b.y + (row + 0.5) * z); };
 const slotCell = k => { const [sx, sy] = SLOTS[k], b = HB(), z = Z(); return { x: b.x + sx * z, y: b.y + (SQUARE_ROW + sy) * z, w: 2 * z }; };
 const flagMid = () => { const b = HB(), z = Z(); return wsFrame().world(b.x + FLAG.w * z / 2, b.y + FLAG.h * z / 2); };
@@ -445,6 +448,7 @@ function benchReset() {
   M.laid = [null, null, null, null]; M.cells = square(); M.step = 0; M.hand.fly = [null, null, null, null];
   M.nails = [0, 0, 0, 0]; M.nailAt = [null, null, null, null]; M.inAt = [null, null, null, null];
   M.prevV = M.signV; M.signV = cellOf('sign'); M.tintAt = S.after.t; M.n++;
+  M.hand.sh = shaper()?.init() || null;   // MOCK the-sign-station-by-hand
 }
 function stepHand(dt) {
   const h = M.hand, hm = h.hm, t = S.after.t, k = nextNail();
@@ -452,9 +456,14 @@ function stepHand(dt) {
   // the outlines' ink: bold with a plank in the hand, faint while the square
   // waits, gone once filled; the nail's target bold with the hammer held
   const plank = heldGoods()?.kind === 'plank', r = dt / HAND.ease;
-  h.oa = h.oa.map((a, i) => { const want = M.laid[i] != null || M.step > 0 ? 0 : plank ? 1 : HAND.faint; return a + Math.max(-r, Math.min(r, want - a)); });
+  // (the hand's ways, signhand.js: only the next slot comes up bold, so the order the parts go in reads)
+  const nextSlot = shaper() ? M.laid.findIndex(v => v == null) : -1;   // MOCK the-sign-station-by-hand
+  h.oa = h.oa.map((a, i) => { const want = M.laid[i] != null || M.step > 0 ? 0 : plank && (nextSlot < 0 || i === nextSlot) ? 1 : HAND.faint; return a + Math.max(-r, Math.min(r, want - a)); });
   const nw = k >= 0 ? (hm.held ? 1 : HAND.faint) : 0;
   h.na += Math.max(-r, Math.min(r, nw - h.na));
+  // MOCK the-sign-station-by-hand: the way's own motion, and the camera in while the bench is worked
+  const sh = shaper();
+  if (sh) { sh.step(dt); stepGlide(!!heldGoods() || laidN() > 0 || M.step > 0, dt); return; }
   if (hm.held) {
     // the head hangs from the grip, at its true position; brought down on the
     // nail it strikes, as hard as it came, and rests there till lifted
@@ -481,6 +490,7 @@ const SIGNS_HAND = {
   grab(x, y) {
     if (!M || !handMode() || !signsMockOn()) return null;
     if (M.step >= SHAPE.length && inFlag(x, y)) return 'flag';
+    if (shaper()) return laidN() === 4 && M.step < SHAPE.length ? shaper().grab(x, y) : null;   // MOCK the-sign-station-by-hand
     const hd = headOf(M.hand.hm);
     return !M.hand.hm.fall && Math.hypot(x - hd.x, y - hd.y) < AP * 2 * Z() ? 'hammer' : null;
   },
@@ -493,12 +503,14 @@ const SIGNS_HAND = {
       benchReset();
       return 'tap';
     }
+    if (shaper()) return shaper().down(what, x, y);   // MOCK the-sign-station-by-hand
     // taken where it is pressed: the head stays where it was under the hand, nothing jumps
     if (what === 'hammer') { const hd = headOf(h.hm); Object.assign(h.hm, { held: true, up: false, px: x, py: y, off: hd.y - y, hy: hd.y, stuck: false, fall: null }); return true; }
     return 'tap';
   },
-  move(x, y) { const hm = M.hand.hm; if (hm.held) { hm.px = x; hm.py = y; } },
-  up() {
+  move(x, y) { if (shaper()) { shaper().move?.(x, y); return; } const hm = M.hand.hm; if (hm.held) { hm.px = x; hm.py = y; } },
+  up(x, y) {
+    if (shaper()) { shaper().up?.(x, y); return; }   // MOCK the-sign-station-by-hand
     const hm = M.hand.hm;
     if (!hm.held) return;
     // b3: laid where it is let go, on the stand under it, kept inside the shed;
@@ -521,7 +533,7 @@ const SIGNS_HAND = {
   // hand, or the pointer over the shed's opening (act 3's rule).
   quiet(x, y) {
     if (!M || !handMode() || !signsMockOn()) return false;
-    if (heldGoods() || M.hand.hm.held) return true;
+    if (heldGoods() || M.hand.hm.held || shaper()?.busy()) return true;
     const c = cx(x), r = cy(y);
     return c >= 6 && c <= 25 && r >= -22 && r <= 0;
   },
@@ -537,6 +549,7 @@ const SIGNS_HAND = {
       const from = { x: colX(u0.c0) + u0.z * AP / 2, y: rowY(u0.r0 + u0.z) + AP };
       return { ...arc(from, bench, Math.min(1, u * 1.4), AP * 5), pose: 'grab' };
     }
+    if (shaper()) return shaper().cue(u);   // MOCK the-sign-station-by-hand
     const k = nextNail();
     if (k < 0) return null;
     const n = nailW(k), r = headOf(M.hand.hm);
@@ -548,7 +561,7 @@ const SIGNS_HAND = {
 };
 globalThis.__signsHand = SIGNS_HAND;
 // The middle of the square's empty slots, in the world: where a plank goes.
-function benchAt() { const b = HB(), z = Z(); return wsFrame().world(b.x + 2 * z, b.y + (SQUARE_ROW + 1) * z); }
+function benchAt() { if (shaper()?.benchAt) return shaper().benchAt(); const b = HB(), z = Z(); return wsFrame().world(b.x + 2 * z, b.y + (SQUARE_ROW + 1) * z); }
 // The shot tools' real pointer drawn as the demo cursor (render/aftercues.js, `demoHand`,
 // handed over by the scene), where the page put the pointer.
 globalThis.__signsPointer = pose => { const h = globalThis.__demoHand; if (h && S.mouse) Object.assign(h, { x: S.mouse.x, y: S.mouse.y, pose }); };
@@ -560,11 +573,12 @@ globalThis.__signsBenchLand = ch => {
   if (!M || !handMode() || !signsMockOn() || ch.kind !== 'plank' || M.step > 0) return false;
   const k = M.laid.findIndex(v => v == null);
   if (k < 0) return false;
-  const x = cx(ch.x), foot = cy(ch.y) + 1, s = slotCell(k);
-  if (x < HAND.catch[0] || x > HAND.catch[1] || foot < s.y + s.w) return false;
+  const x = cx(ch.x), foot = cy(ch.y) + 1, s = slotOf(k);
+  if (x < HAND.catch[0] || x > HAND.catch[1] || foot < s.y + Math.min(s.w, s.h)) return false;
   M.laid[k] = ch.s; M.setAt = S.after.t;
   M.hand.fly[k] = { x: x - 1, y: foot - 2, at: S.after.t };
   sink('plank', 1, 'sign');
+  shaper()?.landed?.();   // MOCK the-sign-station-by-hand
   return true;
 };
 // Where to put a pointer for a step, on the glass: the shot tools' real pointer.
@@ -576,6 +590,7 @@ globalThis.__signsAt = what => {
   else if (what === 'nail') { const k = nextNail(); w = k >= 0 && nailW(k); }
   else if (what === 'hammer') w = headOf(M.hand.hm);
   else if (what === 'flag') w = flagMid();
+  else if (what === 'part') w = shaper()?.at();   // MOCK the-sign-station-by-hand
   else if (what === 'rack') { const r = dropSpot('signs'); w = { x: r.at, y: r.top - AP * 5 }; }
   if (!w) return null;
   const sc = toScreen(w.x, w.y);
@@ -598,7 +613,8 @@ function hammerUp(d, x, y, z) {
 function drawHandBench(d) {
   const h = M.hand, b = HB(), z = Z(), t = S.after.t, th = 2 * z;
   // the empty slots, dashed, eased in and out
-  h.oa.forEach((a, k) => { if (a > 0.01) { const s = slotCell(k); d.fade(a, () => dashBox(d, s.x, s.y, s.w, s.w, th)); } });
+  h.oa.forEach((a, k) => { if (a > 0.01) { const s = slotOf(k); d.fade(a, () => dashBox(d, s.x, s.y, s.w, s.h, th)); } });
+  if (shaper()) { shaper().under?.(d); drawShaped(d); return; }   // MOCK the-sign-station-by-hand
   const flying = i => h.fly[i] && t - h.fly[i].at < HAND.fly;
   if (laidN()) { piece(d, b.x, b.y, z, flying); nails(d, b.x, b.y, z); }
   // a plank caught settling into its slot from where it was caught, growing
@@ -617,6 +633,7 @@ function drawHandBench(d) {
 }
 // Over everything but the cues: the hammer in the hand, and a blow's ticks.
 function drawHandTools() {
+  if (shaper()) return;   // MOCK the-sign-station-by-hand
   const d = wsFrame(), h = M.hand, t = S.after.t, z = Z(), b = HB();
   const ws = (x, y) => ({ x: cx(x) * P, y: cy(y) * P });   // a world point in the frame's px
   const hm = h.hm;
@@ -636,3 +653,32 @@ function drawHandTools() {
     d.fade(1 - (t - h.strikeAt) / T.ticks, () => { d.px(nx - 6 * z, ny + z, 3 * z, 2 * z, K); d.px(nx + (P + 3) * z, ny + z, 3 * z, 2 * z, K); });
   }
 }
+
+// MOCK the-sign-station-by-hand: what signhand.js shapes with, and its bench
+const slotOf = k => { const s = shaper()?.slot?.(k) || slotCell(k); return { h: s.w, ...s }; };
+function drawShaped(d) {
+  const h = M.hand, t = S.after.t, sh = shaper();
+  if (!sh.slot) {
+    // the square's planks settling into their slots, as the hammer's bench has them
+    const flying = i => h.fly[i] && t - h.fly[i].at < HAND.fly;
+    const b = HB(), z = Z();
+    if (laidN() < 4) {
+      for (const c of M.cells) if (M.laid[c.i] != null && !flying(c.i)) fillCell(d, b.x + c.col * z, b.y + c.row * z, z, z, goodColor('plank', M.laid[c.i]));
+      h.fly.forEach((f, i) => {
+        if (!f || t - f.at >= HAND.fly || M.laid[i] == null) return;
+        const u = ease((t - f.at) / HAND.fly), s = slotCell(i), w = 2 + (s.w - 2) * u;
+        fillCell(d, f.x + (s.x - f.x) * u, f.y + (s.y - f.y) * u, w, w, goodColor('plank', M.laid[i]));
+      });
+    } else if (h.fly.some((f, i) => flying(i))) {
+      for (const c of M.cells) if (!flying(c.i)) fillCell(d, b.x + c.col * z, b.y + c.row * z, z, z, goodColor('plank', M.laid[c.i]));
+      h.fly.forEach((f, i) => {
+        if (!flying(i)) return;
+        const u = ease((t - f.at) / HAND.fly), s = slotCell(i), w = 2 + (s.w - 2) * u;
+        fillCell(d, f.x + (s.x - f.x) * u, f.y + (s.y - f.y) * u, w, w, goodColor('plank', M.laid[i]));
+      });
+    } else sh.draw(d);
+  } else sh.draw(d);
+  if (M.setAt != null) puff(d, t - M.setAt, Z(), HB());
+}
+export const signsM = () => M;
+export { wsFrame, HB, FLAG, flag, fillCell, x0 };

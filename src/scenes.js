@@ -4273,8 +4273,9 @@ const SIGNS_MOCK = [ // MOCK the-sign-station-polish
   ['b3', 'B3 by hand: swing the hammer', "Nobody at the bench, so you make it: sweep timber off the pile and let it go anywhere over the shed; each block settles into the next dashed slot. Take the hammer and bring it down on the dashed nail spot: fast drives it home in one, slower takes two. Each nail shapes the piece a row; take the flag to the rack."],
   ['b3big', 'B3-big: the bench work twice the size', "The same, with the bench work drawn twice the size: the stand gone, the square, its dashed slots, the nails and the hammer two cells a cell, filling the shed's opening. A plank grows into its slot as it settles, and the flag is the rack's size again once in your hand."]
 ];
-function signsMockStage(o) { // MOCK the-sign-station-polish
+function signsMockStage(o, way = null) { // MOCK the-sign-station-polish
   workshopStage({ members: /^b/.test(o) ? 2 : 3, grant: { timber: 21, benchtimber: 8 }, hold: false });
+  globalThis.__signHand = way;   // MOCK the-sign-station-by-hand  (the reset above put the last away)
   startSignsMock(o);
   globalThis.__demoHand = demoHand;   // the shot tools' real pointer draws its cursor with it
   const i = STEPS.findIndex(q => q.name === 'signsmock');
@@ -4286,4 +4287,33 @@ for (const [o, option, say] of SIGNS_MOCK) { // MOCK the-sign-station-polish
   SCENES[name] = { about: 'the acts', review: 'the sign station: polish', option, stage: 'mock: throwaway, never merged', branch: 'a3-review-both', say,
     swap: () => { if (S.view !== 'after' || !S.after || !globalThis.__signsMock) { window.__scene(name); return; } startSignsMock(o); },
     run: () => signsMockStage(o) };
+}
+
+// MOCK the-sign-station-by-hand: a new slate for the hand's work at the sign
+// station (the owner, 2026-11-03: "i dont like the swinging hammer aspect.
+// what are some other ways we can do manual work?"), no hammer of any kind
+// (render/after/signhand.js). The planks still come off the pile by the one
+// hand into the dashed slots, the bench work twice the size, and the flag
+// still goes to the rack by hand. The joiner (A) is the polish round's own,
+// kept here unchanged so it is not put away with the hand ways it outlived.
+const SIGN_HAND = [ // MOCK the-sign-station-by-hand
+  ['a', 'A the joiner, kept from the polish round', "Unchanged from the polish round: the joiner fetches four blocks off the pile, lays them as a square in the middle of the shed, and each nail shapes it a step into the flag; it carries the flag to the rack."],
+  ['hoist', 'B raise it: pull the rope', "Planks off the pile into the dashed square as before. A rope runs from the square's top over the ceiling to a toggle at the bench's right end: take the toggle and pull it down. The top of the square rides up with it and a plank slides in under as the pole. Pull to the bottom to lock a row, let it up, pull again: three pulls and the cloth is at the top of its pole."],
+  ['heave', "C heave it up: the stump's pull", "Planks into the square as before. Take the square and draw it up, the stump's pull: past the strain it holds, straining, and a row gives each strain while you hold, the pole growing under it. Keep holding and it climbs to the top: one press, one drag up, three rows."],
+  ['toss', 'D toss it up the pole', "Planks into the square as before. Take the square and flick it up: the cloth flies a row up and lands on its pole, held a beat, a plank sliding in under it. A slow lift drops back. Three flicks."],
+  ['stack', 'E stack it: each plank is a part', "No square and no second gesture: the dashed slots are the flag's own parts, the pole's foot first, then the cloth row by row from the bottom up. Each plank let go over the shed settles into the next and takes its shape as it lands. This reopens the four-block square, which was settled."],
+  ['glide', 'F heave, with the camera in', "C's heave, with the camera gliding in on the shed (two and a half times as close) the moment the first plank comes off the pile, and back out once the flag is in the rack. The pile, the shed and the rack all stay in the window while it is in."]
+];
+for (const [k, option, say] of SIGN_HAND) { // MOCK the-sign-station-by-hand
+  const name = `after-signhand-${k}`, hand = k !== 'a';
+  SCENES[name] = { about: 'the acts', review: 'the sign station: by hand', option, stage: 'mock: throwaway, never merged', branch: 'a3-review-both', say,
+    ...(hand ? { supersedes: ['the sign station: polish'] } : {}),
+    // between two hand ways on the yard standing, the way flipped and the bench begun again;
+    // the joiner, or the camera's glide, stood up afresh
+    swap: () => {
+      const glide = k === 'glide' || globalThis.__signHand === 'glide';
+      if (S.view !== 'after' || !S.after || globalThis.__signsMock !== 'b4' || !hand || glide) { window.__scene(name); return; }
+      globalThis.__signHand = k; startSignsMock('b4');
+    },
+    run: () => (hand ? signsMockStage('b4', k) : signsMockStage('a')) };
 }
