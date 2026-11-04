@@ -3479,6 +3479,21 @@ draft-god-d-5 = so _work_ for me now
 # MOCK draft, the owner's to rewrite: God's opening lines, script D, C with effects, line 6
 draft-god-d-6 = *eternally*
 
+# MOCK draft, the owner's to rewrite: God's opening lines, script E, every effect by its own name, line 1
+draft-god-e-1 = *wave* _shake_ ^glow^
+
+# MOCK draft, the owner's to rewrite: God's opening lines, script E, every effect by its own name, line 2
+draft-god-e-2 = ~slow~ =rainbow= +pulse+
+
+# MOCK draft, the owner's to rewrite: God's opening lines, script E, every effect by its own name, line 3
+draft-god-e-3 = %nervous% |drop|
+
+# MOCK draft, the owner's to rewrite: God's opening lines, script E, every effect by its own name, line 4
+draft-god-e-4 = #boom#
+
+# MOCK draft, the owner's to rewrite: God's opening lines, script E, every effect by its own name, line 5
+draft-god-e-5 = @trail@
+
 # --- MOCK draft-god: end ---
 
 # act beat line, placeholder: the saw handed to the woodcutter

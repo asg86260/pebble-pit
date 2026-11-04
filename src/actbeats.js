@@ -476,7 +476,8 @@ export function stepActs(c) {
   if (p && p.route) {
     const base = ghostPace();
     // up onto the pedestal after the opening, briskly and in play
-    const brisk = p.mode === 'soul' && (p.route === 'pedestal' || p.route === 'camp') && !beatDone('haunt');
+    const brisk = p.mode === 'soul' && (p.route === 'pedestal' || p.route === 'camp') && !beatDone('haunt')
+      || (!!globalThis.__dialogSauce && p.route === 'rise' && p.leg >= 1);   // MOCK dialog-sauce: the walk from the gates to before God
     const k = (p.hold ? ACT_CALL_K : brisk ? ACT_PEDESTAL_K : 1) * (run && !run.out ? run.hurry : 1);
     stepPair(base * k * c.dt / 1000);
   }

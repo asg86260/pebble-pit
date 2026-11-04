@@ -115,8 +115,9 @@ const hellFeet = x => chamberFloor(Math.max(0, chamberAtX(x))) - WORKER;
 const ROUTES = {
   // out of the ruin, floated up to the gates; then through them
   float: [{ float: threshold }],
-  // (MOCK dialog-sauce: with an option up the gates stand a few steps short
-  // of God's throne, and the two walk out of them to stand before him)
+  // (MOCK dialog-sauce: with an option up the gates stand between the two
+  // camps, and the two walk out of them to stand before God, briskly:
+  // actbeats.js, `stepActs`)
   rise: [{ through: 'after' }, { h: () => (globalThis.__dialogSauce ? beforeGod() : S.acts.pair.x), y: afterFeet }],
   camp: [{ h: campX, y: afterFeet }],
   // up the pillar's face onto its top, and back down
