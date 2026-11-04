@@ -584,6 +584,7 @@ const AFTER_GOOD_SAYS = { log: 'hover-log', plank: 'hover-plank', sign: 'hover-s
 // or a good lying on the floor, before the pile and the heap, before the
 // station they stand beside.
 function afterAt(x, y) {
+  if (globalThis.__signsHand?.quiet?.(x, y)) return null;   // MOCK the-sign-station-polish  no label over the bench while it is worked
   const o = S.after && grabAt(x, y);
   const q = S.after && !o ? lyingAt(x, y, P) : null;
   if (q) return msg(AFTER_GOOD_SAYS[kindOf(q)] || 'hover-log');

@@ -55,11 +55,11 @@ const FLAG = { w: 4, h: 7, cloth: 3 };
 // The fist on a cloth three cells square, a third of a cell a bit with a bit
 // of cloth round it: the crowd's flags' fist (SKY_FLAG.fist) drawn smaller.
 const FIST = ['.X.X.X.', 'XXXXXXX', 'XXXXXXX', 'XXXXXX.', '.XXXX..', '.XXXX..', '.XXXX..'];
-function flag(x, foot, v) {
-  const b = 2, top = foot - FLAG.h * AP, cx = x + AP, m = (FLAG.cloth * AP - FIST.length * b) / 2;
+function flag(x, foot, v, z = 1) {
+  const u = AP * z, b = 2 * z, top = foot - FLAG.h * u, cx = x + u, m = (FLAG.cloth * u - FIST.length * b) / 2;
   ctx.fillStyle = goodColor('sign', v);
-  ctx.fillRect(Math.round(x), Math.round(top), AP, FLAG.h * AP);
-  ctx.fillRect(Math.round(cx), Math.round(top), FLAG.cloth * AP, FLAG.cloth * AP);
+  ctx.fillRect(Math.round(x), Math.round(top), u, FLAG.h * u);
+  ctx.fillRect(Math.round(cx), Math.round(top), FLAG.cloth * u, FLAG.cloth * u);
   ctx.fillStyle = GREY[W];
   FIST.forEach((row, j) => [...row].forEach((ch, i) => { if (ch === 'X') ctx.fillRect(Math.round(cx + m + i * b), Math.round(top + m + j * b), b, b); }));
 }
@@ -259,7 +259,7 @@ function joinerAt() {
 const cut = (d, x, y, w, h, tone = W) => d.px(x * P + 2, y * P + 2, w * P - 4, h * P - 4, tone);
 // The shed, roof A, as the game draws it (render/after/stations.js), the pips
 // over the door the nails as driven.
-function shed(d) {
+function shed(d, stand = true) {
   d.r(5, -18, 21, 1, K);
   d.px(5 * P, -17 * P - 2, 21 * P, 2, W);
   d.r(7, -19, 17, 1, K); d.r(9, -20, 13, 1, K); d.r(11, -21, 9, 1, K); d.r(13, -22, 5, 1, K);
@@ -272,46 +272,48 @@ function shed(d) {
     if (n === 0) d.px(x + 1, py0 + 1, pw - 2, pw - 2, W); else if (n === 1) d.px(x + 1, py0 + 1, pw - 2, 2, W);
   });
   // the stand the joiner works on, paper read by its pale slats, behind the bench
+  if (stand) {
   d.r(8, -9, 15, 9, W);
   for (const y of [-8, -6, -4]) d.px(8 * P + 2, y * P + 2, 15 * P - 4, 2, PALE);
   d.px(8 * P, -9 * P, 15 * P, 2, K);
+  }
   // the bench, low, its top a row, on two legs
   d.r(8, -2, 15, 1, K); d.r(9, -1, 2, 1, K); d.r(20, -1, 2, 1, K);
 }
 // The hammer lying on the stand (its head's top left in px, the handle
 // toward the shed's middle), or hung head down from the hand.
-function hammerAt(d, hx, hy, lying) {
-  if (lying) { d.px(hx, hy, P, P, K); d.px(hx + P, hy + 2, P + P / 2, 2, K); return; }
-  d.px(hx - 2, hy, P + 4, P - 2, K);
+function hammerAt(d, hx, hy, lying, z = 1) {
+  if (lying) { d.px(hx, hy, P * z, P * z, K); d.px(hx + P * z, hy + 2 * z, 1.5 * P * z, 2 * z, K); return; }
+  d.px(hx - 2 * z, hy, (P + 4) * z, (P - 2) * z, K);
 }
 const fillCell = (d, x, y, w, h, tone) => { const p = d.world(x, y); ctx.fillStyle = tone; ctx.fillRect(Math.round(p.x), Math.round(p.y), Math.round(w * AP), Math.round(h * AP)); };
 // The piece on the bench, box top left at (bx, by): each cell where the last
 // blow put it, in its block's tone; the flag once the last nail is in.
-function piece(d, bx, by) {
-  if (M.step >= SHAPE.length) { const p = d.world(bx, by + FLAG.h); flag(p.x, p.y, M.signV); return; }
-  for (const c of M.cells) if (M.laid[c.i] != null) fillCell(d, bx + c.col, by + c.row, 1, 1, goodColor('plank', M.laid[c.i]));
+function piece(d, bx, by, z = 1, skip = () => false) {
+  if (M.step >= SHAPE.length) { const p = d.world(bx, by + FLAG.h * z); flag(p.x, p.y, M.signV, z); return; }
+  for (const c of M.cells) if (M.laid[c.i] != null && !skip(c.i)) fillCell(d, bx + c.col * z, by + c.row * z, z, z, goodColor('plank', M.laid[c.i]));
 }
 // The nails: a head standing on the piece once set, half in after a blow,
 // and eased into the piece after the second (the piece's shape is the mark
 // that it went in).
-function nails(d, bx, by) {
+function nails(d, bx, by, sc = 1) {
   M.nails.forEach((n, i) => {
     if (M.nailAt[i] == null) return;
     const [col, row] = NAILS_AT[i], a = clamp01((S.after.t - M.nailAt[i]) / T.nailIn) * (M.inAt[i] == null ? 1 : 1 - clamp01((S.after.t - M.inAt[i]) / T.nailOut));
     if (a <= 0) return;
-    const z = n === 0 ? 4 : 2, x = (bx + col + 0.5) * P - z / 2, y = (by + row + 0.5) * P - z / 2;
+    const z = (n === 0 ? 4 : 2) * sc, x = (bx + (col + 0.5) * sc) * P - z / 2, y = (by + (row + 0.5) * sc) * P - z / 2;
     d.fade(a, () => d.px(x, y, z, z, K));
   });
 }
-function puff(d, age) {
+function puff(d, age, z = 1, box = BOX) {
   const k = age / T.puff;
   if (k < 0 || k >= 1) return;
-  d.fade(1 - k, () => { for (const sx of [-1 - k, 4 + k]) d.px((BOX.x + sx) * P, (BOX.y + FLAG.h - 1 - k) * P, P, P, MID); });
+  d.fade(1 - k, () => { for (const sx of [-1 - k, 4 * z + k]) d.px((box.x + sx) * P, (box.y + FLAG.h * z - 1 - k) * P, P, P, MID); });
 }
 // The station's own pass: the shed, the hammer lying, the piece on the bench.
 export function drawSignsMock(d) {
   if (!M) return;
-  shed(d);
+  shed(d, !big());
   if (handMode()) { drawHandBench(d); return; }
   if (!M.hammer) hammerAt(d, REST * P, -10 * P, true);
   // (the piece lifted off the bench is the members' pass's from the lift's first frame)
@@ -379,45 +381,59 @@ export function drawSignsMockJoiner() {
   }
 }
 
-// --- the hand's way: the manual work (round 3, the owner, 2026-11-03: "lets
-// also look at the manual work now") ---------------------------------------------------
+// --- the hand's way: the manual work (rounds 3 and 4, the owner, 2026-11-03:
+// "lets also look at the manual work now"; on B3, "the landing zone for the
+// timber needs to be upped ... a stronger dashed outline for each one ...
+// the station is just a bit too small and detailed") -----------------------------------
 // The player makes a sign at the workshop the way it makes timber at the saw
 // mill: by the one hand and the one gesture system. Nobody at the bench:
 //
 //   the planks come as the mill's log does (after/mill.js, `bedLand`): a
 //   press and hold on the timber pile sweeps blocks into the hand
-//   (hands.js), and a block let go over the bench is set down there in the
-//   square's next slot (after/piles.js, AFTER_LANDING, `__signsBenchLand`);
-//   the nails are the workshop's gesture (after/gestures.js, DEFS.workshop,
-//   handed to `__signsHand` while the mock is up), the next nail set
-//   standing once the square is whole, two blows a nail and the second
-//   shaping the piece a row, as the joiner's do;
+//   (hands.js), and a block let go anywhere over the shed, or near it, is
+//   caught (after/piles.js, AFTER_LANDING, `__signsBenchLand`) and settles
+//   into the square's next slot, each empty slot drawn as a dashed outline
+//   that comes up bold while a plank is in the hand;
+//   the hammer is the workshop's gesture (after/gestures.js, DEFS.workshop,
+//   handed to `__signsHand` while the mock is up): taken where it lies and
+//   brought down on the next nail, whose spot is a dashed target; fast drives
+//   it home in one, slower half, the second blow shaping the piece a row as
+//   the joiner's does; let go, it drops where it is;
 //   the flag made, a press on it takes it into the hand (`holdUnit`, as the
 //   stump comes into it), and let go over the rack it lands there by the
 //   ground's own landing.
 //
-//   b1  press and flick: a press on the nail raises the hammer over it, held;
-//       the pointer drawn down two cells is the blow; a press a blow
-//   b2  click: the hand is a hammer over the bench, held up; a click on the
-//       nail strikes it, held while the button is down
-//   b3  swing: the hammer lies on the stand; take it, bring its head down on
-//       the nail: fast drives it home in one, slower half; let go, it drops
-//       onto the stand where it is
-// The ghost hand acts out the step that is next (render/aftercues.js).
-import { holdUnit } from '../../hands.js';
+//   b3      the bench as the shed has it
+//   b3big   the bench work at twice the size: the stand gone, the piece, its
+//           slots, its nails and the hammer drawn two cells a cell, so the
+//           square fills the shed's opening (a plank grows into its slot as
+//           it settles, and the made flag is the rack's size again once in
+//           the hand)
+// No label shows over the bench while it is worked (input.js asks `quiet`).
+import { holdUnit, heldGoods } from '../../hands.js';
 import { toScreen } from '../../world.js';
 function handMode() { return /^b/.test(globalThis.__signsMock || ''); }
-const HAND = { flick: 2, reach: 1.5, vMin: 90, vFlush: 380 };
-const freshHand = () => ({ press: null, strikeAt: -9, strikeK: null, uses: 0, hm: { held: false, x: REST, y: -10, vy: 0, px: 0, py: 0, hy: null, stuck: false } });
+const big = () => globalThis.__signsMock === 'b3big';
+const Z = () => (big() ? 2 : 1);
+// The piece's box in the hand's bench: its four columns centered in the
+// shed's opening, standing on the bench's top (row -2).
+const HB = () => ({ x: 15.5 - 2 * Z(), y: -2 - FLAG.h * Z() });
+const HAND = { vMin: 90, vFlush: 380, catch: [5, 26], fly: 0.18, ease: 0.25, faint: 0.4, dash: 3, gap: 2 };
+// Where the hammer lies at first: on the stand's top (b3), or stood on its
+// head-up end at the bench's right end (b3big, the stand gone).
+const restOf = () => (big() ? { x: 20.5, y: -7, up: true } : { x: REST, y: -10, up: false });
+const freshHand = () => ({ strikeAt: -9, strikeK: null, uses: 0, oa: [0, 0, 0, 0], na: 0, fly: [null, null, null, null],
+                           hm: { held: false, ...restOf(), vy: 0, px: 0, py: 0, off: 0, hy: null, stuck: false, fall: null } });
 const wsFrame = () => frame(x0(), groundOf('workshop'), 0, null, AFTER_ART_SCALE);
 const laidN = () => (M.laid || []).filter(v => v != null).length;
 // The next nail: once the square is whole, the first not driven home.
 const nextNail = () => (laidN() === 4 && M.step < SHAPE.length ? M.nails.findIndex(n => n < 2) : -1);
-const nailW = k => { const [col, row] = NAILS_AT[k]; return wsFrame().world(BOX.x + col + 0.5, BOX.y + row + 0.5); };
-const flagMid = () => wsFrame().world(BOX.x + FLAG.w / 2, BOX.y + FLAG.h / 2);
-const inFlag = (x, y) => { const d = wsFrame(), a = d.world(BOX.x, BOX.y), b = d.world(BOX.x + FLAG.w, BOX.y + FLAG.h); return x >= a.x - AP && x <= b.x + AP && y >= a.y - AP && y <= b.y; };
-// The B3 hammer's head, world middle: lying on the stand, or hung from the grip.
-const restHead = hm => wsFrame().world(hm.x + 0.5, hm.y + 0.5);
+const nailW = k => { const [col, row] = NAILS_AT[k], b = HB(), z = Z(); return wsFrame().world(b.x + (col + 0.5) * z, b.y + (row + 0.5) * z); };
+const slotCell = k => { const [sx, sy] = SLOTS[k], b = HB(), z = Z(); return { x: b.x + sx * z, y: b.y + (SQUARE_ROW + sy) * z, w: 2 * z }; };
+const flagMid = () => { const b = HB(), z = Z(); return wsFrame().world(b.x + FLAG.w * z / 2, b.y + FLAG.h * z / 2); };
+const inFlag = (x, y) => { const d = wsFrame(), b = HB(), z = Z(), a = d.world(b.x, b.y), e = d.world(b.x + FLAG.w * z, b.y + FLAG.h * z); return x >= a.x - AP && x <= e.x + AP && y >= a.y - AP && y <= e.y; };
+// The hammer's head, world middle: where it lies or stands, or hung from the grip.
+function restHead(hm) { const d = wsFrame(), z = Z(); return hm.up ? d.world(hm.x + (P + 4) * z / (2 * P), hm.y + (P - 2) * z / (2 * P)) : d.world(hm.x + z / 2, hm.y + z / 2); }
 function headOf(hm) { if (!hm.held) return restHead(hm); return { x: hm.px, y: hm.hy ?? hm.py + hm.off }; }
 function blow(k, n) {
   const t = S.after.t, h = M.hand;
@@ -426,22 +442,27 @@ function blow(k, n) {
   if (M.nails[k] === 2) { M.inAt[k] = t; shapeStep(k); }
 }
 function benchReset() {
-  M.laid = [null, null, null, null]; M.cells = square(); M.step = 0;
+  M.laid = [null, null, null, null]; M.cells = square(); M.step = 0; M.hand.fly = [null, null, null, null];
   M.nails = [0, 0, 0, 0]; M.nailAt = [null, null, null, null]; M.inAt = [null, null, null, null];
   M.prevV = M.signV; M.signV = cellOf('sign'); M.tintAt = S.after.t; M.n++;
 }
 function stepHand(dt) {
   const h = M.hand, hm = h.hm, t = S.after.t, k = nextNail();
   if (k >= 0 && M.nailAt[k] == null) M.nailAt[k] = t;   // the next nail set standing, faded on
-  if (globalThis.__signsMock !== 'b3') return;
+  // the outlines' ink: bold with a plank in the hand, faint while the square
+  // waits, gone once filled; the nail's target bold with the hammer held
+  const plank = heldGoods()?.kind === 'plank', r = dt / HAND.ease;
+  h.oa = h.oa.map((a, i) => { const want = M.laid[i] != null || M.step > 0 ? 0 : plank ? 1 : HAND.faint; return a + Math.max(-r, Math.min(r, want - a)); });
+  const nw = k >= 0 ? (hm.held ? 1 : HAND.faint) : 0;
+  h.na += Math.max(-r, Math.min(r, nw - h.na));
   if (hm.held) {
     // the head hangs from the grip, at its true position; brought down on the
     // nail it strikes, as hard as it came, and rests there till lifted
     const want = hm.py + hm.off, prev = hm.hy ?? want;
     let y = want;
     if (k >= 0) {
-      const n = nailW(k), top = n.y - AP / 2;   // the nail's head, on the piece's face
-      const over = Math.abs(hm.px - n.x) < AP * 1.2;
+      const n = nailW(k), top = n.y - AP * Z() / 2;
+      const over = Math.abs(hm.px - n.x) < AP * 1.2 * Z();
       if (hm.stuck && (!over || want < top - AP)) hm.stuck = false;
       if (over && !hm.stuck && prev < top && want >= top) {
         const vy = (want - prev) / Math.max(dt, 1e-3);
@@ -451,7 +472,7 @@ function stepHand(dt) {
     }
     hm.vy = (y - prev) / Math.max(dt, 1e-3); hm.hy = y;
   } else if (hm.fall) {
-    // let go: it drops onto the stand where it is, under the grains' gravity
+    // let go: it drops onto what is under it, under the grains' gravity
     hm.fall.v += 900 * dt; hm.fall.y = Math.min(hm.fall.to, hm.fall.y + hm.fall.v * dt);
     if (hm.fall.y >= hm.fall.to) hm.fall = null;
   }
@@ -460,13 +481,11 @@ const SIGNS_HAND = {
   grab(x, y) {
     if (!M || !handMode() || !signsMockOn()) return null;
     if (M.step >= SHAPE.length && inFlag(x, y)) return 'flag';
-    const k = nextNail();
-    if (globalThis.__signsMock === 'b3') { const hd = headOf(M.hand.hm); return !M.hand.hm.fall && Math.hypot(x - hd.x, y - hd.y) < AP * 2 ? 'hammer' : null; }
-    if (k >= 0) { const n = nailW(k); if (Math.hypot(x - n.x, y - n.y) < AP * HAND.reach) return 'nail'; }
-    return null;
+    const hd = headOf(M.hand.hm);
+    return !M.hand.hm.fall && Math.hypot(x - hd.x, y - hd.y) < AP * 2 * Z() ? 'hammer' : null;
   },
   down(what, x, y) {
-    const h = M.hand, k = nextNail();
+    const h = M.hand;
     if (what === 'flag') {
       const m = holdUnit(M.signV, flagMid());
       if (!m) return 'tap';
@@ -474,34 +493,43 @@ const SIGNS_HAND = {
       benchReset();
       return 'tap';
     }
-    if (what === 'nail' && k >= 0 && globalThis.__signsMock === 'b1') { h.press = { y, k, struck: false }; return true; }
-    if (what === 'nail' && k >= 0 && globalThis.__signsMock === 'b2') { blow(k, 1); h.press = { y, k, struck: true }; return true; }
     // taken where it is pressed: the head stays where it was under the hand, nothing jumps
-    if (what === 'hammer') { const hd = headOf(h.hm); Object.assign(h.hm, { held: true, px: x, py: y, off: hd.y - y, hy: hd.y, stuck: false, fall: null }); return true; }
+    if (what === 'hammer') { const hd = headOf(h.hm); Object.assign(h.hm, { held: true, up: false, px: x, py: y, off: hd.y - y, hy: hd.y, stuck: false, fall: null }); return true; }
     return 'tap';
   },
-  move(x, y) {
-    const h = M.hand;
-    if (h.press && !h.press.struck && y - h.press.y >= HAND.flick * AP) { blow(h.press.k, 1); h.press.struck = true; }
-    if (h.hm.held) { h.hm.px = x; h.hm.py = y; }
-  },
+  move(x, y) { const hm = M.hand.hm; if (hm.held) { hm.px = x; hm.py = y; } },
   up() {
-    const h = M.hand, hm = h.hm;
-    h.press = null;
-    if (hm.held) {
-      // laid where it is let go, on the stand, its head's column kept inside it
-      const hd = headOf(hm), col = Math.max(8, Math.min(20.5, cx(hd.x) - 0.5));
-      Object.assign(hm, { held: false, x: col, y: -10, hy: null, stuck: false });
-      hm.fall = { y: hd.y, to: restHead(hm).y, v: 0 };
+    const hm = M.hand.hm;
+    if (!hm.held) return;
+    // b3: laid where it is let go, on the stand under it, kept inside the shed;
+    // b3big: dropped, it comes down at the bench's end clear of the piece and
+    // stands there head up, where it was first
+    const hd = headOf(hm), z = Z();
+    if (big()) {
+      const r = restOf(), col = Math.max(r.x - 1, Math.min(r.x, cx(hd.x) - 0.8 * z));
+      Object.assign(hm, { held: false, up: true, x: col, y: r.y, hy: null, stuck: false });
+    } else {
+      const col = Math.max(8, Math.min(23 - 2.5 * z, cx(hd.x) - z / 2));
+      Object.assign(hm, { held: false, up: false, x: col, y: restOf().y, hy: null, stuck: false });
     }
+    const to = restHead(hm);
+    hm.fall = { x0: hd.x, y: hd.y, x1: to.x, y0: hd.y, to: to.y, v: 0 };
   },
-  step(dt) { /* the frame is the mock's own STEPS entry (scenes.js) */ },
+  step() { /* the frame is the mock's own STEPS entry (scenes.js) */ },
   takeUses() { const n = M && M.hand ? M.hand.uses : 0; if (M && M.hand) M.hand.uses = 0; return n; },
+  // No label over the bench while it is worked: a good or the hammer in the
+  // hand, or the pointer over the shed's opening (act 3's rule).
+  quiet(x, y) {
+    if (!M || !handMode() || !signsMockOn()) return false;
+    if (heldGoods() || M.hand.hm.held) return true;
+    const c = cx(x), r = cy(y);
+    return c >= 6 && c <= 25 && r >= -22 && r <= 0;
+  },
   // the ghost hand, acting out what is next, `u` of its loop
   cue(u) {
     if (!M || !handMode() || !signsMockOn()) return null;
     const arc = (a, b, k, lift) => ({ x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k - Math.sin(k * Math.PI) * lift });
-    const bench = wsFrame().world(BOX.x + 2, BOX.y + SQUARE_ROW - 1);
+    const bench = benchAt();
     if (M.step >= SHAPE.length) { const r = dropSpot('signs'); return { ...arc(flagMid(), { x: r.at, y: r.top - AP * 5 }, Math.min(1, u * 1.4), AP * 4), pose: 'grab' }; }
     if (laidN() < 4) {
       const u0 = topBlock('benchtimber');
@@ -511,40 +539,40 @@ const SIGNS_HAND = {
     }
     const k = nextNail();
     if (k < 0) return null;
-    const n = nailW(k), m = globalThis.__signsMock;
-    if (m === 'b1') return { x: n.x, y: n.y + (u < 0.45 ? 0 : AP * HAND.flick * Math.min(1, (u - 0.45) * 5)), pose: 'grab' };
-    if (m === 'b2') return { x: n.x, y: n.y + (u % 0.5 < 0.2 ? AP / 3 : 0), pose: 'point' };
-    const r = restHead(M.hand.hm);
+    const n = nailW(k), r = headOf(M.hand.hm);
     if (u < 0.3) return { x: r.x, y: r.y, pose: 'grab' };
-    const k2 = Math.min(1, (u - 0.3) / 0.5), top = { x: n.x, y: n.y - AP * 5 };
+    const k2 = Math.min(1, (u - 0.3) / 0.5), top = { x: n.x, y: n.y - AP * 5 * Z() };
     const p = k2 < 0.7 ? arc(r, top, k2 / 0.7, AP * 2) : { x: n.x, y: top.y + (n.y - top.y) * ((k2 - 0.7) / 0.3) };
     return { ...p, pose: 'grab' };
   }
 };
 globalThis.__signsHand = SIGNS_HAND;
+// The middle of the square's empty slots, in the world: where a plank goes.
+function benchAt() { const b = HB(), z = Z(); return wsFrame().world(b.x + 2 * z, b.y + (SQUARE_ROW + 1) * z); }
 // The shot tools' real pointer drawn as the demo cursor (render/aftercues.js, `demoHand`,
 // handed over by the scene), where the page put the pointer.
 globalThis.__signsPointer = pose => { const h = globalThis.__demoHand; if (h && S.mouse) Object.assign(h, { x: S.mouse.x, y: S.mouse.y, pose }); };
-// A block let go over the bench (after/piles.js, AFTER_LANDING): set down in
-// the square's next slot when its foot comes down on what it lies on, the
-// bench or the row of blocks under it. True once it is down.
+// A block let go over the shed or near it (after/piles.js, AFTER_LANDING):
+// caught once its foot comes down to the next slot's floor, wherever it is
+// across the shed, and settling into that slot from where it was caught.
+// True once caught.
 globalThis.__signsBenchLand = ch => {
   if (!M || !handMode() || !signsMockOn() || ch.kind !== 'plank' || M.step > 0) return false;
   const k = M.laid.findIndex(v => v == null);
   if (k < 0) return false;
-  const x = cx(ch.x), foot = cy(ch.y) + 1, slotFoot = BOX.y + SQUARE_ROW + SLOTS[k][1] + 2;
-  if (x < BOX.x - 1 || x > BOX.x + FLAG.w + 1 || foot < slotFoot) return false;
+  const x = cx(ch.x), foot = cy(ch.y) + 1, s = slotCell(k);
+  if (x < HAND.catch[0] || x > HAND.catch[1] || foot < s.y + s.w) return false;
   M.laid[k] = ch.s; M.setAt = S.after.t;
+  M.hand.fly[k] = { x: x - 1, y: foot - 2, at: S.after.t };
   sink('plank', 1, 'sign');
   return true;
 };
 // Where to put a pointer for a step, on the glass: the shot tools' real pointer.
 globalThis.__signsAt = what => {
   if (!M) return null;
-  const d = wsFrame();
   let w = null;
   if (what === 'pile') { const u = topBlock('benchtimber'); w = u && { x: colX(u.c0) + u.z * AP / 2, y: rowY(u.r0 + u.z) + AP }; }
-  else if (what === 'bench') w = d.world(BOX.x + 2, BOX.y + SQUARE_ROW - 1);
+  else if (what === 'bench') w = benchAt();
   else if (what === 'nail') { const k = nextNail(); w = k >= 0 && nailW(k); }
   else if (what === 'hammer') w = headOf(M.hand.hm);
   else if (what === 'flag') w = flagMid();
@@ -554,51 +582,57 @@ globalThis.__signsAt = what => {
   return { x: sc.x, y: sc.y, wx: w.x, wy: w.y, laid: laidN(), step: M.step, nails: [...M.nails], next: nextNail(), n: M.n };
 };
 // --- the hand's drawing ------------------------------------------------------------------
+// A dashed outline round a box of cells, its dashes `th` px thick: the
+// shared dashed language of a closed station's outline, bolder, for a spot
+// the hand is to put something.
+function dashBox(d, x, y, w, h, th) {
+  const X = x * P, Y = y * P, Wd = w * P, Ht = h * P, on = HAND.dash * th / 2 + 1, per = on + HAND.gap * th / 2;
+  for (let s = 0; s < Wd; s += per) { const l = Math.min(on, Wd - s); d.px(X + s, Y, l, th, K); d.px(X + s, Y + Ht - th, l, th, K); }
+  for (let s = 0; s < Ht; s += per) { const l = Math.min(on, Ht - s); d.px(X, Y + s, th, l, K); d.px(X + Wd - th, Y + s, th, l, K); }
+}
+// The hammer stood on its handle's foot, head up (b3big's rest).
+function hammerUp(d, x, y, z) {
+  d.px(x * P, y * P, (P + 4) * z, (P - 2) * z, K);
+  d.px(x * P + ((P + 4) * z) / 2 - z, y * P + (P - 2) * z, 2 * z, 2 * P * z, K);
+}
 function drawHandBench(d) {
-  if (globalThis.__signsMock === 'b3') {
-    const hm = M.hand.hm;
-    if (!hm.held && !hm.fall) hammerAt(d, hm.x * P, hm.y * P, true);
-  }
-  if (laidN()) { piece(d, BOX.x, BOX.y); nails(d, BOX.x, BOX.y); }
-  if (M.setAt != null) puff(d, S.after.t - M.setAt);
+  const h = M.hand, b = HB(), z = Z(), t = S.after.t, th = 2 * z;
+  // the empty slots, dashed, eased in and out
+  h.oa.forEach((a, k) => { if (a > 0.01) { const s = slotCell(k); d.fade(a, () => dashBox(d, s.x, s.y, s.w, s.w, th)); } });
+  const flying = i => h.fly[i] && t - h.fly[i].at < HAND.fly;
+  if (laidN()) { piece(d, b.x, b.y, z, flying); nails(d, b.x, b.y, z); }
+  // a plank caught settling into its slot from where it was caught, growing
+  // to the bench's size as it goes (b3big)
+  h.fly.forEach((f, i) => {
+    if (!f || t - f.at >= HAND.fly || M.laid[i] == null) return;
+    const u = ease((t - f.at) / HAND.fly), s = slotCell(i), w = 2 + (s.w - 2) * u;
+    fillCell(d, f.x + (s.x - f.x) * u, f.y + (s.y - f.y) * u, w, w, goodColor('plank', M.laid[i]));
+  });
+  // the next nail's spot, a dashed target round it
+  const k = nextNail();
+  if (k >= 0 && h.na > 0.01) { const [col, row] = NAILS_AT[k], q = 0.5 * z; d.fade(h.na, () => dashBox(d, b.x + col * z - q, b.y + row * z - q, z + 2 * q, z + 2 * q, Math.max(2, z + 1))); }
+  const hm = h.hm;
+  if (!hm.held && !hm.fall) { if (hm.up) hammerUp(d, hm.x, hm.y, z); else hammerAt(d, hm.x * P, hm.y * P, true, z); }
+  if (M.setAt != null) puff(d, t - M.setAt, z, b);
 }
 // Over everything but the cues: the hammer in the hand, and a blow's ticks.
 function drawHandTools() {
-  const d = wsFrame(), h = M.hand, t = S.after.t, m = globalThis.__signsMock, k = nextNail();
-  const ticks = () => {
-    if (h.strikeK == null || t - h.strikeAt > T.ticks) return;
-    const [col, row] = NAILS_AT[h.strikeK], nx = (BOX.x + col) * P, ny = (BOX.y + row) * P;
-    d.fade(1 - (t - h.strikeAt) / T.ticks, () => { d.px(nx - 6, ny + 1, 3, 2, K); d.px(nx + P + 3, ny + 1, 3, 2, K); });
-  };
+  const d = wsFrame(), h = M.hand, t = S.after.t, z = Z(), b = HB();
   const ws = (x, y) => ({ x: cx(x) * P, y: cy(y) * P });   // a world point in the frame's px
-  const ptr = S.mouse ? ws(S.mouse.x, S.mouse.y) : null;
-  if (m === 'b3') {
-    const hm = h.hm;
-    if (hm.held) {
-      // its handle a fixed length up and out off the head, as the B1 and B2 hammer
-      const hd = ws(hm.px, hm.hy ?? hm.py + hm.off);
-      hammerAt(d, hd.x - P / 2, hd.y - (P - 2) / 2, false);
-      d.line(hd.x / P, hd.y / P, hd.x / P + 1.5, hd.y / P - 2, 2, K);
-    } else if (hm.fall) hammerAt(d, hm.x * P, cy(hm.fall.y) * P - P / 2, true);
-    ticks();
-    return;
+  const hm = h.hm;
+  if (hm.held) {
+    // one rigid hammer: its handle a fixed length up and out off the head
+    const hd = ws(hm.px, hm.hy ?? hm.py + hm.off);
+    hammerAt(d, hd.x - P * z / 2, hd.y - (P - 2) * z / 2, false, z);
+    d.line(hd.x / P, hd.y / P, hd.x / P + 1.5 * z, hd.y / P - 2 * z, 2 * z, K);
+  } else if (hm.fall) {
+    // falling at its true position, drifting to where it comes to rest
+    const f = hm.fall, k = f.to > f.y0 ? clamp01((f.y - f.y0) / (f.to - f.y0)) : 1, wx = f.x0 + (f.x1 - f.x0) * k;
+    if (hm.up) hammerUp(d, cx(wx) - (P + 4) * z / (2 * P), cy(f.y) - (P - 2) * z / (2 * P), z);
+    else hammerAt(d, hm.x * P, cy(f.y) * P - P * z / 2, true, z);
   }
-  const struck = h.press && h.press.struck;
-  if (h.press && (struck || m === 'b1')) {
-    const [col, row] = NAILS_AT[h.press.k], nx = (BOX.x + col) * P, ny = (BOX.y + row) * P;
-    const head = struck ? { x: nx, y: ny } : { x: nx - P, y: (BOX.y - 4) * P };
-    // one rigid hammer: its handle a fixed length off the head, up and out
-    // toward the hand when struck, down toward it when raised
-    hammerAt(d, head.x, head.y, false);
-    const hx = (head.x + P / 2) / P, hy = (head.y + P / 2) / P;
-    d.line(hx, hy, hx + 1.5, hy + (struck ? -2 : 2), 2, K);
-  } else if (m === 'b2' && ptr && k >= 0) {
-    // over the bench the hand is a hammer, held up off the pointer
-    const n = nailW(k);
-    if (Math.hypot(S.mouse.x - n.x, S.mouse.y - n.y) < AP * 6) {
-      hammerAt(d, ptr.x - P, ptr.y - 3 * P, false);
-      d.line((ptr.x - P / 2) / P, (ptr.y - 3 * P + P / 2) / P, (ptr.x - P / 2) / P + 1.5, (ptr.y - 3 * P + P / 2) / P + 2, 2, K);
-    }
+  if (h.strikeK != null && t - h.strikeAt <= T.ticks) {
+    const [col, row] = NAILS_AT[h.strikeK], nx = (b.x + col * z) * P, ny = (b.y + row * z) * P;
+    d.fade(1 - (t - h.strikeAt) / T.ticks, () => { d.px(nx - 6 * z, ny + z, 3 * z, 2 * z, K); d.px(nx + (P + 3) * z, ny + z, 3 * z, 2 * z, K); });
   }
-  ticks();
 }
