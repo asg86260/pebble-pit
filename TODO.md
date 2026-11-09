@@ -4,6 +4,17 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
+## Act 3's stair and act 2's abyssal sword -- DESIGNED, AWAITING APPROVAL (2026-11-09)
+
+DESIGN.md, "The stair and the abyssal sword". Act 3's line builds a stair to
+God instead of winning a crowd share; faith is rebel renamed; act 2 gets a
+building (the reliquary) whose ladder strengthens the party; the serpent
+grows mightier by level, its level 25 drops an abyssal fang forged into a
+sword that is carried up and stabs God, unmasking him. Blocker: the owner's
+approval and the four open calls at the end of the section. God's crowd
+redraw (review-godcrowd, rounds 1-2) is parked; its ground fix
+(f7e0b54a, the path runs to the camera's last window) is worth landing alone.
+
 ## A dialog system -- APPROVED, BUILDING (2026-11-01)
 
 The owner: "we need to have some dialog to explain the premise of act 3. we

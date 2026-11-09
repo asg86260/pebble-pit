@@ -21497,6 +21497,107 @@ climax inside the mechanism -- the signs and posters win the members, the
 members strike, the strike starves the glare. Working forever turns into
 the means to rebel because the union's work is aimed at the throne's food.
 
+### The stair and the abyssal sword (design, not built; the owner, 2026-11-09)
+
+The owner, after two rounds on God's crowd came back worse: "im still
+unsure of how we can convey the general idea of the act. i like the
+production line, we can adjust to build something else", then: "i like
+the overthrow and building up idea. i think we would need to tie in
+something from act 2 to be able to hurt or overthrow god. im wondering if
+unlocking act 3 and faith resource we unlock a new upgrade in act 2 to
+make fighters stronger and once fighters get past lvl 25 of the extended
+serpent it drops an abyssal fang, in which we can create an abyssal sword
+to stab god with. the lvl 25 serpent should appear mightier and stronger
+than the previous lvls. maybe we build a new building for act 2 for
+housing a new class of upgrades to make fighters stronger." The calls
+taken the same day: faith is rebel renamed; the stab replaces the
+standstill climax; the sword is forged in the deep and carried up; the
+line builds a stair.
+
+**Why.** The walkout's progress was a share of a crowd the player never
+touches, so the act's idea -- the dead organizing against working forever --
+never showed on screen; two rounds of redrawing the crowd did not fix
+that, because the trouble was what the crowd stood for, not how it was
+drawn. A stair is progress you can see: it climbs a section at a time out
+of the camp toward the throne, built by the same line. And the means to
+hurt God has to come from somewhere the afterlife does not reach, which
+ties act 3's climax to act 2's endgame and gives the endless serpent a
+goal past its record.
+
+**The bargain.** Act 3 stops being self-contained: its last gate waits on
+the deep. A player who never pushed the serpent past level 25 must go back
+down and do it, with the new building's ladder to help. That is the
+point -- the acts become one game -- and the cost the player pays is a
+return to act 2 at the top of act 3.
+
+#### Act 3: the line builds a stair
+
+- The production line (grove, saw mill, chipper, paper mill, workshop,
+  press) stays. Its timber and planks now build **the stair**: sections
+  laid one above the next from the camp's edge toward God's throne, each
+  a stage of the act, each carried up and set by bodies (nothing appears).
+  The stair replaces the support share as the act's progress, and its
+  sections replace the gates `meeting`, `slowdown` and `strike`.
+- Signs and posters still win members, and members are the line's hands:
+  the posters feed the workforce, the stair is what the workforce makes.
+  God's crowd stays where it stands, as the backdrop, no longer a bar.
+- **Faith is rebel renamed** (`S.after.rebel`, `AFTER_*_REBEL`, the
+  pedestal's click): one coin, its name changed in the save by a migration
+  and in the words file, nothing else.
+
+#### Act 2: the reliquary and the abyssal fang
+
+- **A new building in the deep** (working name: the reliquary), opened
+  when act 3 begins. It is a station row with `place: 'deep'` beside the
+  furnace and the pods, and its board sells **a new class of upgrades for
+  every fighter at once** -- not a per-class ladder: one ladder, eight rungs
+  in bands like every ladder (`tierRows`, `named` bands), paid in faith
+  plus the deep's coins, each rung raising the whole party's damage and
+  standing. Faith reaches the deep the way act 3's bills already reach the
+  deep's scales: through the purse, not a body.
+- **The serpent grows mightier by level.** Today only its HP scales
+  (`SERPENT_LEVEL_GROWTH`) and nothing drawn reads `serpentLevel`. The
+  serpent's drawing gains level bands -- longer, darker, more spines, the
+  coil heavier -- read from the level, and **level 25 is its abyssal form**,
+  plainly another animal from the one at 24.
+- **The abyssal fang** drops once, when level 25's last bar empties. It is
+  not a station fang: `fangRoom` does not cap it and the build button
+  cannot spend it. It is carried to the furnace like any fang.
+- **The abyssal sword** is forged at the furnace from the fang (a bill in
+  the deep's coins), then carried up: a fighter takes it up the shaft to
+  the yard, and it rises to the afterlife the way souls do, through the
+  cloud's thin patch, in a rising soul's hands. In act 3 it is carried to
+  the stair's foot.
+- **The reach.** Today level 25 needs a near-maxed, tuned party (about 17
+  for a typical seven, 26 for the best). The reliquary's ladder, near its
+  end, brings a typical seven to 25; that is its tuning target.
+
+#### The climax
+
+When the stair's last section is set and the sword stands at its foot,
+the pair climb the stair with it and stab God; the wound unmasks him as
+Satan (the beats `strike`, `unmask` and `hell-told` as written, the
+standstill replaced). A cutscene, not a fight: the act stays
+non-combat; the fighting that earned the sword was act 2's.
+
+#### Reuse
+
+The station table, bodies and carry for the stair and the reliquary; the
+deep's fang drop, carry and furnace for the abyssal fang and the sword;
+`tierRows` for the reliquary's ladder; the purse for faith in the deep's
+bills; the beats registry for the climax. New: the stair's sections and
+drawing, the reliquary's drawing, the serpent's level bands and abyssal
+form, the sword's drawing and its rise.
+
+#### Calls still open
+
+1. What the stair's sections cost: timber and planks only, or each band
+   asks for a different product of the line (planks, then signs, then
+   paper) so every station matters to the climb.
+2. How many sections, and whether the throne lowers to meet the stair.
+3. The reliquary's name and its look.
+4. Whether faith is spent anywhere in act 3 still, once the gates go.
+
 ### Everything keeps running (call 1, settled 2026-10-17)
 
 The yard and the deep never stop. From the house's fall to `home-again`,
