@@ -103,11 +103,30 @@ test('toward the horizon a layer is smaller, flatter, slower, and worked less of
   }
 });
 
-test('a layer has a long tail of sizes: a few clouds many times the typical one', () => {
-  const L = skyLayer({ i: CLOUDS_SKY.layers - 1, seed: 3, W: 1200 });
-  const r = L.puffs.filter(p => !p.crust).map(p => p.r).sort((a, b) => a - b);
-  const median = r[r.length >> 1], top = r[r.length - 1];
-  assert.ok(top / median > 2.5, `biggest lobe ${top.toFixed(1)} is not far past the median ${median.toFixed(1)}`);
+test('a layer is one sky: clouds on one base line, none overlapping its neighbor, no stretch of sky empty', () => {
+  // the owner, 2026-11-09: "unnecessary separation ... some are lumped close
+  // together, theres differing heights". A cloud is its puffs that share a
+  // base and a stray; each stands clear of the next by at least the least
+  // gap and never by more than a cloud's own width of the layer
+  for (const i of [2, CLOUDS_SKY.layers - 1]) {
+    const L = skyLayer({ i, seed: 3, W: 1200 }), by = new Map();
+    for (const p of L.puffs) {
+      if (p.follow) continue;
+      const k = `${p.cut}|${p.stray}`;
+      if (!by.has(k)) by.set(k, []);
+      by.get(k).push(p);
+    }
+    const clouds = [...by.values()].map(ps => ({ l: Math.min(...ps.map(p => p.x - p.r)), r: Math.max(...ps.map(p => p.x + p.r)) })).sort((a, b) => a.l - b.l);
+    assert.equal(by.size, new Set(L.puffs.filter(p => !p.follow).map(p => p.cut)).size === 1 ? by.size : -1, `layer ${i}: more than one base line`);
+    assert.ok(clouds.length >= 6, `layer ${i}: only ${clouds.length} clouds across 1200 cells`);
+    for (let k = 1; k < clouds.length; k++) {
+      const gap = clouds[k].l - clouds[k - 1].r;
+      assert.ok(gap > -1, `layer ${i}: cloud ${k} overlaps the one before by ${(-gap).toFixed(1)} cells`);
+      // (a cloud's kid turrets ride their parent and are not counted in its
+      // width here, so a cloud reads a little narrower than it is drawn)
+      assert.ok(gap < L.P.R * (CLOUDS_SKY.gap[1] + 1), `layer ${i}: ${gap.toFixed(1)} cells of empty sky before cloud ${k}`);
+    }
+  }
 });
 
 test('a crust lump rides its lobe: it never drifts off it', () => {
@@ -136,8 +155,11 @@ test('a flowing edge crosses a cell once: none chatters, hardly any comes back w
   const T = new Int8Array(w * h).fill(-9), when = new Float64Array(w * h).fill(-9), from = new Int8Array(w * h);
   let changes = 0, back = 0, chatter = 0;
   const s = [0, 0, 0, 0];
-  for (let f = 0; f <= 600; f++) {
-    const t = 40 + f / 60;
+  // two minutes at twenty steps a second: a cloud moves as one body now
+  // and billows only at its edges, so ten seconds see almost nothing cross
+  // a cell; a tenth of a second is still two steps
+  for (let f = 0; f <= 2400; f++) {
+    const t = 40 + f / 20;
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
       const i = y * w + x, was = T[i], now = tierOf(sumsAt(view, t, x0 + x, y, s), was === -9 ? null : was);
       if (was !== -9 && now !== was) {

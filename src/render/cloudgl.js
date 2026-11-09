@@ -104,8 +104,10 @@ void main() {
 //   k 1  its lit face: the cell toward the light is open sky, so this is
 //        the side of the cloud the light falls on
 //   k 2  its plain body
-//   k 3  its shadowed side: the cell away from the light is open sky; and
-//        its underside over open sky
+//   k 3  its shadowed side: the cell a step along CLOUDS_SHADE_DIR (sideways,
+//        away from the light) is open sky -- never straight down, or every
+//        cell over the flat base cut would be a band of shade the cloud's
+//        full width
 //   k 3  also where a nearer lobe stands just below it: the shadow where
 //        lobes meet
 //   k 4  the lower half of its underside, the darkest of it
@@ -115,6 +117,7 @@ precision highp float; precision highp int; precision highp usampler2D;
 uniform usampler2D uT;
 uniform int uLit[8], uShade[8], uBase[8], uCore[8], uRow[8];   // depths a tier, and which cloud it is
 uniform vec2 uLight;       // toward the light, a unit step
+uniform vec2 uSide;        // the step toward open sky that puts a cell on the shadowed side (CLOUDS_SHADE_DIR)
 uniform int uBottom;       // what is under the last row: a tier + 1, or 0
 out uint o;
 int at(ivec2 c) {
@@ -140,7 +143,7 @@ void main() {
   if (h == 1) k = 1; else if (h == 2) k = 3;
   int l = uLit[j], s = uShade[j], b = uBase[j], co = uCore[j];
   if (l > 0 && behind(at(c + ivec2(round(uLight * float(l)))), j)) k = 1;
-  if (s > 0 && open(at(c - ivec2(round(uLight * float(s)))))) k = 3;
+  if (s > 0 && open(at(c + ivec2(round(uSide * float(s)))))) k = 3;
   if (s > 0) { int n = at(c + ivec2(0, s)); if (n > j && uRow[n] != uRow[j]) k = 3; }
   if (b > 0 && at(c + ivec2(0, b)) == -1) k = at(c + ivec2(0, (b + 1) / 2)) == -1 ? 4 : 3;
   if (co > 0) { int n = at(c + ivec2(0, co)); if (n > j && uRow[n] == uRow[j]) k = 3; }
@@ -431,7 +434,7 @@ export function skyGL() {
       bind(0, s.T[b].t); gl.uniform1i(P.roles.u.uT, 0);
       gl.uniform1iv(P.roles.u.uLit, L.lit); gl.uniform1iv(P.roles.u.uShade, L.shade); gl.uniform1iv(P.roles.u.uBase, L.base);
       gl.uniform1iv(P.roles.u.uCore, L.core); gl.uniform1iv(P.roles.u.uRow, L.row);
-      gl.uniform2f(P.roles.u.uLight, L.light[0], L.light[1]); gl.uniform1i(P.roles.u.uBottom, L.bottom);
+      gl.uniform2f(P.roles.u.uLight, L.light[0], L.light[1]); gl.uniform2f(P.roles.u.uSide, L.side[0], L.side[1]); gl.uniform1i(P.roles.u.uBottom, L.bottom);
       draw();
       // the cleanups, in pairs so the last lands where the settle reads: a
       // band a cell too thin can leave another as it goes (CLOUDS_CLEAN)
