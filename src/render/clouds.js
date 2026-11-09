@@ -26,12 +26,8 @@
 import { CLOUDS_TONES, CLOUDS_THRESHOLD, CLOUDS_HYST, CLOUDS_BUDGET_MS, CLOUDS_SLICE,
          CLOUDS_RECIPE, CLOUDS_BILLOW, CLOUDS_KINDS, CLOUDS_ONE_TONE_ROWS, CLOUDS_BAND_MIN, CLOUDS_CREASE_MIN, CLOUDS_CORE_MIN, CLOUDS_LOBE_LIGHT, CLOUDS_SEA,
          CLOUDS_TREATMENTS, CLOUDS_SKY, CLOUDS_LOD, CLOUDS_BANK, CLOUDS_LIFE, CLOUDS_SHAPES, CLOUDS_VOLUME, CLOUDS_TIERS,
-         CLOUDS_FLOW, CLOUDS_GROUND_FLOW, CLOUDS_PALETTE, CLOUDS_DEPTH_BANDS, CLOUDS_LIGHT, CLOUDS_VOLUME_BANDS,
-         CLOUDS_GROUND_DEPTHS, CLOUDS_OPTION, CLOUDS_OPTIONS } from '../config.js';
-
-// MOCK: the review 'clouds: natural motion' (config/clouds.js, CLOUDS_OPTIONS):
-// the option standing, read at every place it changes a number.
-const opt = () => CLOUDS_OPTIONS[CLOUDS_OPTION] || CLOUDS_OPTIONS[0];
+         CLOUDS_FLOW, CLOUDS_BODY, CLOUDS_TURRET, CLOUDS_LUMP, CLOUDS_GROUND_FLOW, CLOUDS_PALETTE, CLOUDS_DEPTH_BANDS, CLOUDS_LIGHT, CLOUDS_SHADE_DIR, CLOUDS_VOLUME_BANDS,
+         CLOUDS_GROUND_DEPTHS } from '../config.js';
 const smooth = v => v * v * (3 - 2 * v);
 
 // A cloud's shape is its own seed's, not a draw from the yard's `rand()`: a
@@ -547,7 +543,6 @@ const pick = (rnd, w) => {
 };
 // a log-normal draw: most near 1, a long tail of big ones
 const lognormal = (rnd, sigma) => Math.exp(sigma * Math.sqrt(-2 * Math.log(1 - rnd() * 0.999)) * Math.cos(TAU * rnd()));
-const expo = (rnd, mean) => -mean * Math.log(1 - rnd() * 0.999);
 const TIER = Object.fromEntries(CLOUDS_TIERS.map((n, j) => [n, j]));
 const count = (rnd, [a, b]) => a + Math.floor(rnd() * (b - a + 1));
 
@@ -559,7 +554,7 @@ const count = (rnd, [a, b]) => a + Math.floor(rnd() * (b - a + 1));
 // own round edge against its neighbors instead of melting into a slab.
 const DEPTH = ['rear', 'mid', 'front', 'near'];
 function volume(rnd, cx, base, R, flat, add) {
-  const V = { ...CLOUDS_VOLUME, ...(opt().vol || {}) }, B = V.base, T = V.turrets, K = V.kids;   // MOCK: option E's fewer, bigger domes
+  const V = CLOUDS_VOLUME, B = V.base, T = V.turrets, K = V.kids;
   // the turrets side by side, each overlapping the last by `close` of their
   // radii, the group centered on the cloud's middle
   const n = count(rnd, T.n), rs = [], xs = [];
@@ -614,9 +609,9 @@ function shape(rnd, kind, cx, base, R, flat, add) {
     volume(rnd, cx, base, R, flat, add);
     // domes stacked up the crown, each smaller, wandering a little off line:
     // rooted low, reaching high
-    const T = H.tower, levels = opt().tower?.levels || T.levels;   // MOCK: options D-F stack a level or two
+    const T = H.tower;
     let r = R * T.shrink, x = cx, y = base - R * 1.1 * flat;
-    for (let k = 0, n = count(rnd, levels); k < n; k++) {
+    for (let k = 0, n = count(rnd, T.levels); k < n; k++) {
       y -= r * T.climb * flat; x += (rnd() * 2 - 1) * T.wander * r;
       add(k % 2 ? 'front' : 'mid', x, y, r, flat);
       add('rear', x + (rnd() < 0.5 ? -1 : 1) * r * 0.7, y + r * 0.35 * flat, r * 0.6, flat);
@@ -657,7 +652,7 @@ function shape(rnd, kind, cx, base, R, flat, add) {
   }
   if (kind === 'blob') {
     // a far cloud drawn plain: a few big lobes side by side on the base
-    const T = opt().blob || H.blob;   // MOCK: option C's long low blobs
+    const T = H.blob;
     let x = cx;
     const rs = Array.from({ length: count(rnd, T.n) }, () => R * lerp(rnd(), T.r));
     x -= rs.reduce((a, r) => a + r * T.step[0], 0) / 2;
@@ -679,35 +674,27 @@ function flowPuff(rnd, x, y, r, flat, tier, life, stray, F) {
     p: [rnd() * TAU, rnd() * TAU, rnd() * TAU], q: [rnd() * TAU, rnd() * TAU, rnd() * TAU] };
 }
 
-// A cloud's puffs, made and given their current, with the crust of small
-// lumps on its big lobes: lumps that ride their lobe's current, many on the
-// front tiers and few on the rear, so the back of a cloud is softer.
+// A cloud's puffs, made and set on the cloud's one current (CLOUDS_BODY),
+// with the crust of small lumps on its big lobes, many on the front tiers
+// and few on the rear, so the back of a cloud is softer. Which turrets
+// billow (CLOUDS_TURRET) and how each lump comes and goes (CLOUDS_LUMP) are
+// drawn from a stream of the cloud's own, `cs`, so the cloud's shape is the
+// shape stream's alone.
 function cloudPuffs(rnd, kind, cx, base, R, flat, life, stray, puffs, cs = 0) {
-  const O = opt(), K = (O.vol || CLOUDS_VOLUME).crust, F = O.flow || CLOUDS_FLOW;   // MOCK: option A's slower flow, E's sparser crust
-  // MOCK, options B on: one current for the whole cloud, and which turrets
-  // billow and which lumps come and go -- drawn from a stream of the cloud's
-  // own (`cs`, the cloud's seed), so the cloud's shape is the same seed's
-  // whatever the option
-  let body = null, brnd = null;
-  if (O.motion === 'body') {
-    brnd = gen((cs ^ 0x9e3779b9) >>> 0);
-    const B = O.body;
-    body = { a: [R * lerp(brnd(), B.wander), R * lerp(brnd(), B.wander) * 0.6], w: [TAU / lerp(brnd(), B.period), TAU / lerp(brnd(), B.period)],
-             p: [brnd() * TAU, brnd() * TAU, brnd() * TAU, brnd() * TAU], lift: B.lift };
-  }
+  const K = CLOUDS_VOLUME.crust, F = CLOUDS_FLOW, B = CLOUDS_BODY, Bl = CLOUDS_TURRET;
+  const brnd = gen((cs ^ 0x9e3779b9) >>> 0);
+  const body = { a: [R * lerp(brnd(), B.wander), R * lerp(brnd(), B.wander) * 0.6], w: [TAU / lerp(brnd(), B.period), TAU / lerp(brnd(), B.period)],
+                 p: [brnd() * TAU, brnd() * TAU, brnd() * TAU, brnd() * TAU], lift: B.lift };
   shape(rnd, kind, cx, base, R, flat, (name, x, y, r, f, on) => {
     const j = TIER[name], p = flowPuff(rnd, x, y, r, f, j, life, stray, F);
-    p.kind = kind;
-    if (on) { p.follow = on; p.a = p.a.map(v => v * CLOUDS_VOLUME.kids.ride); }
+    p.kind = kind; p.body = body;
+    if (on) p.follow = on;
     // every puff of a cloud stops at its base line: the bottom is flat
     p.cut = base;
-    if (body) {
-      p.body = body;
-      const Bl = O.billow;
-      if (!on && name !== 'rear' && r >= Bl.from && brnd() < Bl.share) {
-        p.billow = { swell: lerp(brnd(), Bl.swell), rise: Bl.rise, w: TAU / lerp(brnd(), Bl.period), ph: brnd() * TAU };
-        p.grow = p.billow.swell * (1 + Bl.rise);
-      }
+    // a free turret may billow: swell and rise off the body, then slump
+    if (!on && name !== 'rear' && r >= Bl.from && brnd() < Bl.share) {
+      p.billow = { swell: lerp(brnd(), Bl.swell), rise: Bl.rise, w: TAU / lerp(brnd(), Bl.period), ph: brnd() * TAU };
+      p.grow = p.billow.swell * (1 + Bl.rise);   // how much bigger it can get, for the card's reach
     }
     puffs.push(p);
     if (r < K.from || kind === 'blob') return p;
@@ -715,8 +702,8 @@ function cloudPuffs(rnd, kind, cx, base, R, flat, life, stray, puffs, cs = 0) {
     for (let k = 0; k < n; k++) {
       const a = Math.PI * (K.arc[0] + (K.arc[1] - K.arc[0]) * (k + rnd()) / n);
       const c = flowPuff(rnd, x + Math.cos(a) * r * K.out, y + Math.sin(a) * r * K.out * f, r * lerp(rnd(), K.r), f, j, life, stray, F);
-      c.follow = p; c.crust = true; c.a = c.a.map(v => v * 0.4); c.cut = p.cut;
-      if (body) { c.body = body; c.lump = { w: TAU / lerp(brnd(), O.lump.period), ph: brnd() * TAU }; }
+      c.follow = p; c.crust = true; c.cut = p.cut; c.body = body;
+      c.lump = { w: TAU / lerp(brnd(), CLOUDS_LUMP.period), ph: brnd() * TAU };
       puffs.push(c);
     }
     return p;
@@ -724,33 +711,29 @@ function cloudPuffs(rnd, kind, cx, base, R, flat, life, stray, puffs, cs = 0) {
 }
 
 // One layer of the sky, `W` cells round (it wraps), seeded: a band of the
-// one sheet of cloud (CLOUDS_SKY), groups of clouds along it, each cloud
-// somewhere in the band's slice of distance, so its base stands at the
-// sheet's height seen from there. Its rows run from the top of its highest
-// cloud down past its lowest base; `baseRow` is the horizon's row in them,
-// `sky` the sky's height in cells that `lift` is a share of.
-// `lane`, when given, is where the layer's bases sit instead: [highest,
-// lowest] in cells below the layer's top row (its first row at y 0), a
-// nearer, bigger cloud of the band higher in it -- the yard's lanes, for a
+// one sheet of cloud (CLOUDS_SKY), its clouds on the band's one base line,
+// set down one after another by their drawn width plus a gap of open sky,
+// so none overlaps its neighbor and no stretch stands empty. Its rows run
+// from the top of its highest cloud down past its base; `baseRow` is the
+// horizon's row in them, `sky` the sky's height in cells that `lift` is a
+// share of. `lane`, when given, is where the layer's base sits instead:
+// [highest, lowest] in cells below the layer's top row (its first row at y
+// 0), the base `CLOUDS_SKY.at` of the way down it -- the yard's lanes, for a
 // place whose clouds keep to the top of its sky (act 3, render/after/cloudsky.js).
 export function skyLayer({ i, seed = 1, W, sky = 145, lane = null }) {
   const S = CLOUDS_SKY, D = CLOUDS_LOD, P = layerParams(i), rnd = gen(seed * 7919 + 101 * (i + 1));
-  const slice = Math.pow(S.far, 1 / Math.max(1, S.layers - 1)), puffs = [];
-  const plain = P.d < (opt().lod?.plain ?? D.plain);   // MOCK: option C shapes the middle distance
-  const PL = opt().place;   // MOCK: options D-F place the layer as one sky
+  const puffs = [], plain = P.d < D.plain;
   if (P.d < D.bank) bank(rnd, P, W, sky, puffs);
-  else if (PL) {
-    // one base line for the layer, and clouds set down one after another by
-    // their drawn width plus a gap of open sky: nothing overlaps its
-    // neighbor and no stretch stands empty
-    const base = lane ? lane[1] - (lane[1] - lane[0]) * PL.u : -P.lift * sky;
+  else {
+    const base = lane ? lane[1] - (lane[1] - lane[0]) * S.at : -P.lift * sky;
     let x = rnd() * P.R * 2;
     while (x < W) {
-      const kind = plain ? 'blob' : pick(rnd, opt().kinds || S.kinds), L = CLOUDS_LIFE[kind] || CLOUDS_LIFE.heap;
-      const R0 = Math.min(P.R * PL.tail, Math.max(P.R * 0.5, P.R * lognormal(rnd, PL.spread)));
+      const kind = plain ? 'blob' : pick(rnd, S.kinds), L = CLOUDS_LIFE[kind] || CLOUDS_LIFE.heap;
+      const R0 = Math.min(P.R * S.tail, Math.max(P.R * 0.5, P.R * lognormal(rnd, S.spread)));
       const life = { per: TAU / lerp(rnd(), L.life), ph: rnd() * TAU, keep: L.keep };
-      const stray = (rnd() * 2 - 1) * S.stray * P.wind, cs = Math.floor(rnd() * 1e9), gap = P.R * lerp(rnd(), PL.gap);
-      // made about 0, measured, then shifted so its left edge follows the gap
+      const stray = (rnd() * 2 - 1) * S.stray * P.wind, cs = Math.floor(rnd() * 1e9), gap = P.R * lerp(rnd(), S.gap);
+      // made about 0 and measured; never smaller than the grid can draw
+      // whole (built again bigger); then shifted so its left edge follows the gap
       const make = R => { const ps = []; cloudPuffs(gen(cs), kind, 0, base, R, P.flat, life, stray, ps, cs); return ps; };
       let ps = make(R0), R = R0;
       const [w, h] = extent(ps, base), k = Math.max(D.least.w / Math.max(w, 1e-3), D.least.h / Math.max(h, 1e-3));
@@ -760,29 +743,6 @@ export function skyLayer({ i, seed = 1, W, sky = 145, lane = null }) {
       for (const p of ps) p.x += x - left;
       puffs.push(...ps);
       x += right - left + gap;
-    }
-  } else {
-    let x = rnd() * P.R * 3;
-    while (x < W) {
-      // a group: clouds packed close enough to run into a mass
-      for (let k = 0, n = 1 + Math.floor(expo(rnd, P.group - 1)); k < n && x < W; k++) {
-        const kind = plain ? 'blob' : pick(rnd, S.kinds), L = CLOUDS_LIFE[kind] || CLOUDS_LIFE.heap;
-        // nearer or farther in the band: bigger and higher, or smaller and lower
-        const near = Math.pow(slice, S.jitter * (rnd() * 2 - 1));
-        const R0 = near * Math.min(P.R * P.tail, Math.max(P.R * 0.3, P.R * lognormal(rnd, P.spread)));
-        const life = { per: TAU / lerp(rnd(), L.life), ph: rnd() * TAU, keep: L.keep };
-        const stray = (rnd() * 2 - 1) * S.stray * P.wind, cs = Math.floor(rnd() * 1e9);
-        const u = Math.log(near) / Math.log(slice) / Math.max(S.jitter, 1e-6) * 0.5 + 0.5;
-        const base = lane ? lane[1] - (lane[1] - lane[0]) * u : -P.lift * near * sky;
-        // never smaller than the grid can draw whole: built again bigger
-        const make = R => { const ps = []; cloudPuffs(gen(cs), kind, x, base, R, P.flat, life, stray, ps, cs); return ps; };
-        let ps = make(R0), R = R0;
-        const [w, h] = extent(ps, base), k = Math.max(D.least.w / Math.max(w, 1e-3), D.least.h / Math.max(h, 1e-3));
-        if (k > 1) ps = make(R = R0 * k);
-        puffs.push(...ps);
-        x += R * lerp(rnd(), [P.packing * 0.6, P.packing * 1.4]);
-      }
-      x += P.R * expo(rnd, P.gap);
     }
   }
   let top = 0, bottom = 0;
@@ -846,31 +806,31 @@ export function puffAt(p, t, out = {}) {
   return out;
 }
 function puffNow(p, t, out) {
-  const O = opt();   // MOCK
   if (p.follow) {
-    // a crust lump: its lobe's place and swell, its own small stray on top
+    // a kid turret or a crust lump: its lobe's place and swell
     puffAt(p.follow, t, lead);
     const k = lead.r / p.follow.r;
     if (p.body) {
-      // MOCK, options B and C: rigid on its lobe; a lump condenses and
-      // dissipates on its own slow clock, a kid turret only rides
+      // of a cloud that moves as one body: rigid on its lobe; a lump
+      // condenses and dissipates on its own slow clock, a kid only rides
       out.x = lead.x + (p.x - p.follow.x) * k;
       out.y = lead.y + (p.y - p.follow.y) * k;
       out.r = p.r * k * (p.lump ? smooth(0.5 + 0.5 * Math.sin(t * p.lump.w + p.lump.ph)) : 1);
       out.flat = p.flat;
       return out;
     }
+    // (the sea's and the bank's: its own small stray on top)
     out.x = lead.x + (p.x - p.follow.x) * k + p.a[0] * Math.sin(t * p.w[0] + p.p[0]);
     out.y = lead.y + (p.y - p.follow.y) * k + CLOUDS_FLOW.lift * p.a[1] * Math.sin(t * p.w[1] + p.q[0]);
-    out.r = p.r * k * (1 + (O.lumpPulse ?? 0.1) * Math.sin(t * p.w[2] + p.q[1]));
+    out.r = p.r * k * (1 + 0.1 * Math.sin(t * p.w[2] + p.q[1]));
     out.flat = p.flat;
     return out;
   }
   const life = p.life ? p.life.keep + (1 - p.life.keep) * (0.5 - 0.5 * Math.cos(t * p.life.per + p.life.ph)) : 1;
   if (p.body) {
-    // MOCK, options B and C: the cloud's one current carries every lobe, so
-    // the lobes keep their places in it; a turret that billows swells and
-    // rises off the body, then slumps back
+    // a lobe of a cloud that moves as one body (CLOUDS_BODY): the cloud's
+    // one current carries every lobe, so they keep their places in it; a
+    // turret that billows swells and rises off the body, then slumps back
     const B = p.body, s = p.billow, sw = s ? s.swell * (0.5 + 0.5 * Math.sin(t * s.w + s.ph)) : 0;
     out.x = p.x + p.stray * t + B.a[0] * Math.sin(t * B.w[0] + B.p[0]) + B.a[1] * Math.sin(t * B.w[1] + B.p[1]);
     out.y = p.y + B.lift * (B.a[0] * Math.sin(t * B.w[1] + B.p[2]) + B.a[1] * Math.sin(t * B.w[0] + B.p[3])) - (s ? s.rise * sw * p.r * p.flat : 0);
@@ -878,13 +838,14 @@ function puffNow(p, t, out) {
     out.flat = p.flat;
     return out;
   }
+  // a billow of the sea or the bank, on a current of its own (CLOUDS_FLOW):
   // two sines across and two up and down, at three periods between them, so
   // no two lobes keep step and the path never quite repeats
   const s1 = Math.sin(t * p.w[1] + p.p[1]);
   out.x = p.x + p.stray * t + p.a[0] * Math.sin(t * p.w[0] + p.p[0]) + p.a[1] * s1;
   out.y = p.y + CLOUDS_FLOW.lift * (p.a[0] * Math.sin(t * p.w[2] + p.q[0]) + p.a[1] * Math.sin(t * p.w[1] + p.q[1]));
   // a life's swell is square-root shaped, so a cloud fills out fast and thins slow
-  out.r = p.r * Math.sqrt(life) * (1 + (O.pulse ?? 0.06) * Math.sin(t * p.w[2] + p.q[0]));   // MOCK: option A's pulse
+  out.r = p.r * Math.sqrt(life) * (1 + 0.06 * Math.sin(t * p.w[2] + p.q[0]));
   out.flat = p.flat;
   return out;
 }
@@ -925,8 +886,7 @@ export function tierOf(sums, was = null) {
 // and treatment. Roles are tier * 5 + 1 lit face, + 2 body, + 3 shadowed
 // side and underside, + 4 core (cloudgl.js, ROLES).
 export function layerLook(layer, { page = 'light', treat = 'C' } = {}) {
-  const LL = CLOUDS_LOBE_LIGHT, D = CLOUDS_TREATMENTS[treat], P = layer.P, nt = layer.nt, VB = { ...CLOUDS_VOLUME_BANDS, ...(opt().vb || {}) };   // MOCK: option E's shallower underside
-  const C = opt().palette?.[page] || CLOUDS_PALETTE[page], BANDS = opt().bands?.[page] || CLOUDS_DEPTH_BANDS[page];   // MOCK: option C's tones
+  const LL = CLOUDS_LOBE_LIGHT, D = CLOUDS_TREATMENTS[treat], C = CLOUDS_PALETTE[page], P = layer.P, nt = layer.nt, VB = CLOUDS_VOLUME_BANDS;
   const eight = f => Int32Array.from({ length: 8 }, (_, j) => (j < nt ? f(j) : 0));
   const lobes = Array.from({ length: nt }, (_, j) => {
     // the crust's small lumps are not what a tier's bands are sized by
@@ -934,7 +894,7 @@ export function layerLook(layer, { page = 'light', treat = 'C' } = {}) {
     return ps.reduce((a, p) => a + p.r * p.flat, 0) / Math.max(1, ps.length);
   });
   const depthOf = j => (layer.ground ? (layer.depths || CLOUDS_GROUND_DEPTHS)[j] : P.e);
-  const bandOf = j => BANDS.filter(b => b[0] <= depthOf(j)).pop();
+  const bandOf = j => CLOUDS_DEPTH_BANDS[page].filter(b => b[0] <= depthOf(j)).pop();
   const ladderOf = j => bandOf(j)[1];
   const round = j => bandOf(j)[2] === 'round' && D.tones === 2, based = j => bandOf(j)[2] !== 'flat' && D.tones === 2;
   const lut = new Float32Array(40 * 4), tone = new Int32Array(40), named = Object.keys(C);
@@ -960,10 +920,10 @@ export function layerLook(layer, { page = 'light', treat = 'C' } = {}) {
     lit: eight(j => (round(j) && D.belly === 'inside' && !layer.ground ? band(VB.lit, lobes[j]) : 0)),
     shade: eight(j => (layer.ground ? (D.tones === 2 && lobes[j] >= CLOUDS_SEA.creaseMin ? Math.max(2, Math.round(CLOUDS_SEA.crease * lobes[j])) : 0)
       : round(j) && D.belly === 'inside' ? band(VB.shade, lobes[j]) : 0)),
-    base: eight(j => (based(j) && !layer.ground ? Math.max(2, Math.round(VB.base * P.R)) : 0)),
-    core: eight(j => (round(j) && D.belly === 'inside' && !layer.ground && CLOUDS_TIERS[j] !== 'near' && lobes[j] >= (opt().coreMin ?? CLOUDS_CORE_MIN) ? band(VB.core, lobes[j]) : 0)),   // MOCK: option E
+    base: eight(j => (based(j) && !layer.ground && VB.base ? Math.max(2, Math.round(VB.base * P.R)) : 0)),
+    core: eight(j => (round(j) && D.belly === 'inside' && !layer.ground && CLOUDS_TIERS[j] !== 'near' && lobes[j] >= CLOUDS_CORE_MIN ? band(VB.core, lobes[j]) : 0)),
     row: eight(j => layer.rowOf[j]), bottom: layer.ground ? nt : 0,
-    light: CLOUDS_LIGHT, tone, lut,
+    light: CLOUDS_LIGHT, side: CLOUDS_SHADE_DIR, tone, lut,
     // each lobe lit in the round, where the tier is drawn in the round
     // (the ground's billows take only the lit cap: their shadow is the
     // crevice where the row in front stands, and a crescent of their own on

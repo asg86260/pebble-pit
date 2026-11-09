@@ -15,14 +15,14 @@
 // The flow runs on the act's own clock, so a held scene holds its clouds.
 // Numbers in config/clouds.js, CLOUDS_ACT3.
 
-import { P, CLOUDS_ACT3 as A, CLOUDS_SKY, CLOUDS_PALETTE, CLOUDS_OPTION, CLOUDS_OPTIONS } from '../../config.js';
+import { P, CLOUDS_ACT3 as A, CLOUDS_SKY, CLOUDS_PALETTE } from '../../config.js';
 import { S } from '../../state.js';
 import { ctx } from '../ctx.js';
 import { onPixel } from '../frame.js';
 import { darkPage, onTheme, raw } from '../../ink.js';
 import { afterOpenX, afterX0, afterX1 } from '../../after/place.js';
 import { skyLayer, layerLook, layerParams, stillSheet, drawBand } from '../clouds.js';
-import { cellOnPage, layerSpan, workClouds, putCells, cloudCard } from '../cloudpage.js';
+import { cellOnPage, layerSpan, workClouds, putCells } from '../cloudpage.js';
 import { now } from './kit.js';
 import { restY } from '../../shot.js';
 import { held } from '../../reset.js';
@@ -38,19 +38,15 @@ export const pathTone = () => (darkPage ? raw(CLOUDS_PALETTE.dark[A.path.dark]) 
 // The layers, made once: their puffs are fixed by the seed, and only where
 // they are drawn changes.
 let L = null;   // cache: made once from the act's fixed seed and width
-// MOCK: the review 'clouds: natural motion' -- option C parts the far lanes;
-// and the layers made again when the option turns, the card's windows afresh
-const lanes = () => CLOUDS_OPTIONS[CLOUDS_OPTION]?.lanes || A.sky.lanes;
-export function remakeCloudSky() { L = null; still = null; cloudCard()?.afresh(); }
 function layers() {
   if (L) return L;
   // a layer's round: the act's width as the layer slides past it, and a pad
   const round = rate => Math.ceil((afterX1() - afterX0()) * rate / P) + A.pad;
-  L = { sky: Array.from({ length: CLOUDS_SKY.layers }, (_, i) => skyLayer({ i, seed: A.seed, W: round(layerParams(i).parallax * A.sky.rate), sky: A.sky.rows, lane: lanes()[i] })) };
+  L = { sky: Array.from({ length: CLOUDS_SKY.layers }, (_, i) => skyLayer({ i, seed: A.seed, W: round(layerParams(i).parallax * A.sky.rate), sky: A.sky.rows, lane: A.sky.lanes[i] })) };
   for (const l of L.sky) l.look = layerLook(l, { page: page() });
   return L;
 }
-const NAMES = () => layers().sky.map((_, i) => 'sky' + i).filter((_, i) => lanes()[i]);
+const NAMES = () => layers().sky.map((_, i) => 'sky' + i).filter((_, i) => A.sky.lanes[i]);
 const layerOf = name => layers().sky[+name.slice(3)];
 
 // Where a layer stands this frame: its rate against the camera, the world y
@@ -97,7 +93,7 @@ function putStill(name, sp) {
   const st = stills(), sh = st[name];
   if (!sh) return;
   // the sky's band in its layer's lane at the top of the sky
-  const lane = lanes()[+name.slice(3)];
+  const lane = A.sky.lanes[+name.slice(3)];
   const y = onPixel(restY()) + lane[1] * sp.cw - sh.h * sp.cw;
   const k = S.zoom * S.dpr, was = ctx.getTransform();
   // drawBand lays its copies from x 0 across a width: from the window's left edge

@@ -43,8 +43,9 @@ export const CLOUDS_CREASE_MIN = 6;
 // against the lobe behind it, the shadow where they meet -- only when its
 // lobes are at least this many cells across their radius. Smaller clouds get
 // their outer edge's light and shadow alone: two bands a junction on a lobe a
-// few cells high read as hatching, not as lobes.
-export const CLOUDS_CORE_MIN = 7;
+// few cells high read as hatching, not as lobes (ten, since the owner's
+// polish round of 2026-11-09: on middling lobes the crescents read as holes).
+export const CLOUDS_CORE_MIN = 10;
 
 // --- the field ------------------------------------------------------------------
 // A puff of radius r adds (1 - d^2/R^2)^3 to every cell within R of its
@@ -145,9 +146,15 @@ export const CLOUDS_ONE_TONE_ROWS = [1, 2, 1, 2];
 // perspectively"): every cloud's base at one height, the sheet seen from
 // overhead out to the horizon. `layers` bands of distance cut it, the
 // nearest at distance 1 and the farthest at `far`, spaced evenly in the
-// distance's logarithm; a cloud stands somewhere in its band's slice
-// (`jitter` of it either way). Seen from under a sheet, a thing at distance z
-// is 1/z as big, 1/z as high over the horizon and moves 1/z as fast, so:
+// distance's logarithm. Every cloud of a layer stands on the layer's one
+// base line (`at` of its lane, where a place gives one), and the clouds are
+// set down one after another along it, each by its drawn width plus `gap`
+// R of open sky, so none overlaps its neighbor and no stretch stands empty
+// (the owner, 2026-11-09: a layer was groups packed into one mass with dead
+// stretches between, its bases jittered 4-5 cells -- "unnecessary
+// separation ... lumped close together ... differing heights"). Seen from
+// under a sheet, a thing at distance z is 1/z as big, 1/z as high over the
+// horizon and moves 1/z as fast, so:
 //
 //   R         a cloud's typical size at distance 1 (its biggest turret's
 //             radius), in cells
@@ -157,17 +164,15 @@ export const CLOUDS_ONE_TONE_ROWS = [1, 2, 1, 2];
 //   wind      cells a second it drifts, at distance 1
 //
 // so a far cloud is small, low and slow, and the far ones crowd toward the
-// horizon. The rest are [far, near] pairs taken at a band's share of the
-// way out (0 the horizon, 1 nearest):
-//   spread    how widely sizes scatter round R (a log-normal's sigma): a few
-//             clouds many times the typical one, many smaller
-//   tail      the biggest a cloud may be, in R
+// horizon. Then:
+//   spread    how widely sizes scatter round R (a log-normal's sigma), and
+//   tail      the biggest a cloud may be, in R: close round the layer's
+//             size, so a layer reads as one weather
+//   gap       open sky between a cloud and the next, in R, [least, most]
+// and [far, near] pairs taken at a band's share of the way out (0 the
+// horizon, 1 nearest):
 //   flat      how far a puff is squashed top to bottom (1 round): a far
 //             cloud is seen edge-on, so flatter
-//   group     how many clouds a group has, on average
-//   packing   their spacing within a group, in their own size: under the 4
-//             or so a cumulus spans, so a group runs into one mass
-//   gap       open sky between groups, on average, in R
 //   every     frames between workings of its field on the card: a far
 //             layer's puffs move a hair a frame, so it is worked one frame
 //             in this many, its fade kept in step
@@ -176,11 +181,11 @@ export const CLOUDS_ONE_TONE_ROWS = [1, 2, 1, 2];
 //             wind: clouds overtake each other, meet and part
 //   kinds     how often each shape forms (CLOUDS_SHAPES)
 export const CLOUDS_SKY = {
-  layers: 5, far: 8, jitter: 0.5,
+  layers: 5, far: 8, at: 0.5,
   R: 18, lift: 0.8, parallax: 0.75, wind: 0.06,
-  spread: [0.4, 0.55], tail: [2.2, 2.4], flat: [0.45, 1], group: [3, 1.5], packing: [1.1, 1.8], gap: [1.6, 6],
+  spread: 0.3, tail: 1.6, gap: [0.4, 1.6], flat: [0.45, 1],
   every: [6, 1], stray: 0.4,
-  kinds: { cumulus: 5, tower: 1 }
+  kinds: { cumulus: 1 }
 };
 // What the sheet keeps far off (the owner, 2026-10-20: the distant clouds
 // read as "single cell lines and a bit messy"): the grid is a cell, so a
@@ -193,7 +198,7 @@ export const CLOUDS_SKY = {
 //            no shading, no lumps (CLOUDS_SHAPES.blob)
 //   bank     a layer nearer than this is no clouds at all but the horizon's
 //            one long bank (CLOUDS_BANK)
-export const CLOUDS_LOD = { least: { h: 6, w: 10 }, plain: 0.6, bank: 0.1 };
+export const CLOUDS_LOD = { least: { h: 6, w: 10 }, plain: 0.3, bank: 0.1 };
 // The horizon's bank: one row of low lobes the whole way round, each `r` of
 // its layer's R (scattered by `spread`), `step` of its radius apart, its
 // center `at` its radius over the horizon, squashed `flat`, so the horizon
@@ -226,17 +231,16 @@ export const CLOUDS_LIFE = {
 //            its upper edge within `arc` half-turns of straight up, `out` of
 //            its radius from its center, in front of it a share `front` of
 //            the time (else behind), down `levels` generations, none under
-//            `least` cells; a kid rides its parent's current, its own
-//            wander `ride` of a free lobe's
+//            `least` cells; a kid rides its parent, swelling as it swells
 //   crust    small lumps on a lobe's edge: `per` a cell of its radius on the
 //            front tiers, `back` of that on the rear, `r` of the lobe's
 //            radius, over `arc` of its edge (half-turns, left round the top
 //            to right), from lobes of at least `from` cells
 export const CLOUDS_VOLUME = {
   base: { span: [0.85, 1], r: [0.38, 0.52], flat: 0.7, at: 0.35, step: [0.95, 1.25] },
-  turrets: { n: [2, 4], r: [0.62, 0.95], ends: 0.3, close: [0.55, 0.75], rise: [0.4, 0.8], stack: [0.95, 0.72] },
-  kids: { n: [2, 4], shrink: [0.48, 0.7], arc: 0.45, out: [0.7, 0.92], front: 0.55, levels: 2, least: 2.5, ride: 0.5 },
-  crust: { from: 6, per: 0.3, back: 0.2, r: [0.16, 0.28], arc: [-1.1, 0.1], out: 0.9 }
+  turrets: { n: [2, 3], r: [0.66, 0.95], ends: 0.3, close: [0.6, 0.78], rise: [0.45, 0.8], stack: [0.95, 0.72] },
+  kids: { n: [1, 3], shrink: [0.5, 0.7], arc: 0.45, out: [0.72, 0.92], front: 0.55, levels: 1, least: 3 },
+  crust: { from: 8, per: 0.15, back: 0, r: [0.18, 0.28], arc: [-1.1, 0.1], out: 0.9 }
 };
 // The tiers a sky layer's puffs fall in, back to front: a cloud's own depths
 // from its rear (the shelf and the turrets behind) to its nearest turrets.
@@ -258,15 +262,33 @@ export const CLOUDS_SHAPES = {
   heap: { span: 2.6, crown: [0, 2], crownR: [0.45, 0.6], flat: 0.75 },
   stratus: { count: [6, 14], length: [4, 9], r: [0.22, 0.4], flat: 0.38, wander: 0.4 },
   scrap: { count: [2, 4], r: [0.18, 0.38], spread: 1.2 },
-  blob: { n: [2, 4], r: [0.6, 1], step: [1, 1.3], rise: [0.3, 0.6] }
+  blob: { n: [3, 5], r: [0.5, 0.8], step: [1.2, 1.6], rise: [0.35, 0.6] }
 };
 
 // --- the flow -----------------------------------------------------------------------
-// The sky is liquid: every puff moves every frame on its own slow current and
-// the field is worked out afresh each frame (render/cloudgl.js), so two lobes
-// drifting together grow a neck that thickens until they are one, and a lobe
-// drifting off thins its neck until it pinches away. A puff's path is sines
-// over time at its own periods and phases, each a share of its radius:
+// The sky is liquid: the field is worked out afresh each frame
+// (render/cloudgl.js) from puffs that moved this frame. A cloud of the sky
+// moves as one body (the owner, 2026-11-09, option B of the review 'clouds:
+// natural motion'): every lobe of it rides one slow current and advects with
+// the layer's wind, so the lobes keep their places in the cloud and its
+// shading does not swim; the shape changes only at its edges, where turrets
+// billow and the small lumps on its edge condense and dissipate. (Lobes
+// each on a current of their own, 0.2-0.45 of their radius over 120-300 s,
+// slid through each other at twice the wind's speed and the shadows between
+// them migrated across the body -- the "morphing" the owner saw.)
+//   CLOUDS_BODY    the cloud's one current: sines over time, `wander` of the
+//                  cloud's R, `period` seconds, `lift` the share up and down
+//   CLOUDS_TURRET  a turret of at least `from` cells billows: swells `swell`
+//                  of its radius and rises `rise` of that swell as it does,
+//                  over `period` seconds; a share `share` of the turrets
+//                  billow at all, so one rises at a time
+//   CLOUDS_LUMP    a crust lump condenses and dissipates over `period`
+//                  seconds, its radius a smoothstep of a sine
+export const CLOUDS_BODY = { wander: [0.03, 0.07], period: [240, 600], lift: 0.25 };
+export const CLOUDS_TURRET = { from: 3, swell: [0.1, 0.22], rise: 0.5, period: [180, 420], share: 0.6 };
+export const CLOUDS_LUMP = { period: [90, 240] };
+// The horizon's bank and the cloud sea still put each puff on a current of
+// its own (there a billow rolling against its neighbors is the point):
 //   wander  how far it strays, as a share of its radius, [least, most]
 //   period  seconds a stray takes, [least, most]
 //   lift    how much of the stray is up and down rather than across
@@ -315,9 +337,13 @@ export const CLOUDS_PALETTE = {
 // The third entry says how much of a cloud's volume is drawn at that
 // distance: 'flat' a silhouette, 'base' its underside alone, 'round' all of
 // it -- lit face, shadowed side, the shadow where lobes meet, the base.
+// The middle distance is a flat silhouette in the haze on both pages (the
+// owner's polish round, 2026-11-09): a band drawn on a cloud a few cells
+// tall was a ruled line under a slab, and by night, in the near cloud's
+// shadow tone, it fused with the undersides into a notched strip.
 export const CLOUDS_DEPTH_BANDS = {
-  light: [[0, ['haze', 'haze', 'haze', 'haze'], 'flat'], [0.25, ['haze', 'haze', 'body', 'body'], 'base'], [0.6, ['lit', 'body', 'shade', 'core'], 'round']],
-  dark: [[0, ['haze', 'haze', 'haze', 'haze'], 'flat'], [0.25, ['body', 'body', 'haze', 'haze'], 'base'], [0.6, ['lit', 'near', 'body', 'haze'], 'round']]
+  light: [[0, ['haze', 'haze', 'haze', 'haze'], 'flat'], [0.25, ['haze', 'haze', 'haze', 'haze'], 'flat'], [0.6, ['lit', 'body', 'shade', 'shade'], 'round']],
+  dark: [[0, ['haze', 'haze', 'haze', 'haze'], 'flat'], [0.25, ['haze', 'haze', 'haze', 'haze'], 'flat'], [0.6, ['lit', 'near', 'body', 'body'], 'round']]
 };
 // Each lobe of a near cloud lit as a rounded form of its own (cloudgl.js,
 // FIELD): a cell belongs to the strongest lobe of its tier there, and is in
@@ -328,17 +354,25 @@ export const CLOUDS_DEPTH_BANDS = {
 export const CLOUDS_LOBE_LIGHT = { lit: [0.35, 0.6], shade: [0.3, 0.62], least: 5 };
 // Which way the light falls from: a step toward it, up and to the left.
 export const CLOUDS_LIGHT = [-0.6, -0.8];
+// The step from a cell toward open sky that puts it on a cloud's shadowed
+// side: sideways, to the right, never down. Looking down (away from the
+// light) made every cell over the flat base cut "shadowed side": a band of
+// shade the cloud's full width, measured 355 px of ruled line under one
+// cloud at the owner's window (the polish round, 2026-11-09).
+export const CLOUDS_SHADE_DIR = [1, 0];
 // How deep each band of a near cloud's volume is, as a share of the tier's
 // typical lobe radius (each at least 2 cells, and none on a lobe under
 // CLOUDS_BAND_MIN times it):
 //   lit    its face toward the light
 //   shade  its side away from the light
-//   base   its underside, as a share of its layer's R
+//   base   its underside, as a share of its layer's R: none, since the
+//          polish round -- any band along the flat cut is a ruled line, so
+//          the underside takes only each lobe's own shadow
 //   core   a rear lobe's shadow where a nearer lobe stands below it (in the
-//          shadowed side's tone: the darkest step is the base's alone). Only
+//          shadowed side's tone). Only
 //          the rear: the front tiers are one lit mass, parted from the rear
 //          by this shadow, and a band at every tier's edge read as stripes
-export const CLOUDS_VOLUME_BANDS = { lit: 0.42, shade: 0.4, base: 0.16, core: 0.2 };
+export const CLOUDS_VOLUME_BANDS = { lit: 0.42, shade: 0.4, base: 0, core: 0.2 };
 // The ground's rows, back to front, as depths for the bands above.
 export const CLOUDS_GROUND_DEPTHS = [0.1, 0.62, 1];
 // --- the cloud sea ---------------------------------------------------------------
@@ -373,8 +407,10 @@ export const CLOUDS_SEA = {
 //          like act 1"; six cells lower, 2026-10-22, "lets lower the cloud
 //          band a bit"): its bases in its `lanes` entry, [highest, lowest] in
 //          cells below the top of the act's resting window, far to near --
-//          the nearest highest, each farther one a little lower, so the sheet
-//          still reads in perspective. In cells, so a cloud's height does not
+//          the middle distance at the near layer's own base, behind it, and
+//          the far banks a few cells under (a layer hanging well below the
+//          near bases read as teeth under the clouds by night; the polish
+//          round, 2026-11-09). In cells, so a cloud's height does not
 //          move when the window is resized. A cloud is cut flat at its base,
 //          so however it swells or flows it never hangs below its lane.
 //   path   the path's surface by night: the cloud palette's role it is
@@ -385,86 +421,5 @@ export const CLOUDS_SEA = {
 //   seed   the act's clouds' seed
 export const CLOUDS_ACT3 = {
   seed: 7, pad: 900, path: { dark: 'haze' },
-  sky: { rows: 120, rate: 0.4, lanes: [null, [37, 40], [35, 38], [32, 36], [28, 33]] }
+  sky: { rows: 120, rate: 0.4, lanes: [null, [36, 39], [32, 35], [32, 36], [28, 33]] }
 };
-
-// --- MOCK: the review 'clouds: natural motion' ---------------------------------------
-// Three ways the clouds could move and read, switched by one knob so the
-// review bench (review.html) stands each in the real game; the one chosen is
-// folded into the constants above and this block goes. 0 is today.
-//   A  the same model, slowed: a lobe strays a third as far, three times as
-//      slow, and hardly bobs; its radius hardly pulses
-//   B  a cloud moves as one body: all its lobes share one slow current and
-//      advect with the layer's wind; the shape changes only at its edges --
-//      turrets billow (swell and rise, then slump) and the small lumps on its
-//      edge condense and dissipate
-//   C  B, with the background reworked: far clouds a tone of their own
-//      (lighter than any near tone by day), the middle distance drawn in
-//      shape rather than as blobs, the far blobs long and low, the far
-//      lanes parted, and no dark ruled line under a near cloud's base
-//   body    one current a cloud: `wander` of its R, `period` seconds, `lift`
-//           the share up and down
-//   billow  a turret of at least `from` cells swells `swell` of its radius
-//           and rises `rise` of that swell as it does, over `period`
-//           seconds; a share `share` of the turrets billow at all, so one
-//           rises at a time
-//   lump    a crust lump condenses and dissipates over `period` seconds
-export let CLOUDS_OPTION = 0;
-export const CLOUDS_OPTION_NAMES = ['0', 'A', 'B', 'C', 'D', 'E', 'F'];
-const MOCK_B = {
-  motion: 'body',
-  body: { wander: [0.03, 0.07], period: [240, 600], lift: 0.25 },
-  billow: { from: 3, swell: [0.1, 0.22], rise: 0.5, period: [180, 420], share: 0.6 },
-  lump: { period: [90, 240] }
-};
-export const CLOUDS_OPTIONS = [
-  {},
-  { flow: { wander: [0.06, 0.14], period: [300, 700], lift: 0.15 }, pulse: 0.02, lumpPulse: 0.03 },
-  MOCK_B,
-  { ...MOCK_B,
-    palette: { light: { sky: '#ffffff', haze: '#ededed', lit: '#dbdbdb', body: '#c9c9c9', shade: '#a4a4a4', core: '#757575' } },
-    // the middle distance a flat silhouette in its own shape: a band drawn on
-    // a cloud a few cells tall is a ruled line under a slab
-    bands: { light: [[0, ['haze', 'haze', 'haze', 'haze'], 'flat'], [0.25, ['haze', 'haze', 'haze', 'haze'], 'flat'], [0.6, ['lit', 'body', 'shade', 'shade'], 'round']],
-             dark: [[0, ['haze', 'haze', 'haze', 'haze'], 'flat'], [0.25, ['body', 'body', 'body', 'body'], 'flat'], [0.6, ['lit', 'near', 'body', 'body'], 'round']] },
-    lod: { plain: 0.3 },
-    blob: { n: [3, 5], r: [0.5, 0.8], step: [1.2, 1.6], rise: [0.35, 0.6] },
-    lanes: [null, [41, 44], [37, 40], [32, 36], [28, 33]] },
-  // Round 2, on B (the owner: "unnecessary separation ... some are lumped
-  // close together, theres differing heights"). Today a layer is groups of
-  // clouds packed 1.1-1.8 R apart (a cumulus is ~4 R wide, so a group is one
-  // overlapping mass) with exponential gaps of 6 R between groups (dead
-  // stretches of 200 cells beside the masses), every cloud's base jittered
-  // across its lane (4-5 cells), sizes log-normal 0.55 with a tail of 2.4 R,
-  // and towers stacked 2-4 levels (150 cells tall on the near layer).
-  //   D  one sky: every cloud of a layer on one base line (`u` of the lane),
-  //      placed one after another by its drawn width plus `gap` R of open
-  //      sky, sizes close round the layer's R (`spread`, `tail`), towers a
-  //      level or two
-  //   E  D, and the shapes polished: fewer, bigger domes (two or three
-  //      turrets, one generation of smaller ones, a sparser crust), the
-  //      lobe-meet shadow only on lobes of `coreMin` cells, no ruled
-  //      underline, the middle distance in shape, far banks long and low
-  //   F  E in option C's tones (a far haze of its own by day)
-  { ...MOCK_B, place: { spread: 0.3, tail: 1.6, gap: [0.4, 1.6], u: 0.5 }, tower: { levels: [1, 2] } },
-  { ...MOCK_B, place: { spread: 0.3, tail: 1.6, gap: [0.4, 1.6], u: 0.5 }, tower: { levels: [1, 2] },
-    vol: { turrets: { n: [2, 3], r: [0.66, 0.95], ends: 0.3, close: [0.6, 0.78], rise: [0.45, 0.8], stack: [0.95, 0.72] },
-           kids: { n: [1, 3], shrink: [0.5, 0.7], arc: 0.45, out: [0.72, 0.92], front: 0.55, levels: 1, least: 3, ride: 0.5 },
-           crust: { from: 8, per: 0.15, back: 0, r: [0.18, 0.28], arc: [-1.1, 0.1], out: 0.9 } },
-    coreMin: 10,
-    // no towers (a dome or two stacked on a low cumulus read as a mushroom
-    // cap on a stalk) and a shallower underside, so the flat base is not a
-    // dark strip
-    kinds: { cumulus: 1 }, vb: { base: 0.1 },
-    bands: { light: [[0, ['haze', 'haze', 'haze', 'haze'], 'flat'], [0.25, ['haze', 'haze', 'haze', 'haze'], 'flat'], [0.6, ['lit', 'body', 'shade', 'shade'], 'round']],
-             dark: [[0, ['haze', 'haze', 'haze', 'haze'], 'flat'], [0.25, ['body', 'body', 'body', 'body'], 'flat'], [0.6, ['lit', 'near', 'body', 'body'], 'round']] },
-    lod: { plain: 0.3 },
-    blob: { n: [3, 5], r: [0.5, 0.8], step: [1.2, 1.6], rise: [0.35, 0.6] },
-    lanes: [null, [41, 44], [37, 40], [32, 36], [28, 33]] },
-  null   // F: E in C's tones, filled in below (E is not yet a name here)
-];
-CLOUDS_OPTIONS[6] = { ...CLOUDS_OPTIONS[5], palette: CLOUDS_OPTIONS[3].palette };
-export const CLOUDS_KNOBS = [
-  { key: 'CLOUDS_OPTION', label: 'clouds option (0 A B C D E F)', min: 0, max: 6, step: 1,
-    get: () => CLOUDS_OPTION, set: v => { CLOUDS_OPTION = v; } }
-];
