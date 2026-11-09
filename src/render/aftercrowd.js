@@ -52,7 +52,7 @@ import { P, GREY, GOD_BACK, STRIKE_SHARE, CROWD_X0, CROWD_FILES, CROWD_PITCH, AF
          GOD_N, GOD_MASS, GOD_EDGE, GOD_CROWN, GOD_EYES, GOD_HAND, GOD_THRONE, GOD_RAYS, GOD_IDLE, GOD_TALK, GAZE,
          AFTER_GAZE_SETTLE_S, AFTER_BURN_S, SKY_DRIFT,
          AFTER_SEAT_DARK, AFTER_LINE_DARK, AFTER_GAZE_EDGE, SIGN_FADE_S,
-         GOD_DEPTH_ON, GOD_DEPTH, GOD_WAVES_ON, GOD_WAVES, GOD_LIGHT_ON, GOD_LIGHT } from '../config.js';
+         GOD_DEPTH_ON, GOD_DEPTH, GOD_WAVES_ON, GOD_WAVES, GOD_LIGHT_ON, GOD_LIGHT, GOD_TAKE } from '../config.js';
 import { ctx } from './ctx.js';
 import { layerAt } from './frame.js';
 import { raw, darkPage, perPage, themeGen } from '../ink.js';
@@ -388,7 +388,7 @@ function drawStage() {
 // A fact of the window.
 let ROWS = [], rowsKey = '';   // cache: keyed by the stage's geometry
 function crowdRows() {
-  const st = stage(), G = GOD_CROWD, key = `${st.yb}|${st.yf}|${st.mx}|${GOD_DEPTH_ON ? 1 : 0}`;
+  const st = stage(), G = GOD_CROWD, key = `${st.yb}|${st.yf}|${st.mx}|${GOD_DEPTH_ON ? 1 : 0}|${GOD_TAKE}`;
   if (key === rowsKey) return ROWS;
   const out = [];
   // Straight rows a soul and a row's gap apart, every soul one size -- or,
@@ -460,7 +460,7 @@ function rowSouls(r, R, n, out) {
     const i = k + 1000, a = standing(r, n, i, past);
     // With depth on, a share of the front row stands a cell down off the
     // stage's edge, on the cloud, so the near edge frays instead of ruling a line.
-    const drop = GOD_DEPTH_ON && r === n - 1 && hsh(i, 23) < GOD_DEPTH.fray ? P : 0;
+    const drop = GOD_DEPTH_ON && r === n - 1 && hsh(i, 23) < GOD_DEPTH.fray ? Math.max(P, snap(w / 3, P)) : 0;
     if (a > 0.001) out.push({ r, i, x: x0, y: R.y + drop, w, a });
   }
 }
@@ -469,10 +469,15 @@ function rowSouls(r, R, n, out) {
 // world y, and `between(Infinity)` the rest after the front row). The one
 // place the crowd's own shape is drawn, so a crowd drawn another way is this
 // function and what it reads.
-function drawGodsCrowd(rows, between) {
-  let count = 0;
+// Rows `from` to `to` of them: the rows behind the path from the sky's
+// layer, and with a take whose stage runs on past the path (config,
+// GOD_TAKES) the rows in front of it from the camp's (`drawAfterCrowd`),
+// over the path, so the mass comes toward the viewer.
+function drawGodsCrowd(rows, between, from = 0, to = rows.length) {
+  let count = from ? drawn.souls : 0;
   const M = GOD_MASS;
   rows.forEach((R, r) => {
+    if (r < from || r >= to) return;
     between(R.y);
     const souls = [];
     rowSouls(r, R, rows.length, souls);
@@ -509,7 +514,7 @@ function drawGodsCrowd(rows, between) {
     }
   });
   drawn.souls = count;
-  between(Infinity);
+  if (to >= rows.length) between(Infinity);
 }
 
 // --- souls won over ----------------------------------------------------------------------------------
@@ -1086,12 +1091,18 @@ export function drawSkyCrowd() {
   items.sort((a, b) => a.y - b.y);
   let next = 0;
   for (const w of shown.won) w.drawn = null;
-  drawGodsCrowd(crowdRows(), y => {
+  const rows = crowdRows(), floor = afterFloor();
+  BETWEEN = y => {
     while (next < items.length && items[next].y <= y) items[next++].draw();
     drawWon(y);
-  });
+  };
+  // the rows whose feet are behind the path; the rest wait for the camp's layer
+  SPLIT = rows.findIndex(R => R.y > floor);
+  if (SPLIT < 0) SPLIT = rows.length;
+  drawGodsCrowd(rows, BETWEEN, 0, SPLIT);
   drawGaze(GZ);
 }
+let BETWEEN = null, SPLIT = 0;   // cache: this frame's, handed from the sky's layer to the camp's
 // For a scene: the members walked out since the sky last looked, seen now,
 // as the next frame drawn would see them, so a scene can turn the clock on to
 // a won soul's moment before any frame is drawn.
@@ -1106,6 +1117,9 @@ export function drawAfterCrowd() {
   if (!S.after) return;
   camFrame();
   if (!GZ) return;
+  // the rows in front of the path, over it (a take whose stage runs on past it)
+  const rows = crowdRows();
+  if (BETWEEN && SPLIT < rows.length) drawGodsCrowd(rows, BETWEEN, SPLIT, rows.length);
   drawDrift();
   drawBubbles();
 }

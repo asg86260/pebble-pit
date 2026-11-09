@@ -306,7 +306,28 @@ export const GOD_WAVES = { lit: 0.85, litDay: 0.4, swell: 1.0, rallyLit: 0.3, ow
 // by night; gone with the rays as support rises.
 export let GOD_LIGHT_ON = false;
 export const GOD_LIGHT = { reach: 230, flat: 0.5, amp: 0.7, spoke: 0.6 };
+// Scale (round 2; the owner on C: "trying to be large and expansive, but
+// appearing miniscule"): the crowd was a strip 28 cells deep between the
+// horizon and the path, a sixth of the window. Each take re-lays God's frame
+// and his stage: `foot` the cells his foot stands over the path (the stage's
+// depth behind the path), `size` his share of the sky he would have standing
+// on the path, `front` the cells the stage's front stands over the path --
+// negative, it runs on past the path toward the viewer and the rows there
+// are drawn over the path (render/aftercrowd.js, drawAfterCrowd) -- `soul`
+// a soul's cells at the back and the front, `beyond` the stage cells the
+// crowd runs out past the stage either side, `hb` and `hf` the stage's half
+// at its back and front in stage cells (GOD_STAGE's with none), wide enough
+// at the front to run off both edges. `GOD_TAKE` names the one in
+// play; '' is C as it stands.
+export let GOD_TAKE = '';
+export const GOD_TAKES = {
+  D: { foot: 28, size: 0.85, front: -40, soul: [1, 8], beyond: 60, hb: 150, hf: 420 },
+  E: { foot: 60, size: 0.6, front: 2, soul: [1, 4], beyond: 100, hb: 300, hf: 520 },
+  F: { foot: 60, size: 0.6, front: -40, soul: [1, 8], beyond: 60, hb: 300, hf: 900 }
+};
+export const GOD_TAKE_NAMES = ['', 'D', 'E', 'F'];
 export const GOD_LOOK_KNOBS = [
+  { key: 'GOD_TAKE', label: "God's crowd: scale take (0 C, 1 D, 2 E, 3 F)", min: 0, max: 3, step: 1, get: () => GOD_TAKE_NAMES.indexOf(GOD_TAKE), set: v => { GOD_TAKE = GOD_TAKE_NAMES[v] || ''; } },
   { key: 'GOD_DEPTH_ON', label: "God's crowd: depth", min: 0, max: 1, step: 1, get: () => (GOD_DEPTH_ON ? 1 : 0), set: v => { GOD_DEPTH_ON = !!v; } },
   { key: 'GOD_WAVES_ON', label: "God's crowd: waves", min: 0, max: 1, step: 1, get: () => (GOD_WAVES_ON ? 1 : 0), set: v => { GOD_WAVES_ON = !!v; } },
   { key: 'GOD_LIGHT_ON', label: "God's crowd: his light", min: 0, max: 1, step: 1, get: () => (GOD_LIGHT_ON ? 1 : 0), set: v => { GOD_LIGHT_ON = !!v; } }

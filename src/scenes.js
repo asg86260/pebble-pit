@@ -638,8 +638,8 @@ function heavenTurn(want) {
 const LEVEL_SIGNS = [[16, 12], [6, 30], [27, 14], [34, 24]];
 // God's camp with the bench's switches set (config/aftercrowd.js), the clock
 // run on to just before a loud phrase, as level-god-talk stands it.
-function godLook(depth, waves, light) {
-  window.__tune('GOD_DEPTH_ON', depth); window.__tune('GOD_WAVES_ON', waves); window.__tune('GOD_LIGHT_ON', light);
+function godLook(depth, waves, light, take = 0) {
+  window.__tune('GOD_DEPTH_ON', depth); window.__tune('GOD_WAVES_ON', waves); window.__tune('GOD_LIGHT_ON', light); window.__tune('GOD_TAKE', take);
   levelAt(0.1, 'god');
   window.__holdShot(0);
   for (let k = 0; k < 800; k++) { const m = skyMoment(); if (m && m.glare === 0 && m.next < 0.3) break; window.__fast(0.1); }
@@ -3378,6 +3378,17 @@ export const SCENES = {
   'godcrowd-c': { about: 'the acts', review: "God's crowd: perspective and effects", option: 'C depth + waves + his light: a spoked pool of his rays on the crowd round his foot, turning with them',
     say: "B, and God's light: the souls round his foot lit in a pool spoked as his rays are, turning with them, gone as support takes the rays",
     run: () => godLook(1, 1, 1) },
+  // Round 2 (the owner on C: "large and expansive, but appearing miniscule"):
+  // C's depth, waves and light at a scale (config/aftercrowd.js, GOD_TAKES).
+  'godcrowd-d': { about: 'the acts', review: "God's crowd: perspective and effects", option: "D to your feet: the stage runs on past the path to the frame's foot, the near souls eight cells, the rows off both edges",
+    say: "C at scale: the stage's front forty cells past the path, the front rows drawn over it, a soul eight cells at the front",
+    run: () => godLook(1, 1, 1, 1) },
+  'godcrowd-e': { about: 'the acts', review: "God's crowd: perspective and effects", option: 'E the far multitude: God set back and smaller, his foot sixty cells up, the mass a deep sea behind the path',
+    say: "C at scale: God's foot sixty cells over the path and God at six tenths of his size, the stage deep behind the path, the crowd wider past it",
+    run: () => godLook(1, 1, 1, 2) },
+  'godcrowd-f': { about: 'the acts', review: "God's crowd: perspective and effects", option: "F both: God set back and small, the mass from under his throne down past the path to the frame's foot",
+    say: "C at scale: D's run to the viewer and E's far throne together, the mass filling the frame from the horizon to its foot",
+    run: () => godLook(1, 1, 1, 3) },
   'level-carry': { about: 'the acts', say: "the chain running: a carrier with a sign over the cloud, climbing the stage's plinth or out on its top",
     run: () => {
       afterChain(true);
