@@ -51,7 +51,8 @@ import { P, GREY, GOD_BACK, STRIKE_SHARE, CROWD_X0, CROWD_FILES, CROWD_PITCH, AF
          SKY_SUPPORT_EASE, SKY_WON, SKY_FLAG, SKY_AURA, SKY_RALLY, SKY_ROAR, SKY_GRUMBLE, SKY_RING_W, SKY_RING_LIFT,
          GOD_N, GOD_MASS, GOD_EDGE, GOD_CROWN, GOD_EYES, GOD_HAND, GOD_THRONE, GOD_RAYS, GOD_IDLE, GOD_TALK, GAZE,
          AFTER_GAZE_SETTLE_S, AFTER_BURN_S, SKY_DRIFT,
-         AFTER_SEAT_DARK, AFTER_LINE_DARK, AFTER_GAZE_EDGE, SIGN_FADE_S } from '../config.js';
+         AFTER_SEAT_DARK, AFTER_LINE_DARK, AFTER_GAZE_EDGE, SIGN_FADE_S,
+         GOD_DEPTH_ON, GOD_DEPTH, GOD_WAVES_ON, GOD_WAVES, GOD_LIGHT_ON, GOD_LIGHT } from '../config.js';
 import { ctx } from './ctx.js';
 import { layerAt } from './frame.js';
 import { raw, darkPage, perPage, themeGen } from '../ink.js';
@@ -233,11 +234,20 @@ const ringW = rate => SKY_RING_W[0] + SKY_RING_W[1] * rate;
 const ringLift = rate => Math.max(P, snap(SKY_RING_LIFT[0] + SKY_RING_LIFT[1] * rate, P));
 // What a rally does to a soul at (x, y) seen at `rate` (1 / its depth): it
 // lifts it. World px, down.
+// With waves on the lift is a swell: a cosine bump over the ring's band,
+// and the same crest of his light (`RING.lit`), so the ring rolls through
+// the mass rather than stepping it up and down.
+const RING = { lit: 0 };
 function ringsAt(x, y, rate) {
   let lift = 0;
+  RING.lit = 0;
   for (const r of RINGS) {
-    if (Math.abs(Math.hypot(x - r.x, y - r.y) - r.rad) >= ringW(rate)) continue;
-    lift = Math.min(lift, -ringLift(rate));
+    const d = Math.abs(Math.hypot(x - r.x, y - r.y) - r.rad), w = ringW(rate);
+    if (d >= w) continue;
+    if (!GOD_WAVES_ON) { lift = Math.min(lift, -ringLift(rate)); continue; }
+    const k = 0.5 + 0.5 * Math.cos(Math.PI * d / w);
+    lift = Math.min(lift, -Math.round(ringLift(rate) * GOD_WAVES.swell * k * K) / K);
+    RING.lit = Math.max(RING.lit, k * GOD_WAVES.rallyLit);
   }
   return lift;
 }
@@ -314,7 +324,9 @@ function hopAt(x, y) {
     if (a <= 0) continue;
     const up = Math.sin(Math.PI * u) * (w.big ? T.bigHop : T.hop) * H * a;
     if (up > -HOP.lift) HOP.lift = -up;
-    HOP.lit = Math.max(HOP.lit, a * clamp((1 - u) / T.unlit, 0, 1));
+    // Lit whole through the hop and out over its last `unlit`; with waves
+    // on, lit with the hop's own sine, so the light is a crest and not a band.
+    HOP.lit = Math.max(HOP.lit, a * (GOD_WAVES_ON ? Math.sin(Math.PI * u) : clamp((1 - u) / T.unlit, 0, 1)));
   }
   HOP.lift = Math.round(HOP.lift * K) / K;
   return HOP;
@@ -376,12 +388,15 @@ function drawStage() {
 // A fact of the window.
 let ROWS = [], rowsKey = '';   // cache: keyed by the stage's geometry
 function crowdRows() {
-  const st = stage(), G = GOD_CROWD, key = `${st.yb}|${st.yf}|${st.mx}`;
+  const st = stage(), G = GOD_CROWD, key = `${st.yb}|${st.yf}|${st.mx}|${GOD_DEPTH_ON ? 1 : 0}`;
   if (key === rowsKey) return ROWS;
   const out = [];
-  // Straight rows a soul and a row's gap apart, every soul one size.
-  const step = n => n + stageGap() - GOD_MASS.rise;   // a row tucked under the next by a rise, so no square lifting shows the stage
-  for (let y = st.yf - P, r = 0; y > st.yb + P; r++) {
+  // Straight rows a soul and a row's gap apart, every soul one size -- or,
+  // with depth on, each row's soul its own size and tucked under the next
+  // by a share of it, so the rows pack tighter toward the back; the front
+  // row's feet then on the stage's front edge, so no stage shows under it.
+  const step = n => n + stageGap() - (GOD_DEPTH_ON ? Math.round(n * GOD_DEPTH.tuck) : GOD_MASS.rise);   // a row tucked under the next by a rise, so no square lifting shows the stage
+  for (let y = GOD_DEPTH_ON ? st.yf : st.yf - P, r = 0; y > st.yb + P; r++) {
     const n = stageSoul(st, y);
     out.push({ y, n, k: stageFore(st, y), r });
     y -= step(n);
@@ -403,11 +418,28 @@ const drawn = { souls: 0 };
 // A soul's rise, world px (0 to -rise, on a whole device pixel): a smooth sine
 // on the soul's own period, its phase the wave across the mass plus its own,
 // so the mass rolls and no two squares keep step.
-function rippleAt(x, i, r) {
+// `k` is the soul's size against the front's: with waves on a far soul
+// rises less, as it is smaller.
+function rippleAt(x, i, r, k = 1) {
   const M = GOD_MASS, own = hsh(i, r, 11), per = lerp(M.period[0], M.period[1], hsh(i, r, 17));
-  const ph = x / M.wave + r * M.drift + own * M.own;
+  const wave = GOD_WAVES_ON ? GOD_WAVES.wave : M.wave, ownK = GOD_WAVES_ON ? GOD_WAVES.own : M.own;
+  const ph = x / wave + r * M.drift + own * ownK;
   const u = 0.5 + 0.5 * Math.sin(2 * Math.PI * (now() / per + ph));
-  return Math.round(-M.rise * u * K) / K;
+  return Math.round(-M.rise * (GOD_WAVES_ON ? k : 1) * u * K) / K;
+}
+// His light on the crowd round his foot (config, GOD_LIGHT): how lit a soul
+// at (x, foot y) is, 0 to 1 -- a pool falling off with the flattened
+// distance from his foot, spoked as his rays are and turning with them,
+// gone with them as support rises.
+function poolAt(x, y) {
+  const L = GOD_LIGHT, left = raysLeft();
+  if (left < 0.02) return 0;
+  const dx = x - WV.fx, dy = (y - WV.fy) / L.flat, d = Math.hypot(dx, dy), reach = L.reach * H;
+  if (d >= reach) return 0;
+  const fall = 1 - d / reach;
+  const ang = Math.atan2(dy, dx) - TK * GOD_RAYS.turn;
+  const spoke = 0.5 + 0.5 * Math.cos(GOD_RAYS.n * ang);
+  return L.amp * left * fall * (1 - L.spoke + L.spoke * spoke);
 }
 export const crowdDrawn = () => ({ ...drawn, won: shown.won.length });
 // The souls of row r in view, each { r, i, x, y, w, a }: x its left, y its
@@ -426,7 +458,10 @@ function rowSouls(r, R, n, out) {
     if (x0 + w < S.camX - P || x0 > S.camX + S.viewW + P) continue;
     const past = clamp((Math.abs(c - mid) - edge) / Math.max(1, hw - edge), 0, 1);
     const i = k + 1000, a = standing(r, n, i, past);
-    if (a > 0.001) out.push({ r, i, x: x0, y: R.y, w, a });
+    // With depth on, a share of the front row stands a cell down off the
+    // stage's edge, on the cloud, so the near edge frays instead of ruling a line.
+    const drop = GOD_DEPTH_ON && r === n - 1 && hsh(i, 23) < GOD_DEPTH.fray ? P : 0;
+    if (a > 0.001) out.push({ r, i, x: x0, y: R.y + drop, w, a });
   }
 }
 // God's crowd: its rows back to front, and before each whatever stands on
@@ -442,19 +477,33 @@ function drawGodsCrowd(rows, between) {
     const souls = [];
     rowSouls(r, R, rows.length, souls);
     const back = 1 - (rows.length > 1 ? r / (rows.length - 1) : 1);
+    // the share of the row's squares pale: with depth on, the back rows
+    // nearly all pale and the front nearly all mid, so the mass fades toward the sky
+    const paleShare = GOD_DEPTH_ON ? lerp(GOD_DEPTH.pale, GOD_DEPTH.paleBack, back) : M.pale + M.deepPale * back;
+    // a word's light: whole as today, or capped by page with waves on
+    const litK = GOD_WAVES_ON ? (darkPage ? GOD_WAVES.lit : GOD_WAVES.litDay) : 1;
+    const k = R.n / stageSoul();   // the row's soul against the front's
     for (const s of souls) {
       if (s.a > 0.5) count++;
-      const hop = hopAt(s.x + s.w / 2, s.y), lift = Math.min(ringsAt(s.x + s.w / 2, s.y, 1), hop.lift);
+      const hop = hopAt(s.x + s.w / 2, s.y), ring = ringsAt(s.x + s.w / 2, s.y, 1);
+      // with waves on, a far soul's hop and swell are smaller, as it is
+      const lift = GOD_WAVES_ON ? Math.round(Math.min(ring, hop.lift) * k * K) / K : Math.min(ring, hop.lift);
       const was = ctx.globalAlpha;
       if (s.a < 1) ctx.globalAlpha = was * s.a;
       // a flat square, one of the page's two greys, up and down on its own
       // phase of the wave across the mass
-      const y = s.y - s.w + lift + rippleAt(s.x, s.i, r);
-      rect(s.x, y, s.w, s.w, hsh(s.i, r, 5) < M.pale + M.deepPale * back ? PALE : MID);
-      // lit in his light as his word reaches it
-      if (hop.lit > 0.01) {
-        ctx.globalAlpha = was * s.a * hop.lit;
+      const y = s.y - s.w + lift + rippleAt(s.x, s.i, r, k);
+      rect(s.x, y, s.w, s.w, hsh(s.i, r, 5) < paleShare ? PALE : MID);
+      // lit in his light as his word reaches it, or as a rally's swell passes
+      const lit = Math.max(hop.lit * litK, RING.lit);
+      if (lit > 0.01) {
+        ctx.globalAlpha = was * s.a * lit;
         rect(s.x, y, s.w, s.w, LIT_TONE);
+      }
+      // and in the pool of his light round his foot (paper by day, his white by night)
+      if (GOD_LIGHT_ON) {
+        const pool = poolAt(s.x + s.w / 2, s.y);
+        if (pool > 0.01) { ctx.globalAlpha = was * s.a * pool; rect(s.x, y, s.w, s.w, darkPage ? WHITE : W); }
       }
       ctx.globalAlpha = was;
     }

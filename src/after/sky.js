@@ -19,7 +19,8 @@
 import { S } from '../state.js';
 import { P, SKY_FIT, GOD_CELLS, GOD_FIT, GOD_UP, GOD_RATE, GOD_FOOT, GOD_CROWD, GOD_SIGN_DEEP, GOD_STAGE, AFTER_HORIZON,
          GOD_N, GOD_THRONE, WALK_BODY, WORKER,
-         CROWD_X0, CROWD_FILES, CROWD_PITCH, CROWD_NEAR, CROWD_ROW, CROWD_FAR_ROW, GOD_BACK, UNION_CROWD, AFTER_SLICE_GAP } from '../config.js';
+         CROWD_X0, CROWD_FILES, CROWD_PITCH, CROWD_NEAR, CROWD_ROW, CROWD_FAR_ROW, GOD_BACK, UNION_CROWD, AFTER_SLICE_GAP,
+         GOD_DEPTH_ON, GOD_DEPTH } from '../config.js';
 import { yardCell } from '../world.js';
 import { actPlace } from '../acts.js';
 import { afterFloor, afterTop, afterOpenX, campEdges, podiumMid, unionHalf, stationBox, speakerAt, reachTo } from './place.js';
@@ -78,10 +79,10 @@ export const faceY = () => { const f = skyFrame(); return f.gy0 + 9 * f.gc; };
 // is { dx, y }: world px across from the middle at y, and world y.
 let stageMemo = null, stageKey = ''; // cache: keyed by the sky frame (horizon, cell, floor)
 export function stage() {
-  const f = skyFrame(), G = GOD_STAGE, key = `${f.hor}|${f.h}|${f.floor}`;
+  const f = skyFrame(), G = GOD_STAGE, key = `${f.hor}|${f.h}|${f.floor}|${GOD_DEPTH_ON ? 1 : 0}`;
   if (stageMemo && key === stageKey) return stageMemo;
   // its front stands up among the far cloud's rows, not on the plane
-  const mx = G.mx * f.h, yf = afterFloor() - GOD_BACK.front * P;
+  const mx = G.mx * f.h, yf = afterFloor() - (GOD_DEPTH_ON ? GOD_DEPTH.front : GOD_BACK.front) * P;
   const steps = Math.max(1, Math.ceil((f.bank - f.gy0 - (GOD_N + GOD_THRONE.seatH) * f.h) / (GOD_THRONE.step * f.h)));
   stageMemo = {
     // from behind his foot forward to the main plane's line, which is its foot
@@ -183,7 +184,14 @@ export function stageSpot(f, r) {
 // row and between two rows: every soul one size, in whole cells, so the
 // crowd stays on the cell grid and a soul keeps its rim and its middle at
 // any window.
-export const stageSoul = () => GOD_BACK.soul * P;
+// With depth on (config, GOD_DEPTH) a soul grows from the back row's cells to
+// the front's by where its row stands, still in whole cells; asked with no
+// row it is the front's.
+export const stageSoul = (st = null, y = null) => {
+  if (!GOD_DEPTH_ON) return GOD_BACK.soul * P;
+  const s = st || stage(), fore = y == null ? 1 : stageFore(s, y);
+  return Math.round(lerp(GOD_DEPTH.soul[0], GOD_DEPTH.soul[1], fore)) * P;
+};
 export const stageGap = () => GOD_BACK.gap * P;
 // A body of the sim's on the top: a soul of its row's size, but no wider
 // than most of a file's spacing there, so the members standing side by side
