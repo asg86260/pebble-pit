@@ -35,6 +35,7 @@ import { windowS, startMeal, landAt } from './deep/meals.js';
 import { startleFauna, faunaWhen } from './deep/fauna.js';
 import { nextWave } from './render/deepwave.js';
 import { skyMoment, skyWatch } from './render/aftercrowd.js';
+import { remakeCloudSky } from './render/after/cloudsky.js';   // MOCK: the review 'clouds: natural motion'
 import { buildStation, nextSlot } from './deep/party.js';
 import { lookAt, seatRails } from './deep/rails.js';
 import { press as pressBuildButton } from './deep/buildbutton.js';
@@ -2894,6 +2895,19 @@ export const SCENES = {
   // switches handed back to the build, which in a dev build stands both.
   'after-empty': { about: 'the acts', say: 'the afterlife, empty: the placeholder cloud floor, nothing built on it',
     run: () => { window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1); } },
+  // MOCK: the review 'clouds: natural motion' (config/clouds.js, CLOUDS_OPTIONS):
+  // the act's sky under each option, the camp empty so nothing stands in
+  // front of the clouds; the option is a knob, so moving between them swaps
+  // it on the sky already standing.
+  ...Object.fromEntries([
+    ['0 today', "today's clouds: every lobe on its own current, the far layers plain blobs"],
+    ['A slowed', 'the same model slowed: a lobe strays a third as far, three times as slow, hardly bobs'],
+    ['B one body, billowing edges', 'a cloud moves as one body with the wind; turrets billow and slump, edge lumps condense and dissipate'],
+    ['C B + a reworked background', 'B, far clouds in a tone of their own, the middle distance in shape, long low far banks, no ruled underline']
+  ].map(([option, say], n) => [`clouds-${option[0]}`, { about: 'the acts', review: 'clouds: natural motion', option, say, branch: 'review-clouds',
+    stage: 'mock: an option in the real game on branch review-clouds, not on main; the one chosen is folded into config/clouds.js',
+    swap: () => { window.__tune('CLOUDS_OPTION', n); remakeCloudSky(); },
+    run: () => { window.__tune('CLOUDS_OPTION', n); remakeCloudSky(); window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1); } }])),
   'hell-empty': { about: 'the acts', say: 'hell, empty: the placeholder black hollow and its floor, nothing built in it',
     run: () => { window.__reset(); window.__actsOn(null); window.__goPlace('hell'); window.__fast(1); } },
   // Act 4's loop on its placeholder art (hell/; render/hell.js): the landing

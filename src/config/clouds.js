@@ -387,3 +387,51 @@ export const CLOUDS_ACT3 = {
   seed: 7, pad: 900, path: { dark: 'haze' },
   sky: { rows: 120, rate: 0.4, lanes: [null, [37, 40], [35, 38], [32, 36], [28, 33]] }
 };
+
+// --- MOCK: the review 'clouds: natural motion' ---------------------------------------
+// Three ways the clouds could move and read, switched by one knob so the
+// review bench (review.html) stands each in the real game; the one chosen is
+// folded into the constants above and this block goes. 0 is today.
+//   A  the same model, slowed: a lobe strays a third as far, three times as
+//      slow, and hardly bobs; its radius hardly pulses
+//   B  a cloud moves as one body: all its lobes share one slow current and
+//      advect with the layer's wind; the shape changes only at its edges --
+//      turrets billow (swell and rise, then slump) and the small lumps on its
+//      edge condense and dissipate
+//   C  B, with the background reworked: far clouds a tone of their own
+//      (lighter than any near tone by day), the middle distance drawn in
+//      shape rather than as blobs, the far blobs long and low, the far
+//      lanes parted, and no dark ruled line under a near cloud's base
+//   body    one current a cloud: `wander` of its R, `period` seconds, `lift`
+//           the share up and down
+//   billow  a turret of at least `from` cells swells `swell` of its radius
+//           and rises `rise` of that swell as it does, over `period`
+//           seconds; a share `share` of the turrets billow at all, so one
+//           rises at a time
+//   lump    a crust lump condenses and dissipates over `period` seconds
+export let CLOUDS_OPTION = 0;
+export const CLOUDS_OPTION_NAMES = ['0', 'A', 'B', 'C'];
+const MOCK_B = {
+  motion: 'body',
+  body: { wander: [0.03, 0.07], period: [240, 600], lift: 0.25 },
+  billow: { from: 3, swell: [0.1, 0.22], rise: 0.5, period: [180, 420], share: 0.6 },
+  lump: { period: [90, 240] }
+};
+export const CLOUDS_OPTIONS = [
+  {},
+  { flow: { wander: [0.06, 0.14], period: [300, 700], lift: 0.15 }, pulse: 0.02, lumpPulse: 0.03 },
+  MOCK_B,
+  { ...MOCK_B,
+    palette: { light: { sky: '#ffffff', haze: '#ededed', lit: '#dbdbdb', body: '#c9c9c9', shade: '#a4a4a4', core: '#757575' } },
+    // the middle distance a flat silhouette in its own shape: a band drawn on
+    // a cloud a few cells tall is a ruled line under a slab
+    bands: { light: [[0, ['haze', 'haze', 'haze', 'haze'], 'flat'], [0.25, ['haze', 'haze', 'haze', 'haze'], 'flat'], [0.6, ['lit', 'body', 'shade', 'shade'], 'round']],
+             dark: [[0, ['haze', 'haze', 'haze', 'haze'], 'flat'], [0.25, ['body', 'body', 'body', 'body'], 'flat'], [0.6, ['lit', 'near', 'body', 'body'], 'round']] },
+    lod: { plain: 0.3 },
+    blob: { n: [3, 5], r: [0.5, 0.8], step: [1.2, 1.6], rise: [0.35, 0.6] },
+    lanes: [null, [41, 44], [37, 40], [32, 36], [28, 33]] }
+];
+export const CLOUDS_KNOBS = [
+  { key: 'CLOUDS_OPTION', label: 'clouds option (0 A B C)', min: 0, max: 3, step: 1,
+    get: () => CLOUDS_OPTION, set: v => { CLOUDS_OPTION = v; } }
+];

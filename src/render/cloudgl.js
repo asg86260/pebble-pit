@@ -314,7 +314,7 @@ export function skyGL() {
       // and how far off it this one sits, with every wander on the way)
       let lobe = p, ride = 0;
       while (lobe.follow) { ride += lobe.a[0] + lobe.a[1]; lobe = lobe.follow; }
-      const reach = p.reach || (p.reach = (lobe.r * 1.08 + lobe.a[0] + lobe.a[1] + lobe.a[2]) * REACH + 1 +
+      const reach = p.reach || (p.reach = (lobe.r * (1.08 + (lobe.grow || 0)) + lobe.a[0] + lobe.a[1] + lobe.a[2]) * REACH + 1 +
         (p.follow ? (Math.abs(p.x - lobe.x) + p.r * 1.2 + ride) * REACH : 0));
       let near = lobe.x + lobe.stray * t - ox; near -= W * Math.floor(near / W);
       if (near > w + reach && near < W - reach) continue;
