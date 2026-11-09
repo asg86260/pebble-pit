@@ -410,7 +410,7 @@ export const CLOUDS_ACT3 = {
 //           rises at a time
 //   lump    a crust lump condenses and dissipates over `period` seconds
 export let CLOUDS_OPTION = 0;
-export const CLOUDS_OPTION_NAMES = ['0', 'A', 'B', 'C'];
+export const CLOUDS_OPTION_NAMES = ['0', 'A', 'B', 'C', 'D', 'E', 'F'];
 const MOCK_B = {
   motion: 'body',
   body: { wander: [0.03, 0.07], period: [240, 600], lift: 0.25 },
@@ -429,9 +429,42 @@ export const CLOUDS_OPTIONS = [
              dark: [[0, ['haze', 'haze', 'haze', 'haze'], 'flat'], [0.25, ['body', 'body', 'body', 'body'], 'flat'], [0.6, ['lit', 'near', 'body', 'body'], 'round']] },
     lod: { plain: 0.3 },
     blob: { n: [3, 5], r: [0.5, 0.8], step: [1.2, 1.6], rise: [0.35, 0.6] },
-    lanes: [null, [41, 44], [37, 40], [32, 36], [28, 33]] }
+    lanes: [null, [41, 44], [37, 40], [32, 36], [28, 33]] },
+  // Round 2, on B (the owner: "unnecessary separation ... some are lumped
+  // close together, theres differing heights"). Today a layer is groups of
+  // clouds packed 1.1-1.8 R apart (a cumulus is ~4 R wide, so a group is one
+  // overlapping mass) with exponential gaps of 6 R between groups (dead
+  // stretches of 200 cells beside the masses), every cloud's base jittered
+  // across its lane (4-5 cells), sizes log-normal 0.55 with a tail of 2.4 R,
+  // and towers stacked 2-4 levels (150 cells tall on the near layer).
+  //   D  one sky: every cloud of a layer on one base line (`u` of the lane),
+  //      placed one after another by its drawn width plus `gap` R of open
+  //      sky, sizes close round the layer's R (`spread`, `tail`), towers a
+  //      level or two
+  //   E  D, and the shapes polished: fewer, bigger domes (two or three
+  //      turrets, one generation of smaller ones, a sparser crust), the
+  //      lobe-meet shadow only on lobes of `coreMin` cells, no ruled
+  //      underline, the middle distance in shape, far banks long and low
+  //   F  E in option C's tones (a far haze of its own by day)
+  { ...MOCK_B, place: { spread: 0.3, tail: 1.6, gap: [0.4, 1.6], u: 0.5 }, tower: { levels: [1, 2] } },
+  { ...MOCK_B, place: { spread: 0.3, tail: 1.6, gap: [0.4, 1.6], u: 0.5 }, tower: { levels: [1, 2] },
+    vol: { turrets: { n: [2, 3], r: [0.66, 0.95], ends: 0.3, close: [0.6, 0.78], rise: [0.45, 0.8], stack: [0.95, 0.72] },
+           kids: { n: [1, 3], shrink: [0.5, 0.7], arc: 0.45, out: [0.72, 0.92], front: 0.55, levels: 1, least: 3, ride: 0.5 },
+           crust: { from: 8, per: 0.15, back: 0, r: [0.18, 0.28], arc: [-1.1, 0.1], out: 0.9 } },
+    coreMin: 10,
+    // no towers (a dome or two stacked on a low cumulus read as a mushroom
+    // cap on a stalk) and a shallower underside, so the flat base is not a
+    // dark strip
+    kinds: { cumulus: 1 }, vb: { base: 0.1 },
+    bands: { light: [[0, ['haze', 'haze', 'haze', 'haze'], 'flat'], [0.25, ['haze', 'haze', 'haze', 'haze'], 'flat'], [0.6, ['lit', 'body', 'shade', 'shade'], 'round']],
+             dark: [[0, ['haze', 'haze', 'haze', 'haze'], 'flat'], [0.25, ['body', 'body', 'body', 'body'], 'flat'], [0.6, ['lit', 'near', 'body', 'body'], 'round']] },
+    lod: { plain: 0.3 },
+    blob: { n: [3, 5], r: [0.5, 0.8], step: [1.2, 1.6], rise: [0.35, 0.6] },
+    lanes: [null, [41, 44], [37, 40], [32, 36], [28, 33]] },
+  null   // F: E in C's tones, filled in below (E is not yet a name here)
 ];
+CLOUDS_OPTIONS[6] = { ...CLOUDS_OPTIONS[5], palette: CLOUDS_OPTIONS[3].palette };
 export const CLOUDS_KNOBS = [
-  { key: 'CLOUDS_OPTION', label: 'clouds option (0 A B C)', min: 0, max: 3, step: 1,
+  { key: 'CLOUDS_OPTION', label: 'clouds option (0 A B C D E F)', min: 0, max: 6, step: 1,
     get: () => CLOUDS_OPTION, set: v => { CLOUDS_OPTION = v; } }
 ];

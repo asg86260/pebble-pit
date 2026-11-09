@@ -2913,7 +2913,10 @@ export const SCENES = {
     ['0 today', "today's clouds: every lobe on its own current, the far layers plain blobs"],
     ['A slowed', 'the same model slowed: a lobe strays a third as far, three times as slow, hardly bobs'],
     ['B one body, billowing edges', 'a cloud moves as one body with the wind; turrets billow and slump, edge lumps condense and dissipate'],
-    ['C B + a reworked background', 'B, far clouds in a tone of their own, the middle distance in shape, long low far banks, no ruled underline']
+    ['C B + a reworked background', 'B, far clouds in a tone of their own, the middle distance in shape, long low far banks, no ruled underline'],
+    ['D B, one sky', 'B placed as one sky: every cloud of a layer on one base line, set down by its width plus a gap of open sky, sizes close round the layer\'s, towers a level or two'],
+    ['E D + polished shapes', 'D with fewer, bigger domes, a sparser crust, the lobe-meet shadow only on big lobes, no ruled underline, the middle distance in shape, far banks long and low'],
+    ['F E in C\'s tones', 'E with option C\'s palette: a far haze of its own by day, the lit face a tone of its own']
   ].map(([option, say], n) => [`clouds-${option[0]}`, { about: 'the acts', review: 'clouds: natural motion', option, say, branch: 'review-clouds',
     stage: 'mock: an option in the real game on branch review-clouds, not on main; the one chosen is folded into config/clouds.js',
     swap: () => { window.__tune('CLOUDS_OPTION', n); remakeCloudSky(); },
