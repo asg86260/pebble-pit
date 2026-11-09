@@ -38,8 +38,12 @@ page drawn from plain shapes, not the game, and it says so.
      size, so check it at real size before calling it subtle.
    - Show what the option does to what stands on it: stations, a worker
      walking (a square moving along the ground), feet.
-4. **Send it and ask for the vote.** Send the HTML file to the owner, with
-   one line per option and your pick with its reason. Do not build.
+4. **Put it on the review bench and ask for the vote.** Label each option's
+   panel `A.`, `B.`, `C.` (the template's `?opt=A` shows that panel alone),
+   and give each its own scene on the bench, as the `review-bench` skill
+   says. Never send the owner a loose HTML file or a page of stacked
+   options. Tell them in one line per option, with your pick and its reason.
+   Do not build.
 5. **Build the one chosen.** Then take shots with `tools/look.mjs <scene>`
    and compare them against the mock. A follow-up tweak to it is a new mock
    before it is new code, unless it is a number the owner named ("six cells

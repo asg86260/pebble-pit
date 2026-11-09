@@ -58,4 +58,19 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
+</script>
+<script>
+// On the review bench a mock shows one option at a time: ?opt=A keeps that
+// option's panel alone, scaled to fill the frame, and drops the page's prose.
+(() => {
+  const k = new URLSearchParams(location.search).get('opt'); if (!k) return;
+  document.querySelectorAll('h1, body > p').forEach(e => e.remove());
+  document.body.style.padding = '0';
+  for (const f of document.querySelectorAll('#row > figure')) {
+    const b = f.querySelector('figcaption b');
+    if (!b || !b.textContent.trim().startsWith(k + '.')) { f.remove(); continue; }
+    f.style.cssText = 'border:0;padding:4px;max-width:none;overflow:hidden';
+    f.querySelector('canvas').style.cssText = 'display:block;margin:0 auto;height:86vh;width:auto;max-width:100vw;image-rendering:pixelated';
+  }
+})();
 </script></body></html>
