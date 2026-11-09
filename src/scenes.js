@@ -636,6 +636,16 @@ function heavenTurn(want) {
 // a member beside the first sign walks out and the clock runs on `won`
 // seconds into its soul's way round the sign and across to the union's camp.
 const LEVEL_SIGNS = [[16, 12], [6, 30], [27, 14], [34, 24]];
+// God's camp with the bench's switches set (config/aftercrowd.js), the clock
+// run on to just before a loud phrase, as level-god-talk stands it.
+function godLook(depth, waves, light) {
+  window.__tune('GOD_DEPTH_ON', depth); window.__tune('GOD_WAVES_ON', waves); window.__tune('GOD_LIGHT_ON', light);
+  levelAt(0.1, 'god');
+  window.__holdShot(0);
+  for (let k = 0; k < 800; k++) { const m = skyMoment(); if (m && m.glare === 0 && m.next < 0.3) break; window.__fast(0.1); }
+  window.__look(godView() - S.viewW / 2); window.__fast(1 / 60);
+  window.__holdShot();
+}
 function levelAt(share, at, won = null) {
   window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
   const n = 4000, gone = Math.round(n * share * STRIKE_SHARE);
@@ -3350,6 +3360,21 @@ export const SCENES = {
       window.__look(godView() - S.viewW / 2); window.__fast(1 / 60);
       window.__holdShot();
     } },
+  // God's crowd on the bench (config/aftercrowd.js, GOD_DEPTH, GOD_WAVES,
+  // GOD_LIGHT): the same moment as level-god-talk with the switches set, so
+  // the options stand side by side and the vote is which switches stay on.
+  'godcrowd-0': { about: 'the acts', review: "God's crowd: perspective and effects", option: '0 today',
+    say: "God's crowd as it stands: every soul one size, a word's light a black band by day, a rally a step up",
+    run: () => godLook(0, 0, 0) },
+  'godcrowd-a': { about: 'the acts', review: "God's crowd: perspective and effects", option: 'A depth: the rows shrink and pale toward the sky, the front edge frays onto the cloud',
+    say: "God's crowd in depth: a soul a cell at the back to three at the front, the back rows pale, the front row's feet on the stage's edge and some a cell down on the cloud",
+    run: () => godLook(1, 0, 0) },
+  'godcrowd-b': { about: 'the acts', review: "God's crowd: perspective and effects", option: 'B depth + waves: a word a crest of light, a rally a swell, the mass rolling',
+    say: "A's depth, and the effects as waves: a word's light a crest riding its hop, a rally a cosine swell with its own crest, the ripple coherent across the mass",
+    run: () => godLook(1, 1, 0) },
+  'godcrowd-c': { about: 'the acts', review: "God's crowd: perspective and effects", option: 'C depth + waves + his light: a spoked pool of his rays on the crowd round his foot, turning with them',
+    say: "B, and God's light: the souls round his foot lit in a pool spoked as his rays are, turning with them, gone as support takes the rays",
+    run: () => godLook(1, 1, 1) },
   'level-carry': { about: 'the acts', say: "the chain running: a carrier with a sign over the cloud, climbing the stage's plinth or out on its top",
     run: () => {
       afterChain(true);

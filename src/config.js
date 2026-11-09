@@ -115,6 +115,7 @@ import { ROOMBA_KNOBS } from './config/roomba.js';
 import { CUT_KNOBS } from './config/cutscene.js';   // wave shot, track A
 import { ACT_KNOBS } from './config/acts.js';       // the rise, ridden
 import { CLOUDS_KNOBS } from './config/clouds.js';  // MOCK: the review 'clouds: natural motion'
+import { GOD_LOOK_KNOBS } from './config/aftercrowd.js';   // God's crowd on the bench
 
 export const TUNABLE = [
   ...YARD_KNOBS, ...VIEW_KNOBS, ...PIT_KNOBS, ...DUST_KNOBS, ...AIR_KNOBS,
@@ -126,7 +127,8 @@ export const TUNABLE = [
   ...ROOMBA_KNOBS,
   ...CUT_KNOBS,                     // wave shot, track A
   ...ACT_KNOBS,                     // the rise, ridden
-  ...CLOUDS_KNOBS                   // MOCK: the review 'clouds: natural motion'
+  ...CLOUDS_KNOBS,                  // MOCK: the review 'clouds: natural motion'
+  ...GOD_LOOK_KNOBS                 // God's crowd on the bench
 ];
 
 // A knob with no row throws rather than reading `undefined`: setting one
