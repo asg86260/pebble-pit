@@ -637,6 +637,21 @@ function heavenTurn(want) {
 const LEVEL_SIGNS = [[16, 12], [6, 30], [27, 14], [34, 24]];
 // God's camp with the bench's switches set (config/aftercrowd.js), the clock
 // run on to just before a loud phrase, as level-god-talk stands it.
+// MOCK: a plain-shape page laid over the game for a review, gone with the
+// next scene.
+function mockOver(src) {
+  if (!window.__sceneMockWrapped) {
+    const go = window.__scene;
+    window.__scene = n => { document.getElementById('mock-over')?.remove(); return go(n); };
+    window.__sceneMockWrapped = true;
+  }
+  document.getElementById('mock-over')?.remove();
+  const f = document.createElement('iframe');
+  f.id = 'mock-over'; f.src = src;
+  f.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;border:0;z-index:99999;background:#fff';
+  document.body.appendChild(f);
+}
+
 function godLook(depth, waves, light, take = 0) {
   window.__tune('GOD_DEPTH_ON', depth); window.__tune('GOD_WAVES_ON', waves); window.__tune('GOD_LIGHT_ON', light); window.__tune('GOD_TAKE', take);
   levelAt(0.1, 'god');
@@ -3346,32 +3361,27 @@ export const SCENES = {
       window.__look(godView() - S.viewW / 2); window.__fast(1 / 60);
       window.__holdShot();
     } },
-  // God's crowd on the bench (config/aftercrowd.js, GOD_DEPTH, GOD_WAVES,
-  // GOD_LIGHT): the same moment as level-god-talk with the switches set, so
-  // the options stand side by side and the vote is which switches stay on.
-  'godcrowd-0': { about: 'the acts', review: "God's crowd: perspective and effects", option: '0 today',
-    say: "God's crowd as it stands: every soul one size, a word's light a black band by day, a rally a step up",
-    run: () => godLook(0, 0, 0) },
-  'godcrowd-a': { about: 'the acts', review: "God's crowd: perspective and effects", option: 'A depth: the rows shrink and pale toward the sky, the front edge frays onto the cloud',
-    say: "God's crowd in depth: a soul a cell at the back to three at the front, the back rows pale, the front row's feet on the stage's edge and some a cell down on the cloud",
-    run: () => godLook(1, 0, 0) },
-  'godcrowd-b': { about: 'the acts', review: "God's crowd: perspective and effects", option: 'B depth + waves: a word a crest of light, a rally a swell, the mass rolling',
-    say: "A's depth, and the effects as waves: a word's light a crest riding its hop, a rally a cosine swell with its own crest, the ripple coherent across the mass",
-    run: () => godLook(1, 1, 0) },
-  'godcrowd-c': { about: 'the acts', review: "God's crowd: perspective and effects", option: 'C depth + waves + his light: a spoked pool of his rays on the crowd round his foot, turning with them',
-    say: "B, and God's light: the souls round his foot lit in a pool spoked as his rays are, turning with them, gone as support takes the rays",
-    run: () => godLook(1, 1, 1) },
-  // Round 2 (the owner on C: "large and expansive, but appearing miniscule"):
-  // C's depth, waves and light at a scale (config/aftercrowd.js, GOD_TAKES).
-  'godcrowd-d': { about: 'the acts', review: "God's crowd: perspective and effects", option: "D to your feet: the stage runs on past the path to the frame's foot, the near souls eight cells, the rows off both edges",
-    say: "C at scale: the stage's front forty cells past the path, the front rows drawn over it, a soul eight cells at the front",
-    run: () => godLook(1, 1, 1, 1) },
-  'godcrowd-e': { about: 'the acts', review: "God's crowd: perspective and effects", option: 'E the far multitude: God set back and smaller, his foot sixty cells up, the mass a deep sea behind the path',
-    say: "C at scale: God's foot sixty cells over the path and God at six tenths of his size, the stage deep behind the path, the crowd wider past it",
-    run: () => godLook(1, 1, 1, 2) },
-  'godcrowd-f': { about: 'the acts', review: "God's crowd: perspective and effects", option: "F both: God set back and small, the mass from under his throne down past the path to the frame's foot",
-    say: "C at scale: D's run to the viewer and E's far throne together, the mass filling the frame from the horizon to its foot",
-    run: () => godLook(1, 1, 1, 3) },
+  // MOCK: the reviews 'act 3: where faith comes from' (a choice in words, the
+  // frame showing where each would live) and 'act 3: the stair's layout' (a
+  // plain-shape page laid over the game). Nothing here is built.
+  'faith-a': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'mock: plain shapes, not the game; round 3, a shrine the followers pray round, a capped meter you click to empty, one option a frame',
+    option: 'A obelisk: a fill bar up its face, followers in a full circle round it',
+    say: 'the clearest meter and the most Cult of the Lamb ring; new obelisk art and a back row drawn behind it', run: () => mockOver('/mocks/a3-faith-3.html?opt=A') },
+  'faith-b': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'mock: plain shapes, not the game; round 3, a shrine the followers pray round, a capped meter you click to empty, one option a frame',
+    option: 'B brazier: the flame grows with the fill, a gauge beside it, followers in an arc facing you',
+    say: 'the most alive and the cheapest ring; a flame is a poor number, hence the gauge', run: () => mockOver('/mocks/a3-faith-3.html?opt=B') },
+  'faith-c': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'mock: plain shapes, not the game; round 3, a shrine the followers pray round, a capped meter you click to empty, one option a frame',
+    option: 'C censer: a censer hung over a stone ring, its bowl the meter, followers on the ring',
+    say: 'the smallest meter; the ring is a new footprint on the map', run: () => mockOver('/mocks/a3-faith-3.html?opt=C') },
+  'stair-a': { about: 'the acts', review: "act 3: the stair's layout", stage: 'mock: plain shapes, not the game; round 3, the timber scaffold built from the floor up, the camera turning up at the right end, one option a frame',
+    option: 'A ladders: a deck and a ladder each bay, the crew climbing what they have built',
+    say: 'the clearest picture of building from the floor up; five ladders and decks a flight, and a climb', run: () => mockOver('/mocks/a3-stair-3.html?opt=A') },
+  'stair-b': { about: 'the acts', review: "act 3: the stair's layout", stage: 'mock: plain shapes, not the game; round 3, the timber scaffold built from the floor up, the camera turning up at the right end, one option a frame',
+    option: 'B hoist: a mast and pulley on the deck below, pieces and the builder ride the rope up',
+    say: 'the busiest; mast, rope and plank all move every bay, and a thin rope may shimmer', run: () => mockOver('/mocks/a3-stair-3.html?opt=B') },
+  'stair-c': { about: 'the acts', review: "act 3: the stair's layout", stage: 'mock: plain shapes, not the game; round 3, the timber scaffold built from the floor up, the camera turning up at the right end, one option a frame',
+    option: 'C ramp: a plank ramp climbs under each flight, the crew walks it',
+    say: 'the cheapest motion; a second diagonal under every flight that crowds the braces', run: () => mockOver('/mocks/a3-stair-3.html?opt=C') },
   'level-carry': { about: 'the acts', say: "the chain running: a carrier with a sign over the cloud, climbing the stage's plinth or out on its top",
     run: () => {
       afterChain(true);
@@ -4202,3 +4212,4 @@ Object.assign(SCENES, {
       standSign('s2', signMid('s2', 'deep').x - S.viewW / 2);
     } }
 });
+

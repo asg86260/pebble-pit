@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Act 3 Stair, Round 2</title>
+<style>
+:root{--bg:#fff;--ink:#000}
+body{margin:0;padding:16px;background:var(--bg);color:var(--ink);font:13px ui-monospace,Menlo,monospace}
+h1{font-size:15px;margin:0 0 4px}p{margin:0 0 12px;max-width:900px;line-height:1.45}
+.row{display:flex;flex-direction:column;gap:16px}
+figure{margin:0;border:2px solid #000;padding:8px;max-width:100%;overflow-x:auto}
+figcaption{margin-top:6px;max-width:900px;line-height:1.4}
+canvas{display:block;max-width:100%;image-rendering:pixelated}
+</style></head><body>
+<h1>MOCK, not the game: act 3's switchback stair, round 2: three scaffolds</h1>
+<p>Plain shapes: the stair is option C of round 1 (switchbacks up a cloud column), now held up by scaffolding, with railings and landings. Each bought increment is one flight plus the scaffold under it, carried up piece by piece (a plank bar or an upright post over a worker's head) and faded in. Outlined boxes are the stations (forestry, saw mill, workshop, chipper, paper mill, press), black 3x3 squares are workers (a bar over the head is a carried plank), the white square with a crown is God on his throne, pale tiered shapes are cloud, and the black-and-grey stepped ribbon is the stair. The corner box is a minimap (the camera is the small frame) and the top-left words are a mock HUD tally, not game copy. Each panel loops: a price tag appears on the next empty stair section, the cursor buys it, the tally ticks down, two workers carry planks up from the press and the section fades in. The camera follows the build along its own path. It cannot show the real sprites, the real worker speed or the real camp walk, and a worker's feet on a slope are interpolated, not planted on each tread.</p>
+<div class="row" id="row"></div>
+<script>
+const P = 6, COLS = 100, ROWS = 90, W = COLS * P, H = ROWS * P;
+const K = '#000', MID = '#8c8c8c', SHADE = '#bdbdbd', PALE = '#d9d9d9', PAPER = '#fff';
+const hash = (a, b = 0) => { let h = (a * 374761393 + b * 668265263) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
+const cell = (x, c, i, j, w = 1, h = 1) => { x.fillStyle = c; x.fillRect(i * P, j * P, w * P, h * P); };
+const clamp = (v, a = 0, b = 1) => Math.max(a, Math.min(b, v));
+const sm = u => { u = clamp(u); return u * u * (3 - 2 * u); };
+const lerp = (a, b, u) => a + (b - a) * u;
+const T0 = +((location.hash.match(/t=([\d.]+)/) || [0, 0])[1]);
+const SPEED = 28;                       // cells a second in the mock: twice a real walk of about 14, so a loop is short
+const COST = { faith: 10, timber: 8, dust: 12 }, START = { faith: 40, timber: 32, dust: 48 };
+const NAMES = ['forestry', 'saw mill', 'workshop', 'chipper', 'paper mill', 'press'];
+const SW = [12, 20, 16, 12, 18, 14], SH = [9, 12, 10, 9, 12, 10];
+
+function cursor(x, px, py, a) {
+  x.save(); x.globalAlpha = a; x.fillStyle = K; x.beginPath(); x.moveTo(px, py); x.lineTo(px, py + 16); x.lineTo(px + 4, py + 12); x.lineTo(px + 10, py + 12); x.closePath(); x.fill();
+  x.strokeStyle = PAPER; x.lineWidth = 1; x.stroke(); x.restore();
+}
+// ---- cloud: columns of cells, toned by depth, scalloped underneath
+const TONES = [['#f2f2f2', '#e8e8e8'], [PALE, '#e0e0e0'], ['#cfcfcf', SHADE], [SHADE, '#adadad']];
+const tone = (c, r, frac, seed) => TONES[frac < .04 ? 0 : frac < .35 ? 1 : frac < .7 ? 2 : 3][hash(c >> 1, r + seed * 7) < .3 ? 1 : 0];
+function cloud(x, xs, xe, topFn, D, seed, tp = 0) {
+  for (let c = xs; c < xe; c++) {
+    const top = Math.round(topFn(c));
+    let d = D + Math.round(2.5 * Math.sin(c * 0.45 + seed) + hash(c >> 1, seed) * 2);
+    if (tp) d = Math.max(2, Math.round(d * Math.sqrt(clamp(Math.min(c - xs + 1, xe - c) / tp))));
+    for (let r = 0; r < d; r++) cell(x, tone(c, r, r / d, seed), c, top + r);
+  }
+}
+function station(x, s) {
+  cell(x, K, s.x, s.y - s.h, s.w, s.h);
+  cell(x, '#e8e8e8', s.x + 1, s.y - s.h + 1, s.w - 2, s.h - 2);
+  cell(x, K, s.x, s.y - s.h, s.w, 2);
+  cell(x, K, s.x + (s.w >> 1) - 1, s.y - 4, 3, 4);
+  cell(x, PAPER, s.x + (s.w >> 1), s.y - 3, 1, 3);
+  x.fillStyle = K; x.font = 'bold 9px ui-monospace,Menlo,Consolas,monospace'; x.textAlign = 'center';
+  x.fillText(s.name, (s.x + s.w / 2) * P, (s.y - s.h + 5) * P - 2); x.textAlign = 'left';
+}
+function god(x, gx, gy, t) {          // gx,gy: feet of the throne's seat (cell coords)
+  cell(x, MID, gx - 1, gy - 15, 14, 14);          // throne back
+  cell(x, K, gx - 2, gy - 2, 16, 2);              // seat
+  cell(x, K, gx - 2, gy - 15, 1, 15); cell(x, K, gx + 13, gy - 15, 1, 15);
+  const bx = gx + 2, by = gy - 12;
+  cell(x, K, bx, by, 8, 8); cell(x, PAPER, bx + 1, by + 1, 6, 6);
+  cell(x, K, bx + 2, by + 3, 1, 1); cell(x, K, bx + 5, by + 3, 1, 1); cell(x, K, bx + 3, by + 5, 2, 1);
+  cell(x, K, bx, by - 1, 8, 1); cell(x, K, bx, by - 3, 1, 2); cell(x, K, bx + 3, by - 4, 2, 3); cell(x, K, bx + 7, by - 3, 1, 2);
+}
+
+// ---- a route: the feet's path, cell coordinates; the stair lies along its sections
+function mkRoute(pts) {
+  const L = [0]; for (let i = 1; i < pts.length; i++) L.push(L[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+  return { pts, L, len: L[L.length - 1] };
+}
+function at(R, d) {
+  d = clamp(d, 0, R.len); let i = 1; while (i < R.pts.length - 1 && R.L[i] < d) i++;
+  const u = (d - R.L[i - 1]) / ((R.L[i] - R.L[i - 1]) || 1), a = R.pts[i - 1], b = R.pts[i];
+  return [lerp(a[0], b[0], u), lerp(a[1], b[1], u)];
+}
+function drawSection(x, R, sec, stepW, stepH, a, ghost) {
+  x.save(); x.globalAlpha = a;
+  for (let i = sec[0]; i < sec[1]; i++) {
+    const [xa, ya] = R.pts[i], [xb, yb] = R.pts[i + 1], dx = xb - xa, dy = yb - ya;
+    if (dy === 0) {
+      cell(x, K, Math.min(xa, xb), ya, Math.abs(dx), 1);
+      x.globalAlpha = ghost ? a * .5 : a; cell(x, MID, Math.min(xa, xb), ya + 1, Math.abs(dx), 2); x.globalAlpha = a;
+      if (!ghost) { const lx = Math.min(xa, xb), w = Math.abs(dx); cell(x, K, lx, ya - 3, w, 1); for (let px = lx; px <= lx + w - 1; px += 3) cell(x, K, px, ya - 2, 1, 2); }
+      continue;
+    }
+    const n = Math.abs(dx) / stepW;
+    for (let q = 0; q < n; q++) {
+      const ty = ya + dy * (q + 1) / n, left = dx > 0 ? xa + q * stepW : xa - (q + 1) * stepW;
+      cell(x, K, left, ty, stepW, 1);
+      x.globalAlpha = ghost ? a * .5 : a; cell(x, MID, left, ty + 1, stepW, stepH + 1); x.globalAlpha = a;
+      if (!ghost) { cell(x, K, left, ty - 3, stepW, 1); cell(x, K, left + (dx > 0 ? 0 : stepW - 1), ty - 2, 1, 2); }
+    }
+  }
+  x.restore();
+}
+function worker(x, wx, wy, t, carry, a) {   // wx,wy: feet, cells
+  if (a <= 0.01) return;
+  x.save(); x.globalAlpha = a;
+  const bob = Math.abs(Math.sin(t * 9 + wx)) * .3, px = (wx - 1.5) * P, py = (wy - 3 - bob) * P;
+  x.fillStyle = K; x.fillRect(px, py, 3 * P, 3 * P);
+  x.strokeStyle = PAPER; x.lineWidth = 1; x.strokeRect(px + .5, py + .5, 3 * P - 1, 3 * P - 1);
+  if (carry === 2) { x.fillStyle = K; x.fillRect(px + P, py - 4 * P - 2, P, 4 * P); x.strokeRect(px + P + .5, py - 4 * P - 1.5, P - 1, 4 * P - 1); }
+  else if (carry) { x.fillStyle = K; x.fillRect(px - P, py - P - 2, 5 * P, P); x.strokeRect(px - P + .5, py - P - 1.5, 5 * P - 1, P - 1); }
+  x.restore();
+}
+
+// ---- an option: geometry in, a draw function out
+function makeOpt(o) {
+  const R = mkRoute(o.pts), nSec = o.sections.length;
+  const surfBelow = (px, py) => { let best = o.floor; for (let i = 0; i < R.pts.length - 1; i++) { const [xa, ya] = R.pts[i], [xb, yb] = R.pts[i + 1], dx = xb - xa, dy = yb - ya; if (px < Math.min(xa, xb) || px >= Math.max(xa, xb)) continue; let sy; if (dy === 0) sy = ya; else { const n = Math.abs(dx) / o.sw, q = Math.floor(Math.abs(px - xa) / o.sw); sy = ya + dy * (q + 1) / n; } if (sy > py + 3 && sy < best) best = sy; } return best; };
+  const doorD = i => { const s = o.stations[i]; const cx = s.x + s.w / 2; let d = 0; for (let k = 1; k < R.pts.length; k++) { const a = R.pts[k - 1], b = R.pts[k]; if (a[1] === b[1] && cx >= Math.min(a[0], b[0]) && cx <= Math.max(a[0], b[0])) { d = R.L[k - 1] + Math.abs(cx - a[0]); break; } } return d; };
+  const doors = o.stations.map((_, i) => doorD(i)), lastDoor = doors[doors.length - 1];
+  // ---- the build's timeline
+  const ev = []; let prevEnd = 2.4, lastRet = 0;
+  for (let k = 0; k < nSec; k++) {
+    const s = o.sections[k], mid = (R.L[s[0]] + R.L[s[1]]) / 2, walk = Math.abs(mid - lastDoor) / SPEED;
+    const tagIn = prevEnd + .5, buy = tagIn + 2, leave = [buy + .2, buy + .9], arr = leave.map(l => l + walk);
+    const fadeStart = arr[1], end = fadeStart + 1.4, ret = end + .3 + walk;
+    ev.push({ mid, walk, tagIn, buy, leave, arr, fadeStart, end, retStart: end + .3, ret }); prevEnd = end; lastRet = Math.max(lastRet, ret);
+  }
+  const lastEnd = ev[nSec - 1].end, tHold = Math.max(lastEnd + 3.5, lastRet + .3), LOOP = tHold + 5;
+  // ---- the camera
+  const proj = (px, py) => { let best = null, bd = 1e9; for (let i = 1; i < o.cam.length; i++) { const a = o.cam[i - 1], b = o.cam[i], vx = b[0] - a[0], vy = b[1] - a[1], u = clamp(((px - a[0]) * vx + (py - a[1]) * vy) / (vx * vx + vy * vy)), qx = a[0] + vx * u, qy = a[1] + vy * u, d = Math.hypot(px - qx, py - qy); if (d < bd) { bd = d; best = [qx, qy]; } } return best; };
+  const door0 = () => [o.stations[0].x + 6, o.stations[0].y - 2];
+  const keys = [{ arr: 0, move: 1, f: door0 }];
+  ev.forEach((e, k) => { keys.push({ arr: e.tagIn - .2, move: k ? 1.6 : 2.2, f: () => at(R, e.mid) }); keys.push({ arr: e.buy + .8, move: .8, f: t => posOf(k, 0, t).p }); });
+  keys.push({ arr: lastEnd + 2.4, move: 2, f: () => [o.god[0] + 6, o.god[1] - 6] });
+  keys.push({ arr: tHold + 4.5, move: 3.2, f: door0 });
+  const focus = t => { let i = keys.findIndex(k => k.arr > t); if (i < 0) return keys[keys.length - 1].f(t); if (i === 0) return keys[0].f(t); const kk = keys[i], pv = keys[i - 1], u = sm((t - (kk.arr - kk.move)) / kk.move), a = pv.f(t), b = kk.f(t); return [lerp(a[0], b[0], u), lerp(a[1], b[1], u)]; };
+
+  // ---- static layer: cloud and stations, drawn once
+  const wd = o.world, off = document.createElement('canvas'); off.width = wd.w * P; off.height = wd.h * P;
+  const ox = off.getContext('2d'); ox.translate(-wd.x * P, -wd.y * P); o.paint(ox); o.stations.forEach(s => station(ox, s));
+  // ---- bodies
+  const idle = o.stations.map((s, i) => [0, 1].map(j => ({ s, ph: hash(i, j) * 6.28, amp: Math.min(7, (s.w + 8) / 2 - 3), sp: .35 + .2 * hash(j, i) })));
+  const couriers = [0, 1, 2, 3, 4].map(i => ({ a: doors[i], b: doors[i + 1], off: hash(i, 9) * 10 }));
+  const posOf = (k, j, t) => {
+    const e = ev[k], drop = e.mid + (j ? 2.2 : -2.2), dd = lastDoor + (j ? 3.5 : -3.5), w = e.walk;
+    const idlePos = () => at(R, dd + Math.sin(t * .5 + j * 2 + k) * 1.5);
+    if (t < e.leave[j]) return { p: idlePos(), carry: t > e.leave[j] - .5 };
+    if (t < e.arr[j]) return { p: at(R, lerp(dd, drop, (t - e.leave[j]) / (e.arr[j] - e.leave[j]))), carry: true };
+    if (t < e.retStart) return { p: at(R, drop), carry: t < e.fadeStart + .4 + (j ? 0 : 0), plankA: 1 - sm((t - e.fadeStart) / 1.0) };
+    if (t < e.ret - 0 && t < e.retStart + w) return { p: at(R, lerp(drop, dd, (t - e.retStart) / w)), carry: false };
+    return { p: idlePos(), carry: false };
+  };
+  const remaining = t => {
+    const out = {};
+    for (const c of Object.keys(START)) {
+      let v = START[c]; ev.forEach(e => { v -= COST[c] * sm((t - e.buy) / .6); });
+      const r = sm((t - (tHold + .5)) / 1.2); out[c] = Math.round(lerp(v, START[c], r));
+    }
+    return out;
+  };
+  const cur = t => { let k = 0; ev.forEach((e, i) => { if (t >= e.tagIn - .3) k = i; }); return k; };
+
+  return function draw(x, now) {
+    const t = (now + T0) % LOOP, f = focus(t), c = proj(f[0], f[1]);
+    const ccx = clamp(c[0], wd.x + COLS / 2, wd.x + wd.w - COLS / 2), ccy = clamp(c[1], wd.y + ROWS / 2, wd.y + wd.h - ROWS / 2);
+    const cx = Math.round((ccx - COLS / 2) * P), cy = Math.round((ccy - ROWS / 2) * P);
+    const camX = cx / P, camY = cy / P;
+    // far clouds, parallax
+    for (let n = 0; n < 34; n++) {
+      const w = 14 + hash(n, 1) * 18, h = 3 + Math.floor(hash(n, 2) * 3), span = COLS + 70;
+      let bx = ((hash(n, 3) * span * 2 - camX * .5 + now * .6) % span + span) % span - 35, by = Math.round(-10 + hash(n, 4) * 130 - (camY - o.camY0) * .45);
+      if (by < -8 || by > ROWS + 4) continue;
+      for (let i = 0; i < w; i++) { const hh = Math.round(h * Math.sin(Math.PI * (i + .5) / w)); for (let r = 0; r < hh; r++) cell(x, r === hh - 1 && hh > 2 ? '#dcdcdc' : '#e9e9e9', Math.round(bx) + i, by - r); }
+    }
+    x.save(); x.translate(-cx, -cy);
+    x.imageSmoothingEnabled = false; x.drawImage(off, wd.x * P, wd.y * P);
+    // stair: ghosts then built
+    const sa = 1 - sm((t - tHold) / 1.5);
+    o.sections.forEach((s, k) => {
+      const e = ev[k], built = sm((t - e.fadeStart) / 1.4), gh = (t < e.tagIn ? .12 : .45 * sm((t - e.tagIn) / .4)) * (1 - built) * sa;
+      if (gh > .01) drawSection(x, R, s, o.sw, o.sh, gh, true);
+      if (built > .01) { if (o.scaf) { x.save(); x.globalAlpha = built * sa; o.scaf(x, R, s, k, o.sw, o.sh, surfBelow); x.restore(); } drawSection(x, R, s, o.sw, o.sh, built * sa, false); }
+    });
+    god(x, o.god[0], o.god[1], now);
+    // bodies
+    idle.forEach((arr, i) => arr.forEach(w => { const s = w.s, cxs = s.x + s.w / 2, wx = cxs + Math.sin(now * w.sp + w.ph) * w.amp; worker(x, wx, s.y, now + w.ph, false, 1); }));
+    couriers.forEach((cr, i) => {
+      const tt = Math.abs(cr.b - cr.a) / SPEED, pause = 1.6, cyc = 2 * (tt + pause), ph = (now + cr.off) % cyc;
+      let d, carry = false;
+      if (ph < pause) d = cr.a; else if (ph < pause + tt) { d = lerp(cr.a, cr.b, (ph - pause) / tt); carry = true; } else if (ph < 2 * pause + tt) d = cr.b; else d = lerp(cr.b, cr.a, (ph - 2 * pause - tt) / tt);
+      const p = at(R, d); worker(x, p[0], p[1], now + i, carry, 1);
+    });
+    ev.forEach((e, k) => [0, 1].forEach(j => { const s = posOf(k, j, t); worker(x, s.p[0], s.p[1], t + j, s.carry && (s.plankA === undefined || s.plankA > .02) ? (j ? 2 : 1) : 0, sa < 1 ? sa : 1); }));
+    // tag + cursor
+    const kk = cur(t), e = ev[kk], mp = at(R, e.mid), ta = sm((t - e.tagIn) / .4) * (1 - sm((t - (e.buy + .5)) / .4));
+    if (ta > .01 && t < e.buy + 1) {
+      const press = t > e.buy && t < e.buy + .4, txt = `${COST.faith} faith · ${COST.timber} timber · ${COST.dust} dust`;
+      x.font = '11px ui-monospace,Menlo,Consolas,monospace'; const tw = x.measureText(txt).width + 12, bx = mp[0] * P - tw / 2, by = (mp[1] - 12) * P;
+      x.save(); x.globalAlpha = ta; x.strokeStyle = K; x.lineWidth = 1; x.beginPath(); x.moveTo(mp[0] * P, by + 18); x.lineTo(mp[0] * P, mp[1] * P - 4); x.stroke();
+      x.fillStyle = press ? K : PAPER; x.fillRect(bx, by, tw, 18); x.strokeRect(bx + .5, by + .5, tw - 1, 17);
+      x.fillStyle = press ? PAPER : K; x.fillText(txt, bx + 6, by + 13); x.restore();
+      const cu = 1 - sm((t - (e.tagIn + .2)) / (e.buy - .3 - e.tagIn - .2));
+      cursor(x, bx + tw * .5 + 30 * cu + 4 + (press ? 1 : 0), by + 10 + 26 * cu + (press ? 2 : 0), ta);
+    }
+    x.restore();
+    // HUD
+    const rem = remaining(t), buying = ev.some(e => t > e.buy && t < e.buy + .6);
+    x.fillStyle = buying ? K : PAPER; x.fillRect(6, 6, 330, 38); x.strokeStyle = K; x.lineWidth = 1; x.strokeRect(6.5, 6.5, 329, 37);
+    x.fillStyle = buying ? PAPER : K; x.font = 'bold 11px ui-monospace,Menlo,Consolas,monospace';
+    x.fillText(`faith ${rem.faith} · timber ${rem.timber} · dust ${rem.dust}`, 12, 22);
+    x.font = '10px ui-monospace,Menlo,Consolas,monospace'; x.fillText(`walk to this section from the press: ${(ev[kk].walk * 2).toFixed(0)}s (mock plays 2x)`, 12, 37);
+    // minimap
+    const ms = o.mm, mw = wd.w * ms, mh = wd.h * ms, mx0 = W - mw - 10, my0 = 6;
+    x.fillStyle = 'rgba(255,255,255,.92)'; x.fillRect(mx0 - 3, my0 - 3, mw + 6, mh + 6); x.strokeStyle = K; x.strokeRect(mx0 - 2.5, my0 - 2.5, mw + 5, mh + 5);
+    const mp2 = (wx, wy) => [mx0 + (wx - wd.x) * ms, my0 + (wy - wd.y) * ms];
+    x.strokeStyle = SHADE; x.lineWidth = 2; x.beginPath(); R.pts.forEach((p, i) => { const q = mp2(p[0], p[1]); i ? x.lineTo(q[0], q[1]) : x.moveTo(q[0], q[1]); }); x.stroke();
+    x.fillStyle = K; o.stations.forEach(s => { const q = mp2(s.x, s.y - s.h); x.fillRect(q[0], q[1], Math.max(2, s.w * ms), Math.max(2, s.h * ms)); });
+    o.sections.forEach((s, k) => { const b = sm((t - ev[k].fadeStart) / 1.4) * sa; if (b < .02) return; x.save(); x.globalAlpha = b; x.strokeStyle = K; x.lineWidth = 2; x.beginPath(); for (let i = s[0]; i <= s[1]; i++) { const q = mp2(R.pts[i][0], R.pts[i][1]); i === s[0] ? x.moveTo(q[0], q[1]) : x.lineTo(q[0], q[1]); } x.stroke(); x.restore(); });
+    const gq = mp2(o.god[0] + 4, o.god[1] - 8); x.fillStyle = PAPER; x.fillRect(gq[0] - 2, gq[1] - 2, 5, 5); x.strokeStyle = K; x.lineWidth = 1; x.strokeRect(gq[0] - 1.5, gq[1] - 1.5, 4, 4);
+    ev.forEach((e, k) => [0, 1].forEach(j => { const s = posOf(k, j, t), q = mp2(s.p[0], s.p[1]); x.fillStyle = K; x.fillRect(q[0] - 1, q[1] - 2, 2, 2); }));
+    const cq = mp2(camX, camY); x.strokeStyle = K; x.lineWidth = 1; x.strokeRect(cq[0] + .5, cq[1] + .5, COLS * ms, ROWS * ms);
+  };
+}
+
+// ======================= the switchback stair, three scaffolds
+const line = (x, c, x0, y0, x1, y1) => { const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)) || 1; for (let i = 0; i <= n; i++) cell(x, c, Math.round(lerp(x0, x1, i / n)), Math.round(lerp(y0, y1, i / n))); };
+// posts stand at these x for a section: every `gap` cells along a flight, and both ends of a landing
+function footings(R, sec, sw, sh, gap) {
+  const out = [];
+  for (let i = sec[0]; i < sec[1]; i++) {
+    const [xa, ya] = R.pts[i], [xb, yb] = R.pts[i + 1], dx = xb - xa, dy = yb - ya;
+    if (dy === 0) { const l = Math.min(xa, xb), w = Math.abs(dx); out.push([l, ya], [l + w - 1, ya]); continue; }
+    const n = Math.abs(dx) / sw;
+    for (let q = 0; q < n; q += Math.round(gap / sw)) { const ty = ya + dy * (q + 1) / n, left = dx > 0 ? xa + q * sw : xa - (q + 1) * sw; out.push([left + (sw >> 1), ty]); }
+  }
+  return out;
+}
+// A: timber scaffold: posts, a beam every bay, X-braces
+function scafTimber(x, R, sec, k, sw, sh, below) {
+  const fs = footings(R, sec, sw, sh, 6).map(([px, ty]) => ({ px, top: ty + sh + 2, bot: Math.round(below(px, ty)) }));
+  fs.forEach(f => cell(x, K, f.px, f.top, 1, Math.max(0, f.bot - f.top)));
+  for (let i = 0; i < fs.length - 1; i++) {
+    const a = fs[i], b = fs[i + 1]; if (Math.abs(b.px - a.px) > 8 || b.px === a.px) continue;
+    const y0 = Math.max(a.top, b.top), y1 = Math.min(a.bot, b.bot); if (y1 - y0 < 4) continue;
+    const bays = Math.max(1, Math.round((y1 - y0) / 10)), bh = (y1 - y0) / bays;
+    for (let j = 0; j < bays; j++) {
+      const ya = Math.round(y0 + j * bh), yb = Math.round(y0 + (j + 1) * bh);
+      line(x, MID, a.px, ya, b.px, yb); line(x, MID, b.px, ya, a.px, yb);
+      cell(x, K, Math.min(a.px, b.px), yb, Math.abs(b.px - a.px) + 1, 1);
+    }
+  }
+}
+// B: a solid built tower the stair wraps around, one storey per section
+function scafTower(x, R, sec, k, sw, sh, below) {
+  const yLo = R.pts[sec[0]][1], yHi = R.pts[sec[1]][1], tl = 183, tw = 14;
+  cell(x, K, tl, yHi, tw, yLo - yHi + 1); cell(x, '#d9d9d9', tl + 1, yHi, tw - 2, yLo - yHi + 1);
+  for (let ry = yHi + 4; ry < yLo; ry += 10) { cell(x, K, tl, ry, tw, 1); cell(x, K, tl + 3, ry + 3, 2, 3); cell(x, K, tl + tw - 5, ry + 3, 2, 3); }
+  cell(x, K, tl - 1, yHi - 1, tw + 2, 2);
+  for (let i = sec[0]; i < sec[1]; i++) if (R.pts[i][1] === R.pts[i + 1][1]) {
+    const a = R.pts[i], b = R.pts[i + 1], mid = tl + tw / 2, outer = Math.abs(a[0] - mid) > Math.abs(b[0] - mid) ? a[0] : b[0], edge = outer > mid ? tl + tw : tl;
+    cell(x, K, Math.min(outer, edge), a[1] + 3, Math.abs(outer - edge), 1); line(x, K, edge, a[1] + 9, outer, a[1] + 3);
+  }
+}
+// C: a lighter rig: ropes hung from the landings and flights, a cable under each flight
+function scafRope(x, R, sec, k, sw, sh, below) {
+  const dot = (px, y0, y1, c) => { for (let y = y0; y < y1; y++) if ((y + px) % 2 === 0) cell(x, c, px, y); };
+  const fs = footings(R, sec, sw, sh, 9);
+  fs.forEach(([px, ty], i) => { const bot = Math.round(below(px, ty)), land = i === 0 || i === fs.length - 1; dot(px, ty + sh + 2, Math.min(bot, ty + (land ? 30 : 9)), land ? K : MID); });
+  for (let i = sec[0]; i < sec[1]; i++) {
+    const [xa, ya] = R.pts[i], [xb, yb] = R.pts[i + 1]; if (ya === yb) continue;
+    for (let q = 0; q <= 24; q++) { const px = Math.round(lerp(xa, xb, q / 24)), py = Math.round(lerp(ya, yb, q / 24)) + 9; if (q % 2 === 0) cell(x, K, px, py); }
+  }
+}
+const stairC = (scaf) => {
+  const stations = []; let xs = 10;
+  for (let i = 0; i < 6; i++) { stations.push({ name: NAMES[i], w: SW[i], h: SH[i], x: xs, y: 190 }); xs += SW[i] + 8; }
+  const pts = [[4, 190], [172, 190], [202, 160], [210, 160], [180, 130], [170, 130], [200, 100], [210, 100], [180, 70], [172, 70]];
+  return makeOpt({
+    pts, stations, sections: [[1, 3], [3, 5], [5, 7], [7, 9]], sw: 3, sh: 3, god: [156, 70], camY0: 178, mm: .4, floor: 192, scaf,
+    world: { x: 0, y: 40, w: 235, h: 180 },
+    cam: [[45, 178], [130, 176], [190, 150], [188, 58]],
+    paint(x) {
+      cloud(x, -4, 164, () => 190, 26, 3, 6);
+      for (let row = 74; row < 216; row++) {
+        const l = 163 + Math.round(2.5 * Math.sin(row * .37) + 1.5 * Math.sin(row * .13 + 2)), r = 217 + Math.round(2.5 * Math.sin(row * .31 + 1) + 1.5 * Math.sin(row * .11));
+        for (let c = l; c <= r; c++) cell(x, tone(c, row, (row - 74) / 142, 11), c, row);
+      }
+      cloud(x, 148, 190, () => 70, 6, 7, 5);
+    }
+  });
+};
+const A = stairC(scafTimber), B = stairC(scafTower), C = stairC(scafRope);
+const OPTS = [
+  ['A', 'Timber scaffold', A, 'Posts every 6 cells under each flight and landing, a beam and X-braces in every 10-row bay, all standing on the cloud column. Reads most as a building site and as the thing the workers are building. Cost: the most pieces to draw and to carry per increment (posts, beams and braces fade in with the flight), and the tallest sections are mostly bracing.'],
+  ['B', 'Solid tower, the stair wraps it', B, 'A built tower of storeys with windows rises through the column, one storey per bought increment; the flights run in front of it and arms hold each landing. The most finished, least see-through structure, with one clear piece to carry per section. Cost: it hides the column\'s cloud, a tower is a new building to draw (and a new footprint under the no-overlap rule), and it looks permanent rather than makeshift.'],
+  ['C', 'Rope-and-plank rig', C, 'Thin dotted ropes hang from the landings and treads and a cable runs under every flight; nothing is solid but the treads and rails. Lightest to draw and to carry (planks and a few posts), and the cloud shows through. Cost: it reads as the flimsiest, so "held up by scaffolding" is weakest here, and 1-cell dotted ropes will shimmer if the camera moves in pixel steps.']
+];
+
+const views = OPTS.map(([k, name, fn, say]) => {
+  const f = document.createElement('figure'), c = document.createElement('canvas');
+  c.width = W; c.height = H; f.append(c);
+  const cap = document.createElement('figcaption'); cap.innerHTML = `<b>${k}. ${name}</b><br>${say}`; f.append(cap);
+  document.getElementById('row').append(f);
+  return { x: c.getContext('2d'), fn };
+});
+const start = performance.now();
+function frame(now) {
+  for (const v of views) { v.x.fillStyle = PAPER; v.x.fillRect(0, 0, W, H); v.fn(v.x, (now) / 1000); }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+<script>
+// On the review bench a mock shows one option at a time: ?opt=A keeps that
+// option's panel alone, scaled to fill the frame, and drops the page's prose.
+(() => {
+  const k = new URLSearchParams(location.search).get('opt'); if (!k) return;
+  document.querySelectorAll('h1, body > p').forEach(e => e.remove());
+  document.body.style.padding = '0';
+  for (const f of document.querySelectorAll('#row > figure')) {
+    const b = f.querySelector('figcaption b');
+    if (!b || !b.textContent.trim().startsWith(k + '.')) { f.remove(); continue; }
+    f.style.cssText = 'border:0;padding:4px;max-width:none;overflow:hidden';
+    f.querySelector('canvas').style.cssText = 'display:block;margin:0 auto;height:86vh;width:auto;max-width:100vw;image-rendering:pixelated';
+  }
+})();
+</script></body></html>

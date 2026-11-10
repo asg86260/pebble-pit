@@ -44,8 +44,24 @@ A real-game option stands the game up in `run`. A plain-shape mock:
   `run: () => mockOver('/mocks/<name>.html?opt=A')`. The template's `?opt=`
   keeps that option's panel alone, scaled to the frame. Never point every
   option at the whole page (three panels stacked in one frame is wrong).
-- `mockOver` lives in `src/scenes.js` beside the scenes and takes the
-  overlay away when the next scene stands.
+- `mockOver` is review-branch code (`// MOCK`, never on main). If the review
+  branch lacks it, add it to `src/scenes.js` above the scenes:
+
+  ```js
+  // MOCK: a plain-shape page laid over the game for a review, gone with the next scene.
+  function mockOver(src) {
+    if (!window.__sceneMockWrapped) {
+      const go = window.__scene;
+      window.__scene = n => { document.getElementById('mock-over')?.remove(); return go(n); };
+      window.__sceneMockWrapped = true;
+    }
+    document.getElementById('mock-over')?.remove();
+    const f = document.createElement('iframe');
+    f.id = 'mock-over'; f.src = src;
+    f.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;border:0;z-index:99999;background:#fff';
+    document.body.appendChild(f);
+  }
+  ```
 
 Mark throwaway scenes and helpers `// MOCK`; they never land on main.
 
