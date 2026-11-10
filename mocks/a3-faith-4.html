@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Act 3 Faith Shrine Mock 4</title>
+<style>
+:root{--bg:#fff;--ink:#000}
+body{margin:0;padding:16px;background:var(--bg);color:var(--ink);font:13px ui-monospace,Menlo,monospace}
+h1{font-size:15px;margin:0 0 4px}p{margin:0 0 12px;max-width:860px;line-height:1.45}
+.row{display:flex;flex-direction:column;gap:16px}
+figure{margin:0;border:2px solid #000;padding:8px;max-width:100%;overflow-x:auto}
+figcaption{margin-top:6px;max-width:860px;line-height:1.4}
+canvas{display:block;max-width:100%;image-rendering:pixelated}
+</style></head><body>
+<h1>Act 3: faith from a Gothic shrine the followers pray around, no meter on it (round 4 of option A)</h1>
+<p>MOCK, not the game. Plain shapes on the 6 px grid: black squares are the pair, dark-grey squares the followers (lighter ones kneel behind the shrine), pale pluses are prayers flying to wherever the option shows fullness. The box top left stands in for the HUD; a scripted cursor clicks the doorway once it has sat full. All three share one shrine and differ only in how fullness reads. It cannot show real sprites, walk routes, the real sky behind the halo or the sim numbers. Each panel loops 46 s: fill, cap, click, refill; +1 follower at 6, 20 and 36 s.</p>
+<div class="row" id="row"></div>
+<script>
+const P = 6, COLS = 100, ROWS = 75, W = COLS * P, H = ROWS * P;
+const K = '#000', MID = '#8c8c8c', SHADE = '#bdbdbd', PALE = '#d9d9d9', PAPER = '#fff', WORK = '#4a4a4a', BACK = '#707070', STONE = '#6b6b6b';
+const hash = (a, b = 0) => { let h = (a * 374761393 + b * 668265263) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
+const cell = (x, c, i, j, w = 1, h = 1) => { x.fillStyle = c; x.fillRect(i * P, j * P, w * P, h * P); };
+function cursor(x, px, py, press) {
+  px += press ? 1 : 0; py += press ? 2 : 0;
+  x.fillStyle = K; x.beginPath(); x.moveTo(px, py); x.lineTo(px, py + 16); x.lineTo(px + 4, py + 12); x.lineTo(px + 10, py + 12); x.closePath(); x.fill();
+  x.strokeStyle = PAPER; x.lineWidth = 1; x.stroke();
+}
+function rng(seed) { let s = seed >>> 0; return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+const ease = u => u * u * (3 - 2 * u);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const FONT = s => `bold ${s}px ui-monospace,Menlo,monospace`;
+
+const GROUND = 58, CX = 50, LOOP = 46, CAP = 12, HUD = { x: 8, y: 4 };
+const JOINS = [6, 20, 36];
+const EMIT = 5;
+const g = v => { v = clamp(Math.round(v), 0, 255); const h = v.toString(16).padStart(2, '0'); return '#' + h + h + h; };
+const lerpG = (a, b, u) => g(a + (b - a) * u);
+const NAVE = 107, TOW = 87, LT = 140;                       // stone grey levels
+
+function drawFloor(x) {
+  for (let c = 0; c < COLS; c++) {
+    const top = GROUND - 6 + (hash(c, 1) < 0.3 ? 1 : 0) - (hash(c, 2) < 0.15 ? 1 : 0);
+    for (let r = top; r < ROWS; r++) cell(x, r - top < 2 ? SHADE : (hash(c, r) < 0.4 ? PALE : SHADE), c, r);
+  }
+}
+const plinth = (x, steps) => { for (const [a, b, h] of steps) { cell(x, K, a, GROUND - h, b - a, h); cell(x, MID, a, GROUND - h, b - a, 1); } };
+// stone with per-cell variation, and the same cell mirrored about the axis (column 50 is the middle)
+const stone = (x, base, i, j, w = 1, h = 1) => { for (let a = 0; a < w; a++) for (let b = 0; b < h; b++) { const q = hash(i + a, j + b + 7); cell(x, g(base + (q < .18 ? 9 : q > .86 ? -9 : 0)), i + a, j + b); } };
+const mir = (x, base, i, j, w = 1, h = 1) => { stone(x, base, i, j, w, h); stone(x, base, 101 - i - w, j, w, h); };
+const mirc = (x, c, i, j, w = 1, h = 1) => { cell(x, c, i, j, w, h); cell(x, c, 101 - i - w, j, w, h); };
+const arch = (x, color, cx, y0, halves) => halves.forEach((hw, r) => cell(x, color, cx - hw, y0 + r, 2 * hw + 1, 1));
+const DOOR = [0, 1, 2, 2, 3, 3, 3], DOOR_OUT = [0, 1, 2, 3, 3, 4, 4, 4];
+
+// Rose window: 12 sectors clockwise from the top. lit(n) is 0..1.
+const ROSE = { x: 50.5, y: 37.5, r: 5.2 };
+function rose(x, lit, pulse) {
+  for (let j = 31; j <= 44; j++) for (let i = 44; i <= 56; i++) {
+    const dx = i + .5 - ROSE.x, dy = j + .5 - ROSE.y, d = Math.hypot(dx, dy);
+    if (d > ROSE.r) continue;
+    if (d > 4.3) { cell(x, g(LT + 20 + 50 * pulse), i, j); continue; }
+    if (d < 1.5) { cell(x, g(LT + 20 + 70 * pulse), i, j); continue; }
+    const rel = (((Math.atan2(dy, dx) + Math.PI / 2) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI) / (Math.PI / 6);
+    const n = Math.min(11, Math.floor(rel)), fr = rel - n;
+    if (Math.min(fr, 1 - fr) * d * (Math.PI / 6) < 0.5) { cell(x, g(LT), i, j); continue; }
+    const a = clamp(lit(n) * (1 - 0.18 * pulse) + (hash(i, j) - .5) * .1 * lit(n), 0, 1);
+    cell(x, lerpG(34, 255, a), i, j);
+  }
+}
+
+// The shrine: stepped plinth, buttress steps, two pinnacled towers, a gabled nave with rose window and a
+// pointed doorway, a crocketed spire and a cross. Identical across the options; each adds its own fullness.
+function shrine(x, s, o) {
+  o = o || {};
+  mir(x, TOW, 38, 52, 2, 4); mir(x, TOW, 39, 48, 1, 4); mir(x, LT, 39, 47, 1, 1);          // buttresses stepping up the towers
+  mir(x, TOW, 40, 32, 3, 23);                                                              // towers
+  mir(x, LT, 39, 31, 5, 1);
+  mir(x, TOW, 40, 28, 3, 3); mir(x, TOW, 41, 22, 1, 6); mirc(x, K, 41, 19, 1, 3); mirc(x, MID, 40, 28, 1, 1);
+  for (const [r, h] of [[37, 7], [47, 6]]) { mirc(x, g(20), 41, r, 1, h); mirc(x, g(20), 41, r - 1, 1, 1); }   // lancet slits
+  cell(x, K, 43, 32, 1, 23); cell(x, K, 57, 32, 1, 23);                                    // shadow joint
+  stone(x, NAVE, 44, 32, 13, 23);
+  for (let r = 0; r < 6; r++) { const w = 13 - 2 * r, l = 44 + r; stone(x, NAVE, l, 31 - r, w, 1); cell(x, g(LT), l, 31 - r); cell(x, g(LT), l + w - 1, 31 - r); }   // gable
+  cell(x, K, 50, 28, 1, 2); cell(x, K, 49, 29, 3, 1);                                      // trefoil
+  stone(x, NAVE, 49, 22, 3, 4); cell(x, K, 50, 22, 1, 4); stone(x, TOW, 50, 13, 1, 9);    // spire
+  for (const [i, j] of [[49, 21], [51, 19], [49, 17], [51, 15]]) cell(x, g(LT), i, j);     // crockets
+  cell(x, K, 50, 5, 1, 8); cell(x, K, 48, 7, 5, 1);                                        // cross
+  rose(x, o.rose || (() => 0), o.rosePulse || 0);
+  arch(x, g(LT), 50, 43, DOOR_OUT);
+  arch(x, lerpG(20, 74, o.door || 0), 50, 44, DOOR);
+  cell(x, lerpG(217, 255, o.door || 0), 50, 46); cell(x, lerpG(217, 255, o.door || 0), 49, 47, 3, 4);   // a saint in the doorway
+  for (const [l, r, h] of [[36, 65, 1], [38, 63, 4], [40, 61, 7]]) { stone(x, 44, l, GROUND - h, r - l, h); cell(x, g(LT + 30), l, GROUND - h, r - l, 1); }                                      // three tall steps, in front of the nave's foot
+}
+
+class Sim {
+  constructor(cfg) {
+    this.cfg = cfg; this.r = rng(cfg.seed); this.t = 0; this.faith = 0; this.fill = 0; this.motes = []; this.tags = []; this.fs = []; this.joined = 0;
+    this.full = 0; this.cur = { x: 88 * P, y: 66 * P, press: 0, tgt: false }; this.fullFade = 0; this.lit = Array(CAP).fill(0);
+    for (let i = 0; i < 4; i++) this.add(i, false);
+  }
+  slotPos(i) {
+    const a = this.cfg.angles[i] * Math.PI / 180;
+    return { x: Math.round(CX - 1.5 + this.cfg.rx * Math.cos(a)), y: Math.round(GROUND + this.cfg.ry * Math.sin(a)) };
+  }
+  add(i, walk) {
+    const s = this.slotPos(i), pair = i < 2, back = s.y < GROUND;
+    const f = { slot: i, tx: s.x, y: s.y, x: walk ? (s.x < CX ? -4 : COLS + 1) : s.x, h: pair ? (i ? 3 : 4) : 3, tone: pair ? K : back ? BACK : WORK, pair, seed: this.r() * 9, emit: this.r() * EMIT, walking: false };
+    this.fs.push(f); return f;
+  }
+  head(f) { return { x: f.x + 1.5, y: f.y - (f.h - 1) - 0.5 }; }
+  pending() { return this.motes.filter(m => m.k === 'in').length; }
+  get pulse() { return this.fullFade * (0.5 + 0.5 * Math.sin(this.t * 2.4)); }
+  step(dt) {
+    this.t += dt;
+    JOINS.forEach((j, n) => { if (this.t >= j && this.joined === n) { const f = this.add(4 + n, true); this.joined++; this.tags.push({ t: 0, f }); } });
+    for (const f of this.fs) {
+      f.walking = Math.abs(f.tx - f.x) > 0.05;
+      if (f.walking) f.x += Math.sign(f.tx - f.x) * Math.min(Math.abs(f.tx - f.x), 14 * dt); else f.x = f.tx;
+      if (!f.walking) {
+        f.emit -= dt;
+        if (f.emit <= 0) {
+          f.emit = EMIT * (0.8 + this.r() * 0.4);
+          if (this.fill + this.pending() < CAP) { const h = this.head(f), tg = this.cfg.target(this.fill + this.pending()); this.motes.push({ k: 'in', fx: h.x, fy: h.y - 1, tg, ft: 0, fd: 1.4 + Math.hypot(h.x - tg.x, h.y - tg.y) * 0.03 }); }
+        }
+      }
+    }
+    for (let i = this.motes.length - 1; i >= 0; i--) {
+      const m = this.motes[i]; m.ft += dt;
+      if (m.k === 'in') {
+        const u = ease(clamp(m.ft / m.fd, 0, 1)), q = m.tg;
+        m.x = m.fx + (q.x - m.fx) * u; m.y = m.fy + (q.y - m.fy) * u - Math.sin(Math.PI * u) * 3;
+        if (m.ft >= m.fd) { this.fill = Math.min(CAP, this.fill + 1); this.motes.splice(i, 1); }
+      } else {
+        if (m.ft >= 0 && !m.started) { m.started = true; this.fill = Math.max(0, this.fill - 1); }
+        const u = ease(clamp(m.ft / m.fd, 0, 1));
+        m.x = m.fx + (HUD.x - m.fx) * u; m.y = m.fy + (HUD.y - m.fy) * u;
+        if (m.ft >= m.fd) { this.faith++; this.motes.splice(i, 1); }
+      }
+    }
+    for (const q of this.tags) q.t += dt;
+    this.tags = this.tags.filter(q => q.t < 3.4);
+    for (let i = 0; i < CAP; i++) this.lit[i] += ((i < this.fill ? 1 : 0) - this.lit[i]) * Math.min(1, dt * 5);
+    this.full = this.fill >= CAP && this.pending() === 0 ? this.full + dt : (this.fill >= CAP ? this.full : 0);
+    this.fullFade += ((this.fill >= CAP ? 1 : 0) - this.fullFade) * Math.min(1, dt * 3);
+    const c = this.cur, tgt = this.cfg.click;
+    c.press = Math.max(0, c.press - dt);
+    const want = this.full > 3.0 && !this.emptying;
+    let gx = 88 * P, gy = 66 * P + Math.sin(this.t) * 4;
+    if (want || c.tgt) { c.tgt = true; gx = tgt.x * P; gy = tgt.y * P; }
+    c.x += (gx - c.x) * Math.min(1, dt * 5); c.y += (gy - c.y) * Math.min(1, dt * 5);
+    if (c.tgt && Math.hypot(gx - c.x, gy - c.y) < 4 && c.press <= 0 && this.fill >= CAP) {
+      c.press = 0.25; c.tgt = false; this.emptying = true;
+      for (let i = 0; i < this.fill; i++) { const q = this.cfg.target(this.fill - 1 - i); this.motes.push({ k: 'out', fx: q.x, fy: q.y, ft: -i * 0.12, fd: 1.5 }); }
+    }
+    if (this.emptying && this.fill === 0) this.emptying = false;
+  }
+  drawMote(x, m) {
+    if (m.ft < 0) return;
+    const u = clamp(m.ft / m.fd, 0, 1), a = Math.min(1, u / 0.18) * Math.min(1, (1 - u) / 0.25);
+    x.save(); x.globalAlpha = a; x.translate(m.x * P, m.y * P);
+    cell(x, SHADE, -1, 0, 3, 1); cell(x, SHADE, 0, -1, 1, 3); cell(x, m.k === 'in' ? MID : K, 0, 0); x.restore();
+  }
+  drawF(x, f) {
+    const h = f.walking ? f.h : f.h - 1, bob = f.walking ? Math.abs(Math.sin(this.t * 14 + f.seed)) * 0.4 : 0;
+    x.fillStyle = f.tone; x.fillRect(f.x * P, (f.y - h - bob) * P, 3 * P, h * P);
+    if (!f.walking) { const up = Math.sin(this.t * 2.2 + f.seed) > 0 ? 1 : 0; cell(x, MID, Math.round(f.x) + 3, Math.round(f.y) - h - up); }
+  }
+  draw(x) {
+    const cfg = this.cfg; drawFloor(x);
+    const items = this.fs.map(f => ({ y: f.y, fn: () => this.drawF(x, f) })); items.push({ y: GROUND, fn: () => cfg.idol(x, this) });
+    items.sort((a, b) => a.y - b.y).forEach(i => i.fn());
+    for (const m of this.motes) this.drawMote(x, m);
+    for (const q of this.tags) {
+      const a = Math.max(0, Math.min(1, q.t / 0.4, (3.4 - q.t) / 0.4)), f = q.f;
+      x.save(); x.globalAlpha = a; x.font = FONT(10); const w = x.measureText('+1 follower').width + 10, px = f.x * P + 9 - w / 2, py = (f.y - f.h - 4) * P;
+      x.fillStyle = K; x.fillRect(px, py, w, 15); x.fillStyle = PAPER; x.fillText('+1 follower', px + 5, py + 11); x.restore();
+    }
+    x.fillStyle = PAPER; x.fillRect(6, 6, 170, 46); x.strokeStyle = K; x.lineWidth = 2; x.strokeRect(7, 7, 168, 44);
+    x.fillStyle = K; x.font = FONT(16); x.fillText('faith ' + this.faith, 14, 28);
+    x.font = '10px ui-monospace,Menlo,monospace'; x.fillStyle = MID; x.fillText('followers ' + this.fs.length, 14, 44);
+    cursor(x, this.cur.x, this.cur.y, this.cur.press > 0);
+  }
+}
+
+const ANGLES = [70, 110, 150, 30, 215, 325, 235, 305];   // the pair at the front, then a full ring; the last four kneel behind the shrine
+const COMMON = { angles: ANGLES, rx: 28, ry: 5, click: { x: 50.5, y: 50 } };
+
+// A: votive candles standing on the three steps (6 / 4 / 2); one candle a prayer, every candle lit = full
+const TIERS = [[57, [48, 52, 44, 56, 40, 60]], [54, [46, 54, 42, 58]], [51, [47, 53]]];
+const RACKS = TIERS.flatMap(([y, xs]) => xs.map(cx => ({ x: cx, y })));
+function racks(x, s) {
+  RACKS.forEach((c, k) => {
+    const l = s.lit[k], p = s.pulse;
+    cell(x, lerpG(LT, 255, l), c.x, c.y - 3, 1, 3);
+    cell(x, lerpG(60, 255, l), c.x, c.y - 4, 1, 1);
+    if (l > .02) {
+      const fl = Math.sin(s.t * 6 + k * 1.9) > .3 ? 1 : 0;
+      x.save(); x.globalAlpha = l * .9; cell(x, PAPER, c.x, c.y - 5 - fl, 1, 1 + fl);
+      x.globalAlpha = l * (.55 + .3 * p); cell(x, SHADE, c.x - 1, c.y - 4, 1, 2); cell(x, SHADE, c.x + 1, c.y - 4, 1, 2);
+      if (p > .05) { x.globalAlpha = p * .6; cell(x, PALE, c.x - 1, c.y - 6, 1, 1); cell(x, PALE, c.x + 1, c.y - 6, 1, 1); cell(x, PALE, c.x, c.y - 7 - fl, 1, 1); }
+      x.restore();
+    }
+  });
+}
+const cfgA = Object.assign({ seed: 5 }, COMMON, {
+  target: k => ({ x: RACKS[k % CAP].x + .5, y: RACKS[k % CAP].y - 5 }),
+  idol(x, s) { shrine(x, s, { door: s.fullFade * (.6 + .4 * s.pulse) }); racks(x, s); }
+});
+
+// B: the rose window lights pane by pane, clockwise from the top
+const cfgB = Object.assign({ seed: 9 }, COMMON, {
+  target: k => { const a = -Math.PI / 2 + (k % 12 + .5) * Math.PI / 6; return { x: ROSE.x + 3 * Math.cos(a), y: ROSE.y + 3 * Math.sin(a) }; },
+  idol(x, s) { shrine(x, s, { rose: n => s.lit[n], rosePulse: s.pulse, door: s.fullFade * .5 }); }
+});
+
+// C: prayers rise past the spire and gather into a halo ring; full = the ring closes at the top
+const HALO = { x: 50.5, y: 10, r: 7.2 };
+const slotP = k => k === 0 ? 0 : (k % 2 ? (k + 1) / 2 : -k / 2);
+const slotOf = p => p === 0 ? 0 : p > 0 ? 2 * p - 1 : -2 * p;
+function halo(x, s) {
+  const p0 = s.pulse;
+  for (let j = 0; j < 22; j++) for (let i = 36; i < 66; i++) {
+    const dx = i + .5 - HALO.x, dy = j + .5 - HALO.y, d = Math.hypot(dx, dy);
+    if (d < HALO.r - .8 || d > HALO.r + 2.2) continue;
+    const pr = (Math.atan2(dy, dx) - Math.PI / 2) / (Math.PI / 6);
+    let p = Math.round(pr); const off = (pr - p) * Math.PI / 6;
+    if (p > 6) p -= 12; if (p < -5) p += 12;
+    const slot = slotOf(p);
+    if (d <= HALO.r + .6) {
+      const gap = .9 * (1 - s.fullFade);
+      if ((Math.PI / 12 - Math.abs(off)) * d < gap) continue;
+      const l = s.lit[slot], q = hash(i, j) < .15 ? 14 : 0;
+      cell(x, lerpG(200, q, l), i, j);
+    } else if (s.fullFade > .02 && d <= HALO.r + 1.6 + p0) {
+      x.save(); x.globalAlpha = s.fullFade * (.35 + .35 * p0); cell(x, SHADE, i, j); x.restore();
+    }
+  }
+}
+const cfgC = Object.assign({ seed: 13 }, COMMON, {
+  target: k => { const a = Math.PI / 2 + slotP(k % 12) * Math.PI / 6; return { x: HALO.x + HALO.r * Math.cos(a) - .5, y: HALO.y + HALO.r * Math.sin(a) - .5 }; },
+  idol(x, s) { shrine(x, s, { door: s.fullFade * .5 }); halo(x, s); }
+});
+
+const OPTS = [
+  ['A', 'Votive candles', () => new Sim(cfgA), 'The obelisk becomes a Gothic shrine (stepped plinth, buttresses, pinnacled towers, gabled nave with a rose window and a pointed doorway, a crocketed spire and a cross). Fullness is twelve votive candles standing on the three steps (six, four, two): each prayer flies to the next unlit wick and lights it, bottom step first; at full all twelve burn, the flames swell and the doorway glows, slowly breathing; the click puts them out from the top down. Cost: the shrine and twelve small candles, no extra footprint (the steps are part of the shrine, grown from three cells tall to seven). Readability: the best count of the three, each candle is one you can count, and a lighting reads as a prayer arriving.'],
+  ['B', 'Rose window', () => new Sim(cfgB), 'The same shrine; the rose window is the meter. Twelve panes light clockwise from the top as prayers fly into them; at full the whole window blazes and slowly breathes. The click darkens it pane by pane. Cost: the least new art and no extra footprint (the window is already part of the shrine), but the window is only about ten cells across, so a pane is a two-by-four-cell wedge and the count is the hardest to read exactly; it reads as roughly how full, not how many.'],
+  ['C', 'Halo over the spire', () => new Sim(cfgC), 'The same shrine; prayers rise the whole height of the shrine and gather into a ring floating round the spire and cross. It fills segment by segment from the bottom, alternating sides, and the last one closes it at the top; at full the ring is solid, thickens and pulses. The click lets the ring go out segment by segment. Cost: the ring sits high above the yard (the camera frame must hold it, and the sky behind it must carry a dark ring; here it is black on white as a placeholder), but it costs no footprint and the climb of the prayers is the best motion. Readability: twelve visible segments, good at a distance.'],
+];
+
+const views = OPTS.map(([k, name, mk, say]) => {
+  const f = document.createElement('figure'), c = document.createElement('canvas');
+  c.width = W; c.height = H; f.append(c);
+  const cap = document.createElement('figcaption'); cap.innerHTML = `<b>${k}. ${name}</b><br>${say}`; f.append(cap);
+  document.getElementById('row').append(f);
+  const v = { x: c.getContext('2d'), mk, sim: mk() };
+  const m = /t=(\d+)/.exec(location.hash); if (m) for (let i = 0; i < +m[1] * 60; i++) v.sim.step(1 / 60);
+  return v;
+});
+let last = null;
+function frame(now) {
+  const dt = last === null ? 0 : Math.min(0.05, (now - last) / 1000); last = now;
+  for (const v of views) {
+    if (v.sim.t > LOOP) v.sim = v.mk();
+    v.sim.step(dt); v.x.fillStyle = PAPER; v.x.fillRect(0, 0, W, H); v.sim.draw(v.x);
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+<script>
+// On the review bench a mock shows one option at a time: ?opt=A keeps that
+// option's panel alone, scaled to fill the frame, and drops the page's prose.
+(() => {
+  const k = new URLSearchParams(location.search).get('opt'); if (!k) return;
+  document.querySelectorAll('h1, body > p').forEach(e => e.remove());
+  document.body.style.padding = '0';
+  for (const f of document.querySelectorAll('#row > figure')) {
+    const b = f.querySelector('figcaption b');
+    if (!b || !b.textContent.trim().startsWith(k + '.')) { f.remove(); continue; }
+    f.style.cssText = 'border:0;padding:4px;max-width:none;overflow:hidden';
+    f.querySelector('canvas').style.cssText = 'display:block;margin:0 auto;height:86vh;width:auto;max-width:100vw;image-rendering:pixelated';
+  }
+})();
+</script></body></html>
