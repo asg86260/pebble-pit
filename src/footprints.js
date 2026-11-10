@@ -289,7 +289,7 @@ function afterParts() {
   const a = Math.min(...rows.map(r => r[1])), z = Math.max(...rows.map(r => r[2])), top = Math.min(...rows.map(r => r[0]));
   for (let i = 0; i < AFTER_PLOT_MAX; i++)
     out.push({ id: `tree:${i}`, rects: [rect(plotX(i) + a * AP, fl3 + top * AP, (z - a + 1) * AP, -top * AP)] });
-  out.push({ id: 'throne-stair', rects: [rect(stairFoot(), fl - AFTER_STAIR_RISE, AFTER_STAIR_W, AFTER_STAIR_RISE)] });
+  // MOCK stair4: the stair is its flights now (the stairN stations)
   if (portalStands('heaven')) {
     const e = portalEnd('heaven', 'after');
     out.push({ id: 'heaven-gates', rects: [rect(e.x - ACT_GATES_REACH, e.top, ACT_GATES_REACH * 2, e.feet - e.top)] });

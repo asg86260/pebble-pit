@@ -1,4 +1,5 @@
-// The members: souls who walked out of God's yard, and the jobs they are put
+// The members: souls who walked out of God's yard, and the jobs they are put
+// MOCK stair4
 // on (DESIGN.md, "Act 3's crew: assigned like the yard's"). Placeholder
 // drawing.
 //
@@ -759,7 +760,7 @@ export const AFTER_CREW = {
   // God's crowd (drawn in depth), one walking into ours or still fading in,
   // the pair building (they are the pedestal's), and the first through a
   // working station's door (drawn in the station's pose).
-  pickable: w => w.state !== 'join' && w.pair == null && bodyInk(w) >= 1 && deepAt(w.x) <= 0
+  pickable: w => w.state !== 'join' && w.pair == null && bodyInk(w) >= 1 && deepAt(w.x, w) <= 0
     && !(w.at && atStation(w.at)[0] === w),
   hold(w, x, y) { w.x = x; w.y = y + BODY_H / 2; },
   // A woodcutter taken up mid-stroke lets go of the cut: set down elsewhere,
