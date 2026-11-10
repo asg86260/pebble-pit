@@ -1,4 +1,5 @@
-// The saw, its strokes and the sawdust (DESIGN.md, "Act 3's grove, rebuilt",
+// The saw, its strokes and the sawdust (DESIGN.md, "Act 3's grove, rebuilt",
+// MOCK stair4
 // calls 7 to 9 and "The saw"; track B, taken from the signed-off mock W-2
 // with heft and F1). One hand saw: a closed grip of ink round a paper cell, a
 // blade deep at the heel and tapering to the toe, its back a line of ink and
@@ -180,7 +181,7 @@ export function drawHeldSaws() {
   if (!a || !a.sawHanded) return;
   for (const w of a.bodies) {
     if (w.job !== AFTER_JOB.CUT || w.state !== 'work' || !inView(w.x - AP * 14, AP * 28)) continue;
-    const ink0 = bodyInk(w) * (1 - (w.lifted ? 0 : deepAt(w.x)));
+    const ink0 = bodyInk(w) * (1 - (w.lifted ? 0 : deepAt(w.x, w)));
     if (ink0 <= 0) continue;
     const was = ctx.globalAlpha;
     ctx.globalAlpha = was * ink0;

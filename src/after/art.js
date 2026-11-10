@@ -73,6 +73,18 @@ export function pileGrid(what) {
   const h = Math.ceil(Math.sqrt(pl.brim)), cols = pl.cols ?? 2 * h - 1, size = AFTER_BLOCK[pl.good];
   return { size, h: AFTER_BLOCK_H[pl.good] ?? size, cols, rows: pl.cols ? Math.ceil(pl.brim / cols) : h };
 }
+// MOCK stair4
+// The stair to God, flights of timber scaffold, each a station of the shared
+// build (after/build.js): a run of steps rising `rise` cells off the head of
+// the one below, a landing on a post past it, and under the landing the floor
+// its pile of loads lies on (`buildAt`). Flight k stands as tall as k rises,
+// its posts down to the floor, so it goes up from the ground band by band.
+export const STAIR = { flights: 4, rise: 10, run: 20, landing: 28, gap: 1, buildAt: 22 };
+export const isStair = key => /^stair\d$/.test(key);
+export const stairKeys = () => Array.from({ length: STAIR.flights }, (_, k) => `stair${k + 1}`);
+export const stairW = k => STAIR.run + (k === STAIR.flights ? 12 : STAIR.landing);
+export const stairStep = k => stairW(k) + STAIR.gap;
+for (const [k, key] of stairKeys().entries()) DRAWN[key] = { box: [0, stairW(k + 1), STAIR.rise * (k + 1)], door: 10, pile: {}, sign: -8, buildAt: STAIR.buildAt };
 // A pile's width and height in cells.
 export const pileCells = what => { const g = pileGrid(what); return g ? g.cols * g.size : PILE_CELLS; };
 export const pileHigh = what => { const g = pileGrid(what); return g ? g.rows * g.h : 0; };

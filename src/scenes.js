@@ -52,7 +52,7 @@ import { millView, bedWants } from './after/mill.js';
 import { gestureDown, gestureMove, gestureUp, partsOf } from './after/gestures.js';
 import { STEPS } from './game.js';
 import { demoHand } from './render/aftercues.js';
-import { siteLoads } from './after/build.js';
+import { siteLoads, raiseStation } from './after/build.js';
 import { dropSpot, goodsRead } from './after/piles.js';
 import { stripOf as groundStrip, units as groundUnits, counted as groundCounted } from './after/ground.js';
 import { afterGround } from './state.js';
@@ -577,6 +577,26 @@ function afterSite(until) {
   }
   const b = stationBox('workshop');
   window.__look(b.x + b.w / 2 - S.viewW / 2); window.__holdShot();
+}
+
+// MOCK stair4
+// The stair to God, one flight raised by the shared build as a workshop is
+// (after/build.js): `done` flights standing, the next ordered and run until
+// `until` holds of its site, the camera on its middle.
+function stairSite(done, until) {
+  window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+  for (const k of ['mill']) if (!S.after.built.includes(k)) S.after.built.push(k);
+  for (let k = 0; k < 90 && window.__afterRead().walking > 0; k++) window.__fast(1);
+  S.after.camp = 4;
+  window.__afterGrant({ rebel: 400, timber: 40 }); yardPurse();
+  for (let k = 1; k <= done; k++) S.after.built.push('stair' + k);
+  const key = 'stair' + (done + 1);
+  raiseStation(key);
+  for (let k = 0; k < 6000 && !until(S.after.raising[key]); k++) window.__fast(0.1);
+  // framed on the flight going up, and the landing of the one below it where there is one
+  const b = stationBox(key), p = done ? stationBox('stair' + done) : null;
+  const mid = p ?(p.x + p.w * 0.55 + b.x + b.w * 0.5) / 2 : b.x + b.w / 2;
+  window.__look(mid - S.viewW / 2); window.__holdShot();
 }
 
 // Act 3's crowds and God at a point of the pan (track C, render/aftercrowd.js):
@@ -3373,15 +3393,16 @@ export const SCENES = {
   'faith-c': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'mock: plain shapes, not the game; round 4, a Catholic gothic shrine, fullness shown without a meter, one option a frame',
     option: 'C halo: prayers climb the spire into a ring round the cross, closed at full',
     say: 'the best motion and reads from afar; needs a taller frame and a dark ring on the sky', run: () => mockOver('/mocks/a3-faith-4.html?opt=C') },
-  'stair-a': { about: 'the acts', review: "act 3: the stair's layout", stage: 'mock: plain shapes, not the game; round 3, the timber scaffold built from the floor up, the camera turning up at the right end, one option a frame',
-    option: 'A ladders: a deck and a ladder each bay, the crew climbing what they have built',
-    say: 'the clearest picture of building from the floor up; five ladders and decks a flight, and a climb', run: () => mockOver('/mocks/a3-stair-3.html?opt=A') },
-  'stair-b': { about: 'the acts', review: "act 3: the stair's layout", stage: 'mock: plain shapes, not the game; round 3, the timber scaffold built from the floor up, the camera turning up at the right end, one option a frame',
-    option: 'B hoist: a mast and pulley on the deck below, pieces and the builder ride the rope up',
-    say: 'the busiest; mast, rope and plank all move every bay, and a thin rope may shimmer', run: () => mockOver('/mocks/a3-stair-3.html?opt=B') },
-  'stair-c': { about: 'the acts', review: "act 3: the stair's layout", stage: 'mock: plain shapes, not the game; round 3, the timber scaffold built from the floor up, the camera turning up at the right end, one option a frame',
-    option: 'C ramp: a plank ramp climbs under each flight, the crew walks it',
-    say: 'the cheapest motion; a second diagonal under every flight that crowds the braces', run: () => mockOver('/mocks/a3-stair-3.html?opt=C') },
+  'stair4-a': { about: 'the acts', review: "act 3: the stair's layout", stage: 'built: review-stair-build, a review branch, never merged',
+    option: 'A one flight going up: the pile, the builders at its base, half risen',
+    say: 'the first flight raised like a workshop: its pile under the landing, builders hammering at its base, two of four bands risen from the floor', run: () => stairSite(0, r => r.n >= 2) },
+  'stair4-b': { about: 'the acts', review: "act 3: the stair's layout", stage: 'built: review-stair-build, a review branch, never merged',
+    option: "B the flight finished, the next flight's pile set beside it",
+    say: "flight one standing, flight two's pile whole under its landing and the builders about to start", run: () => stairSite(1, r => r.whole != null) },
+  'stair4-c': { about: 'the acts', review: "act 3: the stair's layout", stage: 'built: review-stair-build, a review branch, never merged',
+    option: 'C three flights up, the fourth rising',
+    say: 'three flights standing, the fourth going up band by band from the floor', run: () => stairSite(3, r => r.n >= 2) },
+
   'level-carry': { about: 'the acts', say: "the chain running: a carrier with a sign over the cloud, climbing the stage's plinth or out on its top",
     run: () => {
       afterChain(true);

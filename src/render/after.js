@@ -24,6 +24,8 @@ import { fillDots } from './dots.js';
 import { buildingGlyph } from './bars.js';
 import { writeCount, widthOf, drawable, GH } from './numfont.js';
 import { screenAt } from './frame.js';
+// MOCK stair4
+import { isStair } from '../after/art.js';
 import { stationBox, stationX0, fileAt, rankAtY, groundOf, ART, AP } from '../after/place.js';
 import { airMotes } from '../after/rebel.js';
 import { built } from '../after/levels.js';
@@ -160,7 +162,7 @@ function drawStation(key) {
   const a = A(), r = a.raising[key];
   // Each drawn on its paper backing, so the camp's crowd behind it does not
   // show through its open parts; the pillar is paper through already.
-  const draw = key === 'pedestal' ? drawPillar : (d, work, t) => { backing(d, backOf(key)); DRAW[key](d, work, t, hands[key], atStation(key).length > 0, extras(key)); };
+  const draw = key === 'pedestal' ? drawPillar : (d, work, t) => { if (!isStair(key)) backing(d, backOf(key)); DRAW[key](d, work, t, hands[key], atStation(key).length > 0, extras(key)); };
   // Closed, or just built and its closed look still fading off as the last
   // piece lands: its loads on the spot while it goes up.
   const opened = openedOf(key);
@@ -288,7 +290,7 @@ export function drawAfterMembers() {
   // Each faded as it steps out of our crowd or walks back into it. One the
   // hand has lifted is drawn here, on the cursor, wherever it is held.
   for (const w of a.bodies) {
-    const deep = w.lifted ? 0 : deepAt(w.x);
+    const deep = w.lifted ? 0 : deepAt(w.x, w);
     if (deep >= 1 || !inView(w.x - P * 4, P * 8)) continue;
     ctx.globalAlpha = bodyInk(w) * (1 - deep);
     drawMember(w);
