@@ -26,7 +26,7 @@ import { CABIN } from '../../after/cabin.js';
 import { DOORWAY } from '../../after/doorway.js';
 import { held } from '../../reset.js';
 import { ctx } from '../ctx.js';
-import { ringCells, ringFace } from '../cellring.js';
+import { ringCells } from '../cellring.js';
 import { S } from '../../state.js';
 import { darkPage, raw } from '../../ink.js';
 import { coinAt } from '../aftercoins.js';
@@ -342,7 +342,7 @@ function forestry(d, work, t) {
 //         motes bursting outward
 // Nothing here pops: everything comes and goes by opacity.
 export const SHRINE = { mode: 'fill', fill: 0, folk: 0, t0: 0, pray: null };
-// MOCK faith11
+// MOCK faith12
 // The faithful at prayer: the frame's own body (kit.js `body`), whole, never
 // squashed or sheared, moved as one piece at its true position, eased.
 // `SHRINE.pray` picks the movement and when each follower goes:
@@ -376,15 +376,14 @@ function makeRing(size, inner, outer) {
     Array.from({ length: size }, (_, i) => (Math.hypot(i - h, j - h) >= inner && Math.hypot(i - h, j - h) <= outer ? '#' : '.')).join(''));
   // clockwise from the top
   const cells = ringCells(mask, -Math.PI / 2, Math.PI * 2).sort((p, q) => p.share - q.share);
-  return { mask, cells, face: ringFace(mask), size };
+  return { mask, cells, size };
 }
 const RING = makeRing(19, 7.5, 9.6);
 const FAITH_AT = { x: 0, y: -45 };          // the ring's top left off the shrine's left and the floor, cells: its hub over the cross, two cells clear of it
 // What is not yet inked is the ink itself, faint: so it reads as the ink's own
 // ghost on either page (the ink is the page's light tone in the dark), where a
 // fixed pale or mid would vanish on one of them.
-const FAITH_GHOST = { track: 0.28, trackDark: 0.1, pulse: 0.4 };   // in the dark the page's ink is its light tone, so the unfilled track goes much fainter to leave the inked arc the brightest thing
-const PULSE_S = 2.4;
+const FAITH_GHOST = { track: 0.28, trackDark: 0.1 };   // in the dark the page's ink is its light tone, so the unfilled track goes much fainter to leave the inked arc the brightest thing
 const ease3 = k => k * k * (3 - 2 * k);
 const easeOut = k => 1 - (1 - k) * (1 - k);
 
@@ -470,12 +469,6 @@ function shrine(d, work, t) {
   if (!d.sinking) ringAt(d, RING, rx, ry, f, false);
   const c = SA.click, w = tl % clickLoop(), t1 = c.hold + c.press, t2 = t1 + c.unwind;
   if (!d.sinking) {
-    // the pulse at full, and the pressed beat of a click
-    const pressed = SHRINE.mode === 'click' && w >= c.hold && w < t1 + 0.3 ? 0.6 * ease3(Math.min(1, (w - c.hold) / 0.15)) * (1 - ease3(clamp01((w - t1) / 0.3))) : 0;
-    if (f >= 0.999) {
-      const a = (0.5 - 0.5 * Math.cos((t || 0) / PULSE_S * Math.PI * 2)) * FAITH_GHOST.pulse;
-      d.fade(Math.max(a * (1 - pressed), pressed), () => { for (const { j, from, n } of RING.face) d.r(rx + from, ry + j, n, 1, K); });
-    }
     const C = AFTER_SHRINE_MOTES, hubX = rx + 9, hubUp = -ry - 9.5;
     // the rising motes, as many as the ring is full
     risePuffs(d, t || 0, C, C.puffs, rx + 9, -ry + 0.5, f);

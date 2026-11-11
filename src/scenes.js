@@ -3413,13 +3413,13 @@ export const SCENES = {
   // cross. The fill and the faithful are stood in the run, not earned or
   // walked: a real build would read the fill off the shrine's own count and
   // send members to kneel at its door.
-  'faith11-a': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-hop, a review branch, never merged',
+  'faith12-a': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-full, a review branch, never merged',
     option: 'A the hop, half full: no orbit, no halo',
     say: 'each square hops as its prayer leaves; the ring fills, the glint laps it, motes rise', run: () => shrineAt('fill', 19, 'hop') },
-  'faith11-b': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-hop, a review branch, never merged',
+  'faith12-b': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-full, a review branch, never merged',
     option: 'B the same at full, held',
     say: 'full: the face pulses, each prayer is turned away off the tip', run: () => shrineAt('full', 3, 'hop') },
-  'faith11-c': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-hop, a review branch, never merged',
+  'faith12-c': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-full, a review branch, never merged',
     option: 'C the click',
     say: 'full for five seconds, then the click (stood in): the arc unwinds, the faith flies to the counter, the ring fills again', run: () => shrineAt('click', 0, 'hop') },
 
