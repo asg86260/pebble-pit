@@ -772,3 +772,22 @@ export const AFTER_SHRINE_FULL = {
   shake: { poses: [[-1, 0], [1, 0], [-1, -1], [1, 0], [-1, 0], [0, 0]], hold: 0.07, every: 3 },
   stream: { puffs: 34, size: 1, life: 2.6, rise: 14, spread: 20, seed: 20, peak: 0.9, big: { puffs: 14, size: 2, seed: 70, life: 3.2, spread: 16, peak: 0.85 } }
 };
+
+// MOCK faith14
+// The full ring's tremor, pulse and motes by feel (`SHRINE.feel`, render/after/stations.js
+// `feelAt`), all in seconds and cells. A cycle is `every` long; `base` is the
+// hum between beats, in cells of tremor; each beat peaks `at` seconds in, rising
+// over `rise` along `curve` (1 steady, 2 slow then fast) and easing off over
+// `fall`, to `amp` cells of tremor and `pulse` more of scale (0.05: the ring
+// swells to 105%) in a window `win` wide round the peak, and sheds `shed` motes
+// off its cells. `hz` the tremor's rate: x and y at different rates, so the ring
+// traces a small loop, never a jump.
+export const AFTER_SHRINE_FEEL = {
+  hz: [13, 17], ySeen: 0.6, win: 0.5,
+  slow: { every: 4, base: 0, beats: [{ at: 1.5, rise: 1.5, fall: 0.6, curve: 2, amp: 0.4, pulse: 0.06, shed: 26 }] },
+  hum: { every: 3, base: 0.07, beats: [{ at: 0.6, rise: 0.6, fall: 0.8, curve: 1.5, amp: 0.4, pulse: 0.06, shed: 26 }] },
+  beat: { every: 3, base: 0, beats: [{ at: 0.2, rise: 0.2, fall: 0.2, curve: 1, amp: 0.3, pulse: 0.05, shed: 14 }, { at: 0.65, rise: 0.15, fall: 0.35, curve: 1, amp: 0.4, pulse: 0.06, shed: 18 }] },
+  // the motes off the ring's cells: the steady few, and each burst
+  motes: { puffs: 12, size: 1, life: 3, out: 6, up: 4, fadeIn: 5, peak: 0.8, greyAt: 0.55, greyFade: 0.2, tones: ['ink', 'ink'], ease: true, sway: 0, swayRate: 0, swayPhase: 0, drift: 0, rise: 0 },
+  burst: { size: 1, life: 1.9, out: 9, up: 5, fadeIn: 8, peak: 0.95, greyAt: 0.55, greyFade: 0.2, tones: ['ink', 'ink'], ease: true, sway: 0, swayRate: 0, swayPhase: 0, drift: 0, rise: 0 }
+};

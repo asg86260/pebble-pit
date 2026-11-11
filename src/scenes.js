@@ -589,7 +589,7 @@ function afterSite(until) {
 // ring over it. The faithful are drawn, not walked there.
 function shrineAt(mode, at, pray = null, extra = {}) {
   window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
-  SHRINE.mode = mode; SHRINE.folk = 6; SHRINE.pray = pray; SHRINE.shake = !!extra.shake; SHRINE.stream = !!extra.stream; SHRINE.t0 = S.after.t - at;
+  SHRINE.mode = mode; SHRINE.folk = 6; SHRINE.pray = pray; SHRINE.shake = !!extra.shake; SHRINE.stream = !!extra.stream; SHRINE.feel = extra.feel || null; SHRINE.t0 = S.after.t - at;
   const b = stationBox('shrine');
   window.__look(b.x + b.w / 2 - S.viewW / 2); window.__fast(0); window.__holdShot();
 }
@@ -3433,6 +3433,16 @@ export const SCENES = {
   'faith13-c': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-full, a review branch, never merged', branch: 'review-faith-full',
     option: 'C both',
     say: 'full: the shake every three seconds and the thicker stream of motes together', run: () => shrineAt('full', 2.7, 'hop', { shake: true, stream: true }) },
+  // MOCK faith14
+  'faith14-a': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-full, a review branch, never merged', branch: 'review-faith-full',
+    option: 'A slow build',
+    say: 'full: a tremor builds over a second and a half, the ring swells and sheds motes off its cells, then settles; every four seconds', run: () => shrineAt('full', 1.6, 'hop', { feel: 'slow' }) },
+  'faith14-b': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-full, a review branch, never merged', branch: 'review-faith-full',
+    option: 'B a low hum',
+    say: 'full: a faint tremor all the while, and every three seconds a stronger swell with a burst of motes off the ring', run: () => shrineAt('full', 0.6, 'hop', { feel: 'hum' }) },
+  'faith14-c': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-full, a review branch, never merged', branch: 'review-faith-full',
+    option: 'C heartbeat',
+    say: 'full: two quick beats, each a tremor and a swell with motes shed off the ring, then rest; every three seconds', run: () => shrineAt('full', 0.25, 'hop', { feel: 'beat' }) },
 
   'level-carry': { about: 'the acts', say: "the chain running: a carrier with a sign over the cloud, climbing the stage's plinth or out on its top",
     run: () => {
