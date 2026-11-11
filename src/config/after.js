@@ -761,3 +761,14 @@ export const AFTER_SHRINE_SAUCE = {
   click: { hold: 5, press: 0.5, unwind: 3, empty: 1.5, refill: 8, every: 0.1,
     burst: { puffs: 18, size: 1, life: 1.8, rise: 0, drift: 0, sway: 0, swayRate: 0, swayPhase: 0, fadeIn: 8, peak: 0.95, greyAt: 0.5, greyFade: 0.1, spread: 0, tones: ['ink', 'ink'], r0: 10.5, r1: 11, ease: true } }
 };
+
+// MOCK faith13
+// The full faith ring (render/after/stations.js, `shrine`): `shake` the poses
+// it jumps through, each [cells right, cells down] held `hold` seconds, the
+// last the rest, begun every `every` seconds while the ring is full; `stream`
+// the stronger run of motes over the usual ones, both fading in as the ring
+// closes (`risePuffs`, the same as the half-full motes).
+export const AFTER_SHRINE_FULL = {
+  shake: { poses: [[-1, 0], [1, 0], [-1, -1], [1, 0], [-1, 0], [0, 0]], hold: 0.07, every: 3 },
+  stream: { puffs: 34, size: 1, life: 2.6, rise: 14, spread: 20, seed: 20, peak: 0.9, big: { puffs: 14, size: 2, seed: 70, life: 3.2, spread: 16, peak: 0.85 } }
+};

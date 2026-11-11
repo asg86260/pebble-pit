@@ -19,7 +19,7 @@
 
 // REVIEW act-3-the-cabin-built
 // MOCK faith8
-import { P, AFTER_SAW_TEETH, AFTER_ART_SCALE, AFTER_MILL, AFTER_CABIN_SMOKE, AFTER_SHRINE_MOTES, AFTER_SHRINE_SAUCE, AFTER_COIN_LIFE_S, AFTER_LINE_DARK } from '../../config.js';
+import { P, AFTER_SAW_TEETH, AFTER_ART_SCALE, AFTER_MILL, AFTER_CABIN_SMOKE, AFTER_SHRINE_MOTES, AFTER_SHRINE_SAUCE, AFTER_SHRINE_FULL, AFTER_COIN_LIFE_S, AFTER_LINE_DARK } from '../../config.js';
 import { K, W, PALE, MID, hash, silhouette, clamp01, square } from './kit.js';
 import { ART } from '../../after/art.js';
 import { CABIN } from '../../after/cabin.js';
@@ -341,7 +341,7 @@ function forestry(d, work, t) {
 //         off the tip to the counter in the corner on the same coin arc,
 //         motes bursting outward
 // Nothing here pops: everything comes and goes by opacity.
-export const SHRINE = { mode: 'fill', fill: 0, folk: 0, t0: 0, pray: null };
+export const SHRINE = { mode: 'fill', fill: 0, folk: 0, t0: 0, pray: null, shake: false, stream: false };   // MOCK faith13
 // MOCK faith12
 // The faithful at prayer: the frame's own body (kit.js `body`), whole, never
 // squashed or sheared, moved as one piece at its true position, eased.
@@ -464,7 +464,15 @@ function shrine(d, work, t) {
   for (let y = 3; y <= 9; y++) run(-y, SH.niche[0], SH.niche[1], W);
   for (let k = 1; k <= 6; k++) run(-9 - k, SH.niche[0] + k, SH.niche[1] - k, W);
   // the faith ring: its face in paper, no rim round it
-  const rx = x0 + FAITH_AT.x, ry = FAITH_AT.y, f = clamp01(faithAt(tl)), N = RING.cells.length;
+  const f = clamp01(faithAt(tl)), N = RING.cells.length;
+  // MOCK faith13: at full the ring jumps through the config's poses, whole cells, held, then rests; one piece, so its cells, glint and prayers all follow
+  const FU = AFTER_SHRINE_FULL;
+  let sx = 0, sy = 0;
+  if (SHRINE.shake && f >= 0.999) {
+    const ph = tl % FU.shake.every, k = Math.floor(ph / FU.shake.hold);
+    if (k < FU.shake.poses.length) [sx, sy] = FU.shake.poses[k];
+  }
+  const rx = x0 + FAITH_AT.x + sx, ry = FAITH_AT.y + sy;
   // nothing paper in or round it: the sky and clouds run right up to the ring, and a backing read off this drawing (`silhouette`) holds no ring either
   if (!d.sinking) ringAt(d, RING, rx, ry, f, false);
   const c = SA.click, w = tl % clickLoop(), t1 = c.hold + c.press, t2 = t1 + c.unwind;
@@ -473,6 +481,11 @@ function shrine(d, work, t) {
     // the rising motes, as many as the ring is full
     risePuffs(d, t || 0, C, C.puffs, rx + 9, -ry + 0.5, f);
     risePuffs(d, t || 0, { ...C, ...C.big }, C.big.puffs, rx + 9, -ry + 0.5, clamp01((f - 0.4) / 0.6));
+    if (SHRINE.stream) {   // MOCK faith13
+      const ST = { ...C, ...FU.stream }, sh = clamp01((f - 0.9) / 0.1);
+      risePuffs(d, t || 0, ST, ST.puffs, rx + 9 - sx, -ry + 0.5 + sy, sh);
+      risePuffs(d, t || 0, { ...ST, ...FU.stream.big }, FU.stream.big.puffs, rx + 9 - sx, -ry + 0.5 + sy, sh);
+    }
     // the glint travelling the inked arc, eased in and out along it, and over its leading and trailing edge
     const lit = f * N, u = (tl / SA.turnS) % 1, g = u * (lit + SA.glintCells), env = ease3(clamp01(Math.min(u, 1 - u) * 4));
     RING.cells.forEach(({ i, j }, k) => {
