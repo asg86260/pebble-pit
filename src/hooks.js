@@ -1505,7 +1505,7 @@ HANDLES.__hellAt = (what, i) => {
 // granted, the crowd's rims set, where the pair, the trees and the stumps
 // stand.
 import { clickAfter } from './after/index.js';
-import { afterRow, AFTER_ROWS, afterBill, afterMaxed, openAfterBoard } from './after/rows.js';
+import { afterRow, AFTER_ROWS, afterBill, openAfterBoard } from './after/rows.js';
 import { setCrowd, hireAll, support as afterSupport, union as afterUnion, ready as afterReady, crowdSize } from './after/union.js';
 import { pairBox } from './after/rebel.js';
 import { campCount, walkingOut, idleBodies } from './after/bodies.js';
@@ -1560,7 +1560,7 @@ HANDLES.__afterPair = () => { const b = pairBox(); return { x: b.x + b.w / 2, y:
 HANDLES.__afterTrees = () => (S.after ? S.after.plots.map((p, i) => ({ i, grow: p.grow, logs: lying().filter(q => q.i === i).length, falling: p.fall != null,
   stump: p.stump, x: plotX(i) + AP / 2, y: groundOf('grove') - AP * 8, sx: plotX(i) + AP / 2, sy: groundOf('grove') - AP * 2 })) : []);
 HANDLES.__afterRows = () => AFTER_ROWS.map(u => ({ key: u.key, card: u.card, shown: !!S.after && u.show(),
-  bill: afterBill(u), rung: u.rung ? u.rung() : u.from ? u.from() : 0, done: afterMaxed(u) }));
+  bill: afterBill(u), rung: u.rung ? u.rung() : u.from ? u.from() : 0, done: maxed(u) }));
 HANDLES.__afterRead = () => (S.after ? { rebel: S.after.rebel, ...goodsRead(), gate: S.after.gate,
   sawHanded: S.after.sawHanded, support: afterSupport(), union: afterUnion(), ready: afterReady(), camp: campCount() + idleBodies().length, walking: walkingOut(),
   size: crowdSize(), signs: S.after.signs.length, bodies: S.after.bodies.length,
