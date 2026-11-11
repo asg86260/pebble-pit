@@ -3401,24 +3401,15 @@ export const SCENES = {
   // cross. The fill and the faithful are stood in the run, not earned or
   // walked: a real build would read the fill off the shrine's own count and
   // send members to kneel at its door.
-  'faith8-a': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-smooth, a review branch, never merged',
-    option: 'A the ring filling: prayers flying in, glint, breath and orbit together, about half full',
-    say: "prayers arc from the kneelers into the tip, the glint laps the arc, a faint ring breathes round it, motes circle and rise", run: () => shrineAt('fill', 19) },
-  'faith8-b': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-smooth, a review branch, never merged',
-    option: 'B the same at full, held and pulsing, prayers still arriving and bouncing off',
-    say: 'full: the face pulses, the motes are thick, and each prayer that arrives is turned away off the tip', run: () => shrineAt('full', 3) },
-  'faith8-c': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-smooth, a review branch, never merged',
-    option: "C the click: full, then emptied into the faith count (round 7 C, smoothed and on the combined ring)",
-    say: 'full for five seconds, then the click (stood in, not a real press): the arc unwinds, the faith flies to the counter, the ring fills again', run: () => shrineAt('click', 0) },
-  'faith9-a': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-pray, a review branch, never merged',
-    option: 'A the bow: each follower kneels, bows low and rises in held poses, staggered; a prayer leaves at the low point',
-    say: 'each follower bows on its own beat, held low, and the prayer leaves at the bottom of the bow', run: () => shrineAt('fill', 19, 'bow') },
-  'faith9-b': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-pray, a review branch, never merged',
-    option: 'B hands up: each raises its arms in a held pose and sways, the prayer released at the top of the reach',
-    say: 'each raises its arms, sways at the top, and the prayer is released there', run: () => shrineAt('fill', 19, 'hands') },
-  'faith9-c': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-pray, a review branch, never merged',
-    option: 'C the wave: the bow travels round the ring like a chant, one follower after the next, prayers following the wave',
-    say: 'the bow passes down the line, one after the next, and each prayer follows its follower', run: () => shrineAt('fill', 19, 'wave') },
+  'faith10-a': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-simple, a review branch, never merged',
+    option: 'A the bob: each square rises a cell and settles, staggered; its prayer leaves at the top',
+    say: 'each square rises a cell and settles on its own beat; the prayer leaves at the top', run: () => shrineAt('fill', 19, 'bob') },
+  'faith10-b': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-simple, a review branch, never merged',
+    option: 'B the nod: each square dips toward the shrine a cell and back, its prayer leaving on the dip',
+    say: 'each square dips toward the shrine and back; the prayer leaves on the dip', run: () => shrineAt('fill', 19, 'nod') },
+  'faith10-c': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-simple, a review branch, never merged',
+    option: 'C the hop: each square gives a small hop when its prayer leaves, still between',
+    say: 'each square hops as its prayer leaves, and is still between', run: () => shrineAt('fill', 19, 'hop') },
 
 
   'level-carry': { about: 'the acts', say: "the chain running: a carrier with a sign over the cloud, climbing the stage's plinth or out on its top",

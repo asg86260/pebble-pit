@@ -343,48 +343,35 @@ function forestry(d, work, t) {
 //         motes bursting outward
 // Nothing here pops: everything comes and goes by opacity.
 export const SHRINE = { mode: 'fill', fill: 0, folk: 0, t0: 0, pray: null };
-// MOCK faith9
-// The faithful at prayer. Act 3's body is the yard's square (kit.js `body`:
-// 18 px, a 2 px rim round a white middle), so a pose is the square's height,
-// its lean toward the shrine and, for the reach, two arm bars at its sides --
-// held at each end and eased between, rounded to whole pixels, feet fixed.
-// `SHRINE.pray` picks the pose and when each follower goes:
-//   bow   each on its own beat, a prayer leaving at the low point
-//   hands each raises its arms and sways, the prayer released at the top
-//   wave  the bow handed down the line a beat at a time, round the shrine
-// Prayer times are read off the same cycle as the pose, so one beat is both.
-// Four cells wide, a cell bigger than the yard's squat body: at the scene's size the
-// small one could not show a bow or a raised arm. Six cells apart, so a bow's lean
-// (a cell at most) never touches the next.
-const FW = 24, FSQUAT = 18, FEET = P;
-const folkX = (i, n) => { const h = Math.floor(n / 2); return (i < h ? SH.x - 7 - (h - 1 - i) * 6 : SH.x + SH.w + 3 + (i - h) * 6) * P; };
+// MOCK faith10
+// The faithful at prayer: the frame's own body (kit.js `body`), whole, never
+// squashed or sheared, moved as one piece at its true position, eased.
+// `SHRINE.pray` picks the movement and when each follower goes:
+//   bob  rises a cell and settles, the prayer leaving at the top
+//   nod  dips a cell toward the shrine and back, the prayer leaving on the dip
+//   hop  a small hop as the prayer leaves, still between
+// Prayer times are read off the same cycle as the movement, so one beat is both.
 const PRAY = {
-  bow:   { T: 5.4, launch: 1.7, off: k => hash(k * 3.7 + 1) * 5.4 },
-  hands: { T: 5.6, launch: 2.0, off: k => hash(k * 5.3 + 2) * 5.6 },
-  wave:  { T: 4.2, launch: 1.7, off: k => k * 0.7 }
+  bob: { T: 5.4, launch: 1.6, off: k => hash(k * 3.7 + 1) * 5.4 },
+  nod: { T: 5.4, launch: 1.6, off: k => hash(k * 5.3 + 2) * 5.4 },
+  hop: { T: 5.4, launch: 0.3, off: k => hash(k * 4.1 + 3) * 5.4 }
 };
+const FEET_Y = -4;                                    // cells: the body's own row, a cell up out of the ground's dip
 // 0..1 along a hold-and-ease timeline: rest to `a`, up to `b`, held to `c`, back down by `d`
 const reach = (u, a, b, c, d) => u < a || u > d ? 0 : u < b ? ease3((u - a) / (b - a)) : u <= c ? 1 : ease3((d - u) / (d - c));
-function folkPose(kind, k, tl) {
+// where the whole body is, in px off its rest place: dx toward the shrine, dy down
+function folkAt(kind, k, tl) {
   const { T, off } = PRAY[kind], u = (((tl - off(k)) % T) + T) % T;
-  if (kind === 'hands') {
-    const r = reach(u, 1, 1.8, 3.0, 3.8), sway = r >= 1 ? Math.sin((u - 1.8) * 2.6) * 2 : 0;
-    return { h: FSQUAT + Math.round(6 * r), lean: Math.round(sway), arm: Math.round(r * 16), bow: 0 };
-  }
-  const b = reach(u, 0.8, 1.7, 2.5, 3.3);
-  return { h: FSQUAT - Math.round(6 * b), lean: Math.round(6 * b), arm: 0, bow: b };
+  if (kind === 'bob') return { dx: 0, dy: -P * reach(u, 0.9, 1.6, 2.0, 3.0) };
+  if (kind === 'nod') return { dx: P * reach(u, 0.9, 1.6, 2.0, 2.8), dy: 0 };
+  const e = u - PRAY.hop.launch;
+  return { dx: 0, dy: e > 0 && e < 0.6 ? -P * 1.5 * Math.sin(Math.PI * e / 0.6) : 0 };
 }
 function folk(d, n) {
   const kind = SHRINE.pray, tl = Math.max(0, (S.after.t || 0) - SHRINE.t0);
   for (let i = 0; i < n; i++) {
-    const left = i < n / 2, face = left ? 1 : -1, p = folkPose(kind, i, tl), x = folkX(i, n);
-    const bx = x + p.lean * face, top = -p.h - FEET;
-    if (kind === 'hands' && p.arm > 0) {
-      // arms up the body's sides, rising past the head as the reach comes
-      const y1 = top + 8, y0 = top - p.arm;
-      d.px(bx - 4, y0, 4, y1 - y0, K); d.px(bx + FW, y0, 4, y1 - y0, K);
-    }
-    square((a, b, w, h, t) => d.px(a, b, w, h, t), bx, top, FW, p.h);
+    const face = i < n / 2 ? 1 : -1, p = folkAt(kind, i, tl);
+    d.body(kneelX(i, n), FEET_Y, p.dx * face, p.dy, false);
   }
 }
 
@@ -487,13 +474,8 @@ function shrine(d, work, t) {
   // the arch, paper: straight sides, then a cell in a row to a point
   for (let y = 3; y <= 9; y++) run(-y, SH.niche[0], SH.niche[1], W);
   for (let k = 1; k <= 6; k++) run(-9 - k, SH.niche[0] + k, SH.niche[1] - k, W);
-  // the faith ring: a rim of paper round it, wider on the dark page where the clouds are close in tone to its ink, so its ink stands off them; then its face
+  // the faith ring: its face in paper, no rim round it
   const rx = x0 + FAITH_AT.x, ry = FAITH_AT.y, f = clamp01(faithAt(tl)), N = RING.cells.length;
-  const rim = darkPage ? 10.8 : 11.1;
-  for (let j = -4; j < 24; j++) {
-    const half = Math.floor(Math.sqrt(Math.max(0, rim * rim - (j - 9) * (j - 9))));
-    if (half > 0) d.r(rx + 9 - half, ry + j, 2 * half + 1, 1, W);
-  }
   for (const { j, from, n } of RING.face) d.r(rx + from, ry + j, n, 1, W);
   ringAt(d, RING, rx, ry, f, d.sinking);
   const c = SA.click, w = tl % clickLoop(), t1 = c.hold + c.press, t2 = t1 + c.unwind;
@@ -529,10 +511,10 @@ function shrine(d, work, t) {
       for (let kn = 0; kn < n; kn++) {
         const o = PR.off(kn) + PR.launch;
         for (let m = Math.max(0, Math.ceil((tl - tail - o) / PR.T)); o + m * PR.T <= tl; m++) {
-          const ts = o + m * PR.T, land = ts + life, p = folkPose(SHRINE.pray, kn, ts);
+          const ts = o + m * PR.T, land = ts + life, p = folkAt(SHRINE.pray, kn, ts);
           const fl = faithAt(land), tc = RING.cells[tipIndex(fl)], tip = cellWorld(d, rx, ry, tc);
           const face = kn < n / 2 ? 1 : -1;
-          prayer(d, rx, ry, ts, tl, { x: d.ox + folkX(kn, n) + p.lean * face + FW / 2, y: d.oy - FEET - p.h - p.arm - 2 }, tip, fl >= 0.999);
+          prayer(d, rx, ry, ts, tl, { x: d.ox + (kneelX(kn, n) + 1.5) * P + p.dx * face, y: d.oy + FEET_Y * P + p.dy - 2 }, tip, fl >= 0.999);
           const gl = (tl - land) / SA.glintS;
           if (gl >= 0 && gl < 1) glint(d, rx, ry, tc, gl);
         }
