@@ -30,6 +30,7 @@ export function myYard() {
   saveRaw(raw);
   forget();
   S.staged = false;
+  document.body.classList.remove('scene-bare');
   // Back to your own yard is back to your own motion setting too.
   forceMotion(null);
   restore();
@@ -49,6 +50,10 @@ export function scene(name) {
   forceCoarse(null);
   forceMotion(null);
   letGoDeepFrame();
+  // A scene about the picture (`bare: true`) stands without the story's card,
+  // the notices and the mess tags over it: the beats a scene marks done and
+  // the yard it messes would otherwise say themselves across what is judged.
+  document.body.classList.toggle('scene-bare', !!sc.bare);
   sc.run();
   refresh();
   return true;
@@ -67,6 +72,7 @@ style.textContent = `
   #dev .scenes .head { opacity: .55; }
   #dev .scenes .row { display: flex; flex-wrap: wrap; gap: 3px; }
   #dev .scenes button.mine { align-self: flex-start; }
+  body.scene-bare #objective, body.scene-bare #toast, body.scene-bare #messtags { display: none !important; }
 `;
 
 function refresh() {
