@@ -18,6 +18,7 @@ import { S } from '../state.js';
 import { isEmpty } from '../carry.js';
 import { nextId } from './util.js';
 import { stationDoor } from './place.js';
+import { landOrder } from './landing.js';
 
 // A member with no job: at the podium, or walking there (bodies.js). A pair's
 // member, `pair` 0 or 1, is never idle.
@@ -43,14 +44,10 @@ export const orderOf = id => orders().find(o => o.id === id) || null;
 // Where an order is set down: its station's door, the grove's at the
 // forestry shack, whose board sells it.
 export const orderAt = o => stationDoor(o.card === 'grove' ? 'forestry' : o.card);
-// What lands a row when its order is in: the cards register it (rows.js), so
-// the sim never imports the cards that sell it.
-let landRow = null;   // page: the cards' landing, set once at load by rows.js
-export const onOrderLanded = fn => { landRow = fn; };
 // A block of order `o` set down at its station: the last lands the row.
 export function orderBrought(o) {
   o.brought += 1;
   if (o.brought < o.n) return;
   S.after.orders = orders().filter(q => q !== o);
-  landRow?.(o.key);
+  landOrder(o.key);   // the cards' landing (landing.js)
 }
