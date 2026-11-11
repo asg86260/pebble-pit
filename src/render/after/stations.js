@@ -375,6 +375,10 @@ const FAITH_AT = { x: 0, y: -45 };   // its top left off the shrine's left and t
 const FAITH_CELLS = ringCells(FAITH, -Math.PI / 2, Math.PI * 2).sort((p, q) => p.share - q.share);
 const FAITH_FACE = ringFace(FAITH);
 const PULSE_S = 2.4;
+// What is not yet inked is the ink itself, faint: so it reads as the ink's own
+// ghost on either page (the ink is the page's light tone in the dark), where a
+// fixed pale or mid would vanish on one of them.
+const FAITH_GHOST = { track: 0.28, fill: 0.55, pulse: 0.4 };
 function shrine(d, work, t) {
   const x0 = SH.x, run = (y, a, b, tone = K) => d.r(x0 + a, y, b - a + 1, 1, tone);
   // the step, then the gable: walls to the eaves, then a cell in a row to the apex
@@ -389,15 +393,20 @@ function shrine(d, work, t) {
   for (let k = 1; k <= 6; k++) run(-9 - k, SH.niche[0] + k, SH.niche[1] - k, W);
   // the faith ring: paper face, then its track and the inked share of it
   const rx = x0 + FAITH_AT.x, ry = FAITH_AT.y, f = clamp01(SHRINE.fill), N = FAITH_CELLS.length;
+  // a rim of paper a cell and a half past the ring, so its ink stands off the clouds in either page
+  for (let j = -2; j < 21; j++) {
+    const half = Math.floor(Math.sqrt(Math.max(0, 11.1 * 11.1 - (j - 9) * (j - 9))));
+    if (half > 0) d.r(rx + 9 - half, ry + j, 2 * half + 1, 1, W);
+  }
   for (const { j, from, n } of FAITH_FACE) d.r(rx + from, ry + j, n, 1, W);
   if (SHRINE.mode === 'disc') {
     FAITH_FACE.forEach(({ j, from, n }, i) => {
       const w = clamp01(f * FAITH_FACE.length - (FAITH_FACE.length - 1 - i));
-      if (w > 0) d.fade(w, () => d.r(rx + from, ry + j, n, 1, MID));
+      if (w > 0) d.fade(w * FAITH_GHOST.fill, () => d.r(rx + from, ry + j, n, 1, K));
     });
     for (const { i, j } of FAITH_CELLS) d.c(rx + i, ry + j, K);
   } else {
-    for (const { i, j } of FAITH_CELLS) d.c(rx + i, ry + j, PALE);
+    d.fade(FAITH_GHOST.track, () => { for (const { i, j } of FAITH_CELLS) d.c(rx + i, ry + j, K); });
     FAITH_CELLS.forEach(({ i, j }, k) => {
       const w = clamp01(f * N - k);
       if (w > 0) d.fade(w, () => d.c(rx + i, ry + j, K));
@@ -405,7 +414,7 @@ function shrine(d, work, t) {
   }
   if (f >= 1 && !d.sinking) {
     const a = 0.5 - 0.5 * Math.cos((t || 0) / PULSE_S * Math.PI * 2);
-    d.fade(a, () => { for (const { j, from, n } of FAITH_FACE) d.r(rx + from, ry + j, n, 1, PALE); });
+    d.fade(a * FAITH_GHOST.pulse, () => { for (const { j, from, n } of FAITH_FACE) d.r(rx + from, ry + j, n, 1, K); });
   }
   if (!d.sinking) {
     const C = AFTER_SHRINE_MOTES;
