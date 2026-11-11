@@ -17,8 +17,8 @@ import { AFTERLIFE_ON, HELL_ON, ACT_ROAD_UNDER } from './config.js';
 import { held } from './reset.js';
 import { demoOn } from './demo.js';
 import { AFTER_PLACE } from './after/place.js';
-
-import { HELL_PLACE } from './hell/place.js';
+import { godFront, restW } from './after/sky.js';
+import { HELL_PLACE, HELL_ROUTE } from './hell/place.js';
 import { AFTER_CREW } from './after/bodies.js';
 import { AFTER_LANDING } from './after/piles.js';
 import { plantLand } from './after/seeds.js';
@@ -81,7 +81,7 @@ const AFTER_AT_YARD = {
 // Each place's crew (placebodies.js): its own body list, its JOBS registry,
 // its walk and how the hand takes one of its bodies up. Read through a
 // getter, since the bodies' modules import the places.
-const HELL_AT = { ...HELL_PLACE, get crew() { return HELL_CREW; } };
+const HELL_AT = { ...HELL_PLACE, route: HELL_ROUTE, get crew() { return HELL_CREW; } };
 export const PLACES = { after: AFTER_AT_YARD, hell: HELL_AT };
 // What a chip of a place comes down on, in the place's order (game.js,
 // `stepChips`): { air?, clamp?, surfaces }. The deep is no place the camera

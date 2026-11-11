@@ -27,10 +27,10 @@ import { isEmpty, push, pop, count, loadKind } from '../carry.js';
 import { upCount } from './levels.js';
 import { cellOf, colOf } from '../grid.js';
 import { afterGround as G } from '../state.js';
-import { walk } from './util.js';
+import { floorGo } from './route.js';
 
 // A walk along the floor, true once there.
-const go = (w, x, dt) => { const there = walk(w, x, floorAt(x), dt); w.y = floorAt(w.x); return there; };
+const go = (w, x, dt) => floorGo(w, x, dt);
 
 // --- the basket's room ---------------------------------------------------------------------
 export const SEEDS_ROW = 'after-seeds';

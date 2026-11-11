@@ -12,7 +12,7 @@
 import { P, HELL_GAP, HELL_H, HELL_W, HELL_FLOOR_MARGIN, HELL_TIERS,
          HELL_X_IN, CHAMBER_W, CHAMBER_GAP, CHAMBER_H, CHAMBER_STEP, PASS_H, LADDER_AT, FACE_H,
          VENT_AT, FURNACE_AT, FURNACE_W, FURNACE_H, ANVIL_AT, STORE_AT, ROAD_AT, SPOIL_AT,
-         BARRIER_IN, BARRIER_W, CAGE_AT, CAGE_W, CAGE_H, CAGE_SPOIL_AT, ROAD_SPAWN_UP } from '../config.js';
+         BARRIER_IN, BARRIER_W, CAGE_AT, CAGE_W, CAGE_H, CAGE_SPOIL_AT, ROAD_SPAWN_UP, GHOST_CLIMB } from '../config.js';
 import { deepFloor, deepX0 } from '../deep/place.js';
 import { S } from '../state.js';
 
@@ -76,3 +76,25 @@ export const hellOpenX = () => chamberFocusX(S.hell ? Math.min(S.hell.chamber, N
 // The place as the camera reads it (acts.js, `PLACES`).
 export const HELL_PLACE = { x0: hellX0, x1: hellX1, top: hellTop, floor: hellFloor, open: hellOpenX,
                             margin: HELL_FLOOR_MARGIN, h: HELL_H };
+
+// --- its ways (route.js, `routeIn`) -------------------------------------------------
+// Hell's world as the one router asks it: a way a chamber's floor (the next
+// chamber's ledge is this floor, `ledgeY(i) === chamberFloor(i - 1)`); a
+// ladder a link, at `ladderX(i)`, chamber i-1's floor to chamber i's, climbed
+// at GHOST_CLIMB; and the road down a link from the road's top, where a ghost
+// of the muster fades in, to the first floor. A ghost's chamber (`c`) is the
+// way it is on.
+export const floorKey = i => `c${i}`;
+let ways = null; // cache: built on first ask, every field a live function
+export const HELL_ROUTE = {
+  ways: () => ways || (ways = {
+    road: { key: 'road', feet: () => roadTop() },
+    ...Object.fromEntries(HELL_TIERS.map((_, i) => [floorKey(i), { key: floorKey(i), c: i, feet: () => chamberFloor(i) }]))
+  }),
+  links: () => [
+    { x: roadX(), a: 'road', b: floorKey(0), name: 'road', pace: GHOST_CLIMB },
+    ...HELL_TIERS.slice(1).map((_, k) => ({ x: ladderX(k + 1), a: floorKey(k), b: floorKey(k + 1), name: `ladder ${k + 1}`, pace: GHOST_CLIMB }))
+  ],
+  wayAt: b => (b.c == null ? 'road' : floorKey(b.c)),
+  onWay(b, way) { if (way.c != null) b.c = way.c; }
+};
