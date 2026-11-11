@@ -1,4 +1,4 @@
-// MOCK faith6
+﻿// MOCK faith7
 // A ring of cells laid out as a mask, shared by the air filter's dial
 // (render/filter.js) and the shrine's faith ring (render/after/stations.js).
 // At seven or nine cells a circle is a choice about which cells, so each

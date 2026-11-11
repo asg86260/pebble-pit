@@ -580,14 +580,15 @@ function afterSite(until) {
   window.__look(b.x + b.w / 2 - S.viewW / 2); window.__holdShot();
 }
 
-// MOCK faith6
-// The shrine stood with its faithful and `fill` of its faith shown
-// (render/after/stations.js, SHRINE), framed with the ring over it.
-function shrineAt(mode, fill) {
+// MOCK faith7
+// The shrine stood with its faithful, doing `mode` (render/after/stations.js,
+// SHRINE), its clock started now and run `ahead` seconds on, framed with the
+// ring over it. The faithful are drawn, not walked there.
+function shrineAt(mode, ahead) {
   window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
-  SHRINE.mode = mode; SHRINE.fill = fill; SHRINE.folk = 6;
+  SHRINE.mode = mode; SHRINE.folk = 6; SHRINE.t0 = S.after.t;
   const b = stationBox('shrine');
-  window.__look(b.x + b.w / 2 - S.viewW / 2); window.__fast(2.5); window.__holdShot();
+  window.__look(b.x + b.w / 2 - S.viewW / 2); window.__fast(ahead); window.__holdShot();
 }
 // MOCK stair4
 // The stair to God, one flight raised by the shared build as a workshop is
@@ -3396,15 +3397,15 @@ export const SCENES = {
   // cross. The fill and the faithful are stood in the run, not earned or
   // walked: a real build would read the fill off the shrine's own count and
   // send members to kneel at its door.
-  'faith6-a': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-ring, a review branch, never merged',
-    option: 'A a ring that fills clockwise, motes rising off it as it fills',
-    say: 'two-thirds full: the filter dial\'s own cell ring inked clockwise from the top, a handful of motes rising off it; it costs one ring over the cross', run: () => shrineAt('ring', 0.67) },
-  'faith6-b': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-ring, a review branch, never merged',
-    option: 'B a disc that fills from the bottom, motes rising',
-    say: 'two-thirds full: the same ring with its face filling from the bottom in flat rows, the motes the same; reads as how full, not where it is up to', run: () => shrineAt('disc', 0.67) },
-  'faith6-c': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-ring, a review branch, never merged',
-    option: 'C the ring at full: held, pulsing, the motes thick',
-    say: 'full: the ring inked all round, its face fading pale and back, every mote out; click to empty it into faith', run: () => shrineAt('ring', 1) },
+  'faith7-a': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-sauce, a review branch, never merged',
+    option: "A prayers fly in: motes rise from the kneelers, arc up and are drawn into the ring's filling tip, the tip glinting as each lands",
+    say: "the yard's coin arc from each kneeler to the ring's tip; the fill rises on its own and is let go at the top", run: () => shrineAt('fly', 9) },
+  'faith7-b': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-sauce, a review branch, never merged',
+    option: 'B the ring turns: the filled arc carries a slow travelling glint, the ring breathes a cell wider and back, motes orbit it before drifting off',
+    say: 'two-thirds full and alive without anyone praying: a glint laps the arc every six seconds, the ring breathes on five', run: () => shrineAt('turn', 0) },
+  'faith7-c': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-sauce, a review branch, never merged',
+    option: "C the click: the ring at full, then the player's click empties it -- the arc unwinds and the faith streams off it to the faith count in the corner, motes bursting outward",
+    say: 'full for five seconds, then the click (stood in, not a real press): the arc unwinds, the faith flies to the counter, the ring fills again', run: () => shrineAt('click', 0) },
   'stair4-a': { about: 'the acts', review: "act 3: the stair's layout", stage: 'built: review-stair-build, a review branch, never merged',
     option: 'A one flight going up: the pile, the builders at its base, half risen',
     say: 'the first flight raised like a workshop: its pile under the landing, builders hammering at its base, two of four bands risen from the floor', run: () => stairSite(0, r => r.n >= 2) },

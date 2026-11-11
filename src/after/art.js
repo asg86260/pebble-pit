@@ -1,4 +1,4 @@
-// The camp's ground plan: each station's drawing as ground, and the camp laid
+﻿// The camp's ground plan: each station's drawing as ground, and the camp laid
 // out left to right off it (the owner, 2026-10-20: "the stations are a bit
 // too far apart": one gap of open floor between every two neighbors). A pure
 // table and one function over it, with no import but the piles' sizes
@@ -48,7 +48,7 @@ const DRAWN = {
   // Its board's ground on the workshops' side, between the last workshop and
   // the union's crowd: laid there off both by after/place.js, which overrides
   // this column (God's side holds the rebel pile).
-  // MOCK faith6
+  // MOCK faith7
   // The shrine: a pointed gable with an arch cut in it, the faithful kneeling either side, and over its cross the faith ring.
   shrine:    { box: [0, 47, 25], door: 22, pile: {} },
   pedestal:  { box: [1, 10, 4], door: 6, pile: {}, ground: 16, sign: -8 }

@@ -1,4 +1,4 @@
-// The camp's stations: the saw mill and the workshop as voted in the second
+﻿// The camp's stations: the saw mill and the workshop as voted in the second
 // redesign (docs/mocks/act3-stations-r2-2026-10-18: the frame saw, the shed),
 // matched to the press (docs/mocks/act3-stations-2026-10-18,
 // polish-workshop-press.html, the press since cut), the construction shack
@@ -19,8 +19,8 @@
 
 // REVIEW act-3-the-cabin-built
 // MOCK stair4
-// MOCK faith6
-import { P, AFTER_SAW_TEETH, AFTER_ART_SCALE, AFTER_MILL, AFTER_CABIN_SMOKE, AFTER_SHRINE_MOTES } from '../../config.js';
+// MOCK faith7
+import { P, AFTER_SAW_TEETH, AFTER_ART_SCALE, AFTER_MILL, AFTER_CABIN_SMOKE, AFTER_SHRINE_MOTES, AFTER_SHRINE_SAUCE, AFTER_COIN_LIFE_S } from '../../config.js';
 import { K, W, PALE, MID, hash, silhouette, clamp01 } from './kit.js';
 import { ART, STAIR, stairW, stairKeys } from '../../after/art.js';
 import { CABIN } from '../../after/cabin.js';
@@ -28,6 +28,8 @@ import { DOORWAY } from '../../after/doorway.js';
 import { held } from '../../reset.js';
 import { ctx } from '../ctx.js';
 import { ringCells, ringFace } from '../cellring.js';
+import { S } from '../../state.js';
+import { coinAt } from '../aftercoins.js';
 import { goodBlock, goodColor } from './piles.js';
 import { wheelAngle, millView, sawyerPose } from '../../after/mill.js';
 
@@ -287,7 +289,7 @@ function cabinSmoke(b, t) {
   const C = AFTER_CABIN_SMOKE, [ci, ch, cw, cn] = CABIN.cap;
   risePuffs(b, t, C, C.puffs, CAB_X + ci + cw / 2 - C.size / 2, ch + cn);
 }
-// MOCK faith6
+// MOCK faith7
 // `n` puffs off (x0, y0), in cells, as the config `C` has them: each rising
 // and drifting at its true position, in and out by fading and from the mid
 // grey to the pale. `share` of them show, the last one fading in rather than
@@ -297,9 +299,11 @@ function risePuffs(b, t, C, n, x0, y0, share = 1) {
   for (let k = 0; k < n; k++) {
     const w = clamp01(share * n - k);
     if (w <= 0) continue;
-    const u = ((t / C.life + k / n) % 1 + 1) % 1;
+    const u = C.once ? t / C.life : ((t / C.life + k / n) % 1 + 1) % 1;
+    if (u < 0 || u >= 1) continue;
     const a = Math.min(1, u * C.fadeIn) * (1 - u) * C.peak * w;
-    const x = x0 + (C.spread ? (hash(k * 3.7 + (C.seed || 0)) - 0.5) * C.spread : 0) + u * C.drift + Math.sin(t * C.swayRate + k * C.swayPhase) * C.sway, y = y0 + u * C.rise;
+    const way = C.path ? C.path(u, k, n) : null;
+    const x = way ? x0 + way[0] : x0 + (C.spread ? (hash(k * 3.7 + (C.seed || 0)) - 0.5) * C.spread : 0) + u * C.drift + Math.sin(t * C.swayRate + k * C.swayPhase) * C.sway, y = way ? y0 + way[1] : y0 + u * C.rise;
     const f = clamp01((u - C.greyAt) / C.greyFade + 0.5);
     const [t0, t1] = (C.tones || ['mid', 'pale']).map(n => ({ ink: K, mid: MID, pale: PALE })[n]);
     const puff = tone => () => b.px(x * P, -(y + C.size) * P, C.size * P, C.size * P, tone);
@@ -355,32 +359,89 @@ function stairFlight(d, k) {
 const stairDraw = k => d => stairFlight(d, k);
 
 // --- the shrine: a gable with an arch cut in it ---------------------------------------
-// MOCK faith6
+// MOCK faith7
 // One ink mass like the shack and the stump house: a pointed gable on a step,
 // a pointed arch cut out of it in paper, a cross on the apex, the faithful
 // kneeling either side (the frame's own squat body). Over the cross floats
-// the faith ring, the air filter's dial's cell ring (render/cellring.js):
-// `SHRINE.fill` of it inked clockwise from the top, each cell fading in as
-// its turn comes, and motes rising off it as the stump house's smoke does,
-// more of them the fuller it is. `mode` 'disc' fills the face from the
-// bottom instead. At full it holds, its face fading pale and back.
-export const SHRINE = { mode: 'ring', fill: 0, folk: 0 };
+// the faith ring, the air filter's dial's cell ring (render/cellring.js),
+// `fill` of it inked clockwise from the top, each cell fading in as its turn
+// comes, with motes off it as the stump house's smoke rises (`risePuffs`).
+// `SHRINE.mode` says what more it does, all of it read off the act's clock:
+//   fly   prayers rise off the kneelers and arc into the ring's tip, the
+//         yard's coin arc (aftercoins.js, `coinAt`); the tip glints as each lands
+//   turn  a glint travels the inked arc, the ring breathes a cell wider and
+//         back, motes orbit it before drifting off
+//   click the ring full, then emptied: the arc unwinds and the faith streams
+//         off the tip to the counter in the corner on the same coin arc,
+//         motes bursting outward
+// Nothing here pops: everything comes and goes by opacity.
+export const SHRINE = { mode: 'ring', fill: 0, folk: 0, t0: 0 };
 const SH = { x: 13, w: 19, wall: 12, niche: [3, 15] };
-// A ring two cells thick, as wide as the shrine: the cells whose middle lies
-// between 7.5 and 9.6 cells off the hub, laid out once as a mask.
-const FAITH = Array.from({ length: 19 }, (_, j) =>
-  Array.from({ length: 19 }, (_, i) => (Math.hypot(i - 9, j - 9) >= 7.5 && Math.hypot(i - 9, j - 9) <= 9.6 ? '#' : '.')).join(''));
-const FAITH_AT = { x: 0, y: -45 };   // its top left off the shrine's left and the floor, cells: its hub over the cross, two cells clear of it
-// clockwise from the top
-const FAITH_CELLS = ringCells(FAITH, -Math.PI / 2, Math.PI * 2).sort((p, q) => p.share - q.share);
-const FAITH_FACE = ringFace(FAITH);
-const PULSE_S = 2.4;
+const SA = AFTER_SHRINE_SAUCE;
+// A ring two cells thick, laid out once as a mask: the cells whose middle lies
+// between `inner` and `outer` cells off the hub.
+function makeRing(size, inner, outer) {
+  const h = (size - 1) / 2;
+  const mask = Array.from({ length: size }, (_, j) =>
+    Array.from({ length: size }, (_, i) => (Math.hypot(i - h, j - h) >= inner && Math.hypot(i - h, j - h) <= outer ? '#' : '.')).join(''));
+  // clockwise from the top
+  const cells = ringCells(mask, -Math.PI / 2, Math.PI * 2).sort((p, q) => p.share - q.share);
+  return { mask, cells, face: ringFace(mask), size };
+}
+const RING = makeRing(19, 7.5, 9.6);
+const RING_BIG = makeRing(21, 8.5, 10.6);   // a cell wider all round, the breath's other end
+const FAITH_AT = { x: 0, y: -45 };          // the ring's top left off the shrine's left and the floor, cells: its hub over the cross, two cells clear of it
 // What is not yet inked is the ink itself, faint: so it reads as the ink's own
 // ghost on either page (the ink is the page's light tone in the dark), where a
 // fixed pale or mid would vanish on one of them.
-const FAITH_GHOST = { track: 0.28, fill: 0.55, pulse: 0.4 };
+const FAITH_GHOST = { track: 0.28, pulse: 0.4 };
+const PULSE_S = 2.4;
+const ease3 = k => k * k * (3 - 2 * k);
+const hold01 = clamp01;
+
+// How full the faith is at the scene's time `tl`, 0..1, by mode.
+function faithAt(tl) {
+  if (SHRINE.mode === 'fly') {
+    const w = tl % SA.fillRise;
+    return w < SA.fillRise - SA.fillDrop ? SA.fillFrom + (SA.fillTo - SA.fillFrom) * w / (SA.fillRise - SA.fillDrop)
+      : SA.fillTo - (SA.fillTo - SA.fillFrom) * ease3((w - (SA.fillRise - SA.fillDrop)) / SA.fillDrop);
+  }
+  if (SHRINE.mode === 'click') {
+    const c = SA.click, w = tl % clickLoop();
+    if (w < c.hold + c.press) return 1;
+    if (w < c.hold + c.press + c.unwind) return 1 - ease3((w - c.hold - c.press) / c.unwind);
+    if (w < c.hold + c.press + c.unwind + c.empty) return 0;
+    return ease3((w - c.hold - c.press - c.unwind - c.empty) / c.refill);
+  }
+  return SHRINE.mode === 'turn' ? SA.turnFill : SHRINE.fill;
+}
+const clickLoop = () => SA.click.hold + SA.click.press + SA.click.unwind + SA.click.empty + SA.click.refill;
+
+// One ring: its face, track and inked share (`f`) at `a` of its opacity, its
+// top left at cell (rx, ry).
+function ringAt(d, R, rx, ry, f, a, solid) {
+  d.fade(a * FAITH_GHOST.track, () => { for (const { i, j } of R.cells) d.c(rx + i, ry + j, K); });
+  R.cells.forEach(({ i, j }, k) => {
+    const w = solid ? 1 : clamp01(f * R.cells.length - k);
+    if (w > 0) d.fade(w * a, () => d.c(rx + i, ry + j, K));
+  });
+}
+const cellWorld = (d, rx, ry, c) => ({ x: d.ox + (rx + c.i + 0.5) * P, y: d.oy + (ry + c.j + 0.5) * P });
+const tipOf = f => RING.cells[Math.min(RING.cells.length - 1, Math.max(0, Math.floor(f * RING.cells.length)))];
+// A coin-arc mote (aftercoins.js) from world (x0, y0) to (tx, ty), stamped at `at`, drawn as one cell.
+function arcMote(d, m, tl) {
+  const at = coinAt(m, tl);
+  if (at) d.fade(at.ink, () => d.px(at.x - d.ox - P, at.y - d.oy - P, P * 2, P * 2, K));
+}
+const kneelX = (i, n) => { const left = i < n / 2, j = left ? i : i - Math.ceil(n / 2); return left ? 1 + j * 4 : SH.x + SH.w + 3 + j * 4; };
+// the plus a landing leaves on the tip cell, fading in and out
+function glint(d, rx, ry, c, a) {
+  d.fade(a, () => { for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) d.c(rx + c.i + dx, ry + c.j + dy, K); });
+}
+
 function shrine(d, work, t) {
   const x0 = SH.x, run = (y, a, b, tone = K) => d.r(x0 + a, y, b - a + 1, 1, tone);
+  const tl = Math.max(0, (t || 0) - SHRINE.t0), live = SHRINE.mode !== 'ring';
   // the step, then the gable: walls to the eaves, then a cell in a row to the apex
   run(-1, 0, SH.w - 1); run(-2, 0, SH.w - 1);
   d.r(x0, -SH.wall, SH.w, SH.wall - 2, K);
@@ -391,42 +452,70 @@ function shrine(d, work, t) {
   // the arch, paper: straight sides, then a cell in a row to a point
   for (let y = 3; y <= 9; y++) run(-y, SH.niche[0], SH.niche[1], W);
   for (let k = 1; k <= 6; k++) run(-9 - k, SH.niche[0] + k, SH.niche[1] - k, W);
-  // the faith ring: paper face, then its track and the inked share of it
-  const rx = x0 + FAITH_AT.x, ry = FAITH_AT.y, f = clamp01(SHRINE.fill), N = FAITH_CELLS.length;
-  // a rim of paper a cell and a half past the ring, so its ink stands off the clouds in either page
+  // the faith ring: a rim of paper a cell and a half past it, so its ink stands off the clouds in either page; then its face
+  const rx = x0 + FAITH_AT.x, ry = FAITH_AT.y, f = clamp01(faithAt(tl)), N = RING.cells.length;
   for (let j = -2; j < 21; j++) {
     const half = Math.floor(Math.sqrt(Math.max(0, 11.1 * 11.1 - (j - 9) * (j - 9))));
     if (half > 0) d.r(rx + 9 - half, ry + j, 2 * half + 1, 1, W);
   }
-  for (const { j, from, n } of FAITH_FACE) d.r(rx + from, ry + j, n, 1, W);
-  if (SHRINE.mode === 'disc') {
-    FAITH_FACE.forEach(({ j, from, n }, i) => {
-      const w = clamp01(f * FAITH_FACE.length - (FAITH_FACE.length - 1 - i));
-      if (w > 0) d.fade(w * FAITH_GHOST.fill, () => d.r(rx + from, ry + j, n, 1, K));
-    });
-    for (const { i, j } of FAITH_CELLS) d.c(rx + i, ry + j, K);
-  } else {
-    d.fade(FAITH_GHOST.track, () => { for (const { i, j } of FAITH_CELLS) d.c(rx + i, ry + j, K); });
-    FAITH_CELLS.forEach(({ i, j }, k) => {
-      const w = clamp01(f * N - k);
-      if (w > 0) d.fade(w, () => d.c(rx + i, ry + j, K));
-    });
-  }
+  for (const { j, from, n } of RING.face) d.r(rx + from, ry + j, n, 1, W);
+  // the breath (turn): the ring and a ring a cell wider cross-fade
+  const breath = !d.sinking && SHRINE.mode === 'turn' ? 0.5 - 0.5 * Math.cos(tl / SA.breathS * Math.PI * 2) : 0;
+  ringAt(d, RING, rx, ry, f, 1 - breath, d.sinking);
+  if (breath > 0) ringAt(d, RING_BIG, rx - 1, ry - 1, f, breath, false);
+  // the pulse at full, and the pressed beat of a click
+  const c = SA.click, w = tl % clickLoop();
+  const pressed = SHRINE.mode === 'click' && w >= c.hold && w < c.hold + c.press + 0.3 ? 0.6 * ease3(Math.min(1, (w - c.hold) / 0.15)) * (1 - ease3(clamp01((w - c.hold - c.press) / 0.3))) : 0;
   if (f >= 1 && !d.sinking) {
-    const a = 0.5 - 0.5 * Math.cos((t || 0) / PULSE_S * Math.PI * 2);
-    d.fade(a * FAITH_GHOST.pulse, () => { for (const { j, from, n } of FAITH_FACE) d.r(rx + from, ry + j, n, 1, K); });
+    const a = (0.5 - 0.5 * Math.cos((t || 0) / PULSE_S * Math.PI * 2)) * FAITH_GHOST.pulse;
+    d.fade(Math.max(a * (1 - pressed), pressed), () => { for (const { j, from, n } of RING.face) d.r(rx + from, ry + j, n, 1, K); });
   }
   if (!d.sinking) {
-    const C = AFTER_SHRINE_MOTES;
-    risePuffs(d, t || 0, C, C.puffs, rx + 9, -ry + 0.5, f);
-    // the bigger motes come in over the last of the fill
-    risePuffs(d, t || 0, { ...C, ...C.big }, C.big.puffs, rx + 9, -ry + 0.5, clamp01((f - 0.4) / 0.6));
+    const C = AFTER_SHRINE_MOTES, hubX = rx + 9, hubUp = -ry - 9.5;
+    // the rising motes, as many as the ring is full (turn trades them for orbiters)
+    if (SHRINE.mode !== 'turn') {
+      risePuffs(d, t || 0, C, C.puffs, rx + 9, -ry + 0.5, f);
+      risePuffs(d, t || 0, { ...C, ...C.big }, C.big.puffs, rx + 9, -ry + 0.5, clamp01((f - 0.4) / 0.6));
+    }
+    if (SHRINE.mode === 'turn') {
+      // motes circling the ring, out and round before they fade
+      const O = SA.orbit;
+      risePuffs(d, tl, { ...O, path: (u, k, n) => { const a = k / n * Math.PI * 2 + u * Math.PI * 2 * O.turns - Math.PI / 2, r = O.r0 + u * O.r1; return [Math.cos(a) * r, -Math.sin(a) * r]; } },
+        O.puffs, hubX, hubUp - 0.5, 1);
+      // the glint travelling the inked arc, trailing a smear of fainter cells, in at its start and out at its end
+      const lit = f * N, u = (tl / SA.turnS) % 1, g = u * lit, env = Math.sin(Math.PI * u);
+      RING.cells.forEach(({ i, j }, k) => {
+        const dr = g - k, tail = dr >= 0 && dr < SA.glintCells ? 1 - dr / SA.glintCells : 0;
+        if (tail > 0 && k < lit) d.fade(tail * env * SA.glintInk, () => d.c(rx + i, ry + j, W));
+      });
+    }
+    if (SHRINE.mode === 'fly') {
+      const every = SA.flyEvery, life = AFTER_COIN_LIFE_S, n = SHRINE.folk || 1;
+      for (let q = Math.max(0, Math.floor((tl - life - SA.glintS) / every)); q <= Math.floor(tl / every); q++) {
+        const ts = q * every, land = ts + life, kn = q % n;
+        const tip = cellWorld(d, rx, ry, tipOf(faithAt(land)));
+        arcMote(d, { v: 1, x0: d.ox + (kneelX(kn, n) + 1.5) * P, y0: d.oy - 2 * P, tx: tip.x, ty: tip.y, at: ts }, tl);
+        const g = (tl - land) / SA.glintS;
+        if (g >= 0 && g < 1) glint(d, rx, ry, tipOf(faithAt(land)), Math.min(1, g * 6) * (1 - g));
+      }
+    }
+    if (SHRINE.mode === 'click') {
+      // the faith streams off the tip as the arc unwinds, to the counter in the corner
+      // (the counter stands in the window's lower left corner, in screen pixels: render/counter.js, EDGE)
+      const z = S.zoom || 1, to = { x: S.camX + 26 / z, y: S.camY + S.viewH - 22 / z };
+      const t0 = c.hold + c.press, n = Math.round(c.unwind / c.every);
+      for (let q = 0; q < n; q++) {
+        const ts = t0 + q * c.every, tip = cellWorld(d, rx, ry, tipOf(Math.max(0, 1 - ease3(q / n))));
+        arcMote(d, { v: 1, x0: tip.x, y0: tip.y + 4 * P, tx: to.x, ty: to.y, at: ts }, w);
+      }
+      // and the burst out of the ring as it lets go
+      const B = c.burst;
+      risePuffs(d, w - t0, { ...B, once: true, path: (u, k, m) => { const a = k / m * Math.PI * 2 + 0.3, r = B.r0 + B.r1 * (1 - (1 - u) * (1 - u)); return [Math.cos(a) * r, -Math.sin(a) * r]; } },
+        B.puffs, hubX, hubUp - 0.5, 1);
+    }
   }
   // the faithful, three a side on the floor, kneeling
-  if (!d.sinking) for (let i = 0; i < SHRINE.folk; i++) {
-    const left = i < SHRINE.folk / 2, j = left ? i : i - Math.ceil(SHRINE.folk / 2);
-    d.body(left ? 1 + j * 4 : x0 + SH.w + 3 + j * 4, -3, 0, 0, true);
-  }
+  if (!d.sinking) for (let i = 0; i < SHRINE.folk; i++) d.body(kneelX(i, SHRINE.folk), -3, 0, 0, true);
 }
 
 export const DRAW = { shrine, mill, workshop, shack, forestry, ...Object.fromEntries(stairKeys().map((key, i) => [key, stairDraw(i + 1)])) };
