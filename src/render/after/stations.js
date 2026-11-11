@@ -19,14 +19,15 @@
 
 // REVIEW act-3-the-cabin-built
 // MOCK stair4
-// MOCK faith5
-import { P, AFTER_SAW_TEETH, AFTER_ART_SCALE, AFTER_MILL, AFTER_CABIN_SMOKE } from '../../config.js';
+// MOCK faith6
+import { P, AFTER_SAW_TEETH, AFTER_ART_SCALE, AFTER_MILL, AFTER_CABIN_SMOKE, AFTER_SHRINE_MOTES } from '../../config.js';
 import { K, W, PALE, MID, hash, silhouette, clamp01 } from './kit.js';
 import { ART, STAIR, stairW, stairKeys } from '../../after/art.js';
 import { CABIN } from '../../after/cabin.js';
 import { DOORWAY } from '../../after/doorway.js';
 import { held } from '../../reset.js';
 import { ctx } from '../ctx.js';
+import { ringCells, ringFace } from '../cellring.js';
 import { goodBlock, goodColor } from './piles.js';
 import { wheelAngle, millView, sawyerPose } from '../../after/mill.js';
 
@@ -283,15 +284,27 @@ function cabinBrush(d) {
 // into its silhouette.
 function cabinSmoke(b, t) {
   if (b.sinking) return;
-  const C = AFTER_CABIN_SMOKE, [ci, ch, cw, cn] = CABIN.cap, x0 = ci + cw / 2 - C.size / 2, y0 = ch + cn;
-  for (let k = 0; k < C.puffs; k++) {
-    const u = ((t / C.life + k / C.puffs) % 1 + 1) % 1;
-    const a = Math.min(1, u * C.fadeIn) * (1 - u) * C.peak;
-    const x = x0 + u * C.drift + Math.sin(t * C.swayRate + k * C.swayPhase) * C.sway, y = y0 + u * C.rise;
+  const C = AFTER_CABIN_SMOKE, [ci, ch, cw, cn] = CABIN.cap;
+  risePuffs(b, t, C, C.puffs, CAB_X + ci + cw / 2 - C.size / 2, ch + cn);
+}
+// MOCK faith6
+// `n` puffs off (x0, y0), in cells, as the config `C` has them: each rising
+// and drifting at its true position, in and out by fading and from the mid
+// grey to the pale. `share` of them show, the last one fading in rather than
+// appearing; the stump house's smoke is all of them, and the shrine's motes
+// the ones its faith has earned.
+function risePuffs(b, t, C, n, x0, y0, share = 1) {
+  for (let k = 0; k < n; k++) {
+    const w = clamp01(share * n - k);
+    if (w <= 0) continue;
+    const u = ((t / C.life + k / n) % 1 + 1) % 1;
+    const a = Math.min(1, u * C.fadeIn) * (1 - u) * C.peak * w;
+    const x = x0 + (C.spread ? (hash(k * 3.7) - 0.5) * C.spread : 0) + u * C.drift + Math.sin(t * C.swayRate + k * C.swayPhase) * C.sway, y = y0 + u * C.rise;
     const f = clamp01((u - C.greyAt) / C.greyFade + 0.5);
-    const puff = tone => () => b.px((CAB_X + x) * P, -(y + C.size) * P, C.size * P, C.size * P, tone);
-    if (f < 1) b.fade(a * (1 - f), puff(MID));
-    if (f > 0) b.fade(a * f, puff(PALE));
+    const [t0, t1] = (C.tones || ['mid', 'pale']).map(n => ({ ink: K, mid: MID, pale: PALE })[n]);
+    const puff = tone => () => b.px(x * P, -(y + C.size) * P, C.size * P, C.size * P, tone);
+    if (f < 1) b.fade(a * (1 - f), puff(t0));
+    if (f > 0) b.fade(a * f, puff(t1));
   }
 }
 function forestry(d, work, t) {
@@ -342,16 +355,36 @@ function stairFlight(d, k) {
 const stairDraw = k => d => stairFlight(d, k);
 
 // --- the shrine: a gable with an arch cut in it ---------------------------------------
-// MOCK faith5
+// MOCK faith6
 // One ink mass like the shack and the stump house: a pointed gable on a step,
-// a pointed arch cut out of it in paper, a cross on the apex. How full the
-// faith is reads one of three ways (SHRINE.mode, set by the review's scene):
-// candles lit one by one on the step, the arch filled from its foot in bands,
-// or neither, the prayers lying on their pile beside it. The faithful kneel
-// either side, the frame's own squat body.
-export const SHRINE = { mode: 'candles', fill: 0, folk: 0 };
-const SH = { x: 13, w: 19, wall: 12, niche: [3, 15], candles: 7 };
-function shrine(d) {
+// a pointed arch cut out of it in paper, a cross on the apex, the faithful
+// kneeling either side (the frame's own squat body). Over the cross floats
+// the faith ring, the air filter's dial's cell ring (render/cellring.js):
+// `SHRINE.fill` of it inked clockwise from the top, each cell fading in as
+// its turn comes, and motes rising off it as the stump house's smoke does,
+// more of them the fuller it is. `mode` 'disc' fills the face from the
+// bottom instead. At full it holds, its face fading pale and back.
+export const SHRINE = { mode: 'ring', fill: 0, folk: 0 };
+const SH = { x: 13, w: 19, wall: 12, niche: [3, 15] };
+const FAITH = [
+  '...#####...',
+  '..##...##..',
+  '.#.......#.',
+  '##.......##',
+  '#.........#',
+  '#.........#',
+  '#.........#',
+  '##.......##',
+  '.#.......#.',
+  '..##...##..',
+  '...#####...'
+];
+const FAITH_AT = { x: 4, y: -37 };   // its top left off the shrine's left and the floor, cells: its middle column over the cross
+// clockwise from the top
+const FAITH_CELLS = ringCells(FAITH, -Math.PI / 2, Math.PI * 2).sort((p, q) => p.share - q.share);
+const FAITH_FACE = ringFace(FAITH);
+const PULSE_S = 2.4;
+function shrine(d, work, t) {
   const x0 = SH.x, run = (y, a, b, tone = K) => d.r(x0 + a, y, b - a + 1, 1, tone);
   // the step, then the gable: walls to the eaves, then a cell in a row to the apex
   run(-1, 0, SH.w - 1); run(-2, 0, SH.w - 1);
@@ -361,22 +394,31 @@ function shrine(d) {
   const cx = x0 + 9;
   d.r(cx, -24, 1, 3, K); d.r(cx - 1, -23, 3, 1, K);
   // the arch, paper: straight sides, then a cell in a row to a point
-  const rows = [];
-  for (let y = 3; y <= 9; y++) rows.push([y, SH.niche[0], SH.niche[1]]);
-  for (let k = 1; k <= 6; k++) rows.push([9 + k, SH.niche[0] + k, SH.niche[1] - k]);
-  const lit = Math.round(SHRINE.fill * rows.length);
-  rows.forEach(([y, a, b], i) => {
-    run(-y, a, b, W);
-    if (SHRINE.mode === 'door' && i < lit) d.px((x0 + a) * P + 2, -y * P + 2, (b - a + 1) * P - 4, P - (i % 2 ? 2 : 4), MID);
-  });
-  // the candles on the step, each an ink cell two high, its flame a mid cell
-  if (SHRINE.mode === 'candles') {
-    const on = Math.round(SHRINE.fill * SH.candles);
-    for (let i = 0; i < SH.candles; i++) {
-      const cxx = x0 + SH.niche[0] + i * 2;
-      d.r(cxx, -4, 1, 2, K);
-      if (i < on) d.c(cxx, -5, MID);
-    }
+  for (let y = 3; y <= 9; y++) run(-y, SH.niche[0], SH.niche[1], W);
+  for (let k = 1; k <= 6; k++) run(-9 - k, SH.niche[0] + k, SH.niche[1] - k, W);
+  // the faith ring: paper face, then its track and the inked share of it
+  const rx = x0 + FAITH_AT.x, ry = FAITH_AT.y, f = clamp01(SHRINE.fill), N = FAITH_CELLS.length;
+  for (const { j, from, n } of FAITH_FACE) d.r(rx + from, ry + j, n, 1, W);
+  if (SHRINE.mode === 'disc') {
+    FAITH_FACE.forEach(({ j, from, n }, i) => {
+      const w = clamp01(f * FAITH_FACE.length - (FAITH_FACE.length - 1 - i));
+      if (w > 0) d.fade(w, () => d.r(rx + from, ry + j, n, 1, MID));
+    });
+    for (const { i, j } of FAITH_CELLS) d.c(rx + i, ry + j, K);
+  } else {
+    for (const { i, j } of FAITH_CELLS) d.c(rx + i, ry + j, MID);
+    FAITH_CELLS.forEach(({ i, j }, k) => {
+      const w = clamp01(f * N - k);
+      if (w > 0) d.fade(w, () => d.c(rx + i, ry + j, K));
+    });
+  }
+  if (f >= 1 && !d.sinking) {
+    const a = 0.5 - 0.5 * Math.cos((t || 0) / PULSE_S * Math.PI * 2);
+    d.fade(a, () => { for (const { j, from, n } of FAITH_FACE) d.r(rx + from, ry + j, n, 1, PALE); });
+  }
+  if (!d.sinking) {
+    const C = AFTER_SHRINE_MOTES;
+    risePuffs(d, t || 0, C, C.puffs, rx + 5, -ry + 0.5, f);
   }
   // the faithful, three a side on the floor, kneeling
   if (!d.sinking) for (let i = 0; i < SHRINE.folk; i++) {

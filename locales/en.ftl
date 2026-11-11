@@ -2748,8 +2748,6 @@ hover-pile-planks = plank pile
 hover-pile-signs = sign pile
 # the hover over a counted pile in act 3 (the grove's seed basket by the forestry shack)
 hover-pile-seeds = seed basket
-# the hover over a counted pile in act 3 (the shrine's prayers)
-hover-pile-prayers = prayer pile
 
 # the hover over a log in the hand's reach in act 3, lying on the floor
 hover-log = log

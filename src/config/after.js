@@ -213,7 +213,7 @@ export const AFTER_PODIUM_PILE = 9;
 export const AFTER_PODIUM_CLIMB = { s: 10, fade: 0.8, rise: [0.2, 0.8], step: [0.8, 0.9] };
 // The stations standing from the act's first frame: the pedestal the pair
 // speak from and the construction shack that sells every other.
-export const AFTER_START_BUILT = ['pedestal', 'shack', 'forestry', 'shrine'];   // MOCK faith5
+export const AFTER_START_BUILT = ['pedestal', 'shack', 'forestry', 'shrine'];   // MOCK faith6
 // The camp's other stations stand whole from the start, closed until they are
 // built: the build sign staked in each (buildsign.js) and the shack's board
 // sell its build, and the station works once it is built. The ground each station's board stands
@@ -752,3 +752,9 @@ export const AFTER_BASKET = {
 // and out over the rest, and from the mid grey to the pale over `greyFade` of
 // its life about `greyAt`: a fade, never a step (the mock's numbers).
 export const AFTER_CABIN_SMOKE = { puffs: 4, size: 2, life: 4.8, rise: 8, drift: 1.6, sway: 0.35, swayRate: 0.9, swayPhase: 2.1, fadeIn: 5, peak: 0.85, greyAt: 0.45, greyFade: 0.15 };
+
+// MOCK faith6
+// The shrine's faith ring (render/after/stations.js): motes rising off it,
+// drawn as the stump house's smoke is (`risePuffs`), up to `puffs` of them
+// as full as the ring is, each a cell, its start spread `spread` cells across.
+export const AFTER_SHRINE_MOTES = { puffs: 28, size: 1, life: 3.6, rise: 14, drift: 0, sway: 0.5, swayRate: 1.1, swayPhase: 2.1, fadeIn: 4, peak: 0.9, greyAt: 0.55, greyFade: 0.2, spread: 10, tones: ['ink', 'mid'] };
