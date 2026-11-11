@@ -23168,9 +23168,11 @@ them (`asked`) kept the hover from opening or shutting act 3's boards.
 
 These now fold onto the shared readers. A body under the pointer is read by
 `grabAt` in every place and named by its crew's `says`, as the yard's are
-named by type. An act's goods are named by the place's `sayAt`. Piles and the
-construction shack are named by an `over` column on their rows, which
-`buildingAt` reads. A pointer passing over opens the board a click would
+named by type. An act's goods are named by the place's `sayAt`. The
+construction shack, which opens nothing, is named by an `over` column on its
+row, which `buildingAt` reads. Piles are not named at all (the owner,
+2026-11-11: "lets drop the pile hovers"); a full one still says so over its
+mark. A pointer passing over opens the board a click would
 open (`clickBoard`), and it neither opens nor shuts a board whose UPGRADES
 button stands (`shopBoxOf`). That is a fact about the row, not the view.
 
