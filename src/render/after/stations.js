@@ -19,7 +19,7 @@
 
 // REVIEW act-3-the-cabin-built
 // MOCK faith8
-import { P, AFTER_SAW_TEETH, AFTER_ART_SCALE, AFTER_MILL, AFTER_CABIN_SMOKE, AFTER_SHRINE_MOTES, AFTER_SHRINE_SAUCE, AFTER_COIN_LIFE_S } from '../../config.js';
+import { P, AFTER_SAW_TEETH, AFTER_ART_SCALE, AFTER_MILL, AFTER_CABIN_SMOKE, AFTER_SHRINE_MOTES, AFTER_SHRINE_SAUCE, AFTER_COIN_LIFE_S, AFTER_LINE_DARK } from '../../config.js';
 import { K, W, PALE, MID, hash, silhouette, clamp01, square } from './kit.js';
 import { ART } from '../../after/art.js';
 import { CABIN } from '../../after/cabin.js';
@@ -28,7 +28,7 @@ import { held } from '../../reset.js';
 import { ctx } from '../ctx.js';
 import { ringCells, ringFace } from '../cellring.js';
 import { S } from '../../state.js';
-import { darkPage } from '../../ink.js';
+import { darkPage, raw } from '../../ink.js';
 import { coinAt } from '../aftercoins.js';
 import { goodBlock, goodColor } from './piles.js';
 import { wheelAngle, millView, sawyerPose } from '../../after/mill.js';
@@ -422,7 +422,7 @@ function ringAt(d, R, rx, ry, f, solid) {
   d.fade(darkPage ? FAITH_GHOST.trackDark : FAITH_GHOST.track, () => { for (const { i, j } of R.cells) d.c(rx + i, ry + j, K); });
   R.cells.forEach(({ i, j }, k) => {
     const w = solid ? 1 : ease3(clamp01(f * R.cells.length - k));
-    if (w > 0) d.fade(w, () => d.c(rx + i, ry + j, K));
+    if (w > 0) d.fade(w, () => d.c(rx + i, ry + j, darkPage ? raw(AFTER_LINE_DARK) : K));
   });
 }
 const cellWorld = (d, rx, ry, c) => ({ x: d.ox + (rx + c.i + 0.5) * P, y: d.oy + (ry + c.j + 0.5) * P });
@@ -476,11 +476,10 @@ function shrine(d, work, t) {
   for (let k = 1; k <= 6; k++) run(-9 - k, SH.niche[0] + k, SH.niche[1] - k, W);
   // the faith ring: its face in paper, no rim round it
   const rx = x0 + FAITH_AT.x, ry = FAITH_AT.y, f = clamp01(faithAt(tl)), N = RING.cells.length;
-  for (const { j, from, n } of RING.face) d.r(rx + from, ry + j, n, 1, W);
-  ringAt(d, RING, rx, ry, f, d.sinking);
+  // nothing paper in or round it: the sky and clouds run right up to the ring, and a backing read off this drawing (`silhouette`) holds no ring either
+  if (!d.sinking) ringAt(d, RING, rx, ry, f, false);
   const c = SA.click, w = tl % clickLoop(), t1 = c.hold + c.press, t2 = t1 + c.unwind;
-  if (d.sinking) { for (const { i, j } of HALO.cells) d.c(rx - 2 + i, ry - 2 + j, K); }
-  else {
+  if (!d.sinking) {
     // the breath: a faint ring a cell clear of the ring, fading in and out
     const breath = 0.5 - 0.5 * Math.cos(tl / SA.breathS * Math.PI * 2);
     d.fade(breath * SA.haloInk * (darkPage ? 0.6 : 1), () => { for (const { i, j } of HALO.cells) d.c(rx - 2 + i, ry - 2 + j, K); });
