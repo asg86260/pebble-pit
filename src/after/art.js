@@ -48,7 +48,7 @@ const DRAWN = {
   // Its board's ground on the workshops' side, between the last workshop and
   // the union's crowd: laid there off both by after/place.js, which overrides
   // this column (God's side holds the rebel pile).
-  // MOCK faith7
+  // MOCK faith8
   // The shrine: a pointed gable with an arch cut in it, the faithful kneeling either side, and over its cross the faith ring.
   shrine:    { box: [0, 47, 25], door: 22, pile: {} },
   pedestal:  { box: [1, 10, 4], door: 6, pile: {}, ground: 16, sign: -8 }

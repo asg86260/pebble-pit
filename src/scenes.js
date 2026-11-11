@@ -580,15 +580,15 @@ function afterSite(until) {
   window.__look(b.x + b.w / 2 - S.viewW / 2); window.__holdShot();
 }
 
-// MOCK faith7
+// MOCK faith8
 // The shrine stood with its faithful, doing `mode` (render/after/stations.js,
 // SHRINE), its clock started now and run `ahead` seconds on, framed with the
 // ring over it. The faithful are drawn, not walked there.
-function shrineAt(mode, ahead) {
+function shrineAt(mode, at) {
   window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
-  SHRINE.mode = mode; SHRINE.folk = 6; SHRINE.t0 = S.after.t;
+  SHRINE.mode = mode; SHRINE.folk = 6; SHRINE.t0 = S.after.t - at;
   const b = stationBox('shrine');
-  window.__look(b.x + b.w / 2 - S.viewW / 2); window.__fast(ahead); window.__holdShot();
+  window.__look(b.x + b.w / 2 - S.viewW / 2); window.__fast(0); window.__holdShot();
 }
 // MOCK stair4
 // The stair to God, one flight raised by the shared build as a workshop is
@@ -3397,14 +3397,14 @@ export const SCENES = {
   // cross. The fill and the faithful are stood in the run, not earned or
   // walked: a real build would read the fill off the shrine's own count and
   // send members to kneel at its door.
-  'faith7-a': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-sauce, a review branch, never merged',
-    option: "A prayers fly in: motes rise from the kneelers, arc up and are drawn into the ring's filling tip, the tip glinting as each lands",
-    say: "the yard's coin arc from each kneeler to the ring's tip; the fill rises on its own and is let go at the top", run: () => shrineAt('fly', 9) },
-  'faith7-b': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-sauce, a review branch, never merged',
-    option: 'B the ring turns: the filled arc carries a slow travelling glint, the ring breathes a cell wider and back, motes orbit it before drifting off',
-    say: 'two-thirds full and alive without anyone praying: a glint laps the arc every six seconds, the ring breathes on five', run: () => shrineAt('turn', 0) },
-  'faith7-c': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-sauce, a review branch, never merged',
-    option: "C the click: the ring at full, then the player's click empties it -- the arc unwinds and the faith streams off it to the faith count in the corner, motes bursting outward",
+  'faith8-a': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-smooth, a review branch, never merged',
+    option: 'A the ring filling: prayers flying in, glint, breath and orbit together, about half full',
+    say: "prayers arc from the kneelers into the tip, the glint laps the arc, a faint ring breathes round it, motes circle and rise", run: () => shrineAt('fill', 19) },
+  'faith8-b': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-smooth, a review branch, never merged',
+    option: 'B the same at full, held and pulsing, prayers still arriving and bouncing off',
+    say: 'full: the face pulses, the motes are thick, and each prayer that arrives is turned away off the tip', run: () => shrineAt('full', 3) },
+  'faith8-c': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-smooth, a review branch, never merged',
+    option: "C the click: full, then emptied into the faith count (round 7 C, smoothed and on the combined ring)",
     say: 'full for five seconds, then the click (stood in, not a real press): the arc unwinds, the faith flies to the counter, the ring fills again', run: () => shrineAt('click', 0) },
   'stair4-a': { about: 'the acts', review: "act 3: the stair's layout", stage: 'built: review-stair-build, a review branch, never merged',
     option: 'A one flight going up: the pile, the builders at its base, half risen',

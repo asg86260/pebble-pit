@@ -213,7 +213,7 @@ export const AFTER_PODIUM_PILE = 9;
 export const AFTER_PODIUM_CLIMB = { s: 10, fade: 0.8, rise: [0.2, 0.8], step: [0.8, 0.9] };
 // The stations standing from the act's first frame: the pedestal the pair
 // speak from and the construction shack that sells every other.
-export const AFTER_START_BUILT = ['pedestal', 'shack', 'forestry', 'shrine'];   // MOCK faith7
+export const AFTER_START_BUILT = ['pedestal', 'shack', 'forestry', 'shrine'];   // MOCK faith8
 // The camp's other stations stand whole from the start, closed until they are
 // built: the build sign staked in each (buildsign.js) and the shack's board
 // sell its build, and the station works once it is built. The ground each station's board stands
@@ -753,11 +753,11 @@ export const AFTER_BASKET = {
 // its life about `greyAt`: a fade, never a step (the mock's numbers).
 export const AFTER_CABIN_SMOKE = { puffs: 4, size: 2, life: 4.8, rise: 8, drift: 1.6, sway: 0.35, swayRate: 0.9, swayPhase: 2.1, fadeIn: 5, peak: 0.85, greyAt: 0.45, greyFade: 0.15 };
 
-// MOCK faith7
+// MOCK faith8
 // The shrine's faith ring (render/after/stations.js): motes rising off it,
 // drawn as the stump house's smoke is (`risePuffs`), up to `puffs` of them
 // as full as the ring is, each a cell, its start spread `spread` cells across.
-export const AFTER_SHRINE_MOTES = { puffs: 40, size: 1, life: 3.6, rise: 11, drift: 0, sway: 0.5, swayRate: 1.1, swayPhase: 2.1, fadeIn: 4, peak: 0.9, greyAt: 0.55, greyFade: 0.2, spread: 16, tones: ['ink', 'ink'], big: { puffs: 16, size: 2, seed: 50, life: 4.2 } };
+export const AFTER_SHRINE_MOTES = { puffs: 40, size: 1, life: 3.6, rise: 11, drift: 0, sway: 0.5, swayRate: 1.1, swayPhase: 2.1, fadeIn: 4, peak: 0.9, greyAt: 0.55, greyFade: 0.2, spread: 16, tones: ['ink', 'ink'], ease: true, big: { puffs: 16, size: 2, seed: 50, life: 4.2 } };
 // What more the faith ring does (render/after/stations.js, `shrine`), in seconds
 // and cells: `fly` how often a prayer sets out and how long the tip glints, the
 // fill's slow rise and its drop; `turn` the glint's lap, its length in cells and
@@ -765,9 +765,10 @@ export const AFTER_SHRINE_MOTES = { puffs: 40, size: 1, life: 3.6, rise: 11, dri
 // beat, the unwind, the empty wait, the refill, how often a mote leaves the tip,
 // and the burst.
 export const AFTER_SHRINE_SAUCE = {
-  flyEvery: 0.5, glintS: 0.8, fillFrom: 0.2, fillTo: 0.95, fillRise: 40, fillDrop: 3,
-  turnFill: 0.67, turnS: 6, glintCells: 6, glintInk: 0.7, breathS: 5,
-  orbit: { puffs: 14, size: 1, life: 7, rise: 0, drift: 0, sway: 0, swayRate: 0, swayPhase: 0, fadeIn: 8, peak: 0.9, greyAt: 0.5, greyFade: 0.1, spread: 0, tones: ['ink', 'ink'], turns: 1.25, r0: 11.5, r1: 3.5 },
+  flyEvery: 0.4, glintS: 0.9, trail: [0.07, 0.14, 0.21], bounce: { s: 0.7, r: 5 },
+  fillFrom: 0.3, fillTo: 0.7, fillRise: 40, fillDrop: 3,
+  turnS: 7, glintCells: 8, glintInk: 0.8, breathS: 5, haloInk: 0.15,
+  orbit: { puffs: 10, size: 1, life: 7, rise: 0, drift: 0, sway: 0, swayRate: 0, swayPhase: 0, fadeIn: 8, peak: 0.9, greyAt: 0.5, greyFade: 0.1, spread: 0, tones: ['ink', 'ink'], turns: 1.25, r0: 12.5, r1: 3.5, ease: true },
   click: { hold: 5, press: 0.5, unwind: 3, empty: 1.5, refill: 8, every: 0.1,
-    burst: { puffs: 18, size: 1, life: 1.8, rise: 0, drift: 0, sway: 0, swayRate: 0, swayPhase: 0, fadeIn: 8, peak: 0.95, greyAt: 0.5, greyFade: 0.1, spread: 0, tones: ['ink', 'ink'], r0: 10.5, r1: 11 } }
+    burst: { puffs: 18, size: 1, life: 1.8, rise: 0, drift: 0, sway: 0, swayRate: 0, swayPhase: 0, fadeIn: 8, peak: 0.95, greyAt: 0.5, greyFade: 0.1, spread: 0, tones: ['ink', 'ink'], r0: 10.5, r1: 11, ease: true } }
 };
