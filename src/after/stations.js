@@ -128,8 +128,9 @@ export const AFTER_STATION_ROWS = [
     open: () => live() && built(card),
     ...(card in AFTER_BUILDS ? { lot: lotOf(card) } : {}),
     // The construction shack sells nothing (the owner, 2026-11-10): it
-    // stands, named, with no board and no button.
-    ...(card === 'shack' ? { board: null, line: null, boardAnchor: null } : {})
+    // stands, with no board and no button, and the pointer asks nothing of
+    // it, as of a pile (`hit`).
+    ...(card === 'shack' ? { board: null, line: null, boardAnchor: null, hit: () => false } : {})
   })),
   // A press on a tree is the saw's (after/gestures.js).
   row('grove', { open: live }),

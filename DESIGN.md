@@ -24917,10 +24917,12 @@ remaining reason was a look, and the owner has now overruled it.
   seated, not hand-put: FENCE_GAP cells out if clear, else the nearest spot
   a cell in, as the build sign is (fence.js). The fence layer stands after
   the cloud's lip, so a post stands on the floor as a pile does.
-- **A station row with no board opens nothing.** The shack keeps its row
-  (its hover, its ground) with no board, and input.js's click asks for a
-  board only of a row that has one; before, a press on the shack took the
-  click and showed the pointer cursor over nothing.
+- **The shack is no longer asked anything by the pointer.** It keeps its
+  station row (its ground) with no board and no button, and answers the hit
+  test as a pile does (`hit: () => false`): with no board, a press on it
+  took the click and showed the pointer cursor over nothing. The yard's
+  casino and the deep's crusher are rows with ground and no board whose
+  click is theirs, so the fix is the shack's row, not input.js's rule.
 - **The load kind is retired, not removed**, and the two band constants
   stay in config, read only by the 2026-10-28 migration, which may never
   change.
