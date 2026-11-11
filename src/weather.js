@@ -465,7 +465,7 @@ export function startle(wx, wy) {
 // pixels and go soft. A cloud's is not: it is snapped to device pixels as it
 // is drawn, and rounding it to its cell first made it hop a cell at a time
 // against a camera that scrolls smoothly.
-const skyAt = s => s.x + skyCam().x * (1 - s.far);
+export const skyAt = s => s.x + skyCam().x * (1 - s.far);
 
 // Where a balloon hangs under a cloud, in the cloud's own space: the middle of
 // its base, as an `x` the camera is added to the way it is added to a cloud's

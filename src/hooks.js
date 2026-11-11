@@ -52,7 +52,7 @@ import { persist, restore, reset as resetGame, switchSlot } from './persist.js';
 import { skipIntro } from './intro.js';
 import { holdSkip, skipScene } from './skip.js';
 import { goOn, lineShown } from './dialog.js';
-import { sendBirds, BIRDS } from './weather.js';
+import { sendBirds, BIRDS, skyAt } from './weather.js';
 import { smogReport } from './smog.js';
 import { advance, restart as restartClock } from './clock.js';
 import { forgetWalk } from './deep/fauna.js';
@@ -144,8 +144,20 @@ export const preview = n => {
 export const next = () => { clearBoulder(); S.chips = []; };
 
 // A flock now. Clears whatever was still up there first, so a check gets that
-// flock and not the leavings of the last one.
-export const birds = (fresh = true) => { if (fresh) BIRDS.length = 0; sendBirds(); return BIRDS.length; };
+// flock and not the leavings of the last one. Given a world x, the flock is
+// slid along its line so its lead bird is over it: where a flock comes in is
+// the sky's chance, and a check about one bird needs it over the ground the
+// check is about, not wherever the seed put it.
+export const birds = (fresh = true, at = null) => {
+  if (fresh) BIRDS.length = 0;
+  const first = BIRDS.length;
+  sendBirds();
+  if (at != null) {
+    const dx = at - skyAt(BIRDS[first]);
+    for (let i = first; i < BIRDS.length; i++) BIRDS[i].x += dx;
+  }
+  return BIRDS.length;
+};
 
 export const crew = (m = 0, h = 0, sp = 0, f = 0, lb = 0, wz = 0) => {   // hire straight off, for looking at things
   S.crew = m + h + sp + f + lb + wz;

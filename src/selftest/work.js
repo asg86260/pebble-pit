@@ -72,14 +72,16 @@ export const TESTS = [
     // whatever is on screen.
     window.__look(state().rockLeftX - 700);
     run(0.2);
-    window.__birds();
+    // The lead bird stood over ordinary ground on screen: clear of the hole,
+    // the rock's bare apron and the mouth of the quarry, where a grain is
+    // banked instead of left lying. That is those working, not the bird
+    // failing, but it is not what this check is about.
+    const was = state();
+    const lo = Math.max(was.pitX - was.pitW, S.camX);
+    const hi = Math.min(was.rockLeftX - 120, S.camX + S.viewW);
+    window.__birds(true, Math.round((lo + hi) / 2 / P) * P);
     const s = state();
-    // One over ordinary ground: clear of the hole, the rock's bare apron and
-    // the mouth of the quarry, where a grain is banked instead of left lying.
-    // That is those working, not the bird failing, but it is not what this
-    // check is about.
-    const clearOf = b => b.x < s.rockLeftX - 120 && b.x > s.pitX - s.pitW;
-    const bird = s.sky.birdWorld.find(clearOf) || s.sky.birdWorld[0];
+    const bird = s.sky.birdWorld[0];
     const [x, y] = onScreen(bird.x, bird.y);
     point('pointerdown', x, y);
     point('pointerup', x, y, 0);
