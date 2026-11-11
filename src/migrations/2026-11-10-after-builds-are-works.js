@@ -20,6 +20,7 @@
 // thirty worker-seconds (config/build.js, BUILD_CAP_S on 2026-11-10), and a
 // station took four bands of two loads.
 import { KINDS } from '../config.js';
+import { AFTER_JOB } from '../jobs.js';
 
 const OF = 30, BANDS = 4, LOADS = 8;
 const obj = v => v && typeof v === 'object' && !Array.isArray(v);
@@ -44,11 +45,11 @@ export default {
     delete a.raising;
     const load = KINDS.load ? new Set(Array.from({ length: KINDS.load.tones }, (_, i) => KINDS.load.first + i)) : new Set();
     if (Array.isArray(a.bodies)) {
-      a.bodies = a.bodies.filter(b => !(obj(b) && b.job === 'builder' && b.pair != null));
+      a.bodies = a.bodies.filter(b => !(obj(b) && b.job === AFTER_JOB.BUILD && b.pair != null));
       for (const b of a.bodies) {
         if (!obj(b)) continue;
         if (Array.isArray(b.load)) { b.load = b.load.filter(v => !load.has(v)); b.carry = b.load.length; }
-        if (b.job !== 'builder') continue;
+        if (b.job !== AFTER_JOB.BUILD) continue;
         Object.assign(b, { job: null, on: false, site: null, workId: null, goal: null, phase: null, slot: null, t: 0, n: 0 });
         delete b.builds; delete b.side; delete b.born;
       }
