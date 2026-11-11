@@ -4,6 +4,20 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
+## Act 3 builds through the yard's construction -- DESIGNED, AWAITING APPROVAL (2026-11-10)
+
+The owner: "act 3s build system should be switched out to use act 1s".
+DESIGN.md, "Act 3 builds through the yard's construction". Act 3's build
+rows become `kind: 'building'` works on works.js, put up by one builder
+through `rebalance` and crew/builders.js, and drawn rising with `withRise`.
+The deep already works this way. after/build.js's carried loads, pile and
+bands are deleted; its timber orders move to after/orders.js. Act 3's save
+needs a migration: a station mid-build becomes a work, so its bill is never
+taken twice. The work runs as two tracks in order: the shared seams first,
+then act 3. Blocker: the owner's approval and the three questions at the
+end of the section (the build-speed ladder, the dotted outline, the shack's
+board). The stair (below) builds on this.
+
 ## Act 3's stair and act 2's abyssal sword -- DESIGNED, AWAITING APPROVAL (2026-11-09)
 
 DESIGN.md, "The stair and the abyssal sword". Act 3's line builds a stair to

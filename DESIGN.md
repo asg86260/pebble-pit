@@ -24619,6 +24619,286 @@ over the price, grows to fit the longer line, and has no hover.
   cell at a time either way. Its ground is the lot's in footprints.js.
 
 
+## Act 3 builds through the yard's construction (design, not built)
+
+The owner, 2026-11-10: "ok we need to re-eval your decision to create new
+systems. please use existing systems as much as possible. if we decide to
+have a player build a new building, we should use the existing construction
+system. so act 3s build system should be switched out to use act 1s".
+
+Act 3 raises a station with a machine of its own (after/build.js: members
+carry loads from the shack's door onto the lot as a pile, two builders lay
+it in four bands). The yard already has one, and the deep already proves it
+serves a second place with its own crew and its own floor (deep/party.js
+`layStation` queues a station on works.js, built by `TYPE.DELVE` bodies on
+the deep's floor). Act 3 becomes the third place on it. Act 3 supplies
+data; the mechanism is the yard's.
+
+### 1. Act 1's construction, end to end
+
+1. **The press.** The build sign (buildsign.js `signPress`) or the board's
+   tile both call shop.js `pressRow`, which calls upgrades.js `buy(u)`. That
+   checks `forSale` and `canPay`. A row with a `kind` and a time
+   (works.js `takesTime`: `workFor` off `BUILD_BANDS[kind]` at `alongOf`)
+   goes to works.js `start(site, u, at, bill)`. `start` pushes
+   `{ key, done: 0, of, at, id, bill }` onto `S.works[site]`, claims the
+   ground order (`reserve`, then world.js through `groundHook`) and calls
+   `staffHook`. Only then does `buy` take the bill (`take`). The coins fly
+   to the site's box (`payTo`, `siteBox`), or to the row's `flyFrom`, and
+   `u.paid` runs. A door row is cut by upgrades/site.js `site()`:
+   `kind: 'building'`, `site: 'yard'`.
+2. **The builders.** crew/muster.js `setStaff` runs staffing.js
+   `rebalance` and then `syncWorkers`. `rebalance` puts one builder on each
+   busy site (`busyBuilderSites`) from the spare hands. With nobody spare it
+   *lends* the body nearest the site (`nearestLendable`, `w.lentFrom`) and
+   gives it back once nothing is left to build. The deep has its own
+   flavor (`busyDeepSites`, `unseatNearest`, `seatUpTo`). crew/builders.js
+   `stepBuilder` picks a work per body (`siteFor`, by the work's `id`),
+   walks the route at `commutePace` to the nearest ground inside the site's
+   box (`buildStationX`, `nearestIn`, `ownBox`), stands `goal: 'at'`, and
+   hammers (crew/dance.js `workJig`: the burst, the lunge, chips from
+   grit.js `spawnGrit`).
+3. **The progress.** muster.js `setHands`/`setHandsOn` count the bodies
+   *arrived* at a site and a work. Every frame, works.js `stepWorks` adds
+   `share * effortAt(site) * dt` to `done`. Nobody standing there means no
+   progress.
+4. **The drawing.** render/rise.js `withRise` clips the station's own
+   drawing to `progressOf(work)`, the bottom course first and a cell at a
+   time (`risingPlaces`). render/buildsites.js `drawBuildSites` draws the
+   barrier posts and the tape, and `drawGrit` the chips. render/bars.js
+   `drawWorkBars` draws a bar over a rising yard place and a filling glyph
+   over a station site. The tile draws its glyph built to the share done,
+   with a clock. The sign goes while `building(u)`.
+5. **The landing.** When `done >= of`, `stepWorks` plays `work-land`,
+   splices the work out and runs `rowFor(key).buy()`, which is the row's
+   effect (`S[key+'Open'] = true`, `lookAt`, `staffDoor`). It then calls
+   `doneHook` (`workFinished`: the tick over a station site) and
+   `staffHook`, and the builders go back.
+6. **The save.** works.js `SAVE` writes `S.works` (in worker-seconds) and
+   `S.buildOrder`. Its `read` keeps only works whose row answers `rowFor`
+   (`registerRows`) and whose site is in `SITES`.
+
+### 2. Act 3's build, piece by piece
+
+| act 3 today | becomes |
+|---|---|
+| rows.js `buildRow`: `buy: raiseStation(st)`, `rung` reads `built \|\| raising` | `kind: 'building'`, `site: 'after-<st>'` (the station row's key, which `registerSites` hands works.js), `raises: 'after-<st>'`. Its `buy` is the landing (`S.after.built.push(st)`), and `rung` reads `built(st)` alone. The rows go to `registerRows` so a saved work reads back. The bill, the `flyFrom` patch and the `paid` motes are unchanged: they already go through the one `buy`/`take`. |
+| build.js `raiseStation`, `S.after.raising` | works.js `start`, through `buy`. |
+| build.js `fillBuilders`, `offPosts`, the camp's members walking in | staffing.js `rebalance`, given a branch for each place (section 3). Act 3 supplies its spare hands: idle members at the podium, then the camp's waiting count, through its crew's `factory`. It also supplies its lending: the nearest posted member, hands free. That is the yard's lending, so `offPosts` is not kept as a copy. |
+| build.js `stepBuilder` (fetch, carry, drop, lay) | crew/builders.js's aim and work (`siteFor`, `ownBox`, `nearestIn`, `workJig`), walked on act 3's own walk (section 3). |
+| build.js `layPiece`, bands, `r.n`/`r.at` | works.js `stepWorks`. |
+| the loads: `toMake`, `loadsOf`, `armsOf`, `markWhole`, `topLoad`, `siteLoads`, `fetchAt`, `source('load', …, 'shack')`, `sink('load', …, 'band')`; place.js `buildPileAt`, `buildLayAt`, `BUILD_PILE_W`; piles.js's `load` restore (line 141) | **Deleted.** `AFTER_BUILDS` bills hold no timber, so the loads were never a cost: they were units made so there was something to carry. This section supersedes the bullet "Build sites take real units" in "One resource system for every act", section 4. |
+| config/blocks.js kind `load` | **Retired, not removed.** Its value run is kept so `acorn`'s saved cell values do not shift (the table's own rule: "a kind added at the end never shifts a saved value"). Nothing makes a load again. |
+| `pairBuilding` and its callers (bubbles.js, gestures.js, rebel.js), and the pair's `'home'` walk in `stepBuilder` | **Deleted.** The pair have not built since 2026-10-20. Any pair builder left in an old save is sent home by the migration. |
+| config: `AFTER_BUILD_PIECES`, `_PIECE_S`, `_A_BAND`, `_CARRIERS`, `_BUILDERS`, `_DROP_S`, `_LAY_S`, `_HOLD_S` | **Deleted.** `AFTER_BUILD_FADE_S` stays: the floor and the grove's beds read it. |
+| render/after.js `closedStation`, `openedBy`, `openedOf`, `drawShackOrder` | `drawStation` wraps the station's draw in `withRise('after-<key>', b.x, groundOf(key), b.w, b.h, …)`. The glyph over the station comes from `drawWorkBars`. The dotted plan outline (`outlineOf`) depends on question 2 below. |
+| place.js `sited()` reads `S.after.raising` | reads `built` or `workOn('after-build-<key>')`. |
+| what build.js keeps: `isIdle`, `handsFree`, the timber orders (`placeOrder` through `orderBrought`, `timberReserved`, `nextOrder`, `orderAt`, `onOrderLanded`) | Moves to `after/orders.js`. build.js is deleted. The orders are an upgrade's blocks carried, not construction, and are outside this change. |
+| scenes.js `after-camp`, `afterSite`, and the waits on `S.after.raising` | wait on `workOn`/`progressOf`. One scene stops the mill partway, as the yard's `build` scene does. |
+
+### 3. The seams, and the generalization each needs
+
+Each seam is fixed once in the shared file, and the yard and the deep pass
+through the same path. None of these is an act 3 copy.
+
+- **Which sites a crew builds.** stations.js `registerSites` registers only
+  rows whose world is the yard. works.js splits sites with two hand-kept
+  sets, `DOWN_THERE` and `UP_THERE`. The job names make this urgent:
+  `SITE_JOB` maps to `JOB.BUILD`, so an act 3 site registered as it is
+  today would be built by the yard's `S.workers`. The fix:
+  `registerSites` takes every row with a site and records its `place`
+  (`yard`, `deep`, `after`). `busyBuilderSites`/`busyDeepSites` become one
+  `busySites(place)`, and a body builds only its own place's sites. That
+  is the deep's rule ("nobody crosses between them") made general.
+  `DOWN_THERE` becomes the deep's entries in that map. `UP_THERE` (the
+  sphere, poured by its wizard) stays: it is about a job, not a place.
+- **Who is standing there.** muster.js `setHands`/`setHandsOn` and works.js
+  `bodiesOn` read `S.workers`. They should ask the site's place for its
+  body list: `S.workers` for the yard and the deep, and
+  `PLACES[place].crew.list()` (acts.js) for an act. The test stays the
+  same fields (`goal === 'at'`, `site`, `workId`), so act 3's builders
+  carry those fields.
+- **Who is made a builder.** staffing.js `rebalance` holds the rule (one
+  builder a work on the go, from the spare hands; with none spare, lend the
+  nearest; give back when the place has nothing left to build) and two
+  places' answers to it. It becomes one loop over the places. Each place
+  answers three questions: who is spare, whom to lend, how a loan comes
+  home. The yard answers with counts and `lentFrom`, the deep with
+  `unseatNearest`/`seatUpTo`, and act 3 with its idle members, its camp
+  count and its roster (a member taken off a post goes back to it when the
+  roster next fills, as it does today).
+- **The walk.** crew/builders.js `stepBuilder` mixes the shared choice
+  (which work, which spot, when it has arrived, the hammer) with the yard's
+  terrain (`keepTo`, `stepRoute`, `wayOver`, `climbTo`, `feetOn`). It is
+  split into the choice, which is shared, and a walk the place hands in:
+  the yard's route walk, or act 3's `walkTo` along `floorAt` (placebodies.js
+  `walkLine`).
+- **The floor.** crew/dance.js (line 114) and grit.js (a chip dies at
+  `S.groundY`) read the yard's ground line. In act 3 that line is a long
+  way under the cloud, so chips would fall straight through it.
+  render/buildsites.js uses deep/place.js `groundOf`, and render/bars.js
+  uses `S.groundY`. All four should ask the floor of the site's or the
+  body's place. The station table already carries that answer (`lot.floor`:
+  `S.groundY` in the yard, after/place.js `floorAt` in act 3), so it
+  becomes the one reader. Act 3's art cell is the yard's (`AP` is `P`), so
+  `withRise` lays the same cells.
+- **What is drawn rising.** render/rise.js `risingPlaces` reads only
+  `worksAt('yard')`. It reads every site whose work's row `raises` a place.
+  `OPENS_PLACE` stays as the yard doors' answer.
+- **Which layers draw in act 3.** In render.js `LAYERS`, `build sites`,
+  `work bars` and `done marks` are `in: YARD_DEEP`, and they gain
+  `'after'`. bars.js's tone flag (`DOWN_THERE.has(site)`) reads the place.
+  The station's own `withRise` goes in act 3's own `after camp` layer, so
+  the order of `LAYERS` does not change.
+- **The camera and the depth.** Nothing to do. Act 3's main plane uses the
+  yard's camera ("Act 3's main plane is the yard"), so a site's box, the
+  clip and the bar are world rects as they are in the yard. Nothing at
+  depth (God's camp) is ever built.
+- **The purse.** Nothing to do. Act 3's rows already pay through
+  upgrades.js `buy` and `take`, and words.js's purse knows the act's
+  coins.
+- **The fence and the no-overlap rule.** `drawBuildSites` stands its posts
+  three cells plus a post outside the box, and footprints.js claims no
+  fence anywhere. Act 3's lots are packed: piles, the sign pile beside the
+  workshop. Fix it once: the fence becomes part of the work's claim in
+  footprints.js, for every place. If a lot's derived gap cannot hold it,
+  the gap is derived wider (art.js `layPiles`). The fence is never drawn
+  smaller in act 3 alone. The verify.js rule decides this on the first
+  fenced mill.
+- **The build-speed ladder.** works.js `effortAt` multiplies by the
+  yard's `buildSpeedLevel`. Unless act 3's sites say their own `effort`
+  (`SITE_SAYS`), the yard's ladder speeds heaven's builds too. See
+  question 1.
+
+**Why act 3 has a copy.** build.js was written on 2026-10-18 to the owner's
+vote for "pile a". That was before the place engine (2026-10-20). At the
+time, act 3's members had no shared engine: works.js could count only
+`S.workers`, `registerSites` deliberately left the acts out, and act 3
+bought through a purse of its own. None of those premises still holds.
+placebodies.js gives every place a crew that a hook can ask. act 3's rows
+pay through the one `buy`. The deep shows that works.js serves a second
+crew on a second floor. One premise still holds and should: act 3's bodies
+stay in their own list, out of the yard's rebalance and lifespans. It no
+longer blocks anything, because the hooks above ask by place. The one
+remaining reason was a look, and the owner has now overruled it.
+
+### 4. What the player sees change
+
+- Pressing the sign, or the shack's tile, takes the bill as it does today
+  and starts a work. The sign goes. The tile's glyph fills to the share
+  done, with a ticking clock, as in the yard.
+- **One** member walks to the lot (idle first, otherwise the nearest one
+  at a post, lent) and hammers at the lot's edge in the yard's bursts,
+  throwing chips. Barrier posts and tape fence the lot.
+- The station rises out of the cloud a course of cells at a time, clipped
+  to the work's progress. It lands with the yard's `work-land` sound, and a
+  tick hangs over it until its board is read.
+- The time is the yard's: `BUILD_BANDS.building` at `BUILD_ALONE` 1, which
+  is `BUILD_CAP_S` (30 worker-seconds with one builder), sped up by the
+  build-speed ladder (question 1).
+- **Lost**, which the owner should know about:
+  - the line of up to four carriers fetching planks from the shack's door;
+  - the pile of loads on the lot, and the hand's grab on those loads;
+  - the two builders laying bands;
+  - each band fading in; the yard's rise lays cells, it does not fade them;
+  - the camp emptying out for a build;
+  - the order glyph over the shack;
+  - perhaps the dotted plan outline (question 2).
+
+### 5. Saves
+
+- `S.after.raising` leaves `blankAfter` (after/index.js).
+  `S.after.built` stays: it is the station-standing fact, as
+  `S.casinoOpen` is in the yard. The work lives in `S.works['after-<key>']`,
+  already saved by works.js.
+- **Without a migration the player pays twice.** `readOver` drops keys the
+  blank lacks. A station that was mid-build would lose its `raising`, its
+  rung would read 0, and its sign would come back with the bill already
+  spent.
+- The migration (`src/migrations/<date>-after-builds-are-works.js`, through
+  the save-shape-change skill) does the following in `apply(s)`:
+  - Each `s.after.raising[key]` whose key is not built becomes
+    `s.works['after-' + key] = [{ key: 'after-build-' + key, done, of,
+    at: null, id, bill: null }]`. `of` is the building band's figure,
+    written into the file as a literal (a migration never changes after it
+    lands). `done = of * laid / 8`, where 8 is that day's bill of loads, also
+    a literal. Loads carried but not yet laid count for nothing.
+  - A key whose bands are all laid (`n >= 4`) and is missing from `built`
+    is added to `built`.
+  - Then: delete `raising`; strip `load` cells from the saved ground and
+    from every body's `load`; idle every body on the build job
+    (`job: null`, `site: null`); send a pair builder home.
+- `SAVE_V` is 37 on main. The migration takes the next number after
+  whatever lands first. grove-a and dialog are both in flight with save
+  changes, and a collision means renumbering one of them.
+- **The fixture.** No saved fixture has a station mid-build:
+  act3-before-ground and act3-full-fence hold the mill at `n: 4`. The build
+  track makes `test/fixtures/act3-mid-build.json` from the `after-camp`
+  scene stopped at two bands. Its check goes red before the migration is
+  written.
+
+### 6. The checks, and the tracks
+
+- **Shared, which must stay green:** works.test, build-anim, build-reload,
+  spare-hand-builds, build-speed, build-throughput, wave31-buildings,
+  deep-works, deep-build-reload.
+- **Act 3:**
+  - after-loop: buy the mill the player's way, reload it mid-build, see it
+    stand.
+  - build-site.test.mjs (it tests act 3's loads today): rewritten to "one
+    builder, progress only while that builder is at the lot, a lent member
+    goes back to its post".
+  - after-pair-stays: the pair never build; idle members build first, then
+    a lent one.
+  - after-yard-coins: the bill's motes still fly.
+  - The files that use `raising` in their setup, moved to `built` or a
+    work: after-boards, after-playthrough, after-pile-plots, after-floor,
+    after-logflow, after-mill-machine, after-carried-goods,
+    after-cut-paper.
+  - one-carry, conservation, no-stock: no `load` door is left in the flows.
+- **The sign:** build-sign.test plus the browser group
+  `src/selftest/buildsign.js` (the sign is absent while `building(u)`).
+- **The map:** no-overlap.test and its verify.js rule, run on a fenced
+  mill.
+- **The save:** persist-roundtrip, save-floor, cloud-sync, and the new
+  mid-build fixture check.
+- shop-rows is untouched. `__rows` reads hooks.js's own `everyRow`, not
+  `registerRows`, so act 3's rows stay off the coverage table, as the act
+  intends.
+- **The look:** `node tools/look.mjs after-camp` and the mill stopped
+  partway, shot at the owner's window in light and dark. It goes to the
+  review bench as BUILT beside today's look before it lands.
+- **Tracks** (two, run in order, because B calls A's new signatures):
+  - **A, the shared seams.** Owns works.js, staffing.js, crew/muster.js,
+    crew/builders.js, crew/dance.js, grit.js, render/rise.js,
+    render/buildsites.js, render/bars.js and footprints.js, and edits
+    `registerSites` in stations.js. Additive in render.js `LAYERS`. The
+    yard's and the deep's checks are its gate.
+  - **B, act 3 on it.** Owns after/rows.js, after/build.js (to
+    after/orders.js), after/bodies.js, after/place.js, after/levels.js,
+    after/index.js, after/bubbles.js, after/gestures.js, after/rebel.js,
+    render/after.js, scenes.js's act 3 scenes, config/after*.js and
+    config/blocks.js, plus the migration and `SAVE_V`.
+- **The stair** ("The stair and the abyssal sword") is built on this. Each
+  section is a work on a stair site, raised by the same builders, so the
+  stair never becomes a third build system.
+
+### 7. Questions for the owner
+
+1. **Should the yard's build-speed ladder speed act 3's builds too?** One
+   ladder for every place is the shared answer. The alternative is a fixed
+   `effort` on act 3's sites, so the speed stays act 3's own.
+2. **Should the dotted outline of an unbuilt station stay?** The yard's
+   empty lot shows only its sign. If the outline stays, it becomes a
+   shared drawing that every empty lot wears, the yard's included. If not,
+   it goes from act 3.
+3. **Should the construction shack keep its board of builds?** In the
+   yard the bench lists the doors as well as their signs, so keeping the
+   shack's board is the yard's shape. Cutting it leaves the sign as the
+   only way in, which is the deep's shape, and the shack then has nothing
+   to sell.
+
+
 ## A dialog system (design, approved)
 
 The owner, 2026-10-31, straight after act 3's intro (the meteor on the
