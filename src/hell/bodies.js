@@ -22,15 +22,16 @@
 // where it was. They are not the yard's crew, so the yard's rebalance never
 // reaches them; they are stepped, walked and picked up by the place body
 // engine (placebodies.js), which act 3's members share. What is hell's is its
-// registry of jobs and its way down the ladders (`wayTo`).
+// registry of jobs; its ladders are ways and links the one router walks.
 
 import { S } from '../state.js';
 import { HELL_JOB } from '../jobs.js';
-import { P, HELL_TIERS, HELL_JOBS, GANG_MAX, GHOST_WALK, GHOST_CLIMB, MUSTER_EVERY_S, GHOST_FADE_S,
+import { P, HELL_TIERS, HELL_JOBS, GANG_MAX, GHOST_WALK, MUSTER_EVERY_S, GHOST_FADE_S,
          HOPPER_MAX, FURNACE_FUEL_MAX, WALL_RATE } from '../config.js';
-import { chamberFloor, ledgeY, ladderX, faceStand, ventX, furnaceStand, anvilX, storeX, roadX, roadTop,
-         spoilX, barrierStand, chamberAtX, chamberX0, chamberX1 } from './place.js';
-import { walkWay, stepCrew } from '../placebodies.js';
+import { chamberFloor, faceStand, ventX, furnaceStand, anvilX, storeX, roadX, roadTop,
+         spoilX, barrierStand, chamberAtX, chamberX0, chamberX1, HELL_ROUTE, floorKey } from './place.js';
+import { stepCrew } from '../placebodies.js';
+import { goIn, walkRoute } from '../route.js';
 import { hellValue } from './levels.js';
 import { blowFace, faceFull } from './ore.js';
 import { blowWall, workableWall } from './barriers.js';
@@ -60,40 +61,13 @@ function spotOf(ref) {
   return { x: storeX(), c: 0 };
 }
 
-// The way from a body's floor to a spot: along the floor to the ladder off
-// the next chamber's ledge, down it, and on; or the same backward. A way is
-// a list of points, each tagged with the chamber whose floor it is on.
-function wayTo(b, x, c) {
-  const pts = [];
-  let at = b.c;
-  while (at < c) {
-    pts.push([ladderX(at + 1), ledgeY(at + 1), at]);
-    pts.push([ladderX(at + 1), chamberFloor(at + 1), at + 1]);
-    at++;
-  }
-  while (at > c) {
-    pts.push([ladderX(at), chamberFloor(at), at]);
-    pts.push([ladderX(at), ledgeY(at), at - 1]);
-    at--;
-  }
-  pts.push([x, chamberFloor(c), c]);
-  return pts;
-}
-
-// Walk the body on along its way (the place body engine's `walkWay`): a
-// floor at GHOST_WALK, a ladder at GHOST_CLIMB. True once it stands at the
-// way's end.
-const pace = (dx, dy) => (Math.abs(dy) > Math.abs(dx) ? GHOST_CLIMB : GHOST_WALK);
-const walk = (b, dt) => walkWay(b, dt, pace);
-
-// Walk toward a spot; true once there.
-function goTo(b, ref, dt) {
+// Walk toward a spot on the one router (route.js, `goIn`) over hell's ways
+// (place.js, `HELL_ROUTE`): along a floor at GHOST_WALK, a ladder at its
+// own pace. True once there.
+const goTo = (b, ref, dt) => {
   const s = spotOf(ref);
-  const end = b.way.length ? b.way[b.way.length - 1] : null;
-  if (!end && Math.abs(b.x - s.x) < 1 && b.c === s.c && Math.abs(b.y - chamberFloor(s.c)) < 1) return true;
-  if (!end || Math.abs(end[0] - s.x) > P / 2 || end[2] !== s.c) b.way = wayTo(b, s.x, s.c);
-  return walk(b, dt);
-}
+  return goIn(HELL_ROUTE, b, s.x, floorKey(s.c), GHOST_WALK, dt);
+};
 
 // --- who does what -----------------------------------------------------------
 // Each body's job this frame: its place in the muster's order, the gang
@@ -295,8 +269,10 @@ function muster(dt) {
   h.musterT += dt;
   if (h.musterT < MUSTER_EVERY_S && h.bodies.length) return;
   h.musterT = 0;
+  // down the road, the router's first link (place.js, `HELL_ROUTE`)
+  const road = HELL_ROUTE.links()[0];
   h.bodies.push({ id: h.nextId++, job: null, x: roadX(), y: roadTop(), c: 0,
-                  way: [[roadX(), chamberFloor(0), 0]], carry: null, task: null, t: 0, age: 0, face: 1 });
+                  route: [{ climb: { ...road }, to: road.b }], carry: null, task: null, t: 0, age: 0, face: 1 });
   h.muster = h.bodies.length;
 }
 
@@ -347,7 +323,7 @@ export const HELL_CREW = {
   },
   stage(b, f, k) {
     // Still on the road down: nothing to do but arrive.
-    if (b.job == null && b.way.length) { walk(b, f.dt); if (b.way.length) return true; }
+    if (b.job == null && b.route && b.route.length) { walkRoute(HELL_ROUTE, b, GHOST_WALK, f.dt); if (b.route.length) return true; }
     // A body finishes carrying before it changes job, so nothing in its
     // hands is ever dropped.
     if (b.job !== f.jobs[k] && !b.carry) { b.job = f.jobs[k]; b.task = null; b.t = 0; }
@@ -358,16 +334,20 @@ export const HELL_CREW = {
   // (render/hell.js, `ghost`).
   box: b => ({ x: b.x - P, y: b.y - 2 * P, w: 2 * P, h: 2 * P }),
   // Not one still on the road down, or still fading in at its top.
-  pickable: b => b.job != null && !b.way.length && b.age >= GHOST_FADE_S,
+  pickable: b => b.job != null && b.age >= GHOST_FADE_S,
   hold(b, x, y) { b.x = x; b.y = y + P; },
-  lifted(b) { b.way = []; },
+  lifted(b) { b.route = null; },
   // The floor of the chamber it is over, of those open; inside its walls.
   land(b) {
     const c = chamberUnder(b.x);
     return { y: chamberFloor(c), x0: chamberX0(c) + P, x1: chamberX1(c) - P };
   },
-  // Its way is asked again from the chamber it came down in (`goTo`).
-  landed(b) { b.c = chamberUnder(b.x); b.way = []; }
+  mid: b => b.x,
+  // Its way is asked again from the chamber it came down in (`goTo`). No
+  // spill: what a ghost carries is a claimed errand, kept through a shaking.
+  // No assign: the muster deals the jobs, in order, and a member put to a
+  // face is there for good.
+  landed(b) { b.c = chamberUnder(b.x); b.route = null; }
 };
 
 // One frame of every ghost.

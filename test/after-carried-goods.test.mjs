@@ -172,12 +172,15 @@ group('with every member on a job, a timber bill still lands: one is lent to car
   window.__afterGrant({ timber: AFTER_PILES.timber.brim });
   const jobs0 = S.after.bodies.filter(b => b.job).length;
   const bought = window.__buy(REACH);
+  // Lent the one way a loan is (the builders' too): the loan on the body
+  // (`lentFrom`), the order its work, and its roster's count kept.
+  const crew0 = JSON.stringify(S.after.crew);
   let wasLent = false;
   const landed = runUntil(() => {
-    wasLent = wasLent || S.after.bodies.some(b => b.job && b.errand === AFTER_JOB.ORDER && loadKind(b) === 'plank');
+    wasLent = wasLent || (S.after.bodies.some(b => b.lentFrom && b.job === AFTER_JOB.ORDER && loadKind(b) === 'plank') && JSON.stringify(S.after.crew) === crew0);
     return !S.after.orders.length;
   }, 300);
-  const back = runUntil(() => !S.after.bodies.some(b => b.errand === AFTER_JOB.ORDER), 60);
+  const back = runUntil(() => !S.after.bodies.some(b => b.job === AFTER_JOB.ORDER || b.errand === AFTER_JOB.ORDER || b.lentFrom), 60);
   window.__actsOn(null);
   return [
     ok(stood && busy && bought, 'every member on a job, the row bought', `${stood} ${busy} ${bought} ${S.after.bodies.map(b => b.job + ':' + b.state + ':' + b.pair).join()}`),

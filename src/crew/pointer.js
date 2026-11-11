@@ -15,7 +15,7 @@ import { earn } from '../notices.js';
 import { crewView, coarse } from '../prefs.js';
 import { inOrb, breakOrb, orbLiftOf } from '../deep/phases.js';
 import { PLACES, actPlace, isActView, crewHolding } from '../acts.js';
-import { bodyAt, liftBody, dropBody, slowBody } from '../placebodies.js';
+import { bodyAt, liftBody, dropBody } from '../placebodies.js';
 
 // --- picking somebody up ------------------------------------------------------
 export function workerAt(x, y) {
@@ -46,8 +46,8 @@ export const lifted = () => S.workers.find(w => w.lifted) || null;
 // the hand takes them up the same way: the body under the pointer in the
 // place the camera is in, the one in the hand wherever it is from, and the
 // held body put where the cursor is by its own place's way of standing.
-// The tooltip and the retraining stay the yard's (`workerAt`, `lifted`): an
-// act's member has no card and no station to be dropped on.
+// The tooltip stays the yard's (`workerAt`, `lifted`): an act's member has no
+// card. A drop on a station asks the body's own place (`drop`).
 // A place's goods are not this hand's: they are swept and thrown as the
 // yard's dust is (hands.js), and this grab takes bodies only.
 const handPad = () => Math.max(P * 1.5, coarse() ? (TOUCH_TARGET / S.zoomShow - WORKER) / 2 : 0);
@@ -76,9 +76,9 @@ export function holdBody(w, x, y) {
 // slow, so it can be caught. The stamp is refreshed on every pointermove, so
 // the slow outlives the hover by HOVER_SLOW_MS and no more.
 export function hoverAt(x, y) {
-  const act = isActView(S.view), w = act ? grabAt(x, y) : workerAt(x, y);
+  const w = isActView(S.view) ? grabAt(x, y) : workerAt(x, y);
   if (!w || w.lifted || S.crewSight == null) return w;
-  if (act) slowBody(w, now() + HOVER_SLOW_MS); else w.slowUntil = now() + HOVER_SLOW_MS;
+  w.slowUntil = now() + HOVER_SLOW_MS;
   return w;
 }
 
@@ -131,7 +131,21 @@ export function lift(w) {
 export function drop(w) {
   if (!w) return;
   const v = throwVel();
-  if (crewHolding(w)) { dropBody(w, v); return; }
+  // An act's body: a drop on one of its place's stations is put on that
+  // station's job by the place (`assign`, its own count store) and comes
+  // down where it was put; anywhere else it is thrown. Shaken, it sees stars
+  // where it lands, and what its hands held is the place's to put down there
+  // (`spill`): its goods are not the yard's dust, and a ghost's lump is a
+  // claimed errand.
+  const crew = crewHolding(w);
+  if (crew) {
+    if (w.shook >= SHAKE_TURNS) { w.dizzyFor = DIZZY_MS; earn('dizzy'); }
+    w.shook = 0;
+    w.turnedAt = 0;
+    w.lastDir = 0;
+    dropBody(w, crew.assign?.(w) ? { vx: 0, vy: 0 } : v);
+    return;
+  }
   w.lifted = false;
   w.falling = true;
   // A drop onto a station with room is a retraining, not a throw: no hurl, so
@@ -199,8 +213,11 @@ function flingHat(w, dx) {
   earn('hatoff');
 }
 export function shakeHeld(w, dx) {
-  // An act's member carries nothing the shaking sheds and wears no hat.
-  if (!w || Math.abs(dx) < 1 || crewHolding(w)) return;
+  if (!w || Math.abs(dx) < 1) return;
+  // An act's body is shaken dizzy the yard's way, but sheds nothing in the
+  // hand (its goods are not dust) and wears no hat: what it held is put down
+  // where it lands (`drop`).
+  const act = !!crewHolding(w);
   const dir = Math.sign(dx);
   const t = now();
   if (t - (w.turnedAt || 0) > SHAKE_WINDOW) w.shook = 0;   // lapsed: start again
@@ -213,11 +230,11 @@ export function shakeHeld(w, dx) {
       w.say = { mark: 'dizzy', until: t + DIZZY_MS };
       // The hat comes off NOW, in the air, not on the ground when the body
       // lands.
-      if (w.trained) flingHat(w, dx);
+      if (w.trained && !act) flingHat(w, dx);
     }
     // Nothing comes loose until the shaking is half established, or an
     // ordinary jostle costs dust. Half of SHAKE_TURNS, so the knob moves both.
-    if (w.carry > 0 && w.shook > SHAKE_TURNS / 2) shedLoad(w, dx);
+    if (!act && w.carry > 0 && w.shook > SHAKE_TURNS / 2) shedLoad(w, dx);
   }
   w.lastDir = dir;
 }

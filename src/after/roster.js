@@ -19,7 +19,8 @@ import { drawnMid } from '../footprints.js';
 import { afterlifeOn } from '../acts.js';
 import { built, seatsOf, stumpsOn } from './levels.js';
 import { groundOf, closed } from './place.js';
-import { crewAt, bodiesOf, spareMembers, putOn, walkLeft, holds } from './bodies.js';
+import { crewAt, bodiesOf, walkLeft, holds } from './bodies.js';
+import { assign, spareIn } from '../staffing.js';
 import { standing, stumped, plantable } from './grove.js';
 import { pileFull, pileCount } from './piles.js';
 import { lying } from './ground.js';
@@ -31,8 +32,8 @@ const live = () => afterlifeOn() && !!S.after;
 
 const SRC = {
   count: p => crewAt(p.job),
-  press: (p, d) => putOn(p.job, d),
-  spare: () => spareMembers(),
+  press: (p, d) => assign(p.job, d, 'after'),
+  spare: () => spareIn('after'),
   cap: p => seatsOf(p.job),
   bodies: p => bodiesOf(p.job),
   coming: w => !w.on,
