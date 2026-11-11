@@ -24,13 +24,14 @@ export function ringCells(mask, from, sweep) {
   return out;
 }
 
-// The face: for each row between the ring's top and bottom, the cell it
-// starts at and how many cells across the ring encloses.
+// The face: for each row, the cell the ring's inside starts at and how many
+// cells across it runs, for the rows that have an inside; a ring may be one
+// cell thick or more.
 export function ringFace(mask) {
   const out = [];
-  for (let j = 1; j < mask.length - 1; j++) {
-    const row = mask[j], from = row.indexOf('#') + 1, to = row.lastIndexOf('#');
-    out.push({ j, from, n: to - from });
+  for (let j = 0; j < mask.length; j++) {
+    const row = mask[j], lo = row.indexOf('#'), from = row.indexOf('.', lo + 1), to = row.lastIndexOf('#');
+    if (lo >= 0 && from > 0 && from < to) out.push({ j, from, n: to - from });
   }
   return out;
 }

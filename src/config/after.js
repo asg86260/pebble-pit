@@ -757,4 +757,4 @@ export const AFTER_CABIN_SMOKE = { puffs: 4, size: 2, life: 4.8, rise: 8, drift:
 // The shrine's faith ring (render/after/stations.js): motes rising off it,
 // drawn as the stump house's smoke is (`risePuffs`), up to `puffs` of them
 // as full as the ring is, each a cell, its start spread `spread` cells across.
-export const AFTER_SHRINE_MOTES = { puffs: 28, size: 1, life: 3.6, rise: 14, drift: 0, sway: 0.5, swayRate: 1.1, swayPhase: 2.1, fadeIn: 4, peak: 0.9, greyAt: 0.55, greyFade: 0.2, spread: 10, tones: ['ink', 'mid'] };
+export const AFTER_SHRINE_MOTES = { puffs: 40, size: 1, life: 3.6, rise: 11, drift: 0, sway: 0.5, swayRate: 1.1, swayPhase: 2.1, fadeIn: 4, peak: 0.9, greyAt: 0.55, greyFade: 0.2, spread: 16, tones: ['ink', 'mid'], big: { puffs: 16, size: 2, seed: 50, life: 4.2 } };

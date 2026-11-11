@@ -299,7 +299,7 @@ function risePuffs(b, t, C, n, x0, y0, share = 1) {
     if (w <= 0) continue;
     const u = ((t / C.life + k / n) % 1 + 1) % 1;
     const a = Math.min(1, u * C.fadeIn) * (1 - u) * C.peak * w;
-    const x = x0 + (C.spread ? (hash(k * 3.7) - 0.5) * C.spread : 0) + u * C.drift + Math.sin(t * C.swayRate + k * C.swayPhase) * C.sway, y = y0 + u * C.rise;
+    const x = x0 + (C.spread ? (hash(k * 3.7 + (C.seed || 0)) - 0.5) * C.spread : 0) + u * C.drift + Math.sin(t * C.swayRate + k * C.swayPhase) * C.sway, y = y0 + u * C.rise;
     const f = clamp01((u - C.greyAt) / C.greyFade + 0.5);
     const [t0, t1] = (C.tones || ['mid', 'pale']).map(n => ({ ink: K, mid: MID, pale: PALE })[n]);
     const puff = tone => () => b.px(x * P, -(y + C.size) * P, C.size * P, C.size * P, tone);
@@ -366,20 +366,11 @@ const stairDraw = k => d => stairFlight(d, k);
 // bottom instead. At full it holds, its face fading pale and back.
 export const SHRINE = { mode: 'ring', fill: 0, folk: 0 };
 const SH = { x: 13, w: 19, wall: 12, niche: [3, 15] };
-const FAITH = [
-  '...#####...',
-  '..##...##..',
-  '.#.......#.',
-  '##.......##',
-  '#.........#',
-  '#.........#',
-  '#.........#',
-  '##.......##',
-  '.#.......#.',
-  '..##...##..',
-  '...#####...'
-];
-const FAITH_AT = { x: 4, y: -37 };   // its top left off the shrine's left and the floor, cells: its middle column over the cross
+// A ring two cells thick, as wide as the shrine: the cells whose middle lies
+// between 7.5 and 9.6 cells off the hub, laid out once as a mask.
+const FAITH = Array.from({ length: 19 }, (_, j) =>
+  Array.from({ length: 19 }, (_, i) => (Math.hypot(i - 9, j - 9) >= 7.5 && Math.hypot(i - 9, j - 9) <= 9.6 ? '#' : '.')).join(''));
+const FAITH_AT = { x: 0, y: -45 };   // its top left off the shrine's left and the floor, cells: its hub over the cross, two cells clear of it
 // clockwise from the top
 const FAITH_CELLS = ringCells(FAITH, -Math.PI / 2, Math.PI * 2).sort((p, q) => p.share - q.share);
 const FAITH_FACE = ringFace(FAITH);
@@ -406,7 +397,7 @@ function shrine(d, work, t) {
     });
     for (const { i, j } of FAITH_CELLS) d.c(rx + i, ry + j, K);
   } else {
-    for (const { i, j } of FAITH_CELLS) d.c(rx + i, ry + j, MID);
+    for (const { i, j } of FAITH_CELLS) d.c(rx + i, ry + j, PALE);
     FAITH_CELLS.forEach(({ i, j }, k) => {
       const w = clamp01(f * N - k);
       if (w > 0) d.fade(w, () => d.c(rx + i, ry + j, K));
@@ -418,7 +409,9 @@ function shrine(d, work, t) {
   }
   if (!d.sinking) {
     const C = AFTER_SHRINE_MOTES;
-    risePuffs(d, t || 0, C, C.puffs, rx + 5, -ry + 0.5, f);
+    risePuffs(d, t || 0, C, C.puffs, rx + 9, -ry + 0.5, f);
+    // the bigger motes come in over the last of the fill
+    risePuffs(d, t || 0, { ...C, ...C.big }, C.big.puffs, rx + 9, -ry + 0.5, clamp01((f - 0.4) / 0.6));
   }
   // the faithful, three a side on the floor, kneeling
   if (!d.sinking) for (let i = 0; i < SHRINE.folk; i++) {
