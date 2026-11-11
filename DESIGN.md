@@ -24691,7 +24691,7 @@ data; the mechanism is the yard's.
 | config/blocks.js kind `load` | **Retired, not removed.** Its value run is kept so `acorn`'s saved cell values do not shift (the table's own rule: "a kind added at the end never shifts a saved value"). Nothing makes a load again. |
 | `pairBuilding` and its callers (bubbles.js, gestures.js, rebel.js), and the pair's `'home'` walk in `stepBuilder` | **Deleted.** The pair have not built since 2026-10-20. Any pair builder left in an old save is sent home by the migration. |
 | config: `AFTER_BUILD_PIECES`, `_PIECE_S`, `_A_BAND`, `_CARRIERS`, `_BUILDERS`, `_DROP_S`, `_LAY_S`, `_HOLD_S` | **Deleted.** `AFTER_BUILD_FADE_S` stays: the floor and the grove's beds read it. |
-| render/after.js `closedStation`, `openedBy`, `openedOf`, `drawShackOrder` | `drawStation` wraps the station's draw in `withRise('after-<key>', b.x, groundOf(key), b.w, b.h, …)`. The glyph over the station comes from `drawWorkBars`. The dotted plan outline (`outlineOf`) depends on question 2 below. |
+| render/after.js `closedStation`, `openedBy`, `openedOf`, `drawShackOrder` | `drawStation` has three states, gated the way the yard gates each station on its `*Open` flag. Not built and no work on: nothing is drawn, or the dotted outline (`outlineOf`), depending on question 2. A work on: the station's draw is wrapped in `withRise('after-<key>', b.x, groundOf(key), b.w, b.h, …)`. Built: drawn plainly. The gate matters because `withRise` draws a place that is not rising straight through, unclipped, so a bare swap would draw an unbought station whole. The glyph over the station comes from `drawWorkBars`. |
 | place.js `sited()` reads `S.after.raising` | reads `built` or `workOn('after-build-<key>')`. |
 | what build.js keeps: `isIdle`, `handsFree`, the timber orders (`placeOrder` through `orderBrought`, `timberReserved`, `nextOrder`, `orderAt`, `onOrderLanded`) | Moves to `after/orders.js`. build.js is deleted. The orders are an upgrade's blocks carried, not construction, and are outside this change. |
 | scenes.js `after-camp`, `afterSite`, and the waits on `S.after.raising` | wait on `workOn`/`progressOf`. One scene stops the mill partway, as the yard's `build` scene does. |
@@ -24764,7 +24764,9 @@ through the same path. None of these is an act 3 copy.
   footprints.js, for every place. If a lot's derived gap cannot hold it,
   the gap is derived wider (art.js `layPiles`). The fence is never drawn
   smaller in act 3 alone. The verify.js rule decides this on the first
-  fenced mill.
+  fenced mill. The yard's fences have never been claimed either, so
+  claiming them can turn the yard's no-overlap red too. Track A runs
+  no-overlap on the yard with fences claimed before act 3 relies on it.
 - **The build-speed ladder.** works.js `effortAt` multiplies by the
   yard's `buildSpeedLevel`. Unless act 3's sites say their own `effort`
   (`SITE_SAYS`), the yard's ladder speeds heaven's builds too. See
@@ -24825,9 +24827,14 @@ remaining reason was a look, and the owner has now overruled it.
     a literal. Loads carried but not yet laid count for nothing.
   - A key whose bands are all laid (`n >= 4`) and is missing from `built`
     is added to `built`.
-  - Then: delete `raising`; strip `load` cells from the saved ground and
-    from every body's `load`; idle every body on the build job
-    (`job: null`, `site: null`); send a pair builder home.
+  - Then: delete `raising`; strip `load` cells from every body's `load`;
+    idle every body on the build job (`job: null`, `site: null`, and
+    `phase`, `slot`, `builds` and `side` cleared, so a body saved mid-carry
+    or mid-lay keeps none of them); send a pair builder home.
+  - The saved ground (`after.ground`, from `groundRecord`) is run-length
+    cells and is not edited in the raw blob. A load lying on the lot is
+    dropped where the ground is read back instead: after/ground.js
+    `readRecord` skips cells of a retired kind, since nothing makes one.
 - `SAVE_V` is 37 on main. The migration takes the next number after
   whatever lands first. grove-a and dialog are both in flight with save
   changes, and a collision means renumbering one of them.
@@ -24875,8 +24882,9 @@ remaining reason was a look, and the owner has now overruled it.
     `registerSites` in stations.js. Additive in render.js `LAYERS`. The
     yard's and the deep's checks are its gate.
   - **B, act 3 on it.** Owns after/rows.js, after/build.js (to
-    after/orders.js), after/bodies.js, after/place.js, after/levels.js,
-    after/index.js, after/bubbles.js, after/gestures.js, after/rebel.js,
+    after/orders.js), after/bodies.js, after/place.js, after/levels.js
+    (its `raising` export, also read by `src/selftest/buildsign.js:75`),
+    after/ground.js (`readRecord`), after/index.js, after/bubbles.js, after/gestures.js, after/rebel.js,
     render/after.js, scenes.js's act 3 scenes, config/after*.js and
     config/blocks.js, plus the migration and `SAVE_V`.
 - **The stair** ("The stair and the abyssal sword") is built on this. Each
