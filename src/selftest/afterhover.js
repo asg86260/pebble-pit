@@ -99,6 +99,12 @@ export const TESTS = [
     const got = await standingBody(crew);
     const body = got ? await tipOver(got.box.x + got.box.w / 2, got.box.y + got.box.h / 2) : '';
     const said = got ? crew.says(got.w) : null;
+    // the construction shack opens nothing, but is named over its drawing
+    // (its row's `over`), high up where no body stands in front of it
+    const sh = stationBox('shack');
+    window.__look(sh.x + sh.w / 2 - S.viewW / 2);
+    await raf(); await raf();
+    const shack = await tipOver(sh.x + sh.w / 2, sh.y + P * 2);
     // the mill's frame, passed over: nothing opens
     const m = stationBox('mill'), wk = stationBox('workshop');
     window.__look(m.x - P * 2);
@@ -123,6 +129,7 @@ export const TESTS = [
     return [
       ok(!!got, 'a member stands at its work up there'),
       ok(!!said && body === said, 'the pointer over it names it as its crew calls it', `${body} vs ${said}`),
+      ok(shack === msg('after-board-shack'), 'the construction shack, which opens nothing, is named over its drawing', shack),
       ok(passed === null, 'passing over the saw mill opens no board: it has its button', String(passed)),
       ok(!!k && asked === 'after-mill', 'its UPGRADES button pressed opens its board', String(asked)),
       ok(crossed === 'after-mill', 'the pointer crossing the workshop leaves it up', String(crossed)),

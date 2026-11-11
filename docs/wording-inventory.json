@@ -8283,7 +8283,7 @@
  {
   "id": "after-job-woodcutter",
   "group": "Act 4 (placeholder)",
-  "where": "src/after/rows.js",
+  "where": "src/jobs.js",
   "context": "act 3 job name (placeholder): a woodcutter, named on its seat row",
   "text": "woodcutter"
  },
@@ -8297,7 +8297,7 @@
  {
   "id": "after-job-sawyer",
   "group": "Act 4 (placeholder)",
-  "where": "src/after/rows.js",
+  "where": "src/jobs.js",
   "context": "act 3 job name (placeholder): a sawyer, named on its seat row",
   "text": "sawyer"
  },
@@ -8311,7 +8311,7 @@
  {
   "id": "after-job-joiner",
   "group": "Act 4 (placeholder)",
-  "where": "src/after/rows.js",
+  "where": "src/jobs.js",
   "context": "act 3 job name (placeholder): a joiner, named on its seat row",
   "text": "joiner"
  },

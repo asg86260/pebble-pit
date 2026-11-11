@@ -506,8 +506,12 @@ function buildingAt(x, y) {
     const rect = standRect(r.key);
     if (rect && inRect(rect, x, y)) return r.name;
   }
-  // the drowned pit answers as the abyss; through the torn era, the disc
-  // answers as the rift
+  return null;
+}
+// The yard's hole by what it has become: the drowned pit answers as the
+// abyss; through the torn era, the disc answers as the rift. The yard's
+// alone: hell lies under the pit's x, every point of it past the ground.
+function holeAt(x, y) {
   if (S.drowned && x > pit.x && x < pit.x + pit.w && y > S.groundY) return msg('hover-abyss');
   if (riftOpen() && !S.drowned && inRect(rift, x, y)) return msg('hover-rift');
   return null;
@@ -612,7 +616,7 @@ export function whatIsAt(x, y) {
   const grain = cellLabel(cellAt(floor, x, y) || cellAt(pit, x, y));
   if (grain) return grain;
   if (S.crew >= 1 && inRect(houseRect(), x, y)) return msg('hover-house');
-  const building = buildingAt(x, y);
+  const building = buildingAt(x, y) || holeAt(x, y);
   if (building) return building;
   // the mess before the rock it lies on: poop lands on the rock's flank, and
   // the rock would otherwise answer for the whole of its footprint

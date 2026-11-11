@@ -24,8 +24,8 @@ import { assign, spareIn } from '../staffing.js';
 import { standing, stumped, plantable } from './grove.js';
 import { pileFull, pileCount } from './piles.js';
 import { lying } from './ground.js';
-import { JOB_NAMES } from './rows.js';
 import { waitsOnSeeds } from './seeds.js';
+import { AFTER_JOB_NAMES } from '../jobs.js';
 
 const stationOf = card => (card === 'grove' ? 'forestry' : card);
 const live = () => afterlifeOn() && !!S.after;
@@ -63,7 +63,7 @@ const DOES = {
   woodcutter: () => msg('after-job-woodcutter.says'), sawyer: () => msg('after-job-sawyer.says'),
   joiner: () => msg('after-job-joiner.says')
 };
-export const jobSays = job => { const k = STALL[job](); return msg('after-roster-tip', { job: JOB_NAMES[job](), line: k ? msg(k) : DOES[job]() }); };
+export const jobSays = job => { const k = STALL[job](); return msg('after-roster-tip', { job: AFTER_JOB_NAMES[job](), line: k ? msg(k) : DOES[job]() }); };
 
 const POSTS = AFTER_JOBS.map(job => {
   const card = AFTER_JOB_POST[job], key = stationOf(card);
