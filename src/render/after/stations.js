@@ -27,6 +27,7 @@ import { DOORWAY } from '../../after/doorway.js';
 import { held } from '../../reset.js';
 import { ctx } from '../ctx.js';
 import { ringCells } from '../cellring.js';
+import { faith } from '../../after/faith.js';   // MOCK faith16
 import { S } from '../../state.js';
 import { darkPage, raw } from '../../ink.js';
 import { coinAt } from '../aftercoins.js';
@@ -531,6 +532,8 @@ function shrine(d, work, t) {
   const FL = SHRINE.feel && !d.sinking ? feelAt(SHRINE.feel, tl, clamp01((f - 0.97) / 0.03)) : null;
   // nothing paper in or round it: the sky and clouds run right up to the ring, and a backing read off this drawing (`silhouette`) holds no ring either
   const hubPx = { x: d.ox + (rx + 9.5) * P, y: d.oy + (ry + 9.5) * P };
+  // MOCK faith16: where the ring stands, for the click cue, the cursor and the tip
+  if (!d.sinking) { faith.box = { x: d.ox + (x0 + FAITH_AT.x) * P, y: d.oy + FAITH_AT.y * P, w: RING.size * P, h: RING.size * P }; faith.full = f >= 0.999; }
   const move = fn => {
     if (!FL) { fn(); return; }
     ctx.save();

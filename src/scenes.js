@@ -44,7 +44,8 @@ import { SAVE as CREW_SAVE } from './crew/records.js';
 import { goDeep, goUp, poseGlide } from './view.js';
 import { floorAt, stationX0, stationBox, signBox, soulX, afterFloor, afterOpenX, workshopsX1, unionJoinAt, campEdges, plotX, groundOf, AP } from './after/place.js';
 import { godFront } from './after/sky.js';
-import { SHRINE } from './render/after/stations.js';   // MOCK faith5
+import { SHRINE } from './render/after/stations.js';
+import { faith } from './after/faith.js';   // MOCK faith16   // MOCK faith5
 // The window's middle at the camera's last window over act 3: God in it,
 // his stage square under him.
 const godView = () => godFront();
@@ -589,7 +590,7 @@ function afterSite(until) {
 // ring over it. The faithful are drawn, not walked there.
 function shrineAt(mode, at, pray = null, extra = {}) {
   window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
-  SHRINE.mode = mode; SHRINE.folk = 6; SHRINE.pray = pray; SHRINE.shake = !!extra.shake; SHRINE.stream = !!extra.stream; SHRINE.feel = extra.feel || null; SHRINE.t0 = S.after.t - at;
+  SHRINE.mode = mode; SHRINE.folk = 6; SHRINE.pray = pray; SHRINE.shake = !!extra.shake; SHRINE.stream = !!extra.stream; SHRINE.feel = extra.feel || null; faith.cue = extra.cue || 'hand'; S.mouse = extra.over ? { get x() { return faith.box ? faith.box.x + faith.box.w / 2 : 0; }, get y() { return faith.box ? faith.box.y + faith.box.h / 2 : 0; } } : null; SHRINE.t0 = S.after.t - at;
   const b = stationBox('shrine');
   window.__look(b.x + b.w / 2 - S.viewW / 2); window.__fast(0); window.__holdShot();
 }
@@ -3453,6 +3454,19 @@ export const SCENES = {
   'faith15-c': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-full, a review branch, never merged', branch: 'review-faith-full',
     option: 'C softer edges',
     say: 'full: the heartbeat with a gentler tremor, a bigger swell and motes that fade out slower', run: () => shrineAt('full', 0.3, 'hop', { feel: 'heartC' }) },
+  // MOCK faith16
+  'faith16-a': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-full, a review branch, never merged', branch: 'review-faith-full',
+    option: 'A the ghost hand',
+    say: 'full: the softened heartbeat, and the ghost hand tapping over the ring to say click', run: () => shrineAt('full', 0.3, 'hop', { feel: 'heart16', cue: 'hand' }) },
+  'faith16-b': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-full, a review branch, never merged', branch: 'review-faith-full',
+    option: 'B the hand on hover',
+    say: 'full: the same heartbeat, no cue until the pointer is over the ring, then the ghost hand fades in faint (pointer stood on it here)', run: () => shrineAt('full', 0.3, 'hop', { feel: 'heart16', cue: 'hover', over: true }) },
+  'faith16-c': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-full, a review branch, never merged', branch: 'review-faith-full',
+    option: 'C hand, cursor and tip',
+    say: 'full: the ghost hand, and the pointing cursor and a collect faith tip over the ring (pointer stood on it here)', run: () => shrineAt('full', 0.3, 'hop', { feel: 'heart16', cue: 'hand+', over: true }) },
+  'faith16-d': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-full, a review branch, never merged', branch: 'review-faith-full',
+    option: 'D the shrine board',
+    say: 'the shrine board open: its prayer row, each rung multiplying the faith a prayer adds', run: () => { shrineAt('full', 0.3, 'hop', { feel: 'heart16', cue: 'hand' }); window.__afterGrant({ rebel: 400, timber: 20 }); window.__fast(0.2); window.__openAfterBoard('shrine'); window.__holdShot(); } },
 
   'level-carry': { about: 'the acts', say: "the chain running: a carrier with a sign over the cloud, climbing the stage's plinth or out on its top",
     run: () => {

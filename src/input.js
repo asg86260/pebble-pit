@@ -61,6 +61,7 @@ import * as AFTER_PLACE from './after/index.js';
 import { gestureDown, gestureMove, gestureUp, gestureHeld, gestureUnder, gestureHover, pressTaken } from './after/gestures.js';
 import { pileOwner, pileBox } from './after/place.js';
 import { built } from './after/levels.js';
+import { faith, overFaith } from './after/faith.js';   // MOCK faith16
 import { lyingAt, kindOf } from './after/grove.js';
 import { JOB_NAMES } from './after/rows.js';
 import { AFTER_JOB } from './jobs.js';
@@ -765,6 +766,8 @@ const CURSORS = [
   // up in act 3, a part the hand works: open on it, closed while it is held
   [() => gestureHeld(), 'grabbing'],
   [(x, y) => S.view === 'after' && gestureUnder(x, y), 'grab'],
+  // MOCK faith16: the full faith ring is a click, the option that says so
+  [(x, y) => S.view === 'after' && faith.cue === 'hand+' && overFaith(x, y), 'pointer'],
   // a station a click opens: one whose board has its button promises nothing
   [(x, y) => !!clickBoard(x, y), 'pointer'],
   // a mark that will tell you why something has stopped

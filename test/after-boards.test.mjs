@@ -39,7 +39,8 @@ group('each board lists its rows on its shelves: seats, then upgrades; no board 
     pedestal: [[ups, ['after-recruit', 'after-podium']]],
     grove: [[seats, ['after-seat-woodcutter']], [ups, ['after-saw', 'after-plot', 'after-grow', 'after-stumps', 'after-seeds', 'after-selfseed']]],
     mill: [[seats, ['after-seat-sawyer']], [ups, ['after-blade']]],
-    workshop: [[seats, ['after-seat-joiner']], [ups, ['after-bench', 'after-signreach']]]
+    workshop: [[seats, ['after-seat-joiner']], [ups, ['after-bench', 'after-signreach']]],
+    shrine: [[ups, ['after-prayer']]]   // MOCK faith16
   };
   const off = Object.entries(want).filter(([k, v]) => JSON.stringify(all[k]) !== JSON.stringify(v)).map(([k]) => k);
   const crowdBuys = boardOf('after-crowd').rows().filter(u => !u.read);

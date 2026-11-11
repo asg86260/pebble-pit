@@ -5,7 +5,7 @@
 
 import { S } from '../state.js';
 import { AFTER_START_BUILT, AFTER_UPGRADES, AFTER_PLOTS0, AFTER_PODIUM_REBEL, AFTER_TREE_GROW_S, AFTER_TREE_GROW_S_UP,
-         AFTER_BLADE_LOGS, AFTER_BENCH_SIGNS,
+         AFTER_BLADE_LOGS, AFTER_BENCH_SIGNS, AFTER_PRAYER_MULT,
          SIGN_REACH, SIGN_REACH_UP, AFTER_SEAT_BILLS } from '../config.js';
 import { podiumStood } from './place.js';
 import { workOn } from '../works.js';
@@ -37,6 +37,8 @@ export const bigSigns = () => has('after-signreach');
 // Woodcutters dig stumps out too, once stump removal is bought.
 export const stumpsOn = () => has('after-stumps');
 export const bladeLogs = () => (has('after-blade') ? AFTER_BLADE_LOGS : 1);
+// MOCK faith16: the faith one prayer adds, a multiple a rung of the shrine's prayer ladder
+export const prayerMult = () => AFTER_PRAYER_MULT[upCount('after-prayer')];
 export const benchSigns = () => (has('after-bench') ? AFTER_BENCH_SIGNS : 1);
 export const signReach = big => (big ? SIGN_REACH_UP : SIGN_REACH);
 
