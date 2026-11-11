@@ -50,7 +50,7 @@ function lookOf(c, tones) {
 // A cloud without the card: its field at rest, at this frame's swell, each
 // cell its tier's body tone. Worked again only when the swell or a color moves.
 function stillOf(c, look) {
-  const l = c.layer, sc = l.scale, key = `${sc.r}|${sc.dense}|${sc.bud}|${c.lookKey}`;
+  const l = c.layer, sc = l.scale, key = `${sc.r}|${sc.bud}|${c.lookKey}`;
   let st = c.still;
   if (st && st.key === key) return st;
   if (!st) {

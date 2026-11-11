@@ -959,7 +959,7 @@ export function budOf(p, scale) {
 
 // A lone cloud's tiers with every puff where it was made -- before its
 // current carries it or its life thins it, so its biggest -- scaled as the
-// card scales a layer (`scale`: radii by `r`, the field by `dense`,
+// card scales a layer (`scale`: radii by `r`, buds by `bud`,
 // cloudgl.js), worked out on the CPU: -1 open sky, else the front-most tier
 // past the threshold. What the yard's report
 // counts its sky by (weather.js), and what a page without WebGL2 draws it
@@ -988,7 +988,7 @@ export function restTiers(layer, scale = null, out = null) {
     }
   }
   if (!out || out.length !== n) out = new Int8Array(n);
-  const T = CLOUDS_THRESHOLD / (scale && scale.dense !== undefined ? scale.dense : 1);
+  const T = CLOUDS_THRESHOLD;
   for (let i = 0; i < n; i++) {
     let t = -1;
     for (let j = nt - 1; j >= 0; j--) if (S[j * n + i] > T) { t = j; break; }

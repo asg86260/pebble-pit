@@ -125,14 +125,14 @@ group('the clouds swell through the brew and settle after', async () => {
   run(CLOUD_SETTLE_S + 2);
   const settled = skyReport();
   return [
-    ok(dry.swell === 0 && dry.storm === 0, 'a dry sky is not swelled', `${dry.swell}, ${dry.storm} storm clouds`),
+    ok(dry.swell === 0, 'a dry sky is not swelled', `${dry.swell}`),
     ok(full.swell > 0.95, 'the brew swells the sky to the front\'s heft', `${full.swell}`),
-    ok(full.cloudCells > dry.cloudCells * 2, 'and there is far more cloud', `${dry.cloudCells} -> ${full.cloudCells} cells`),
-    ok(full.storm > 0, 'some of it the front\'s own', `${full.storm}`),
+    ok(full.cloudCells > dry.cloudCells * 1.3, 'and there is more cloud: every cloud budded and grown', `${dry.cloudCells} -> ${full.cloudCells} cells`),
     ok(grew > 20, 'grown a step at a time', `${grew} frames grew`),
     ok(lockstep === 0, 'and never every cloud on one frame', `${lockstep} frames`),
     ok(shrank === 0, 'and never shrinking on the way up', `${shrank} frames`),
-    ok(settled.swell === 0 && settled.storm === 0, 'and settled again after the shower', `${settled.swell}, ${settled.storm}`)
+    ok(settled.swell === 0 && settled.cloudCells <= dry.cloudCells * 1.05, 'and settled again after the shower, the buds shut',
+       `${settled.swell}, ${dry.cloudCells} -> ${settled.cloudCells} cells`)
   ];
 // Following particular clouds a cell at a time: the clouds are not saved, and
 // a load stands up fresh ones (`seedWeather`), so a mid-brew reload is a new
@@ -250,38 +250,27 @@ group('the sky is spread where the camera ends up, not where it started', async 
   ];
 });
 
-// The front does not add all its clouds at once: it adds them as the swell
-// climbs, anywhere across the strip. So each one has to come up out of nothing
-// on its own clock -- one drawn at the swell it happened to be born into is a
-// cloud appearing whole in the middle of the sky, which is what `CLOUD_BLOOM_S`
-// is for.
-group("a front's clouds come up out of nothing where they are born", async () => {
+// A cloud grows toward a front by putting out buds, one after another, each
+// opening out of its lobe's edge over its own share of the swell. So no frame
+// of the brew is a bud arriving whole: the most any one cloud gains in a
+// frame stays a sliver of what it gains over the brew.
+group("a cloud's buds come up out of nothing", async () => {
   run(0.4);
   window.__crew(0, 0);
-  // whatever is already up is not the front's: a group that ran before this
-  // one may have left a sky behind, and the clouds are not cleared between
-  // games any more (a relayout calls the seed, and clearing there swapped the
-  // whole sky every time the window was dragged).
-  const seen = new Map(CLOUDS.map(c => [c, 1]));
+  const before = skyReport().cloudEach;
   window.__front(1);
-  let born = 0, popped = 0, biggest = 0;
+  let each = before, most = 0;
   for (let f = 0; f < STORM_BREW_S * 60 && !state().smog.raining; f++) {
     run(1 / 60);
     const r = skyReport();
-    CLOUDS.forEach((c, i) => {
-      if (seen.has(c)) return;
-      seen.set(c, 1);
-      if (!c.storm) return;
-      born++;
-      // weighed, not counted: a cloud at a thousandth of its size still
-      // touches a dozen columns, and every one of them counts as a cell
-      biggest = Math.max(biggest, r.cloudInk[i]);
-      if (r.cloudInk[i] > 1) popped++;        // a cloud you would see arrive
-    });
+    if (r.cloudEach.length !== each.length) { each = r.cloudEach; continue; }
+    for (let i = 0; i < each.length; i++) most = Math.max(most, r.cloudEach[i] - each[i]);
+    each = r.cloudEach;
   }
+  const gained = Math.max(...each.map((n, i) => n - (before[i] ?? n)));
   return [
-    ok(born >= 4, 'the front brings its clouds through the brew', `${born} of them`),
-    ok(popped === 0, 'and not one of them is drawn whole on the frame it is made',
-       `${popped} popped, the most any of them was worth on its first frame ${biggest} cells`)
+    ok(gained > 0, 'the brew grows the clouds', `the most any cloud gained ${gained} cells`),
+    ok(most <= gained * 0.05, 'and no cloud gains a bud whole on one frame',
+       `the most in a frame ${most} cells, of ${gained} over the brew`)
   ];
 });
