@@ -1,12 +1,14 @@
 // --- the builders -------------------------------------------------------------
 // Spare hands putting up whatever the yard is building. Not a job on the
 // roster: you decide to build something and the idle hands go and do it.
-// `rebalance` in upgrades.js is the one place the count is set.
+// `rebalance` in upgrades.js is the one place the count is set. Which work a
+// builder is on, where it stands and when it has arrived are every place's
+// (crew/sitework.js); the walk there over the yard's ground is this file's.
 
-import { WORKER, BUILD_SHIFT, BUILD_SHIFT_SPAN } from '../config.js';
+import { WORKER } from '../config.js';
 import { S, bench } from '../state.js';
 import { walkY } from '../world.js';
-import { busyBuilderSites, busyDeepSites, siteX, siteBox, handsAt, worksAt, onTheGo } from '../works.js';
+import { busyBuilderSites, busyDeepSites, siteX, handsAt } from '../works.js';
 import { deepPost } from './deep.js';
 import { keepTo, stepRoute, wayOver, climbTo, feetOn, ways, belowYard, inShaft } from '../route.js';
 import { DOWN_THERE } from '../works.js';
@@ -15,6 +17,7 @@ import { TYPE } from '../jobs.js';
 import { now } from '../clock.js';
 import { stopJig, workJig } from './dance.js';
 import { hireSpot, stand } from './body.js';
+import { claimWork, nearestIn, ownBox, arrivedSlack } from './sitework.js';
 
 export function newBuilder() {
   const { x } = hireSpot();
@@ -24,41 +27,7 @@ export function newBuilder() {
 // deep's sites.
 export const newDelver = () => ({ type: TYPE.DELVE, goal: 'to', site: null, x: deepPost(TYPE.GATHER) });
 const sitesFor = w => (w.type === TYPE.DELVE ? busyDeepSites() : busyBuilderSites());
-
-// Which (site, work) slot a builder is on. The unit is a work, not a site: the
-// yard can hold two builds at once, and a body has to be at one of them or its
-// presence credits a bar it is nowhere near. It keeps its slot while the work
-// is on the go; when the work lands it takes the emptiest slot next, oldest
-// first on a tie, so a queue finishes in the order it was bought.
-function siteFor(w) {
-  const busy = sitesFor(w);
-  if (w.site && busy.includes(w.site)
-      && onTheGo(w.site).some(x => x.id === w.workId)) return w.site;
-  let pick = null, pickId = null, fewest = Infinity;
-  for (const site of busy) {
-    // Only what is being built: a work in line has nobody walking to it until
-    // it reaches the front (`stepWorks` in works.js).
-    for (const work of onTheGo(site)) {
-      const n = S.workers.filter(o => o.type === w.type && o !== w
-                                   && o.site === site && o.workId === work.id).length;
-      if (n < fewest) { fewest = n; pick = site; pickId = work.id; }
-    }
-  }
-  w.site = pick;
-  w.workId = pickId;
-  return pick;
-}
-
-// The ground inside a site's zone nearest a given x: the whole box less the
-// body's own width, the same span `jigSpan` works across in dance.js, so the
-// spot a builder walks to and the patch it shuffles along are one rule.
-const nearestIn = (box, x) => Math.max(box.x, Math.min(box.x + box.w - WORKER, x));
-
-// The box a builder's OWN work is on (`siteBox`, the same box the tape is
-// drawn round and the bar hangs over), by the work's id, so two bodies on the yard each
-// stand at the thing they are putting up rather than both at the head work's.
-const ownBox = w =>
-  siteBox(w.site, worksAt(w.site).find(x => x.id === w.workId) || null);
+const siteFor = w => claimWork(w, sitesFor(w), S.workers.filter(o => o.type === w.type));
 
 // The ground a builder's work stands on: the deep's floor for a site down
 // the shaft, the yard's otherwise.
@@ -87,11 +56,7 @@ export function stepBuilder(w) {
   const to = buildStationX(w);
   if (to !== null) {
     const d = to - w.x;
-    // Arrived is a patch, not a pixel: `workJig` shifts the body a few cells a
-    // burst, and a walk re-aimed at one pixel drags it straight back, sixty
-    // times a second. Only a body genuinely somewhere else is walked again.
-    const slack = w.goal === 'at' ? BUILD_SHIFT_SPAN + BUILD_SHIFT * 2 : 1;
-    if (Math.abs(d) >= slack || !onGround(w)) {
+    if (Math.abs(d) >= arrivedSlack(w) || !onGround(w)) {
       if (w.jigAt != null) { stopJig(w); w.lunge = 0; }
       w.goal = 'to';
       // Routed, not slid: a body stepped in x and stood on "whatever is under

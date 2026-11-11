@@ -2,7 +2,7 @@
 // that shows only as much of each as has actually gone up. Plural: the yard
 // holds two builds at once, and each is clipped to ITS OWN work's progress.
 
-import { OPENS_PLACE, progressOf, rowFor, worksAt } from '../works.js';
+import { OPENS_PLACE, SITES, progressOf, rowFor, worksAt } from '../works.js';
 import { P } from '../config.js';
 import { ctx } from './ctx.js';
 
@@ -12,13 +12,15 @@ import { ctx } from './ctx.js';
 // sale, and the bench opens nothing (it *is* the shop), so putting it in that
 // table would have it claiming ground in the walk's build order (`reserve` in
 // works.js) for a place laid out from the first frame.
+// Every site, not the yard's alone: an act's station is raised on its own
+// site, its row naming what it raises (`raises`).
 export function risingPlaces() {
   const out = [];
-  for (const w of worksAt('yard')) {
+  for (const site of SITES) for (const w of worksAt(site)) {
     const row = rowFor(w.key);
     if (row?.kind !== 'building') continue;
-    const place = row.raises || OPENS_PLACE[w.key] || (w.key === 'house' ? 'house' : null);
-    if (place) out.push({ place, key: w.key, w });
+    const place = row.raises || (site === 'yard' ? OPENS_PLACE[w.key] || (w.key === 'house' ? 'house' : null) : null);
+    if (place) out.push({ place, key: w.key, w, site });
   }
   return out;
 }

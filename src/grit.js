@@ -16,9 +16,9 @@ import { rand } from './rng.js';
 import { deepTop } from './deep/place.js';
 
 // One strike's worth. `n` is what one hit throws up, since this fires once a
-// hammer blow rather than on a timer. `floor` is the ground under the blow;
-// only a chip in the water needs it, since in the air the yard's ground line
-// is the floor.
+// hammer blow rather than on a timer. `floor` is the ground under the blow
+// in the water; in the air the yard's ground line is the floor, unless the
+// blow is in a place with a floor of its own (`ground`, an act's cloud).
 export function spawnGrit(x, y, o = {}) {
   const n = o.n || GRIT_MOTES;
   // Which medium is asked of where the blow is, so every caller in the deep
@@ -39,7 +39,7 @@ export function spawnGrit(x, y, o = {}) {
       vy: -(o.rise ?? (sea ? GRIT_SEA_RISE : GRIT_RISE)) * (0.6 + rand() * 0.8),
       t: 0,
       life: (o.life || (sea ? GRIT_SEA_LIFE : GRIT_LIFE)) * (0.7 + rand() * 0.6),
-      ...(sea ? { sea: true, floor: o.floor ?? y } : {})
+      ...(sea ? { sea: true, floor: o.floor ?? y } : o.ground != null ? { ground: o.ground } : {})
     });
   }
 }
@@ -76,6 +76,7 @@ export function stepGrit(dt) {
     }
     // A chip stops at the floor: it is thrown from about hammer height, so
     // without this the burst is under the ground line within a few frames.
-    if (g.y >= S.groundY) S.grit.splice(i, 1);
+    // A place with a floor of its own (an act's cloud) says where it is.
+    if (g.y >= (g.ground ?? S.groundY)) S.grit.splice(i, 1);
   }
 }

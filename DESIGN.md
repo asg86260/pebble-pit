@@ -24891,20 +24891,15 @@ remaining reason was a look, and the owner has now overruled it.
   section is a work on a stair site, raised by the same builders, so the
   stair never becomes a third build system.
 
-### 7. Questions for the owner
+### 7. The owner's answers (2026-11-10)
 
-1. **Should the yard's build-speed ladder speed act 3's builds too?** One
-   ladder for every place is the shared answer. The alternative is a fixed
-   `effort` on act 3's sites, so the speed stays act 3's own.
-2. **Should the dotted outline of an unbuilt station stay?** The yard's
-   empty lot shows only its sign. If the outline stays, it becomes a
-   shared drawing that every empty lot wears, the yard's included. If not,
-   it goes from act 3.
-3. **Should the construction shack keep its board of builds?** In the
-   yard the bench lists the doors as well as their signs, so keeping the
-   shack's board is the yard's shape. Cutting it leaves the sign as the
-   only way in, which is the deep's shape, and the shack then has nothing
-   to sell.
+1. **One speed.** The yard's build-speed ladder speeds act 3's builds too:
+   act 3's sites say no `effort` of their own.
+2. **No dotted outline.** Act 3's empty lot looks like the yard's: the
+   build sign alone, nothing drawn of the station until its work is on.
+3. **No shack board.** The build sign is the only way in, the deep's
+   shape: the build rows are listed on no board, and the shack stands with
+   nothing to sell.
 
 
 ## A dialog system (design, approved)

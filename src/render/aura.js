@@ -26,6 +26,7 @@ import { ctx } from './ctx.js';
 import { flagRip } from '../flagwave.js';
 import { cell } from './marks.js';
 import { groundOf } from '../deep/place.js';
+import { placeOfSite } from '../works.js';
 import { smoothstep as ease } from '../motion.js';
 import { held } from '../reset.js';
 
@@ -98,6 +99,8 @@ function flagBase(rect, which) {
 export function flagReach(which) {
   const r = standRect(which);
   if (!r) return null;
+  // An act's station flies no flag of the yard's.
+  if (placeOfSite(which) === 'after') return null;
   // The flags are the yard's layer: a station on the deep's floor flies none,
   // and clearing one there stood its stack a flag's height over nothing.
   if (groundOf(r.y) !== S.groundY) return null;

@@ -6,7 +6,7 @@ import { P, SHELF_GLYPH_CELLS } from '../config.js';
 import { glyphFor } from '../glyphs.js';
 import { S } from '../state.js';
 import { tintOf } from '../upgrades.js';
-import { doneAt, doneBillsAt, rowFor, DOWN_THERE } from '../works.js';
+import { doneAt, doneBillsAt, rowFor, DOWN_THERE, siteShown } from '../works.js';
 import { buildingGlyph, stackSlot, drift } from './bars.js';
 
 // The key a fighter's station's build goes by (deep/party.js, `stationRow`).
@@ -91,6 +91,7 @@ function outsideEdge(glyph) {
 
 export function drawDoneMarks() {
   for (const site in S.siteDone) {
+    if (!siteShown(site)) continue;   // each place's ticks over its own stations
     const bills = doneBillsAt(site);
     doneAt(site).forEach((key, i) => {
       const at = stackSlot(site, i);
@@ -137,6 +138,7 @@ export function doneMarkAt(site) {
 // where the cursor has to be to be asking what finished; says which site
 export function overDoneMark(mx, my) {
   for (const site in S.siteDone) {
+    if (!siteShown(site)) continue;
     const n = doneAt(site).length;
     if (!n) continue;
     const foot = stackSlot(site, 0), top = stackSlot(site, n - 1);
