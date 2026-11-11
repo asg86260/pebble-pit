@@ -396,7 +396,7 @@ const FAITH_AT = { x: 0, y: -45 };          // the ring's top left off the shrin
 // What is not yet inked is the ink itself, faint: so it reads as the ink's own
 // ghost on either page (the ink is the page's light tone in the dark), where a
 // fixed pale or mid would vanish on one of them.
-const FAITH_GHOST = { track: 0.28, pulse: 0.4 };
+const FAITH_GHOST = { track: 0.28, trackDark: 0.1, pulse: 0.4 };   // in the dark the page's ink is its light tone, so the unfilled track goes much fainter to leave the inked arc the brightest thing
 const PULSE_S = 2.4;
 const ease3 = k => k * k * (3 - 2 * k);
 const easeOut = k => 1 - (1 - k) * (1 - k);
@@ -422,7 +422,7 @@ function faithAt(tl) {
 // The ring: its track, then the inked share (`f`), each cell fading in by
 // the fraction of it the fill has reached, so the tip advances smoothly.
 function ringAt(d, R, rx, ry, f, solid) {
-  d.fade(FAITH_GHOST.track, () => { for (const { i, j } of R.cells) d.c(rx + i, ry + j, K); });
+  d.fade(darkPage ? FAITH_GHOST.trackDark : FAITH_GHOST.track, () => { for (const { i, j } of R.cells) d.c(rx + i, ry + j, K); });
   R.cells.forEach(({ i, j }, k) => {
     const w = solid ? 1 : ease3(clamp01(f * R.cells.length - k));
     if (w > 0) d.fade(w, () => d.c(rx + i, ry + j, K));
@@ -479,7 +479,7 @@ function shrine(d, work, t) {
   for (let k = 1; k <= 6; k++) run(-9 - k, SH.niche[0] + k, SH.niche[1] - k, W);
   // the faith ring: a rim of paper round it, wider on the dark page where the clouds are close in tone to its ink, so its ink stands off them; then its face
   const rx = x0 + FAITH_AT.x, ry = FAITH_AT.y, f = clamp01(faithAt(tl)), N = RING.cells.length;
-  const rim = darkPage ? 12.4 : 11.1;
+  const rim = darkPage ? 10.8 : 11.1;
   for (let j = -4; j < 24; j++) {
     const half = Math.floor(Math.sqrt(Math.max(0, rim * rim - (j - 9) * (j - 9))));
     if (half > 0) d.r(rx + 9 - half, ry + j, 2 * half + 1, 1, W);
@@ -491,7 +491,7 @@ function shrine(d, work, t) {
   else {
     // the breath: a faint ring a cell clear of the ring, fading in and out
     const breath = 0.5 - 0.5 * Math.cos(tl / SA.breathS * Math.PI * 2);
-    d.fade(breath * SA.haloInk, () => { for (const { i, j } of HALO.cells) d.c(rx - 2 + i, ry - 2 + j, K); });
+    d.fade(breath * SA.haloInk * (darkPage ? 0.6 : 1), () => { for (const { i, j } of HALO.cells) d.c(rx - 2 + i, ry - 2 + j, K); });
     // the pulse at full, and the pressed beat of a click
     const pressed = SHRINE.mode === 'click' && w >= c.hold && w < t1 + 0.3 ? 0.6 * ease3(Math.min(1, (w - c.hold) / 0.15)) * (1 - ease3(clamp01((w - t1) / 0.3))) : 0;
     if (f >= 0.999) {

@@ -757,7 +757,7 @@ export const AFTER_CABIN_SMOKE = { puffs: 4, size: 2, life: 4.8, rise: 8, drift:
 // The shrine's faith ring (render/after/stations.js): motes rising off it,
 // drawn as the stump house's smoke is (`risePuffs`), up to `puffs` of them
 // as full as the ring is, each a cell, its start spread `spread` cells across.
-export const AFTER_SHRINE_MOTES = { puffs: 40, size: 1, life: 3.6, rise: 11, drift: 0, sway: 0.5, swayRate: 1.1, swayPhase: 2.1, fadeIn: 4, peak: 0.9, greyAt: 0.55, greyFade: 0.2, spread: 16, tones: ['ink', 'ink'], ease: true, big: { puffs: 16, size: 2, seed: 50, life: 4.2 } };
+export const AFTER_SHRINE_MOTES = { puffs: 22, size: 1, life: 3.6, rise: 12, drift: 0, sway: 0.5, swayRate: 1.1, swayPhase: 2.1, fadeIn: 4, peak: 0.75, greyAt: 0.55, greyFade: 0.2, spread: 28, tones: ['ink', 'ink'], ease: true, big: { puffs: 8, size: 2, seed: 50, life: 4.2 } };
 // What more the faith ring does (render/after/stations.js, `shrine`), in seconds
 // and cells: `fly` how often a prayer sets out and how long the tip glints, the
 // fill's slow rise and its drop; `turn` the glint's lap, its length in cells and
@@ -767,7 +767,7 @@ export const AFTER_SHRINE_MOTES = { puffs: 40, size: 1, life: 3.6, rise: 11, dri
 export const AFTER_SHRINE_SAUCE = {
   flyEvery: 0.4, glintS: 0.9, trail: [0.07, 0.14, 0.21], bounce: { s: 0.7, r: 5 },
   fillFrom: 0.3, fillTo: 0.7, fillRise: 40, fillDrop: 3,
-  turnS: 7, glintCells: 8, glintInk: 0.8, breathS: 5, haloInk: 0.15,
+  turnS: 7, glintCells: 8, glintInk: 0.8, breathS: 5, haloInk: 0.22,
   orbit: { puffs: 10, size: 1, life: 7, rise: 0, drift: 0, sway: 0, swayRate: 0, swayPhase: 0, fadeIn: 8, peak: 0.9, greyAt: 0.5, greyFade: 0.1, spread: 0, tones: ['ink', 'ink'], turns: 1.25, r0: 12.5, r1: 3.5, ease: true },
   click: { hold: 5, press: 0.5, unwind: 3, empty: 1.5, refill: 8, every: 0.1,
     burst: { puffs: 18, size: 1, life: 1.8, rise: 0, drift: 0, sway: 0, swayRate: 0, swayPhase: 0, fadeIn: 8, peak: 0.95, greyAt: 0.5, greyFade: 0.1, spread: 0, tones: ['ink', 'ink'], r0: 10.5, r1: 11, ease: true } }
