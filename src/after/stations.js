@@ -20,6 +20,7 @@ import { afterlifeOn } from '../acts.js';
 import { built } from './levels.js';
 import { stationBox, groundOf, afterFloor, closed, pilePlace, pileOwner, floorAt } from './place.js';
 import { afterRow } from './rows.js';
+import { boardFlag } from '../stations.js';
 import { PILED, pileFull } from './piles.js';
 import { godCampAt, godMid, faceY } from './sky.js';
 import { shopBoxOf, rosterShops } from '../roster.js';
@@ -40,23 +41,10 @@ const mid = () => S.camX + S.viewW / 2;
 // Which act board is up: one at a time, as the yard's own flags are, each
 // row reading and writing its share through an accessor of its own name.
 // This session's, never saved: a reload finds the boards shut.
-let openKey = null; // held: the act board that is up, never saved
-const flag = key => {
-  const name = `${key.replace(/-(\w)/g, (_, c) => c.toUpperCase())}BoardOpen`;
-  Object.defineProperty(S, name, {
-    enumerable: false, configurable: true,
-    get: () => openKey === key,
-    set: v => {
-      const was = openKey;
-      if (v) openKey = key; else if (openKey === key) openKey = null;
-      // The point the crowd's board was asked over is that opening's only:
-      // left behind once it shut, it stood the crowd's ground somewhere God
-      // is not drawn, and the next hand to reach for him found nothing there.
-      if (was === CROWD && openKey !== CROWD) crowdAt = null;
-    }
-  });
-  return name;
-};
+// The point the crowd's board was asked over is that opening's only: left
+// behind once it shut, it stood the crowd's ground somewhere God is not
+// drawn, and the next hand to reach for him found nothing there.
+const flag = key => boardFlag(key, () => { if (key === CROWD) crowdAt = null; });
 
 // The station a card's ground is: the grove's is the forestry shack's, in
 // front of its trees (the owner, 2026-10-20).
@@ -68,7 +56,7 @@ const ground = card => (card === 'grove' ? 'forestry' : card);
 // later opening by the hand stands over God again.
 const CROWD = 'after-crowd';
 let crowdAt = null; // held: the point the crowd's board was asked over
-held('after-boards', () => { openKey = null; crowdAt = null; });
+held('after-boards', () => { crowdAt = null; });
 export const setCrowdAt = at => { crowdAt = at; };
 
 const NAMES = {
