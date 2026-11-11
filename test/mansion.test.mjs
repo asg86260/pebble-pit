@@ -6,7 +6,7 @@
 // scaffold up a pole a trip and down again last; then the two of them in at
 // the door, the freed souls down the cloud stair, and the end sheet. Nothing
 // pops: every piece is set by a body standing at its place, and fades in.
-import { group, ok, run, runUntil, yard } from './helpers.mjs';
+import { group, ok, run, yard } from './helpers.mjs';
 
 const S = yard.S;
 const KEY = 'boulder-clicker/v4';
@@ -37,19 +37,22 @@ group('the yard\'s own hands raise the mansion while the two of them walk home, 
     if (walkingAt == null && S.acts.pair.route) walkingAt = set;
     if (setAtHome == null && ['home', 'door'].includes(S.acts.pair.at)) setAtHome = set;
   };
-  const midway = runUntil(() => { sample(); return S.acts.mansion && S.acts.mansion.set.filter(v => v != null).length >= 10; }, 400);
+  // A frame at a time, so every piece's set is seen: a set lasts under a
+  // second, and a second's step would pass over a third of them.
+  const frameUntil = (fn, secs) => { for (let i = 0; i < secs * 60; i++) { run(1 / 60); if (fn()) return true; } return false; };
+  const midway = frameUntil(() => { sample(); return S.acts.mansion && S.acts.mansion.set.filter(v => v != null).length >= 10; }, 400);
   // a reload in the middle of the build: what is set stays set, nobody is
   // left holding a claim, and it goes on
   const before = S.acts.mansion.set.filter(v => v != null).length;
-  const workBefore = progressOf(workOn('mansion'));
+  const workBefore = progressOf(workOn('mansion')), idBefore = workOn('mansion')?.id;
   window.__reload();
   const after = S.acts.mansion.set.filter(v => v != null).length;
   const hands = S.workers.filter(w => w.piece).length;
-  // the work read back and the pieces read back say the same, a frame on
-  run(1 / 60);
-  const workAfter = progressOf(workOn('mansion'));
-  const agree = Math.abs(workAfter - S.acts.mansion.set.filter(v => v != null).length / all.length) < 1e-9;
-  const done = runUntil(() => { sample(); return beatDone('home-again') || S.beat.sheet === 'mansionsheet'; }, 1200);
+  // the work read back off the save, before a frame is stepped, says what
+  // the pieces read back say, and is the same work, not one started again
+  const workAfter = progressOf(workOn('mansion')), idAfter = workOn('mansion')?.id;
+  const agree = Math.abs(workAfter - after / all.length) < 1e-9 && idAfter === idBefore;
+  const done = frameUntil(() => { sample(); return beatDone('home-again') || S.beat.sheet === 'mansionsheet'; }, 1200);
   run(1);
   const sheet = S.beat.sheet;
   const borrowed = S.workers.filter(w => w.piece).length;
@@ -59,11 +62,11 @@ group('the yard\'s own hands raise the mansion while the two of them walk home, 
     ok(midway, 'the build gets going with the yard\'s own hands', JSON.stringify(S.acts.mansion && S.acts.mansion.set.length)),
     ok(most > 1 && most <= MANSION_BUILDERS && notBuilders === 0, "the yard's builders carry it, a gang of up to its hands, nobody else", `${most} at once, ${notBuilders} not builders`),
     ok(after === before && hands === 0, 'a reload keeps every piece set and lets the hands go to be taken again', `${before} -> ${after}, ${hands} holding`),
-    ok(workBefore > 0 && agree, 'the work on the construction and the pieces set agree after the reload', `${workBefore} -> ${workAfter}, ${after}/${all.length}`),
+    ok(workBefore > 0 && agree, 'the work on the construction is read back as it was, and agrees with the pieces set', `${workBefore} -> ${workAfter}, ${after}/${all.length}, id ${idBefore} -> ${idAfter}`),
     ok(walkingAt != null && setAtHome != null && setAtHome > walkingAt, 'pieces go up while the two of them walk home', `${walkingAt} at the start, ${setAtHome} at home`),
     ok(done && mansionDone() && all.every((_, i) => pieceIn(i) >= 1 || !all[i].segs.length), 'every piece set and faded in', String(mansionDone())),
     ok(rockRowsLeft() === 0, 'the rock on the ruin broken up to the last row', String(rockRowsLeft())),
-    ok(new Set(setters.map(s => s.kind)).size >= 6 && setters.every(s => Math.abs(s.x - MANSION_WAY.to(s.i)) <= P),
+    ok(new Set(setters.map(s => s.i)).size === all.length && setters.every(s => Math.abs(s.x - MANSION_WAY.to(s.i)) <= P),
        'every piece, of every kind, set by a body standing at its place', JSON.stringify(setters.filter(s => Math.abs(s.x - MANSION_WAY.to(s.i)) > P).slice(0, 3))),
     ok(!workLeft, 'the work landed off the construction', JSON.stringify(workLeft)),
     ok(S.acts.house === 'mansion' && S.acts.ended && sheet === 'mansionsheet', 'the two of them in, the souls gathered, the end sheet up', `${S.acts.house} ${S.acts.ended} ${sheet}`),
