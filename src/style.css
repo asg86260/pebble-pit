@@ -762,6 +762,15 @@ body.still #scroller { scroll-behavior: auto; }
 }
 .rebel { -webkit-mask: var(--rebel-mark) 0 0 / 100% 100% no-repeat; mask: var(--rebel-mark) 0 0 / 100% 100% no-repeat; }
 .timber { -webkit-mask: var(--timber-mark) 0 0 / 100% 100% no-repeat; mask: var(--timber-mark) 0 0 / 100% 100% no-repeat; }
+/* An act's coin not drawn yet (hell's): the placeholder the counter's card
+   draws for one, a hollow square at the scale's size, in the words' ink. */
+.actcoin {
+  display: inline-block;
+  vertical-align: baseline;
+  width: 9px; height: 9px;
+  box-sizing: border-box;
+  border: 2px solid currentColor;
+}
 
 /* What the row gives you. It sits left in its own column rather than right
    against the price, because every one of them starts with a plus and a column
