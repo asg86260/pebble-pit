@@ -590,9 +590,9 @@ function afterSite(until) {
 // The shrine stood with its faithful, doing `mode` (render/after/stations.js,
 // SHRINE), its clock started now and run `ahead` seconds on, framed with the
 // ring over it. The faithful are drawn, not walked there.
-function shrineAt(mode, at, pray = null) {
+function shrineAt(mode, at, pray = null, extra = {}) {
   window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
-  SHRINE.mode = mode; SHRINE.folk = 6; SHRINE.pray = pray; SHRINE.t0 = S.after.t - at;
+  SHRINE.mode = mode; SHRINE.folk = 6; SHRINE.pray = pray; SHRINE.shake = !!extra.shake; SHRINE.stream = !!extra.stream; SHRINE.t0 = S.after.t - at;
   const b = stationBox('shrine');
   window.__look(b.x + b.w / 2 - S.viewW / 2); window.__fast(0); window.__holdShot();
 }
@@ -3445,6 +3445,16 @@ export const SCENES = {
     option: 'C the click',
     say: 'full for five seconds, then the click (stood in): the arc unwinds, the faith flies to the counter, the ring fills again', run: () => shrineAt('click', 0, 'hop') },
 
+  // MOCK faith13
+  'faith13-a': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-full, a review branch, never merged', branch: 'review-faith-full',
+    option: 'A the shake',
+    say: 'full: the ring jumps a few cells side to side in held poses, then rests, again every three seconds', run: () => shrineAt('full', 2.7, 'hop', { shake: true, stream: false }) },
+  'faith13-b': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-full, a review branch, never merged', branch: 'review-faith-full',
+    option: 'B more motes',
+    say: 'full: a steady, thicker stream of larger motes rises off the ring; it does not move', run: () => shrineAt('full', 2.7, 'hop', { shake: false, stream: true }) },
+  'faith13-c': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-full, a review branch, never merged', branch: 'review-faith-full',
+    option: 'C both',
+    say: 'full: the shake every three seconds and the thicker stream of motes together', run: () => shrineAt('full', 2.7, 'hop', { shake: true, stream: true }) },
 
   'level-carry': { about: 'the acts', say: "the chain running: a carrier with a sign over the cloud, climbing the stage's plinth or out on its top",
     run: () => {
