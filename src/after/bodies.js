@@ -54,6 +54,7 @@ import { isIdle, handsFree, timberReserved, nextOrder, orderOf, orderAt, orderBr
 import { stepActBuilder, builds as building } from './builders.js';
 import { manSites } from '../crew/sitework.js';
 import { targetAt } from '../crew/assign.js';
+import { staffPlace } from '../staffing.js';
 import { busySitesIn, onTheGo, siteBox, siteX } from '../works.js';
 
 const floorY = () => afterFloor();
@@ -136,18 +137,22 @@ export function spareMembers() {
   for (const job of AFTER_JOBS) owed += Math.max(0, crewAt(job) - bodiesOf(job).length - lentOff(job).length);
   return idleBodies().filter(o => !o.lentFrom).length + S.after.camp - owed;
 }
-// The roster's press (after/roster.js): one more of `job` wanted, while a
-// member is spare and a seat is free; one fewer, while any is wanted. The
-// bodies follow on the next frame (`staff`), walking.
-export function putOn(job, d) {
-  const c = S.after && S.after.crew;
-  if (!c) return false;
-  if (d > 0) { if (spareMembers() <= 0 || crewAt(job) >= seatsOf(job)) return false; c[job] = crewAt(job) + 1; return true; }
-  if (crewAt(job) <= 0) return false;
-  c[job] = crewAt(job) - 1;
-  if (!c[job]) delete c[job];
-  return true;
-}
+// The act's counts on the yard's staffing (staffing.js, `assign`): the
+// roster's press is the yard's rule -- one more while a member is spare and a
+// seat is free, one fewer while any is wanted, a loan off that job forgiven
+// -- over the act's own store (`S.after.crew`, a loan still counted on the job
+// it came off) and seats. The bodies follow on the next frame (`staff`),
+// walking, so there is nothing to catch up at the press.
+staffPlace('after', {
+  jobs: AFTER_JOBS,
+  count: crewAt,
+  set(job, n) { const c = S.after.crew; if (n > 0) c[job] = n; else delete c[job]; },
+  spare: spareMembers,
+  room: job => seatsOf(job) - crewAt(job),
+  bodies: () => (S.after ? S.after.bodies : []),
+  live: () => !!S.after,
+  catchUp() {}
+});
 
 // Where a job is worked, world x: its station's ground, or for the grove's
 // jobs the grove and the forestry shack in front of it, a little slack
@@ -698,7 +703,17 @@ const nearest = (list, x) => list.sort((p, q) => Math.abs(p.x - x) - Math.abs(q.
 const toBuild = w => { takeJob(w, AFTER_JOB.BUILD); Object.assign(w, { site: null, workId: null, goal: 'to' }); return w; };
 const unbuild = w => { dropJob(w); Object.assign(w, { site: null, workId: null, goal: null }); };
 const spareIdle = () => idleBodies().filter(o => !o.errand);
-const lendable = o => o.job && o.job !== AFTER_JOB.BUILD && o.state === 'work' && handsFree(o) && !o.out && !o.pick && !o.errand && !o.lentFrom;
+const lendable = o => AFTER_JOBS.includes(o.job) && o.state === 'work' && handsFree(o) && !o.out && !o.pick && !o.errand && !o.lentFrom;
+// A loan given back, the one way for every loan (a builder's, an order's):
+// off the loan's work, and home to its post if the roster still wants it
+// there; a loan off a job the act no longer has, or one the roster has since
+// filled, is forgiven and the body stays at the podium.
+function repay(w) {
+  const job = w.lentFrom;
+  delete w.lentFrom;
+  unbuild(w);
+  if (AFTER_JOBS.includes(job) && bodiesOf(job).length < crewAt(job)) takeJob(w, job);
+}
 // The bodies lent off a job, building or stood spare: still its, so its
 // roster is not filled again behind them (`staff`).
 const lentOff = job => (S.after ? S.after.bodies.filter(b => b.lentFrom === job && b.state === 'work') : []);
@@ -722,16 +737,12 @@ function manBuilders() {
       on.push(toBuild(w));
       return true;
     },
-    // Home to its post, if the roster still wants it there; a loan off a
-    // job the act no longer has, or one the roster has since filled, is
-    // forgiven and the body stays at the podium.
+    // Every builder's loan home (`repay`); an order's is the order's to send.
     home() {
       for (const w of a.bodies) {
-        const job = w.lentFrom;
-        if (!job || !handsFree(w)) continue;
-        if (building(w)) { on.splice(on.indexOf(w), 1); unbuild(w); }
-        delete w.lentFrom;
-        if (AFTER_JOBS.includes(job) && w.job == null && bodiesOf(job).length < crewAt(job)) takeJob(w, job);
+        if (!w.lentFrom || w.job === AFTER_JOB.ORDER || !handsFree(w)) continue;
+        if (building(w)) on.splice(on.indexOf(w), 1);
+        repay(w);
       }
     }
   });
@@ -749,33 +760,43 @@ function manBuilders() {
   }
 }
 
+// A bought row's timber never waits for want of hands, as a station's going
+// up never does (`manBuilders`), and by the same rule (crew/sitework.js,
+// `manSites`): a pair of hands wanted while an order has blocks on the mound
+// to take up; an idle member runs it as an errand (`ERRANDS`); with nobody
+// idle, the member on a job nearest the mound, its hands empty, is lent to
+// the order -- the loan on the body (`lentFrom`), the order its job, so its
+// roster still counts it (`lentOff`) and nobody counts it twice -- and goes
+// home to its post (`repay`) once no order has a block left to take up.
+const onOrder = () => S.after.bodies.filter(o => o.job === AFTER_JOB.ORDER || o.errand === AFTER_JOB.ORDER).length;
+function manOrders() {
+  const a = S.after;
+  manSites({
+    want: nextOrder() && pileCount('timber') > 0 ? 1 : 0,
+    spare: () => onOrder() + spareIdle().length + a.camp,
+    lend() {
+      const w = nearest(a.bodies.filter(lendable), fedAt('timber'));
+      if (!w) return false;
+      w.lentFrom = w.job;
+      takeJob(w, AFTER_JOB.ORDER);
+      return true;
+    },
+    home() {
+      for (const w of a.bodies) if (w.lentFrom && w.job === AFTER_JOB.ORDER && handsFree(w) && !w.pick) repay(w);
+    }
+  });
+}
+
 // The act's JOBS registry, shaped like the yard's (crew/jobs.js): a row a
 // job, in the order the roster lists them, each with its frame; the builders
-// are put on work by work (`manBuilders`). None fills itself by a
-// count through the engine (no `want`): the roster's count is met by members
-// already standing in the place (`staff`), so nobody is made out of nothing.
-// A bought row's timber never waits for want of hands, as a station's
-// going up never does (`manBuilders`): with nobody idle, the member on
-// a job nearest the mound, its hands empty, is lent to the order -- it keeps
-// its job, so its roster still counts it, carries a load, and goes back to
-// its post once no order has a block left to take up.
-const lent = w => w.job && w.errand === AFTER_JOB.ORDER;
-function lendHands() {
-  const a = S.after;
-  if (!timberReserved() || pileCount('timber') <= 0 || a.camp > 0 || idleBodies().some(o => !o.errand) || a.bodies.some(o => o.errand === AFTER_JOB.ORDER)) return;
-  const mound = fedAt('timber');
-  const free = a.bodies.filter(o => o.job && o.job !== AFTER_JOB.BUILD && o.state === 'work' && handsFree(o) && !o.out && !o.pick)
-    .sort((p, q) => Math.abs(p.x - mound) - Math.abs(q.x - mound));
-  if (free[0]) Object.assign(free[0], { errand: AFTER_JOB.ORDER, order: null, at: null, t: 0 });
-}
-function lentStep(w, dt) {
-  if (!carried(w) && !w.pick && (!nextOrder() || pileCount('timber') <= 0)) { w.errand = null; w.order = null; return; }
-  JOB_STEP.orderer(w, dt);
-}
-const orLent = step => (w, dt) => (lent(w) ? lentStep(w, dt) : step(w, dt));
+// are put on work by work (`manBuilders`), an order's loan by order
+// (`manOrders`). None fills itself by a count through the engine (no
+// `want`): the roster's count is met by members already standing in the
+// place (`staff`), so nobody is made out of nothing.
 export const AFTER_JOB_ROWS = {
-  ...Object.fromEntries(AFTER_JOBS.map(job => [job, { step: orLent(JOB_STEP[job]) }])),
-  [AFTER_JOB.BUILD]: { step: JOB_STEP.builder }
+  ...Object.fromEntries(AFTER_JOBS.map(job => [job, { step: JOB_STEP[job] }])),
+  [AFTER_JOB.BUILD]: { step: JOB_STEP.builder },
+  [AFTER_JOB.ORDER]: { step: JOB_STEP.orderer }
 };
 
 // The act's crew, as the place body engine (placebodies.js) steps it and the
@@ -818,6 +839,9 @@ export const AFTER_CREW = {
   dt: secs,
   begin: () => ({ arrived: 0, idle: idleBodies() }),
   tick(w) {
+    // A save from before an order's loan was a loan: a member kept on its job
+    // with the order as its errand is lent the one way (`manOrders`).
+    if (w.errand === AFTER_JOB.ORDER && AFTER_JOBS.includes(w.job)) Object.assign(w, { lentFrom: w.job, job: AFTER_JOB.ORDER, errand: null });
     if (w.swing != null && S.after.t - w.swing > AFTER_CHOP_HOLD_S) w.swing = null;
     if (w.job && !w.on && walkLeft(w) <= 0) w.on = true;
   },
@@ -846,8 +870,8 @@ export const AFTER_CREW = {
     if (a.bodies.some(w => w.state === 'gone')) a.bodies = a.bodies.filter(w => w.state !== 'gone');
     crowdLines(f.dt);
     staff();
-    lendHands();
     manBuilders();
+    manOrders();
   },
   spare: () => S.after.camp > 0,
   // Drawn as the yard's square, x its middle column and y its feet
