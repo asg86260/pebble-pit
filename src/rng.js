@@ -57,6 +57,10 @@ function draw(s) {
   return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
 }
 
+// The same step on a word the caller keeps (after/util.js `arand` holds its
+// own in the save): the next word and the number it is worth.
+export const next = s => { const w = mix(s); return [w, draw(w)]; };
+
 // A stream of its own, for a thing that needs a lot of chance and must not
 // spend the yard's: the audio's noise buffer takes a couple of hundred
 // thousand draws on the first gesture, and taken from `rand()` they would
