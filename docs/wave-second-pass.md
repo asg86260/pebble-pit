@@ -61,7 +61,7 @@ works.js.** If a function here needs one of those, say so in the report
 and leave that function in upgrades.js.
 
 **`src/staffing.js`** -- the crew's counts: `JOBS`, `spareHands`, `idle`,
-`restaff`, `stripKit`, `rebalance` (with its private `nearestLendable`),
+`restaff`, `stripKit`, `rebalance` (with its private `lendNearest`),
 `hire`, `assign` (with its private `forgive`). These call `syncWorkers`
 (crew.js) and `busyBuilderSites`/`siteX` (works.js); that is allowed.
 `hire` and `assign` today end with `buildShop()`, which is the shop's

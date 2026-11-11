@@ -1,7 +1,7 @@
 // REVIEW review-a3-build
 // --- a builder at a site: the choice every place's builders share --------------
 // Which work a builder is on, where it stands to do it, when it has arrived,
-// and the rule for who is made a builder at all. The walk there is the
+// and the rule for who is made a builder at all (`manSites`). The walk there is the
 // place's own (the yard's route, an act's floor), handed in by the caller;
 // everything else is here once, so the yard, the deep and an act raise a
 // station the same way (DESIGN.md, "Act 3 builds through the yard's
@@ -58,30 +58,25 @@ export function builderMark(w) {
 // times a second. Only a body genuinely somewhere else is walked again.
 export const arrivedSlack = w => (w.goal === 'at' ? BUILD_SHIFT_SPAN + BUILD_SHIFT * 2 : 1);
 
-// Who is made a builder, for a crew kept as bodies (an act's): one a work on
-// the go, never more, so a build never swallows the place's hands. Taken
-// from the spare first, the nearest the work; with none spare, the nearest
-// body at a post is lent, and every builder goes back once there is no work
-// left for it -- the yard's rule (staffing.js, `rebalance`), there kept in
-// counts. `crew` answers the place's half:
-//   builders()   its builders now
-//   spare(x)     a spare body nearest x, made a builder, or null
-//   lend(x)      a posted body nearest x, made a builder, or null
-//   free(w)      a builder no work wants, sent back
-//   handsFree(w) whether it can be let go of now (nothing in its arms)
-export function manSites(busy, crew) {
-  const works = busy.flatMap(site => onTheGo(site).map(work => ({ site, work })));
-  const on = crew.builders();
-  // Over the works on the go: the newest off first, once its hands are free.
-  for (let k = on.length - 1; k >= 0 && on.length > works.length; k--)
-    if (crew.handsFree(on[k])) { crew.free(on[k]); on.splice(k, 1); }
-  for (let short = works.length - on.length; short > 0; short--) {
-    // The work with nobody on it, oldest first.
-    const open = works.find(({ work }) => !on.some(b => b.workId === work.id));
-    const box = open && siteBox(open.site, open.work);
-    const x = box ? box.x + box.w / 2 : open ? siteX(open.site) : null;
-    const w = crew.spare(x) || crew.lend(x);
-    if (!w) break;
-    on.push(w);
-  }
+// Who is made a builder, in every place (the yard, the deep, an act): one a
+// work wanted, never more, so a build never swallows the place's hands.
+// Builders come from the spare; short of them, the body nearest the work is
+// *lent* off its post -- which makes it spare -- and the loan goes home once
+// nothing is left to build, not as soon as one build lands, so a second build
+// still on the go does not lend the same body again a frame later. The place
+// answers its half as data:
+//   want     how many builders its builds want now
+//   spare()  how many of its hands are on nothing (a body lent counts)
+//   lend()   the body nearest the work off its post, the loan recorded on
+//            the body (`lentFrom`); false with nobody to lend
+//   home()   every loan given back, asked only once nothing is left to build
+// How many build is returned: the want, or as many as are spare. Which bodies
+// those are is the place's catch-up (the yard's `syncWorkers`, an act's walk).
+export function manSites(place) {
+  // The shortfall is read once: a place's spare count can be clamped (the
+  // yard's is never below nought), so a lend need not raise it, and a loop
+  // asking again would lend more than the build is short.
+  for (let short = place.want - place.spare(); short > 0; short--) if (!place.lend()) break;
+  if (!place.want) place.home();
+  return Math.min(place.want, place.spare());
 }

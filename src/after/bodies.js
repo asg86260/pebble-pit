@@ -53,7 +53,7 @@ import { workAfter } from './work.js';
 import { isIdle, handsFree, timberReserved, nextOrder, orderOf, orderAt, orderBrought } from './orders.js';
 import { stepActBuilder, builds as building } from './builders.js';
 import { manSites } from '../crew/sitework.js';
-import { busySitesIn } from '../works.js';
+import { busySitesIn, onTheGo, siteBox, siteX } from '../works.js';
 
 const floorY = () => afterFloor();
 // A walk that keeps to the floor: the rows of God's crowd stand up the
@@ -132,8 +132,8 @@ export const atStation = key => (S.after ? S.after.bodies.filter(b => b.at === k
 export function spareMembers() {
   if (!S.after) return 0;
   let owed = 0;
-  for (const job of AFTER_JOBS) owed += Math.max(0, crewAt(job) - bodiesOf(job).length);
-  return idleBodies().length + S.after.camp - owed;
+  for (const job of AFTER_JOBS) owed += Math.max(0, crewAt(job) - bodiesOf(job).length - lentOff(job).length);
+  return idleBodies().filter(o => !o.lentFrom).length + S.after.camp - owed;
 }
 // The roster's press (after/roster.js): one more of `job` wanted, while a
 // member is spare and a seat is free; one fewer, while any is wanted. The
@@ -238,11 +238,14 @@ function fromCrowd(job) {
 function staff() {
   const a = S.after;
   for (const job of AFTER_JOBS) {
-    const on = bodiesOf(job), want = crewAt(job);
-    let n = on.length;
+    const on = bodiesOf(job), want = crewAt(job), loans = lentOff(job);
+    let n = on.length + loans.length;
+    // A roster cut below its loans forgives them, as the yard's press does
+    // (staffing.js, `forgive`): the count shown is already without them.
+    for (const w of loans) { if (n <= want) break; delete w.lentFrom; n--; }
     if (n < want) {
       const z = zoneOf(job), mid = z ? (z[0] + z[1]) / 2 : podiumMid();
-      const free = idleBodies().sort((p, q) => Math.abs(p.x - mid) - Math.abs(q.x - mid));
+      const free = idleBodies().filter(o => !o.lentFrom).sort((p, q) => Math.abs(p.x - mid) - Math.abs(q.x - mid));
       for (const w of free) { if (n >= want) break; takeJob(w, job); n++; }
       while (n < want && a.camp > 0) { a.bodies.push(fromCrowd(job)); n++; }
     }
@@ -683,32 +686,66 @@ function runErrand(w, dt) {
 }
 
 // The builders: a station bought is a work on the yard's works (DESIGN.md,
-// "Act 3 builds through the yard's construction"), and who builds it is the
-// yard's rule (crew/sitework.js, `manSites`): one builder a work on the go,
-// an idle member nearest it first, then one out of the crowd, and with
-// nobody spare the nearest member at a post, lent off it; each goes back to
-// the podium when no work wants it, where its roster takes it again.
+// "Act 3 builds through the yard's construction"), and how many build is the
+// yard's rule (crew/sitework.js, `manSites`): one builder a work on the go;
+// with nobody spare, the nearest member at a post lent off it, the loan on
+// the body (`lentFrom`) as the yard's is, and home to its post once nothing
+// is left to build. Which bodies build is the act's: an idle member nearest
+// the work first, then one out of the crowd; one no work wants goes back to
+// the podium, the newest first.
 const nearest = (list, x) => list.sort((p, q) => Math.abs(p.x - x) - Math.abs(q.x - x))[0] || null;
 const toBuild = w => { takeJob(w, AFTER_JOB.BUILD); Object.assign(w, { site: null, workId: null, goal: 'to' }); return w; };
+const unbuild = w => { dropJob(w); Object.assign(w, { site: null, workId: null, goal: null }); };
+const spareIdle = () => idleBodies().filter(o => !o.errand);
+const lendable = o => o.job && o.job !== AFTER_JOB.BUILD && o.state === 'work' && handsFree(o) && !o.out && !o.pick && !o.errand && !o.lentFrom;
+// The bodies lent off a job, building or stood spare: still its, so its
+// roster is not filled again behind them (`staff`).
+const lentOff = job => (S.after ? S.after.bodies.filter(b => b.lentFrom === job && b.state === 'work') : []);
 function manBuilders() {
   const a = S.after;
-  manSites(busySitesIn('after'), {
-    builders: () => a.bodies.filter(building),
-    spare(x) {
-      const w = nearest(idleBodies().filter(o => !o.errand), x ?? podiumMid());
-      if (w) return toBuild(w);
-      if (a.camp <= 0) return null;
-      const n = fromCrowd(AFTER_JOB.BUILD);
-      a.bodies.push(n);
-      return toBuild(n);
+  const works = busySitesIn('after').flatMap(site => onTheGo(site).map(work => ({ site, work })));
+  const on = a.bodies.filter(building);
+  // Where the oldest work with nobody on it stands.
+  const openX = () => {
+    const open = works.find(({ work }) => !on.some(b => b.workId === work.id));
+    const box = open && siteBox(open.site, open.work);
+    return box ? box.x + box.w / 2 : open ? siteX(open.site) ?? podiumMid() : podiumMid();
+  };
+  const want = manSites({
+    want: works.length,
+    spare: () => on.length + spareIdle().length + a.camp,
+    lend() {
+      const w = nearest(a.bodies.filter(lendable), openX());
+      if (!w) return false;
+      w.lentFrom = w.job;
+      on.push(toBuild(w));
+      return true;
     },
-    lend: x => {
-      const w = nearest(a.bodies.filter(o => o.job && o.job !== AFTER_JOB.BUILD && o.state === 'work' && handsFree(o) && !o.out && !o.pick && !o.errand), x ?? podiumMid());
-      return w ? toBuild(w) : null;
-    },
-    free: w => { dropJob(w); Object.assign(w, { site: null, workId: null, goal: null }); },
-    handsFree
+    // Home to its post, if the roster still wants it there; a loan off a
+    // job the act no longer has, or one the roster has since filled, is
+    // forgiven and the body stays at the podium.
+    home() {
+      for (const w of a.bodies) {
+        const job = w.lentFrom;
+        if (!job || !handsFree(w)) continue;
+        if (building(w)) { on.splice(on.indexOf(w), 1); unbuild(w); }
+        delete w.lentFrom;
+        if (AFTER_JOBS.includes(job) && w.job == null && bodiesOf(job).length < crewAt(job)) takeJob(w, job);
+      }
+    }
   });
+  // Over the works on the go: the newest off first, once its hands are free.
+  for (let k = on.length - 1; k >= 0 && on.length > want; k--)
+    if (handsFree(on[k])) { unbuild(on[k]); on.splice(k, 1); }
+  while (on.length < want) {
+    const x = openX();
+    const w = nearest(spareIdle(), x);
+    if (w) { on.push(toBuild(w)); continue; }
+    if (a.camp <= 0) break;
+    const n = fromCrowd(AFTER_JOB.BUILD);
+    a.bodies.push(n);
+    on.push(toBuild(n));
+  }
 }
 
 // The act's JOBS registry, shaped like the yard's (crew/jobs.js): a row a

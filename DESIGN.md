@@ -24650,7 +24650,7 @@ data; the mechanism is the yard's.
 2. **The builders.** crew/muster.js `setStaff` runs staffing.js
    `rebalance` and then `syncWorkers`. `rebalance` puts one builder on each
    busy site (`busyBuilderSites`) from the spare hands. With nobody spare it
-   *lends* the body nearest the site (`nearestLendable`, `w.lentFrom`) and
+   *lends* the body nearest the site (`lendNearest`, `w.lentFrom`) and
    gives it back once nothing is left to build. The deep has its own
    flavor (`busyDeepSites`, `unseatNearest`, `seatUpTo`). crew/builders.js
    `stepBuilder` picks a work per body (`siteFor`, by the work's `id`),
@@ -24903,13 +24903,19 @@ remaining reason was a look, and the owner has now overruled it.
 
 ### What building it changed
 
-- **Who is made a builder.** The yard's `rebalance` keeps its counts; the
-  rule it carries (one builder a work on the go, from the spare, else the
-  nearest lent off a post, back when no work wants it) is written once more
-  for a crew kept as bodies, `manSites` in crew/sitework.js, which act 3
-  calls with its answers (`manBuilders` in after/bodies.js). Folding the
-  yard's counts onto it is left: the yard's and the deep's checks are green
-  on their own path and nothing asked for the churn.
+- **Who is made a builder.** One rule, `manSites` in crew/sitework.js,
+  for every place: one builder a work wanted, from the spare, short of
+  them the body nearest the work lent off its post, the loan home once
+  nothing is left to build. A place hands it data: how many its builds
+  want, its spare count, its lend, its way home. The yard's `rebalance`
+  calls it twice, once for the yard (its loan `lentFrom`, a count taken off
+  `S[job]`; home when no site is left) and once for the deep (the loan a
+  station stood empty, `unseatNearest`; home is its ordinary seating,
+  `seatUpTo`, so the deep carries no loan on the body). Act 3's
+  `manBuilders` calls it with its bodies, its loan `lentFrom` as the
+  yard's, and the roster counts a loan as still its post's (`staff`), so
+  the post is not filled again behind it. Which bodies build stays each
+  place's catch-up (`syncWorkers`, act 3's nearest-the-work pick).
 - **The fence is claimed on act 3's map only.** Claimed in the yard and the
   deep, the no-overlap rule went red at once on overlaps already drawn
   there (the ram's fence on the shack, the pods' on the first station:
