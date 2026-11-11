@@ -51,7 +51,10 @@ const CAPS = {
   hatch: mix(paper, ink, need('GROUND_INK')), groundTile: need('GROUND_TILE'),
   // CLOUD_TONES steps from the lit crown to the underside, as weather.js mixes them
   cloud: Array.from({ length: need('CLOUD_TONES') }, (_, i) => mix(need('CLOUD_TONE'), need('CLOUD_UNDER'), i / (need('CLOUD_TONES') - 1))),
-  cloudLit: need('CLOUD_LIT'), cloudMid: need('CLOUD_MID'), cloudReach: need('CLOUD_SHADE_REACH'),
+  // The capsules' clouds keep the cell-shaded drawing the yard's sky had
+  // before it moved onto the cloud renderer (capsule-draw.js): its depths,
+  // which the game no longer has.
+  cloudLit: 0.35, cloudMid: 0.7, cloudReach: 4,
   bird: need('BIRD_TONE'), depthShadeSrc: depthShade.toString()
 };
 const SHELF = need('SHELF_INK');

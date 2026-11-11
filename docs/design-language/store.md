@@ -19,7 +19,8 @@ where.
   - The ground hatch is `GROUND_TEXTURE` 2, a mark every `GROUND_TILE`
     cells, at `GROUND_INK` of black.
   - Clouds use `CLOUD_TONE` to `CLOUD_UNDER`, shaded the way weather.js
-    shades them: `CLOUD_LIT`, `CLOUD_MID` and `CLOUD_SHADE_REACH`.
+    shaded them before the yard's sky moved onto the cloud renderer (the
+    capsules keep that drawing; its depths are in tools/steam-art.mjs).
   - Birds use `BIRD_TONE`.
   - Icons use `SHELF_INK`: the coin stroke, and ghost for a locked icon.
 - The coins keep their colors on the icons, because a coin stroke means the
