@@ -24942,7 +24942,7 @@ remaining reason was a look, and the owner has now overruled it.
   ordering scene is gone.
 
 
-## The mansion and the house on the one construction (design, not built)
+## The mansion and the house on the one construction (built 2026-11-10, on audit-mansion-home)
 
 The owner, 2026-11-10: every construction goes through the one construction
 system, no parallel copies. Act 3 is on the yard's works (above). An audit
@@ -25019,6 +25019,23 @@ build-throughput, spare-hand-builds (`want` unchanged for one-hand sites),
 build-anim, wave31-buildings, act3-intro, acts-travel*, persist-roundtrip. The
 look on the review bench, review "the mansion and the house on the shared
 construction".
+
+### What building it changed
+
+- **The seam.** staffing.js asks `want: buildersWanted(sites)` (works.js:
+  each work on the go its row's `hands`, one by default), cleared by the
+  coordinator as the one line in that file.
+- **A carrier with nothing to take** (a stage still being set) waits on the
+  building's own ground (`way.near`), not wherever it was lent from.
+- **The queue card** passes a row marked `unlisted` (queue.js): the mansion is
+  a standing job nobody bought, so it is not the player's to wait on or hand
+  back; it showed there as "MANSION queued" on the first shot.
+- **`__finish` does not finish the mansion**: `stepWorks` reads a carried
+  work's progress off its pieces, so filling `done` by hand is overwritten.
+  Scenes set the pieces (`__actsAt('mansion', n)`).
+- **The review**: scenes `review-mansion-a` (the mansion going up) and `-b`
+  (the finale's house), review "the mansion and the house on the shared
+  construction".
 
 ## A dialog system (design, approved)
 

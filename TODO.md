@@ -15,16 +15,15 @@ stations migrate to SAVE_V 38. Blocker: the owner's vote on the review "act
 `-b`), then the landing. SAVE_V 38 collides with any other branch that
 raises it first; the later one renumbers.
 
-## The mansion and the house on the one construction -- DESIGNED, ONE SEAM BLOCKED (2026-11-10)
+## The mansion and the house on the one construction -- BUILT, ON THE REVIEW BENCH (2026-11-10)
 
-DESIGN.md, "The mansion and the house on the one construction": the
-mansion's copy of home.js's builders goes onto works.js as the first carried
-way (a row's `way`, a piece a trip, through `manSites` and `stepBuilder`);
-home.js keeps its cutscene timeline and shares the piece geometry. Branch
-`audit-mansion-home`. Blocker: staffing.js `rebalance` wants one builder a
-site (`want: sites.length`), so the mansion gets one carrier, not six; the
-one-line fix (`want` a sum of each site's `hands`) is in a file another
-agent owns.
+DESIGN.md, "The mansion and the house on the one construction": the mansion
+is a work on works.js its builders carry up a piece a trip (a row's `way`);
+home.js keeps its cutscene timeline and shares the piece geometry
+(pieces.js). Branch `audit-mansion-home`, on top of `design-act3-build-fold`,
+with one line in staffing.js (`want: buildersWanted(sites)`). Blocker: the
+owner's look at review "the mansion and the house on the shared
+construction" (`review-mansion-a`, `-b`), then landing after the act 3 fold.
 
 ## The yard's fences stand on their neighbors -- FOUND, NOT FIXED (2026-11-10)
 

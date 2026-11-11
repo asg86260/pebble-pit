@@ -1,3 +1,4 @@
+// REVIEW review-mansion
 // A building put up a piece a trip (the finale's house, home.js; the
 // ending's mansion, mansion.js): the one reckoning of where a piece is and
 // where a body stands to set it, so the two plans cannot drift apart.

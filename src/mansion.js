@@ -1,3 +1,4 @@
+// REVIEW review-mansion
 // The ending's mansion (the owner, 2026-10-17 night: "the game ends with the
 // squares getting a massive mansion to live in after freeing God"). On the
 // house's ground at the yard's left end, bigger than the house: a main block
@@ -166,10 +167,13 @@ export const MANSION_WAY = {
   to: i => destOf(mansionPieces()[i]),
   open: i => { const m = M(); return !!m && !m.done && i >= 0 && i < mansionPieces().length && m.set[i] == null; },
   set: i => { const m = M(); if (m && m.set[i] == null) m.set[i] = m.T; },
+  // Where a hand with nothing to take waits: the nearest ground from its
+  // blocks pile to the mansion's far end.
+  near: x => Math.max(blocksX(), Math.min(mansionX() + (MANSION_W - 1) * P, x)),
   takeS: MANSION_TAKE_S,
   setS: MANSION_SET_S
 };
-const ROW = { key: 'mansion', kind: 'building', site: 'mansion', hands: MANSION_BUILDERS, way: MANSION_WAY,
+const ROW = { key: 'mansion', kind: 'building', site: 'mansion', hands: MANSION_BUILDERS, way: MANSION_WAY, unlisted: true,
               buy() { const m = M(); if (m) m.done = true; } };
 registerRows([ROW]);
 

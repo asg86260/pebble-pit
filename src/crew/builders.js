@@ -1,3 +1,4 @@
+// REVIEW review-mansion
 // --- the builders -------------------------------------------------------------
 // Spare hands putting up whatever the yard is building. Not a job on the
 // roster: you decide to build something and the idle hands go and do it.
@@ -80,7 +81,9 @@ function stepCarrier(w, way) {
   if (me && !way.open(me.i)) me = w.piece = null;
   if (!me) {
     const i = way.next();
-    if (i < 0) { w.goal = 'at'; return; }
+    // Nothing to take yet (a stage still being set): it waits on the
+    // building's own ground, not wherever the yard lent it from.
+    if (i < 0) { if (walkTo(w, way.near(w.x))) w.goal = 'at'; return; }
     me = w.piece = { i, st: 'fetch', u: 0 };
   }
   const dt = frames() / 60 * effortAt(w.site) / BUILD_EFFORT;

@@ -1,3 +1,4 @@
+// REVIEW review-mansion
 // The house at the yard's left end (docs/mocks/finale-house-2026-10-12.html,
 // the owner's picks): put up by the yard's builders while the two of them
 // walk home in the finale (finale.js), a piece a trip from a pile they carried
