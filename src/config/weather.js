@@ -21,11 +21,14 @@ export const CLOUDS_ON = true;
 // half-cells, so a far cloud is finer-grained as well as smaller, the way a
 // thing close up is coarse and a thing far off is fine. The air between is in
 // CLOUD_FADE_FAR, read off a cloud's own `far`. `n` is how many of the sheet
-// are kept in the strip of sky in view.
+// are kept in the strip of sky in view. `every` is how often a cloud of the
+// sheet is worked on the card (one frame in that many, render/yardsky.js):
+// it still moves every frame, only its shape is looked at again less often,
+// and a far cloud's shape changes too little a frame to tell.
 export const CLOUD_LAYERS = [
-  { name: 'far',  far: 0.06, scale: 1.2,  flat: 0.7, cell: 0.5, n: 5 },
-  { name: 'mid',  far: 0.18, scale: 0.95, flat: 0.9, cell: 1,   n: 3 },
-  { name: 'near', far: 0.40, scale: 0.6,  flat: 1.0, cell: 1.5, n: 2 }
+  { name: 'far',  far: 0.06, scale: 1.2,  flat: 0.7, cell: 0.5, n: 5, every: 3 },
+  { name: 'mid',  far: 0.18, scale: 0.95, flat: 0.9, cell: 1,   n: 3, every: 2 },
+  { name: 'near', far: 0.40, scale: 0.6,  flat: 1.0, cell: 1.5, n: 2, every: 1 }
 ];
 // Where a sheet's bases sit, in cells below the top of the band: the near
 // sheet highest and each one behind it a little lower, so the sky reads as one

@@ -20,6 +20,7 @@
 // from its field worked on the CPU, held still, in its body's tone.
 
 import { S } from '../state.js';
+import { CLOUD_LAYERS } from '../config.js';
 import { ctx } from './ctx.js';
 import { skyCam } from '../view.js';
 import { GUESTS } from '../skyguests.js';
@@ -94,7 +95,11 @@ export function drawClouds() {
     if (glass.a * (x + l.w * cw) + glass.e < 0 || glass.a * x + glass.e > glassW) continue;
     l.scale = n.scale;
     const look = lookOf(c, n.tones);
-    views.push({ key: c, layer: l, ox: 0, oy: 0, w: l.w, h: l.h, look, every: 1 });
+    // A far sheet's clouds are worked one frame in its `every`, each on a turn
+    // of its own (off its `give`, which never changes), as act 3's far layers
+    // are: their currents and their buds move too little a frame to tell, and
+    // the card's passes are most of a cloudy frame's cost.
+    views.push({ key: c, layer: l, ox: 0, oy: 0, w: l.w, h: l.h, look, every: CLOUD_LAYERS[c.sheet].every, phase: Math.floor(c.give * 97) });
     known.add(c);
     placed.push({ c, x, y, cw, from: Math.max(0, Math.ceil((top - y) / cw)), look });
   }
