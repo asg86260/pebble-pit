@@ -19,7 +19,7 @@
 
 // REVIEW act-3-the-cabin-built
 // MOCK faith8
-import { P, AFTER_SAW_TEETH, AFTER_ART_SCALE, AFTER_MILL, AFTER_CABIN_SMOKE, AFTER_SHRINE_MOTES, AFTER_SHRINE_SAUCE, AFTER_SHRINE_FULL, AFTER_SHRINE_FEEL, AFTER_SHRINE_HEART, AFTER_COIN_LIFE_S, AFTER_LINE_DARK } from '../../config.js';
+import { P, AFTER_SAW_TEETH, AFTER_ART_SCALE, AFTER_MILL, AFTER_CABIN_SMOKE, AFTER_SHRINE_MOTES, AFTER_SHRINE_SAUCE, AFTER_SHRINE_FULL, AFTER_SHRINE_FEEL, AFTER_SHRINE_HEART, AFTER_SHRINE_STAGES, AFTER_COIN_LIFE_S, AFTER_LINE_DARK } from '../../config.js';
 import { K, W, PALE, MID, hash, silhouette, clamp01, square } from './kit.js';
 import { ART } from '../../after/art.js';
 import { CABIN } from '../../after/cabin.js';
@@ -27,7 +27,8 @@ import { DOORWAY } from '../../after/doorway.js';
 import { held } from '../../reset.js';
 import { ctx } from '../ctx.js';
 import { ringCells } from '../cellring.js';
-import { faith } from '../../after/faith.js';   // MOCK faith16
+import { faith } from '../../after/faith.js';
+import { prayerRung } from '../../after/levels.js';   // MOCK faith16
 import { S } from '../../state.js';
 import { darkPage, raw } from '../../ink.js';
 import { coinAt } from '../aftercoins.js';
@@ -342,7 +343,7 @@ function forestry(d, work, t) {
 //         off the tip to the counter in the corner on the same coin arc,
 //         motes bursting outward
 // Nothing here pops: everything comes and goes by opacity.
-export const SHRINE = { mode: 'fill', fill: 0, folk: 0, t0: 0, pray: null, shake: false, stream: false, feel: null };   // MOCK faith13
+export const SHRINE = { mode: 'fill', fill: 0, folk: 0, t0: 0, pray: null, shake: false, stream: false, feel: null, path: null, loop: false };   // MOCK faith13
 // MOCK faith12
 // The faithful at prayer: the frame's own body (kit.js `body`), whole, never
 // squashed or sheared, moved as one piece at its true position, eased.
@@ -505,19 +506,111 @@ function offRing(life, seed, out, up, pad = 0, V = null) {
     return [hx + dx * out * sp * e, hy + dy * out * sp * e + up * ul * u + pad];
   };
 }
+// MOCK faith17
+// The shrine's looks, a function each of (r, run), cells off the shrine's left
+// and the floor: `r(x, y, w, h, tone)` a rect, `run(y, a, b, tone)` a row from
+// cell a to b. Flat squares, ink and paper. Path A is a cross grown into the
+// church; B a stone grown into it; C the church itself, laid piece by piece.
+const GOTH = {
+  step: (r, run) => { run(-1, 0, 18); run(-2, 0, 18); },
+  walls: r => r(0, -12, 19, 10),
+  roof: (r, run) => { for (let k = 1; k <= 9; k++) run(-12 - k, k, 18 - k); },
+  stem: r => r(9, -24, 1, 3),
+  bar: r => r(8, -23, 3, 1),
+  archSq: (r, run) => { for (let y = 3; y <= 9; y++) run(-y, 3, 15, W); },
+  archPt: (r, run) => { for (let k = 1; k <= 6; k++) run(-9 - k, 3 + k, 15 - k, W); }
+};
+const church = (r, run) => { for (const k of ['step', 'walls', 'roof', 'stem', 'bar', 'archSq', 'archPt']) GOTH[k](r, run); };
+const cross = (r, x, top, h, barAt) => { r(x, top, 1, h); r(x - 1, top + barAt, 3, 1); };
+const PATHS = {
+  A: [
+    // a wayside cross on a step
+    (r, run) => { run(-1, 7, 11); run(-2, 8, 10); cross(r, 9, -11, 9, 2); },
+    // a small altar with its cross
+    (r, run) => { run(-1, 4, 14); run(-2, 5, 13); r(6, -7, 7, 5); cross(r, 9, -11, 4, 1); },
+    // a chapel: a small gable, a door cut in it, a cross on the apex
+    (r, run) => {
+      run(-1, 1, 17); run(-2, 1, 17); r(3, -9, 13, 7);
+      for (let k = 1; k <= 6; k++) run(-9 - k, 3 + k, 15 - k);
+      cross(r, 9, -18, 3, 1); r(8, -6, 3, 4, W);
+    },
+    // the chapel with a bell tower beside it
+    (r, run) => {
+      run(-1, 0, 18); run(-2, 0, 18); r(1, -9, 12, 7);
+      for (let k = 1; k <= 5; k++) run(-9 - k, 1 + k, 12 - k);
+      r(5, -6, 3, 4, W);
+      r(13, -17, 5, 15); r(14, -14, 3, 3, W); r(15, -13, 1, 2);
+      run(-18, 13, 17); run(-19, 14, 16); run(-20, 15, 15); cross(r, 15, -23, 3, 1);
+    },
+    church
+  ],
+  B: [
+    // a single standing stone
+    (r, run) => { run(-1, 6, 12); run(-2, 7, 11); r(8, -8, 3, 6); run(-9, 8, 10); run(-10, 9, 9); },
+    // a circle of stones, seen edge on, no two of a height
+    (r, run) => { run(-1, 0, 18); [[1, 6], [5, 8], [9, 10], [13, 8], [17, 6]].forEach(([x, h]) => r(x - 1, -(1 + h), 3, h)); },
+    // two uprights and a lintel
+    (r, run) => { run(-1, 1, 17); r(3, -13, 3, 12); r(13, -13, 3, 12); r(2, -16, 15, 3); },
+    // a stone hall, its gable steeper, a door in it
+    (r, run) => {
+      run(-1, 0, 18); run(-2, 0, 18); r(2, -11, 15, 9);
+      for (let k = 1; k <= 7; k++) run(-11 - k, 2 + k, 16 - k);
+      r(7, -7, 5, 5, W);
+    },
+    church
+  ],
+  C: [
+    // the foundation
+    (r, run) => GOTH.step(r, run),
+    // the walls
+    (r, run) => { GOTH.step(r, run); GOTH.walls(r, run); GOTH.archSq(r, run); },
+    // the roof
+    (r, run) => { GOTH.step(r, run); GOTH.walls(r, run); GOTH.roof(r, run); GOTH.archSq(r, run); GOTH.archPt(r, run); },
+    // the spire
+    (r, run) => { for (const k of ['step', 'walls', 'roof', 'stem', 'archSq', 'archPt']) GOTH[k](r, run); },
+    church
+  ]
+};
+// Which look stands at the scene's time `tl`, and the climb to it if one is
+// going on (the podium's, off `upAt`; a scene's loop steps through the five on
+// its own clock): { n, from (or null), k how far up the new stands, top the
+// ring's cells over the floor now }, or null when no path is set.
+function stageNow(tl) {
+  const Sg = AFTER_SHRINE_STAGES, C = Sg.climb, path = SHRINE.path;
+  if (!path) return null;
+  const tops = Sg.tops[path];
+  let n, from = null, u = 1;
+  if (SHRINE.loop) {
+    n = Math.floor(tl / Sg.hold) % 5;
+    u = (tl % Sg.hold) / C.s;
+    from = (n + 4) % 5;
+  } else {
+    n = Math.min(4, prayerRung());
+    const at = S.after?.upAt?.['after-prayer'];
+    u = n > 0 && at != null ? (S.after.t - at) / C.s : 1;
+    from = n - 1;
+  }
+  if (u >= 1 || u < 0 || from < 0) return { path, n, from: null, k: 1, fade: 0, top: tops[n] };
+  const k = clamp01((u - C.rise[0]) / (C.rise[1] - C.rise[0]));
+  return { path, n, from, k, fade: 1 - clamp01(u / C.fade), top: tops[from] + (tops[n] - tops[from]) * ease3(k) };
+}
+// A look drawn clipped to the courses standing (`k` of it), a cell a course.
+function drawStage(d, x0, ST) {
+  const look = (fn, shown, alpha) => {
+    const r = (x, y, w, h, tone = K) => { const top = shown == null ? y : Math.max(y, -shown); if (y + h > top) d.r(x0 + x, top, w, y + h - top, tone); };
+    d.fade(alpha, () => fn(r, (y, a, b, tone = K) => r(a, y, b - a + 1, 1, tone)));
+  };
+  if (!ST) { look(church, null, 1); return; }
+  const tops = AFTER_SHRINE_STAGES.tops[ST.path];
+  if (ST.from != null && ST.fade > 0) look(PATHS[ST.path][ST.from], null, ST.fade);
+  if (ST.k > 0) look(PATHS[ST.path][ST.n], ST.k < 1 ? Math.ceil(tops[ST.n] * ST.k) : null, 1);
+}
 function shrine(d, work, t) {
   const x0 = SH.x, run = (y, a, b, tone = K) => d.r(x0 + a, y, b - a + 1, 1, tone);
   const tl = Math.max(0, (t || 0) - SHRINE.t0), live = SHRINE.mode !== 'ring';
-  // the step, then the gable: walls to the eaves, then a cell in a row to the apex
-  run(-1, 0, SH.w - 1); run(-2, 0, SH.w - 1);
-  d.r(x0, -SH.wall, SH.w, SH.wall - 2, K);
-  for (let k = 1; k <= 9; k++) run(-SH.wall - k, k, SH.w - 1 - k);
-  // the cross
-  const cx = x0 + 9;
-  d.r(cx, -24, 1, 3, K); d.r(cx - 1, -23, 3, 1, K);
-  // the arch, paper: straight sides, then a cell in a row to a point
-  for (let y = 3; y <= 9; y++) run(-y, SH.niche[0], SH.niche[1], W);
-  for (let k = 1; k <= 6; k++) run(-9 - k, SH.niche[0] + k, SH.niche[1] - k, W);
+  // MOCK faith17: the look the rung stands at, drawn as the podium's climb has it
+  const ST = stageNow(tl);
+  drawStage(d, x0, ST);
   // the faith ring: its face in paper, no rim round it
   const f = clamp01(faithAt(tl)), N = RING.cells.length;
   // MOCK faith13: at full the ring jumps through the config's poses, whole cells, held, then rests; one piece, so its cells, glint and prayers all follow
@@ -527,13 +620,16 @@ function shrine(d, work, t) {
     const ph = tl % FU.shake.every, k = Math.floor(ph / FU.shake.hold);
     if (k < FU.shake.poses.length) [sx, sy] = FU.shake.poses[k];
   }
-  const rx = x0 + FAITH_AT.x + sx, ry = FAITH_AT.y + sy;
+  // MOCK faith17: the ring two cells over whatever look stands, whole cells plus a fraction the ring's own move carries
+  const ryExact = ST ? -(ST.top + 2 + RING.size) + sy : FAITH_AT.y + sy, ryInt = Math.floor(ryExact);
+  const rx = x0 + FAITH_AT.x + sx, ry = ryInt;
   // MOCK faith14: the feel's tremor and swell, drawn by moving the ring as one piece
   const FL = SHRINE.feel && !d.sinking ? feelAt(SHRINE.feel, tl, clamp01((f - 0.97) / 0.03)) : null;
+  if (FL) FL.ty += ryExact - ryInt;
   // nothing paper in or round it: the sky and clouds run right up to the ring, and a backing read off this drawing (`silhouette`) holds no ring either
   const hubPx = { x: d.ox + (rx + 9.5) * P, y: d.oy + (ry + 9.5) * P };
   // MOCK faith16: where the ring stands, for the click cue, the cursor and the tip
-  if (!d.sinking) { faith.box = { x: d.ox + (x0 + FAITH_AT.x) * P, y: d.oy + FAITH_AT.y * P, w: RING.size * P, h: RING.size * P }; faith.full = f >= 0.999; }
+  if (!d.sinking) { faith.box = { x: d.ox + (x0 + FAITH_AT.x) * P, y: d.oy + ryExact * P, w: RING.size * P, h: RING.size * P }; faith.full = f >= 0.999; }
   const move = fn => {
     if (!FL) { fn(); return; }
     ctx.save();

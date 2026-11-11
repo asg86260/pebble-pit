@@ -50,7 +50,6 @@ uniform int uLobe[8];       // 1: a tier whose lobes are each lit and shadowed a
 uniform vec4 uLobeAt;       // lit cap: facing, rim; shadow: facing, rim (CLOUDS_LOBE_LIGHT)
 uniform float uLobeMin;     // the least reach of a lobe lit on its own
 uniform vec2 uLightN;       // toward the light, unit
-uniform float uDense;       // the puffs' field taken this share: a cloud coming up out of nothing (render/yardsky.js)
 out uint o;                 // tier + 1, and the lobe's light (0, 1 lit, 2 shadow) times 16
 void main() {
   ivec2 c = ivec2(gl_FragCoord.xy);
@@ -72,7 +71,7 @@ void main() {
     // flat, at the height the whole field shares
     if (q > 0. && p.y <= b.y) {
       int j = int(b.x);
-      float v = q * q * q * uDense;
+      float v = q * q * q;
       s[j] += v;
       if (v > w[j]) { w[j] = v; d[j] = vec3(vec2(dx, dy) / (a.z * ${(1 / REACH).toFixed(5)}), a.z); }
     }
@@ -256,6 +255,23 @@ function program(gl, fs) {
 }
 
 // A sky renderer, or null where the page has no WebGL2.
+// The windows on the card, on shelves: left to right, and a shelf under the
+// last when one is full. One column of them all ran past the size a drawing
+// buffer may be once a sky held enough of them, and a buffer cut down to fit
+// is scaled back up as it is read -- every cell drawn coarse. Each window's
+// top-left, and the card's size.
+export function shelve(views) {
+  const SHELF = Math.max(CLOUDS_SHELF_W, ...views.map(v => v.w));
+  const spot = [];
+  let H = 0, W = 0, sx = 0, sh = 0;
+  for (const v of views) {
+    if (sx + v.w > SHELF) { H += sh; sx = 0; sh = 0; }
+    spot.push({ x: sx, y: H });
+    sx += v.w; sh = Math.max(sh, v.h); W = Math.max(W, sx);
+  }
+  return { spot, W, H: H + sh };
+}
+
 export function skyGL() {
   if (typeof document === 'undefined') return null;
   const canvas = document.createElement('canvas');
@@ -324,7 +340,7 @@ export function skyGL() {
       if (near > w + reach && near < W - reach) continue;
       puffAt(p, t, q);
       // a layer that swells as a whole (the yard's front, render/yardsky.js):
-      // every puff's radius by `r` (its field's `dense`, the FIELD pass)
+      // every puff's radius by `r`
       // and a bud by how far open it is (`budOf`)
       if (layer.scale) q.r *= layer.scale.r * budOf(p, layer.scale);
       const R = q.r * REACH;
@@ -385,19 +401,7 @@ export function skyGL() {
   // seconds of game time, for the fade. Returns where each window is in
   // `canvas`.
   function render(views, t, dt) {
-    // The windows on shelves, left to right and a shelf under the last when
-    // one is full: one column of them all ran past the size a drawing
-    // buffer may be once a sky held enough of them, and a buffer cut down
-    // to fit is scaled back up as it is read -- every cell drawn coarse.
-    const SHELF = Math.max(CLOUDS_SHELF_W, ...views.map(v => v.w));
-    const spot = [];
-    let H = 0, W = 0, sx = 0, sh = 0;
-    for (const v of views) {
-      if (sx + v.w > SHELF) { H += sh; sx = 0; sh = 0; }
-      spot.push({ x: sx, y: H });
-      sx += v.w; sh = Math.max(sh, v.h); W = Math.max(W, sx);
-    }
-    H += sh;
+    const { spot, W, H } = shelve(views);
     if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }
     const at = [];
     let puffs = 0, uploadMs = 0;
@@ -424,7 +428,6 @@ export function skyGL() {
       gl.uniform1fv(P.field.u.uFill, Array.from({ length: 8 }, (_, j) => { const f = (v.layer.fills || [])[j]; return f === null || f === undefined ? 1e9 : f - oy; }));
       gl.uniform1iv(P.field.u.uLobe, L.lobe); gl.uniform4fv(P.field.u.uLobeAt, L.lobeAt); gl.uniform1f(P.field.u.uLobeMin, L.lobeMin);
       gl.uniform2f(P.field.u.uLightN, L.lightN[0], L.lightN[1]);
-      gl.uniform1f(P.field.u.uDense, v.layer.scale ? v.layer.scale.dense : 1);
       draw();
       // the roles
       pass(P.roles, s.R[0].f, v.w, v.h);

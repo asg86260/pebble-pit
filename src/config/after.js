@@ -832,3 +832,14 @@ const HEART16 = {
   burst: { size: 1, life: 2.8, out: 8, up: 5, fadeIn: 2.5, peak: 0.85, greyAt: 0.55, greyFade: 0.2, tones: ['ink', 'ink'], ease: true, sway: 0, swayRate: 0, swayPhase: 0, drift: 0, rise: 0 }
 };
 AFTER_SHRINE_HEART.heart16 = HEART16;
+
+// MOCK faith17
+// The shrine's drawing by prayer rung (render/after/stations.js, `PATHS`): five
+// looks, the foot and the four rungs, each path's last the church. `tops` how
+// many cells up each look reaches, which the ring sits two cells over; `hold`
+// how long a look stands in a scene's loop, `climb` how a rung lands, the
+// podium's (the old look fading, the new standing up a course at a time).
+export const AFTER_SHRINE_STAGES = {
+  hold: 4, climb: { ...AFTER_PODIUM_CLIMB, s: 3 }, gap: 2,
+  tops: { A: [11, 11, 18, 23, 24], B: [10, 11, 16, 18, 24], C: [2, 12, 21, 24, 24] }
+};

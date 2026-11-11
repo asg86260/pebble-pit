@@ -70,6 +70,9 @@ const tab = await openTab(PORT);
 // game in a frame sometimes never boots"), and only the network can say
 // which one.
 const slowNet = shard ? await watchNetwork(PORT) : null;
+// And every frame the suite navigates is followed by a full collection
+// (`sweepDeadDocuments`), so the documents it leaves behind do not pile up.
+const swept = await sweepDeadDocuments(PORT);
 
 // `--profile out.cpuprofile` samples the page while the suite runs, so where the
 // three minutes actually go is a measurement rather than a guess.
@@ -109,6 +112,7 @@ if (shot) {
 }
 if (tab.logs.length) console.log(['--- console ---', ...tab.logs].join(String.fromCharCode(10)));
 if (slowNet) slowNet();
+swept?.();
 await tab.close();
 own?.kill();
 // A suite's answer fails the run when a check failed or the page threw, so a
@@ -117,6 +121,42 @@ const v = out.result?.result?.value;
 const red = out.result?.exceptionDetails || (v && typeof v === 'object' && 'total' in v
   && (v.passed < v.total || v.errors?.length));
 process.exit(red ? 1 : 0);
+
+// A game in a frame is a whole document, and the suite stages dozens of them
+// in one renderer: a frame per language, per theme, per page (boardwords.js
+// alone navigates one frame some thirty times). A document navigated away
+// from is let go only when a full collection runs, and until then it still
+// counts against the network service's cap on one renderer's loaders (2700),
+// though every request it made has finished (a netlog of a red job never
+// had more than 320 requests alive in the network). On a CI runner
+// with memory to spare no full collection came for a minute at a time: some
+// twenty-five dead frames piled up, the next frame's module graph was refused
+// whole (net::ERR_INSUFFICIENT_RESOURCES with under 300 requests open), and
+// the refusals stopped only when a collection finally ran. So every
+// navigation of a frame inside the page is followed by a full collection,
+// from a session of its own, and the document it replaced goes then.
+async function sweepDeadDocuments(port) {
+  try {
+    const list = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
+    const t = list.find(x => x.type === 'page');
+    if (!t) return null;
+    const ws = new WebSocket(t.webSocketDebuggerUrl);
+    await new Promise(r => ws.addEventListener('open', r));
+    let id = 0, due = null;
+    const send = method => ws.send(JSON.stringify({ id: ++id, method }));
+    ws.addEventListener('message', e => {
+      const m = JSON.parse(e.data);
+      // Only a frame inside the page (it has a parent). A burst of
+      // navigations -- a frame put back to about:blank and then to the game
+      // -- is one collection, a moment after the last.
+      if (m.method !== 'Page.frameNavigated' || !m.params.frame.parentId) return;
+      clearTimeout(due);
+      due = setTimeout(() => send('HeapProfiler.collectGarbage'), 250);
+    });
+    send('Page.enable');
+    return () => { clearTimeout(due); ws.close(); };
+  } catch (e) { console.log(`no sweep of dead documents: ${e?.message || e}`); return null; }
+}
 
 // Where a page that stopped answering is: a second debugger session on its
 // target pauses it and prints the top of the stack, frames included.

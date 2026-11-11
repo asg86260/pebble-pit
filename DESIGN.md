@@ -23351,12 +23351,21 @@ same brown, a balloon still hangs under the same cloud.
   `CLOUD_GRAIN` renderer cells to a sheet's cell, its size in cells scaled to
   match; the sheets' sizes, and the rain and the balloons that read `cell`,
   are unchanged.
-- **A front's cloud comes up as its field thickens** (a layer's `dense`), not
-  as its puffs grow. A puff of any size is cloud at its middle, so growing
-  them from nothing speckles the whole span at once; scaling the cloud up
-  from a point loses cells in its dips as they pass the grid (the "only ever
-  grows" check went red on it). A field taken a share is cloud where it is
-  thickest first and only ever gains cells.
+- **A front grows the sky's own clouds; it brings none** (the owner,
+  2026-11-11, out of three ways shown on the bench: each swelling in place,
+  gathering over the middle, budding). Through the brew every cloud's puffs
+  grow by `CLOUD_GROW_R`, its base comes down `CLOUD_SINK` cells, it greys
+  toward `CLOUD_STORM_TONE`, and buds (`CLOUD_BUDS`) open out of the top
+  edge of its lobes one after another; after the shower they sink back in on
+  the swell's own fall. A bud is made with its cloud, shut, inside its
+  window, and opens from nothing out of its lobe's edge, so it never pops
+  and the cloud only ever gains cells on the way up. The front's own
+  blooming storm clouds, their melt and the field's `dense` that brought
+  them up are gone with it, and "A front's own cloud arrives" above is
+  history.
+- **The card packs its windows on shelves** (`shelve`, `CLOUDS_SHELF_W`): one
+  column of a stormy sky's windows ran past the drawing buffer's limit, and
+  the cut-down buffer drew every cell coarse.
 - **The report counts at rest.** `skyReport`'s cells are the renderer's own
   field (`restTiers`) at the swell's scale with every puff where it was
   made: the currents move every edge a cell this way or that on every frame,

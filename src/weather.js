@@ -1,4 +1,3 @@
-// REVIEW yardsky2
 // What is in the sky, which is nothing that matters and is the point of it.
 // Clouds slide past at the back and now and then a few birds cross. Neither
 // is ever in front of the rock: they are drawn with the far things, before
@@ -8,10 +7,10 @@
 // against the camera, so a thing at `far` 0.2 slides a fifth as fast as the
 // ground when the view scrolls.
 
-import { P, ROCK_SKY, CLOUDS_ON, CLOUDS_WANTED, CLOUD_TONE, CLOUD_UNDER, CLOUD_DRIFT,
-         CLOUD_LAYERS, CLOUD_FAR_JITTER, CLOUD_FADE_FAR, CLOUD_LANES, CLOUD_BLOOM_S, CLOUD_TONES,
-         CLOUD_SHAPES, CLOUD_STORM_SHAPES, CLOUD_R, CLOUD_GRAIN, CLOUD_GROWTH, CLOUD_GROWTHS, CLOUD_BUDS,
-         CLOUD_TOP, CLOUDS_STORM, CLOUD_SETTLE_S,
+import { P, ROCK_SKY, CLOUDS_ON, CLOUD_TONE, CLOUD_UNDER, CLOUD_DRIFT,
+         CLOUD_LAYERS, CLOUD_FAR_JITTER, CLOUD_FADE_FAR, CLOUD_LANES, CLOUD_TONES,
+         CLOUD_SHAPES, CLOUD_R, CLOUD_GRAIN, CLOUD_BUDS, CLOUD_SINK,
+         CLOUD_TOP, CLOUD_SETTLE_S,
          CLOUD_GROW_R, CLOUD_LEAN, STORM_BREW_S,
          CLOUD_MURK_GROW, CLOUD_MURK_TINT, CLOUD_MURK_POW, CLOUD_MURK_TONE, CLOUD_MURK_UNDER,
          CLOUD_STORM_TONE, CLOUD_STORM_UNDER, CLOUD_STORM_TINT, CLOUD_STORM_UNDER_TINT,
@@ -109,21 +108,15 @@ const rgb = h => [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt
 const PALE = { body: rgb(CLOUD_TONE), under: rgb(CLOUD_UNDER) };
 const MURKY = { body: rgb(CLOUD_MURK_TONE), under: rgb(CLOUD_MURK_UNDER) };
 const STORMY = { body: rgb(CLOUD_STORM_TONE), under: rgb(CLOUD_STORM_UNDER) };
-// and the darker grey a way of growing may take the sky's own clouds to
-// (CLOUD_GROWTHS' `dark`), parsed once a way
-const DARKS = CLOUD_GROWTHS.map(g => g.dark ? { body: rgb(g.dark[0]), under: rgb(g.dark[1]) } : STORMY);
 const mix = (a, b, k) => [a[0]+(b[0]-a[0])*k, a[1]+(b[1]-a[1])*k, a[2]+(b[2]-a[2])*k];
 const PAGE = [255, 255, 255];
 // The color of a cloud's crown or its base this frame: pale, browned by the
 // murk up to CLOUD_MURK_TINT of the way, then greyed over that by the storm's
-// swell, as far and as dark as the sky's way of growing takes it.
+// swell.
 function partColor(part, mk, sw) {
   let col = PALE[part];
   if (mk > 0) col = mix(col, MURKY[part], Math.min(1, mk) * CLOUD_MURK_TINT);
-  if (sw > 0) {
-    const g = growth(), to = (DARKS[CLOUD_GROWTH] || STORMY)[part];
-    col = mix(col, to, Math.min(1, sw) * Math.min(1, g.tint * (part === 'under' ? CLOUD_STORM_UNDER_TINT : CLOUD_STORM_TINT)));
-  }
+  if (sw > 0) col = mix(col, STORMY[part], Math.min(1, sw) * (part === 'under' ? CLOUD_STORM_UNDER_TINT : CLOUD_STORM_TINT));
   return col;
 }
 // The air between you and a depth: how far its tones go toward the page.
@@ -155,8 +148,8 @@ export const towardPage = (tone, k) => {
 // two part colors, every step then faded toward the page by the cloud's depth
 // -- the air takes the same share off every tone, so a far cloud's shades are
 // pressed together as well as paler.
-function cloudTones(crown, base, far, off = 0) {
-  const fade = Math.min(1, fadeAt(far) + off * (1 - fadeAt(far))), out = [];
+function cloudTones(crown, base, far) {
+  const fade = fadeAt(far), out = [];
   for (let k = 0; k < CLOUD_TONES; k++) {
     let col = mix(crown, base, k / (CLOUD_TONES - 1));
     if (fade > 0) col = mix(col, PAGE, fade);
@@ -166,20 +159,18 @@ function cloudTones(crown, base, far, off = 0) {
 }
 
 // A cloud is the one cloud renderer's (render/clouds.js): puffs in tiers, a
-// shape of CLOUD_SHAPES (a front's own, CLOUD_STORM_SHAPES) stood on a flat
+// shape of CLOUD_SHAPES stood on a flat
 // base, its puffs worked into one field and flowing on their own currents
 // as it is drawn. Here it is the fact the game keeps: where it is, how deep,
 // how fast it drifts, and `layer`, its puffs in its own window of cells
-// (`cloudLayer`), sized for it at the fullest swell so the window is never
-// made again as it grows. The puffs are drawn from a stream of the cloud's
+// (`cloudLayer`), sized for it at the fullest swell, its buds (CLOUD_BUDS)
+// made with it and shut, so the window is never made again as it grows. The puffs are drawn from a stream of the cloud's
 // own seed, one draw off the yard's generator: a drawing must not spend the
 // yard's chance. Its `give` is its own share of the swell, so no two clouds
 // grow a cell on the same frame and the sky never steps in lockstep -- read
 // off its depth rather than drawn, because a draw here is a number off the
 // yard's one generator at seed time and every seeded run, weather or not,
-// would come out differently. A `storm` cloud is one the front brought,
-// which is nothing at all until the swell has grown it and goes as the swell
-// goes. `sheet` is which of CLOUD_LAYERS it is born into, and it stays there:
+// would come out differently. `sheet` is which of CLOUD_LAYERS it is born into, and it stays there:
 // its size, its grain and its depth are the sheet's. Its height is not --
 // every cloud's base is in its sheet's lane (CLOUD_LANES).
 const between = ([a, b]) => a + rand() * (b - a);
@@ -192,86 +183,41 @@ function pickShape(shares) {
 // nought the farthest sheet's air, one the nearest's -- the fade turned round,
 // so the bands and the paling are the one depth.
 const nearOf = far => 1 - fadeAt(far) / CLOUD_FADE_FAR;
-// How the sky grows toward a front this frame (CLOUD_GROWTHS). Read every
-// frame, not kept on a cloud, so turning it turns the sky standing: every
-// cloud is made able to grow every way -- its window sized for the biggest
-// grow, its buds made and shut -- and only the frame's way opens any of it.
-const growth = () => CLOUD_GROWTHS[CLOUD_GROWTH] || CLOUD_GROWTHS[0];
-const GROW_MOST = Math.max(...CLOUD_GROWTHS.map(g => g.r));
-function makeCloud(x, sheet, storm = false) {
+function makeCloud(x, sheet) {
   const L = CLOUD_LAYERS[sheet];
-  const kind = pickShape(storm ? CLOUD_STORM_SHAPES : CLOUD_SHAPES);
+  const kind = pickShape(CLOUD_SHAPES);
   const R = between(CLOUD_R) * L.scale * CLOUD_GRAIN;
   const seed = Math.floor(rand() * 1e9);
   const off = rand() * 2 - 1;                // where in its sheet's thickness it sits
   const far = L.far + off * CLOUD_FAR_JITTER;
   const yb = between(CLOUD_LANES[L.name]) * P;   // its base, in pixels below the band's top
-  const layer = cloudLayer({ kind, R, seed, flat: L.flat, d: nearOf(far), grow: 1 + GROW_MOST, buds: CLOUD_BUDS });
+  const layer = cloudLayer({ kind, R, seed, flat: L.flat, d: nearOf(far), grow: 1 + CLOUD_GROW_R, buds: CLOUD_BUDS });
   return { x, yb, w: layer.w, layer, far, sheet, vx: CLOUD_DRIFT * (0.5 + far),
-           give: 0.7 + (off + 1) / 2 * 0.6, storm, age: 0, melt: 0 };
+           give: 0.7 + (off + 1) / 2 * 0.6 };
 }
 
 // a cloud's cell in world pixels: its sheet's
 const cellOf = c => P * CLOUD_LAYERS[c.sheet].cell / CLOUD_GRAIN;
 
-// A cloud on its way out: its puffs shrink and it pales toward the page, and
-// the cells it sheds fade out through the renderer's own fade. Only
-// a front's own clouds go this way -- the ordinary sky wraps around the strip
-// -- and a melting one no longer counts toward its sheet, so its replacement
-// drifts in while it is still going.
-const melting = c => c.melt > 0;
-const fade = c => Math.min(1, c.melt) * 0.9;
-
-// how many of a sheet's clouds are in the sky, not counting the ones going
-const inSheet = (sheet, storm) => CLOUDS.reduce((n, c) => n + (c.sheet === sheet && c.storm === storm && !melting(c)), 0);
+// how many of a sheet's clouds are in the sky
+const inSheet = sheet => CLOUDS.reduce((n, c) => n + (c.sheet === sheet), 0);
 
 // The swell as size: how the renderer scales a cloud's puffs this frame (a
-// layer's `scale`, render/cloudgl.js) -- `r` their radii, `dense` their
-// field. Only the radii grow -- with the murk a little, with the storm's
-// swell a lot -- and never the puffs' places: a bigger puff in the same place
-// adds more to every cell it reaches, so a swelling cloud gains cells and
-// never loses one. A melting cloud's radii shrink with what is left of it.
+// layer's `scale`, render/cloudgl.js) -- `r` their radii, `bud` how far its
+// buds are open (`budOf`, render/clouds.js). The radii grow with the storm's
+// swell and the murk alike, the buds with the swell alone, and never a
+// puff's place: a bigger puff in the same place adds to every cell it
+// reaches, and a bud opens out of a lobe's edge, so a growing cloud gains
+// cells and never loses one.
 function scaleOf(c, sw) {
-  const k = Math.min(1, (sw + murkOf(c) * CLOUD_MURK_GROW) * c.give);
-  // A front's cloud is nothing when it is born and comes up out of nothing
-  // over CLOUD_BLOOM_S -- on its own clock, not the sky's, because the front
-  // adds its clouds as the swell climbs and one born at nine tenths would
-  // otherwise be drawn at nine tenths on the frame it was made.
-  //
-  // It comes up as its field thickens, not as its puffs grow: a puff of any
-  // size is cloud at its middle, so growing them from nothing speckles the
-  // whole cloud's span on the first frame, and scaling the cloud up from a
-  // point loses cells in its dips as they slide out past the grid. A field
-  // taken a share is cloud only where it is thickest -- its heart first --
-  // and gains every cell it had as the share climbs.
-  const up = c.storm ? Math.min(1, c.age / CLOUD_BLOOM_S) * Math.min(1, sw * c.give) : 1;
-  // The murk's grow is the same whichever way the sky grows; the front's is
-  // the way's own (`r`), on top, and its buds open with it.
-  const g = growth(), s = Math.min(1, sw * c.give);
-  const r = 1 + CLOUD_GROW_R * k + (g.r - CLOUD_GROW_R) * s;
-  return { r: r * (1 - Math.min(1, c.melt)), dense: up, bud: g.bud * s };
+  const s = Math.min(1, sw * c.give);
+  const k = Math.min(1, s + Math.min(1, murkOf(c) * c.give) * CLOUD_MURK_GROW);
+  return { r: 1 + CLOUD_GROW_R * k, bud: s };
 }
 
-// How far a cloud's base comes down as it grows (CLOUD_GROWTHS' `sink`), in
-// world pixels: by its own share of the swell, like its grow.
-const sinkOf = (c, sw) => growth().sink * P * Math.min(1, sw * c.give);
-
-// REVIEW yardsky2
-// How far a cloud is drawn toward the window's middle as a front gathers the
-// sky (CLOUD_GROWTHS' `pull`), in world pixels across. A share of its way
-// there that thins to nothing out toward the strip's ends, where it wraps,
-// so no cloud is ever pulled in off the end it is about to wrap from, and
-// the shove is gentle enough that a cloud never passes the one ahead of it
-// (its place after the pull still climbs with its place before). Off the
-// swell, so the sky lets go of it the way it gathered it.
-function pullOf(c, sw) {
-  const g = growth();
-  if (!g.pull || !(sw > 0)) return 0;
-  const half = c.w * cellOf(c) / 2, off = acrossView(c) + half - skyCam().w / 2;
-  const d = Math.abs(off) / (skyCam().w / 2 + half + P * 16);
-  if (d >= 1) return 0;
-  return -off * g.pull * Math.min(1, sw * c.give) * (1 - d);
-}
+// How far a cloud's base comes down as it grows (CLOUD_SINK), in world
+// pixels: by its own share of the swell, like its grow.
+const sinkOf = (c, sw) => CLOUD_SINK * P * Math.min(1, sw * c.give);
 
 // Where a sky thing is on the screen right now, in world units across the view.
 function acrossView(s) {
@@ -314,7 +260,7 @@ export function resetWeather() {
 // birds out of the air mid-flight.
 function spreadSky() {
   CLOUD_LAYERS.forEach((L, sheet) => {
-    for (let i = inSheet(sheet, false); i < L.n; i++) {
+    for (let i = inSheet(sheet); i < L.n; i++) {
       const c = makeCloud(0, sheet);
       c.x = skyCam().x * c.far + (i + rand()) * (skyCam().w / L.n) - c.w * cellOf(c);
       CLOUDS.push(c);
@@ -326,50 +272,28 @@ export function stepWeather(now) {
   if (toSpread && CLOUDS_ON) { spreadSky(); toSpread = false; }
 
   if (CLOUDS_ON) CLOUD_LAYERS.forEach((L, sheet) => {
-    while (inSheet(sheet, false) < L.n) {
+    while (inSheet(sheet) < L.n) {
       const c = makeCloud(0, sheet);
       c.x = skyCam().x * c.far - c.w * cellOf(c) - P * 4;    // in off the left, going right
       CLOUDS.push(c);
     }
   });
-  // The front's own clouds: more of them the heavier it is, born anywhere
-  // across the strip since a storm cloud is nothing until the swell grows
-  // it, and gone once the swell has let them shrink to nothing. Dealt round
-  // the sheets from the nearest out, so the front is overhead first.
   const sw = swell();
-  const want = growth().storm ? Math.round((CLOUDS_STORM - CLOUDS_WANTED) * sw) : 0;
-  let storms = CLOUDS.reduce((n, c) => n + c.storm, 0);
-  while (CLOUDS_ON && storms < want) {
-    const sheet = CLOUD_LAYERS.length - 1 - (storms % CLOUD_LAYERS.length);
-    const c = makeCloud(0, sheet, true);
-    c.x = skyCam().x * c.far + rand() * skyCam().w - c.w * cellOf(c) / 2;
-    CLOUDS.push(c);
-    storms++;
-  }
   // Pixels a frame, stepped by how long the frame was, or the sky slows down
   // on a slow machine while the clock behind it does not -- on the
   // background's clock, which stands still while a scene holds the yard.
   const f = ambientFrames();
   // a swelled cloud leans with the wind the rain under it leans with
   const lean = gust() * CLOUD_LEAN * sw;
-  // the front has peaked and is letting go: neither brewing nor pouring
-  const letting = !S.raining && S.stormFor < 0;
   const secs = f / 60;
   skyT += secs;
   for (let i = CLOUDS.length - 1; i >= 0; i--) {
     const c = CLOUDS[i];
     c.x += (c.vx + lean) * f;
-    c.age += secs;
-    // A cloud the front brought breaks up as the front lets go of it: its melt
-    // is the swell's own fall, so it is gone exactly when the sky has settled
-    // rather than hanging on after it, and every cell it sheds fades back into
-    // the page on the way (CLOUDS_FADE_S).
-    if (c.storm && letting) c.melt = Math.max(c.melt, 1 - sw);
-    if (c.melt >= 1) { CLOUDS.splice(i, 1); continue; }
-    // The ordinary sky wraps around the strip instead. A cloud only ever
-    // crosses an edge well outside the window, so nobody sees it go; melting
-    // it there would let a jump of the camera strand one dissolving in the
-    // middle of the sky for no reason anybody could see.
+    // A cloud wraps around the strip. It only ever crosses an edge well
+    // outside the window, so nobody sees it go; melting it there would let a
+    // jump of the camera strand one dissolving in the middle of the sky for
+    // no reason anybody could see.
     //
     // The strip is the window's width plus the cloud's own, and a margin at
     // each end: a cloud that has just cleared one edge has to land clear of
@@ -422,14 +346,11 @@ export function skyReport() {
     birdWorld: BIRDS.map(b => ({ x: skyX(b), y: Math.round(b.y / P) * P })),
     drifts: CLOUDS.every(c => c.vx > 0),
     fars: CLOUDS.map(c => +c.far.toFixed(2)),
-    sheets: CLOUD_LAYERS.map((L, i) => inSheet(i, false)),
-    melting: CLOUDS.filter(melting).length,
+    sheets: CLOUD_LAYERS.map((L, i) => inSheet(i)),
     // the front: how far the sky is swelled, and how many cells of cloud
     // are drawn, so a check can watch it grow a cell at a time
     swell: +swell().toFixed(3),
-    storm: CLOUDS.filter(c => c.storm).length,
     cloudEach: CLOUDS.map(c => cellsOf(c, swell())),
-    cloudInk: CLOUDS.map(c => inkOf(c, swell())),
     cloudCells: CLOUDS.reduce((n, c) => n + cellsOf(c, swell()), 0)
   };
 }
@@ -443,21 +364,14 @@ export function skyReport() {
 let tiers = null;   // cache: scratch for restTiers
 function cellsOf(c, sw) {
   const sc = scaleOf(c, sw);
-  if (c.cells && c.cells.r === sc.r && c.cells.dense === sc.dense && c.cells.bud === sc.bud) return c.cells.n;
-  // nothing at all is no cells: a front's cloud on the frame it is born
+  if (c.cells && c.cells.r === sc.r && c.cells.bud === sc.bud) return c.cells.n;
   let n = 0;
-  if (sc.r > 0 && sc.dense > 0) {
-    tiers = restTiers(c.layer, sc, tiers && tiers.length === c.layer.w * c.layer.h ? tiers : null);
-    for (let i = 0; i < tiers.length; i++) n += tiers[i] >= 0;
-  }
-  c.cells = { r: sc.r, dense: sc.dense, bud: sc.bud, n };
+  tiers = restTiers(c.layer, sc, tiers && tiers.length === c.layer.w * c.layer.h ? tiers : null);
+  for (let i = 0; i < tiers.length; i++) n += tiers[i] >= 0;
+  c.cells = { r: sc.r, bud: sc.bud, n };
   return n;
 }
 
-// ...and how much cloud is actually there. The renderer draws a cell whole
-// or not at all, fading it in, so a cloud weighs its cells: one coming up out
-// of nothing is nothing until a cell of it passes the threshold.
-const inkOf = cellsOf;
 
 // A few birds, strung out rather than in a formation: same heading, each a
 // little behind and a little off the last.
@@ -545,12 +459,9 @@ const skyAt = s => s.x + skyCam().x * (1 - s.far);
 
 // Where a balloon hangs under a cloud, in the cloud's own space: the middle of
 // its base, as an `x` the camera is added to the way it is added to a cloud's
-// (`skyAt`), the cloud's depth, and the base line. Null for a cloud on its way
-// out.
+// (`skyAt`), the cloud's depth, and the base line, lowered as the cloud is.
 export function cloudSpot(c) {
-  if (melting(c)) return null;
-  const sw = swell();
-  return { x: c.x + pullOf(c, sw) + c.layer.mid * cellOf(c), far: c.far, y: cloudY(c) + sinkOf(c, sw) };
+  return { x: c.x + c.layer.mid * cellOf(c), far: c.far, y: cloudY(c) + sinkOf(c, swell()) };
 }
 GUESTS.clouds = () => CLOUDS;
 GUESTS.spot = cloudSpot;
@@ -580,11 +491,11 @@ const skyX = s => Math.round(skyAt(s) / P) * P;
 // A cloud as its drawing wants it this frame (render/yardsky.js): its
 // window's left edge and its base line in the world, its sheet's cell, the
 // swell as size, and its colors crown to base -- the sky's, or its own while
-// a balloon draws it in -- faded by its depth and its melt.
+// a balloon draws it in -- faded by its depth.
 export function cloudNow(c, sw = swell(), mk = murk()) {
   const own = c.drawn > 0.01 ? murkOf(c) : mk;
-  return { x: skyAt(c) + pullOf(c, sw), base: cloudY(c) + sinkOf(c, sw), cell: cellOf(c), scale: scaleOf(c, sw),
-           tones: cloudTones(partColor('body', own, sw), partColor('under', own, sw), c.far, fade(c)) };
+  return { x: skyAt(c), base: cloudY(c) + sinkOf(c, sw), cell: cellOf(c), scale: scaleOf(c, sw),
+           tones: cloudTones(partColor('body', own, sw), partColor('under', own, sw), c.far) };
 }
 
 export function drawBirds() {

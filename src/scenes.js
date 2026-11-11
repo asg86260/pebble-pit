@@ -271,25 +271,6 @@ const skyAt = haze => {
 // the next front forward at a heft; the waits are loops on the yard's own
 // readout rather than counted seconds, so the scenes survive retuning.
 const untilBrewing = (heft = 1) => { window.__front(heft); for (let i = 0; i < 90 && !st().smog.brewing; i++) window.__fast(1); };
-// REVIEW yardsky2 -- the yard's sky's storm cycle, a way of growing a scene:
-// the storm's clock turned down for the bench to about half a minute (a few
-// seconds clear, the brew, the shower at its shortest, the settle), the
-// opening let go, and the next front due a moment after the scene stands, so
-// the bench opens on a clear sky and plays it through in real time. The
-// first muck's beat (firstmuck.js) is marked had: it takes the camera off
-// the sky the moment the first shower is over.
-const YARDSKY_PACE = { STORM_BREW_S: 9, RAIN_LEN_S: 12, RAIN_DRIZZLE_S: 2, RAIN_RISE_S: 2, CLOUD_SETTLE_S: 8 };
-const yardskyCycle = (growth, option, say) => ({
-  about: 'the house and the sky', review: "the yard's sky on the cloud renderer", option, say,
-  stage: 'built: audit-yard-clouds, not on main yet', branch: 'audit-yard-clouds', bare: true,
-  knobs: { ...YARDSKY_PACE, CLOUD_GROWTH: growth },
-  run: () => {
-    skyAt(0); window.__fast(25);
-    if (!S.beatsDone.includes('firstmuck')) S.beatsDone.push('firstmuck');
-    window.__front(1); S.rainDue = 3;
-  },
-  swap: () => {}
-});
 const untilRaining = (heft = 1) => { untilBrewing(heft); for (let i = 0; i < 120 && !st().smog.raining; i++) window.__fast(1); };
 
 const firstMuck = (rockhands, haulers) => {
@@ -612,7 +593,7 @@ function afterSite(until) {
 // ring over it. The faithful are drawn, not walked there.
 function shrineAt(mode, at, pray = null, extra = {}) {
   window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
-  SHRINE.mode = mode; SHRINE.folk = 6; SHRINE.pray = pray; SHRINE.shake = !!extra.shake; SHRINE.stream = !!extra.stream; SHRINE.feel = extra.feel || null; faith.cue = extra.cue || 'hand'; S.mouse = extra.over ? { get x() { return faith.box ? faith.box.x + faith.box.w / 2 : 0; }, get y() { return faith.box ? faith.box.y + faith.box.h / 2 : 0; } } : null; SHRINE.t0 = S.after.t - at;
+  SHRINE.mode = mode; SHRINE.folk = 6; SHRINE.pray = pray; SHRINE.shake = !!extra.shake; SHRINE.stream = !!extra.stream; SHRINE.feel = extra.feel || null; faith.cue = extra.cue || 'hand'; SHRINE.path = extra.path || null; SHRINE.loop = !!extra.path; S.mouse = extra.over ? { get x() { return faith.box ? faith.box.x + faith.box.w / 2 : 0; }, get y() { return faith.box ? faith.box.y + faith.box.h / 2 : 0; } } : null; SHRINE.t0 = S.after.t - at;
   const b = stationBox('shrine');
   window.__look(b.x + b.w / 2 - S.viewW / 2); window.__fast(0); window.__holdShot();
 }
@@ -2433,16 +2414,21 @@ export const SCENES = {
     stage: 'built: audit-yard-clouds, not on main yet', branch: 'audit-yard-clouds', bare: true,
     say: 'a sky at the brim, no storm: every cloud browned by the murk and a little swelled by it',
     run: () => { skyAt(4200); window.__fast(25); window.__air({ haze: 4200 }); window.__fast(1); } },
-  // Round two: the whole storm cycle, sped up to half a minute on the
-  // bench (`yardskyCycle`), under each way the sky can grow toward it
-  // (CLOUD_GROWTHS). The three differ by that one knob, so the bench flips
-  // between them on the sky standing.
-  'yardsky2-a': yardskyCycle(1, 'E grow: each swells in place',
-    'clear, then every cloud swells where it is and greys, the rain, and they shrink back pale'),
-  'yardsky2-b': yardskyCycle(2, 'F grow: they gather',
-    'clear, then the clouds drift in together over the middle, swelling and greying into one mass, the rain, and they part again'),
-  'yardsky2-c': yardskyCycle(3, 'G grow: puffs bud out',
-    'clear, then each cloud buds new puffs out of its top edge as it greys, the rain, and the buds sink back in'),
+  // The whole storm cycle on the bench: the storm's clock turned down to
+  // about half a minute (a few seconds clear, the brew, the shower at its
+  // shortest, the settle), the opening let go, and the next front due a
+  // moment after the scene stands, so it opens on a clear sky and plays
+  // through in real time. The first muck's beat (firstmuck.js) is marked
+  // had: it takes the camera off the sky the moment the first shower is over.
+  'yardsky2-c': { about: 'the house and the sky', review: "the yard's sky on the cloud renderer", option: 'G grow: puffs bud out',
+    stage: 'built: audit-yard-clouds, not on main yet', branch: 'audit-yard-clouds', bare: true,
+    say: 'clear, then each cloud buds new puffs out of its top edge as it greys, the rain, and the buds sink back in',
+    knobs: { STORM_BREW_S: 9, RAIN_LEN_S: 12, RAIN_DRIZZLE_S: 2, RAIN_RISE_S: 2, CLOUD_SETTLE_S: 8 },
+    run: () => {
+      skyAt(0); window.__fast(25);
+      if (!S.beatsDone.includes('firstmuck')) S.beatsDone.push('firstmuck');
+      window.__front(1); S.rainDue = 3;
+    } },
   rainbrew: { about: 'the house and the sky', say: "the storm brewing up, the clouds half swelled",
     run: () => { skyAt(4200); untilBrewing(); window.__fast(20); } },
   cloudswell: { about: 'the house and the sky', say: 'a heavy front at the end of its brew, no rain yet',
@@ -3518,6 +3504,16 @@ export const SCENES = {
   'faith16-d': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-full, a review branch, never merged', branch: 'review-faith-full',
     option: 'D the shrine board',
     say: 'the shrine board open: its prayer row, each rung multiplying the faith a prayer adds', run: () => { shrineAt('full', 0.3, 'hop', { feel: 'heart16', cue: 'hand' }); window.__afterGrant({ rebel: 400, timber: 20 }); window.__fast(0.2); window.__openAfterBoard('shrine'); window.__holdShot(); } },
+  // MOCK faith17
+  'faith17-a': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-full, a review branch, never merged', branch: 'review-faith-full',
+    option: 'A cross to church',
+    say: 'the five looks in a loop, each rising as the old fades: a wayside cross, an altar, a chapel, the chapel with a bell tower, the church', run: () => shrineAt('full', 0.3, 'hop', { feel: 'heart16', cue: 'hand', path: 'A' }) },
+  'faith17-b': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-full, a review branch, never merged', branch: 'review-faith-full',
+    option: 'B stone to church',
+    say: 'the five looks in a loop: a standing stone, a stone circle, a lintel on two uprights, a stone hall, the church', run: () => shrineAt('full', 0.3, 'hop', { feel: 'heart16', cue: 'hand', path: 'B' }) },
+  'faith17-c': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-full, a review branch, never merged', branch: 'review-faith-full',
+    option: 'C the church built up',
+    say: 'the church laid piece by piece in a loop: its foundation, walls, roof, spire, cross', run: () => shrineAt('full', 0.3, 'hop', { feel: 'heart16', cue: 'hand', path: 'C' }) },
 
   'level-carry': { about: 'the acts', say: "the chain running: a carrier with a sign over the cloud, climbing the stage's plinth or out on its top",
     run: () => {
