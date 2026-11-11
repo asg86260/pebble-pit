@@ -24619,7 +24619,7 @@ over the price, grows to fit the longer line, and has no hover.
   cell at a time either way. Its ground is the lot's in footprints.js.
 
 
-## Act 3 builds through the yard's construction (design, not built)
+## Act 3 builds through the yard's construction (built 2026-11-10, on design-act3-build)
 
 The owner, 2026-11-10: "ok we need to re-eval your decision to create new
 systems. please use existing systems as much as possible. if we decide to
@@ -24691,7 +24691,7 @@ data; the mechanism is the yard's.
 | config/blocks.js kind `load` | **Retired, not removed.** Its value run is kept so `acorn`'s saved cell values do not shift (the table's own rule: "a kind added at the end never shifts a saved value"). Nothing makes a load again. |
 | `pairBuilding` and its callers (bubbles.js, gestures.js, rebel.js), and the pair's `'home'` walk in `stepBuilder` | **Deleted.** The pair have not built since 2026-10-20. Any pair builder left in an old save is sent home by the migration. |
 | config: `AFTER_BUILD_PIECES`, `_PIECE_S`, `_A_BAND`, `_CARRIERS`, `_BUILDERS`, `_DROP_S`, `_LAY_S`, `_HOLD_S` | **Deleted.** `AFTER_BUILD_FADE_S` stays: the floor and the grove's beds read it. |
-| render/after.js `closedStation`, `openedBy`, `openedOf`, `drawShackOrder` | `drawStation` has three states, gated the way the yard gates each station on its `*Open` flag. Not built and no work on: nothing is drawn, or the dotted outline (`outlineOf`), depending on question 2. A work on: the station's draw is wrapped in `withRise('after-<key>', b.x, groundOf(key), b.w, b.h, …)`. Built: drawn plainly. The gate matters because `withRise` draws a place that is not rising straight through, unclipped, so a bare swap would draw an unbought station whole. The glyph over the station comes from `drawWorkBars`. |
+| render/after.js `closedStation`, `openedBy`, `openedOf`, `drawShackOrder` | `drawStation` has three states, gated the way the yard gates each station on its `*Open` flag. Not built and no work on: nothing is drawn but its build sign (answer 2; `outlineOf` goes). A work on: the station's draw is wrapped in `withRise('after-<key>', b.x, groundOf(key), b.w, b.h, …)`. Built: drawn plainly. The gate matters because `withRise` draws a place that is not rising straight through, unclipped, so a bare swap would draw an unbought station whole. The glyph over the station comes from `drawWorkBars`. |
 | place.js `sited()` reads `S.after.raising` | reads `built` or `workOn('after-build-<key>')`. |
 | what build.js keeps: `isIdle`, `handsFree`, the timber orders (`placeOrder` through `orderBrought`, `timberReserved`, `nextOrder`, `orderAt`, `onOrderLanded`) | Moves to `after/orders.js`. build.js is deleted. The orders are an upgrade's blocks carried, not construction, and are outside this change. |
 | scenes.js `after-camp`, `afterSite`, and the waits on `S.after.raising` | wait on `workOn`/`progressOf`. One scene stops the mill partway, as the yard's `build` scene does. |
@@ -24770,7 +24770,7 @@ through the same path. None of these is an act 3 copy.
 - **The build-speed ladder.** works.js `effortAt` multiplies by the
   yard's `buildSpeedLevel`. Unless act 3's sites say their own `effort`
   (`SITE_SAYS`), the yard's ladder speeds heaven's builds too. See
-  question 1.
+  answer 1: it does.
 
 **Why act 3 has a copy.** build.js was written on 2026-10-18 to the owner's
 vote for "pile a". That was before the place engine (2026-10-20). At the
@@ -24786,7 +24786,7 @@ remaining reason was a look, and the owner has now overruled it.
 
 ### 4. What the player sees change
 
-- Pressing the sign, or the shack's tile, takes the bill as it does today
+- Pressing the sign, the one way in (answer 3), takes the bill as it does today
   and starts a work. The sign goes. The tile's glyph fills to the share
   done, with a ticking clock, as in the yard.
 - **One** member walks to the lot (idle first, otherwise the nearest one
@@ -24797,7 +24797,7 @@ remaining reason was a look, and the owner has now overruled it.
   tick hangs over it until its board is read.
 - The time is the yard's: `BUILD_BANDS.building` at `BUILD_ALONE` 1, which
   is `BUILD_CAP_S` (30 worker-seconds with one builder), sped up by the
-  build-speed ladder (question 1).
+  build-speed ladder (answer 1).
 - **Lost**, which the owner should know about:
   - the line of up to four carriers fetching planks from the shack's door;
   - the pile of loads on the lot, and the hand's grab on those loads;
@@ -24805,7 +24805,7 @@ remaining reason was a look, and the owner has now overruled it.
   - each band fading in; the yard's rise lays cells, it does not fade them;
   - the camp emptying out for a build;
   - the order glyph over the shack;
-  - perhaps the dotted plan outline (question 2).
+  - the dotted plan outline (answer 2), and the shack's board (answer 3).
 
 ### 5. Saves
 
@@ -24900,6 +24900,38 @@ remaining reason was a look, and the owner has now overruled it.
 3. **No shack board.** The build sign is the only way in, the deep's
    shape: the build rows are listed on no board, and the shack stands with
    nothing to sell.
+
+### What building it changed
+
+- **Who is made a builder.** The yard's `rebalance` keeps its counts; the
+  rule it carries (one builder a work on the go, from the spare, else the
+  nearest lent off a post, back when no work wants it) is written once more
+  for a crew kept as bodies, `manSites` in crew/sitework.js, which act 3
+  calls with its answers (`manBuilders` in after/bodies.js). Folding the
+  yard's counts onto it is left: the yard's and the deep's checks are green
+  on their own path and nothing asked for the churn.
+- **The fence is claimed on act 3's map only.** Claimed in the yard and the
+  deep, the no-overlap rule went red at once on overlaps already drawn
+  there (the ram's fence on the shack, the pods' on the first station:
+  TODO.md). In act 3 a lot is packed between its own piles, so a post is
+  seated, not hand-put: FENCE_GAP cells out if clear, else the nearest spot
+  a cell in, as the build sign is (fence.js). The fence layer stands after
+  the cloud's lip, so a post stands on the floor as a pile does.
+- **A station row with no board opens nothing.** The shack keeps its row
+  (its hover, its ground) with no board, and input.js's click asks for a
+  board only of a row that has one; before, a press on the shack took the
+  click and showed the pointer cursor over nothing.
+- **The load kind is retired, not removed**, and the two band constants
+  stay in config, read only by the 2026-10-28 migration, which may never
+  change.
+- **A saw stroke a hair short of its end lands.** The mill's view already
+  read a log within EPS of the stroke's end as there, while the feed waited
+  for the wheel to reach it exactly; the scenes' new timing hit the gap
+  (rule 25 red). The feed now lands it at the same hair (after/mill.js).
+- **The review**: scenes `review-a3-build-a` and `-b` (review "act 3:
+  building through the yard's construction"); `after-site-rising` and
+  `after-site-late` replace the pile and band scenes, and the shack's
+  ordering scene is gone.
 
 
 ## A dialog system (design, approved)

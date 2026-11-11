@@ -226,12 +226,12 @@ const LAYERS = [
   { name: 'after grove', in: 'after', draw: drawAfterGrove },
   { name: 'after camp', in: 'after', draw: drawAfterCamp },
   { name: 'after crowd', in: 'after', draw: drawAfterCrowd },
-  { name: 'after build sites', in: 'after', draw: drawBuildSites }, // the yard's fence round a station going up, over the camp it stands in
   // The billows along the path's front (render/after/ground.js): over the
   // stations' feet, under the piles and the members, so a pile and a body
   // stand on the floor.
   { name: 'after lip', in: 'after', draw: drawFrontLip },
   { name: 'after piles', in: 'after', draw: drawAfterPiles },   // each station's counted pile, and the workshop's sign rack
+  { name: 'after build sites', in: 'after', draw: drawBuildSites }, // the yard's fence round a station going up, standing on the floor as a pile does
   { name: 'after sight', in: 'after', draw: drawPlaceSight },   // the right button held: the camp behind its members veiled, each ringed
   { name: 'after members', in: 'after', draw: drawAfterMembers },
   { name: 'after grit', in: 'after', draw: drawGrit },           // the chips off an act 3 builder's hammer, in front of the station

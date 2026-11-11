@@ -4,19 +4,28 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
-## Act 3 builds through the yard's construction -- DESIGNED, AWAITING APPROVAL (2026-11-10)
+## Act 3 builds through the yard's construction -- BUILT, ON THE REVIEW BENCH (2026-11-10)
 
-The owner: "act 3s build system should be switched out to use act 1s".
-DESIGN.md, "Act 3 builds through the yard's construction". Act 3's build
-rows become `kind: 'building'` works on works.js, put up by one builder
-through `rebalance` and crew/builders.js, and drawn rising with `withRise`.
-The deep already works this way. after/build.js's carried loads, pile and
-bands are deleted; its timber orders move to after/orders.js. Act 3's save
-needs a migration: a station mid-build becomes a work, so its bill is never
-taken twice. The work runs as two tracks in order: the shared seams first,
-then act 3. Blocker: the owner's approval and the three questions at the
-end of the section (the build-speed ladder, the dotted outline, the shack's
-board). The stair (below) builds on this.
+DESIGN.md, "Act 3 builds through the yard's construction", with the owner's
+three answers (one build speed, no dotted outline, no shack board). Built on
+branch `design-act3-build`, not on main: act 3's stations are works on
+works.js, built by one member, risen with `withRise`; old saves' half-raised
+stations migrate to SAVE_V 38. Blocker: the owner's vote on the review "act
+3: building through the yard's construction" (scenes `review-a3-build-a`,
+`-b`), then the landing. SAVE_V 38 collides with any other branch that
+raises it first; the later one renumbers.
+
+## The yard's fences stand on their neighbors -- FOUND, NOT FIXED (2026-11-10)
+
+A building going up is fenced three cells either side (fence.js), and the
+fence has never been on the map. Claimed there, the no-overlap rule went red
+in two groups: the ram's fence posts stand on the shack (build-throughput,
+"a backlog over every site"), and the pods' on the deep's first station
+(deep-works, deep-build-reload). Act 3 claims its fences and seats each post
+clear of its neighbors (`FENCE_CLAIMED`, `fenceOf`); the yard and the deep
+join by adding their place to `FENCE_CLAIMED`, which moves their posts in
+the same way -- a visible change to the yard's fences, so it is a review
+before it is a fix. Blocker: the owner's call on the look.
 
 ## Act 3's stair and act 2's abyssal sword -- DESIGNED, AWAITING APPROVAL (2026-11-09)
 
