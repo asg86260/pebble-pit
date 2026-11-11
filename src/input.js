@@ -1,3 +1,4 @@
+// REVIEW clicks-
 // Wiring the mouse, the wheel and the keyboard to the game.
 //
 // Nothing in here decides anything: it turns an event into a call on somebody

@@ -1,3 +1,4 @@
+// REVIEW clicks-
 // The ghosts: the muster's members at work in hell (DESIGN.md, "Acts 3 and
 // 4", act 4, "The crew: the muster").
 //

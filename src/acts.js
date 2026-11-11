@@ -1,3 +1,4 @@
+// REVIEW clicks-
 // Acts 3 and 4: whether they are on, and where their places are.
 //
 // DESIGN.md, "Acts 3 and 4: the afterlife and hell (design, not built)". The

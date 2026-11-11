@@ -1,3 +1,4 @@
+// REVIEW clicks-
 // Act 3's stations as rows of the one station table (stations.js; DESIGN.md,
 // "One place engine", step 1): each card's board, and God's crowd's, stands
 // where the station is drawn, so the pointer's one hit test (`stationAt`),
