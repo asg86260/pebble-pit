@@ -4292,7 +4292,7 @@ Object.assign(SCENES, {
 // yard's ring and is the mill's sawyer when let go; a ghost let go over the
 // first chamber walks the router's ways back down the ladder to its face.
 const BODIES_REVIEW = { about: 'the acts', review: "act bodies on the yard's engine", stage: 'built: audit-bodies, not on main yet',
-                        branch: 'audit-bodies' };
+                        branch: 'audit-bodies', bare: true };
 function membersUp() {
   window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
   for (let k = 0; k < 90 && window.__afterRead().walking > 0; k++) window.__fast(1);
@@ -4300,7 +4300,10 @@ function membersUp() {
   window.__fast(2);
   return S.after.bodies.find(b => b.job == null && b.state === 'work' && !b.errand && b.pair == null);
 }
-const overMill = () => { const m = stationBox('mill'); return { x: m.x + m.w / 2, y: m.y + m.h / 3 }; };
+// Over the mill's roof, in the open sky above it: the drop's box runs from the
+// top of the sky to the mill's foot, so this is over the mill, and the member
+// hangs where nothing of the mill's is drawn behind it.
+const overMill = () => { const m = stationBox('mill'); return { x: m.x + m.w / 2, y: m.y - P * 3 }; };
 Object.assign(SCENES, {
   'bodies-held-mill': { ...BODIES_REVIEW, option: 'A act 3: held over the saw mill', say: "A member in the hand over the saw mill, about to be let go: the drop asks the yard's table which station is under it (the yard's ring is not drawn up here yet).",
     run: () => {
@@ -4327,7 +4330,8 @@ Object.assign(SCENES, {
       const b = S.hell.bodies.find(o => o.job === HELL_JOB.MINE && o.c === 1);
       if (!b) return;
       lift(b); holdBody(b, chamberX1(0) - P * 4, chamberFloor(0) - P * 10); drop(b);
-      for (let k = 0; k < 1800 && !(b.y > chamberFloor(0) + P * 2); k++) window.__fast(1 / 60);
+      const half = (chamberFloor(0) + chamberFloor(1)) / 2;
+      for (let k = 0; k < 1800 && !(b.y >= half); k++) window.__fast(1 / 60);
       window.__look(ladderX(1) - S.viewW / 2); window.__holdShot();
     } }
 });
