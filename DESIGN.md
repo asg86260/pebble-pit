@@ -23047,6 +23047,106 @@ The camera and clouds go in with act 3's layout rebuild.
 `VITE_HELL` are set by no build script, and no fixture holds an act save),
 so the act blobs may change shape freely. The yard's save must not move.
 
+### Act bodies on the yard's engine (design, not built; the owner, 2026-11-10)
+
+The owner: no parallel copies of the yard's systems in later acts. An audit
+of "One place engine" step 5 found three left in the bodies. Separate body
+LISTS per place stay (the yard's rebalance must never see an act's members);
+a separate STEPPER, STAFFER or WALKER does not. Folded in this order, the
+game playable after each.
+
+**Conventions every fold keeps.** A yard body's `x` is its left edge and `y`
+its top; an act body's `x` is its middle and `y` its feet. The yard counts
+in frames (`frames()`), the places in seconds. So every shared function is
+handed the place's answers in the place's own frame -- where the floor is,
+what a frame is -- and never reads `feetOn`, `standTop` or `WORKER` for an
+act body.
+
+**1. One fall (crew/falls.js).** `fall(w, f, ground)`: the flick off the
+place's walls, gravity, the foot read after the x step, the body-land sfx,
+and the dizzy landing (stars, `landedAt`, the spill) are written once. The
+place answers `land(w)` (its floor and its x range), `spill(w)` (what the
+hands held goes on the floor) and `landed(w)` (back to its work). The
+yard's answers are what `fall` did before, unchanged: its landing over the
+hole, its settle/retask, its spill onto the floor or the rock, and its
+sink, which is the yard's alone -- the deep's water under the world. Hell
+lies under the deep (`hellTop` is past `S.worldH`), so a shared "off the
+world sinks" would drown every ghost let go; neither act has water under
+it, so neither supplies a sink. The stages that are gravity's and the
+hand's -- the fall, the stars, the hover slow -- are functions both loops
+call (`crew/step.js` and `placebodies.js`); the yard's "unsupported body
+starts falling" stays the yard's, since an act floor has no rock to step
+off. Deleted: placebodies' own `fall`, its `slowBody` WeakMap (the slow is
+`w.slowUntil`/`w.slowOwed` on every body), and pointer.js's two branches for
+it. A place saves its bodies whole and the clock starts again with the page,
+so a read-back body forgets `slowUntil` and stands up from its stars
+(`settleHeld`). **Shaking** reaches act bodies: act 3's member spills its
+load as goods at its feet (`layGood`), nothing vanishing; a ghost keeps its
+lump (a claimed errand), so hell supplies no spill. **The drop asks the
+place.** pointer.js's `drop` asks the holding place's `assign(w)` before
+the throw, as the yard asks `assignDrop`; `dropTargets(place)` is one table
+read for the yard (its `JOB_AT`) and act 3 (its jobs' posts,
+`AFTER_JOB_POST`, against the `after-*` rows' `standRect`), so the aura's
+ring and the drop give one answer in both. Act 3's assign moves THIS body:
+the old job's count down, the new one's up while a seat is free, the body
+put on it where it is (`takeJob`), its errand and loan cleared. Hell
+supplies none: its muster deals jobs in order and a member put to a face is
+there for good (KEEP).
+
+*What the player sees:* an act body let go lands with the thud, a shaken
+one sees stars and drops what it held, a landed one walks back to its work
+(act 3's `landed` was empty), and a member dropped on the saw mill is the
+mill's sawyer.
+
+**2. One staffing (staffing.js, keyed by place).** `assign(job, d, place)`
+and `spareHands(place)` are the yard's rule -- a body on only while one is
+spare and a seat is free, off only while one is on, a loan on that job
+forgiven by the press -- over a place's data registered as roster.js
+registers its posts (`staffPlace`): its jobs, its count store, its cap, its
+spare and its catch-up. The yard's store is `S[job]` and its catch-up
+`rebalance`+`syncWorkers`; act 3's are `S.after.crew`, `seatsOf`, the idle
+members and the crowd less those owed, and `staff`. Deleted: act 3's
+`putOn` (the roster presses `assign(job, d, 'after')`) and its own forgive;
+`spareMembers` stays only as the name after/rows.js reads. **Loans are one
+shape**: the timber order's loan (`lendHands`, a jobbed body flagged
+`errand === ORDER`) becomes the builder's -- `lentFrom` the old job, the
+loan's work its job (an `orderer` row) -- lent and sent home by the one rule
+(`manSites`), so `bodiesOf(job)` and `lentOff(job)` never count one body
+twice. Hell's muster is not a count and stays as it is.
+
+**3. One route (route.js, the place's ways).** `route()` already takes the
+ways and the links; a place supplies them (`PLACES[v].route`: `ways()`,
+`links()`, `wayAt(w)`, its pace and its clock), and `stepRoute(w, pace,
+place)` walks a place's legs on the place's clock, its feet planted on the
+way (an act floor has no wall to climb). The yard's legs and its cached
+`ways()` are untouched (the perf gate counts its builds). A place's legs
+name their way by key and resolve it each frame, so a body saved whole --
+halfway down a ladder included -- reads back on the same leg. **Hell**: a
+way a chamber floor, reaching right to the next chamber's ladder; a link a
+ladder, at `ladderX(i)`, chamber i-1's floor to chamber i's, at
+GHOST_CLIMB; the muster's road down a link too, from the road's top to the
+first floor. Deleted: `wayTo`, `walkWay`. **Act 3**: the floor (its `at`
+is `floorAt`) and God's crowd, a free way walked straight at its rows as
+the deep's water is swum, joined to the floor at the crowd's two edges.
+Deleted: `walkTo`'s hand-written cases. No member walks to the pedestal's
+top (grep: every off-floor target is a crowd row), so it gets no link;
+the pair's own walk (actbeats.js) is a scene's, not the crew's.
+
+**`slotted` stays, on purpose.** The yard's `elbowIdle` nudges an idle
+hauler off another idle hauler standing between strolls; it touches nobody
+walking and nobody working. Act 3's case is working bodies converging on one
+spot -- a door, a pile's middle -- where a nudge would fight the walk every
+frame. Dealing each its spot up front is the rule for that case; the yard
+has no such case (its stations seat their own bodies), so there is nothing
+to share it with yet. It is moved to the act's route as the place's
+`spot(w, x)`, so the walk asks it, not every caller.
+
+Checks, the player's way (lift, hold, drop through crew/pointer.js): an act
+3 member dropped on a station's ground is put on that job; a shaken member
+spills its load as goods and sees stars; a ghost dropped on a far chamber
+climbs back up by the ladders; a reload mid-ladder keeps the ghost on its
+rung.
+
 ## Clouds stack the way cumulus does (built 2026-10-20)
 
 The owner approved the depth direction and asked for "a little bit harder on
