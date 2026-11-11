@@ -21,7 +21,7 @@
 // MOCK stair4
 // MOCK faith8
 import { P, AFTER_SAW_TEETH, AFTER_ART_SCALE, AFTER_MILL, AFTER_CABIN_SMOKE, AFTER_SHRINE_MOTES, AFTER_SHRINE_SAUCE, AFTER_COIN_LIFE_S } from '../../config.js';
-import { K, W, PALE, MID, hash, silhouette, clamp01 } from './kit.js';
+import { K, W, PALE, MID, hash, silhouette, clamp01, square } from './kit.js';
 import { ART, STAIR, stairW, stairKeys } from '../../after/art.js';
 import { CABIN } from '../../after/cabin.js';
 import { DOORWAY } from '../../after/doorway.js';
@@ -377,7 +377,52 @@ const stairDraw = k => d => stairFlight(d, k);
 //         off the tip to the counter in the corner on the same coin arc,
 //         motes bursting outward
 // Nothing here pops: everything comes and goes by opacity.
-export const SHRINE = { mode: 'fill', fill: 0, folk: 0, t0: 0 };
+export const SHRINE = { mode: 'fill', fill: 0, folk: 0, t0: 0, pray: null };
+// MOCK faith9
+// The faithful at prayer. Act 3's body is the yard's square (kit.js `body`:
+// 18 px, a 2 px rim round a white middle), so a pose is the square's height,
+// its lean toward the shrine and, for the reach, two arm bars at its sides --
+// held at each end and eased between, rounded to whole pixels, feet fixed.
+// `SHRINE.pray` picks the pose and when each follower goes:
+//   bow   each on its own beat, a prayer leaving at the low point
+//   hands each raises its arms and sways, the prayer released at the top
+//   wave  the bow handed down the line a beat at a time, round the shrine
+// Prayer times are read off the same cycle as the pose, so one beat is both.
+// Four cells wide, a cell bigger than the yard's squat body: at the scene's size the
+// small one could not show a bow or a raised arm. Six cells apart, so a bow's lean
+// (a cell at most) never touches the next.
+const FW = 24, FSQUAT = 18, FEET = P;
+const folkX = (i, n) => { const h = Math.floor(n / 2); return (i < h ? SH.x - 7 - (h - 1 - i) * 6 : SH.x + SH.w + 3 + (i - h) * 6) * P; };
+const PRAY = {
+  bow:   { T: 5.4, launch: 1.7, off: k => hash(k * 3.7 + 1) * 5.4 },
+  hands: { T: 5.6, launch: 2.0, off: k => hash(k * 5.3 + 2) * 5.6 },
+  wave:  { T: 4.2, launch: 1.7, off: k => k * 0.7 }
+};
+// 0..1 along a hold-and-ease timeline: rest to `a`, up to `b`, held to `c`, back down by `d`
+const reach = (u, a, b, c, d) => u < a || u > d ? 0 : u < b ? ease3((u - a) / (b - a)) : u <= c ? 1 : ease3((d - u) / (d - c));
+function folkPose(kind, k, tl) {
+  const { T, off } = PRAY[kind], u = (((tl - off(k)) % T) + T) % T;
+  if (kind === 'hands') {
+    const r = reach(u, 1, 1.8, 3.0, 3.8), sway = r >= 1 ? Math.sin((u - 1.8) * 2.6) * 2 : 0;
+    return { h: FSQUAT + Math.round(6 * r), lean: Math.round(sway), arm: Math.round(r * 16), bow: 0 };
+  }
+  const b = reach(u, 0.8, 1.7, 2.5, 3.3);
+  return { h: FSQUAT - Math.round(6 * b), lean: Math.round(6 * b), arm: 0, bow: b };
+}
+function folk(d, n) {
+  const kind = SHRINE.pray, tl = Math.max(0, (S.after.t || 0) - SHRINE.t0);
+  for (let i = 0; i < n; i++) {
+    const left = i < n / 2, face = left ? 1 : -1, p = folkPose(kind, i, tl), x = folkX(i, n);
+    const bx = x + p.lean * face, top = -p.h - FEET;
+    if (kind === 'hands' && p.arm > 0) {
+      // arms up the body's sides, rising past the head as the reach comes
+      const y1 = top + 8, y0 = top - p.arm;
+      d.px(bx - 4, y0, 4, y1 - y0, K); d.px(bx + FW, y0, 4, y1 - y0, K);
+    }
+    square((a, b, w, h, t) => d.px(a, b, w, h, t), bx, top, FW, p.h);
+  }
+}
+
 const SH = { x: 13, w: 19, wall: 12, niche: [3, 15] };
 const SA = AFTER_SHRINE_SAUCE;
 // A ring two cells thick, laid out once as a mask: the cells whose middle lies
@@ -514,6 +559,20 @@ function shrine(d, work, t) {
     });
     // the prayers: one sets out from a kneeler every `flyEvery`, but not while it is being emptied
     const every = SA.flyEvery, life = AFTER_COIN_LIFE_S, n = SHRINE.folk || 1, tail = life + SA.bounce.s + 0.4;
+    if (SHRINE.pray) {
+      const PR = PRAY[SHRINE.pray];
+      for (let kn = 0; kn < n; kn++) {
+        const o = PR.off(kn) + PR.launch;
+        for (let m = Math.max(0, Math.ceil((tl - tail - o) / PR.T)); o + m * PR.T <= tl; m++) {
+          const ts = o + m * PR.T, land = ts + life, p = folkPose(SHRINE.pray, kn, ts);
+          const fl = faithAt(land), tc = RING.cells[tipIndex(fl)], tip = cellWorld(d, rx, ry, tc);
+          const face = kn < n / 2 ? 1 : -1;
+          prayer(d, rx, ry, ts, tl, { x: d.ox + folkX(kn, n) + p.lean * face + FW / 2, y: d.oy - FEET - p.h - p.arm - 2 }, tip, fl >= 0.999);
+          const gl = (tl - land) / SA.glintS;
+          if (gl >= 0 && gl < 1) glint(d, rx, ry, tc, gl);
+        }
+      }
+    } else
     for (let q = Math.max(0, Math.floor((tl - tail) / every)); q <= Math.floor(tl / every); q++) {
       const ts = q * every, land = ts + life, kn = q % n, lw = land % clickLoop();
       if (SHRINE.mode === 'click' && ts % clickLoop() >= c.hold && ts % clickLoop() < t2 + c.empty) continue;
@@ -542,7 +601,8 @@ function shrine(d, work, t) {
     }
   }
   // the faithful, three a side on the floor, kneeling
-  if (!d.sinking) for (let i = 0; i < SHRINE.folk; i++) d.body(kneelX(i, SHRINE.folk), -3, 0, 0, true);
+  if (!d.sinking && SHRINE.pray) folk(d, SHRINE.folk);
+  else if (!d.sinking) for (let i = 0; i < SHRINE.folk; i++) d.body(kneelX(i, SHRINE.folk), -3, 0, 0, true);
 }
 
 export const DRAW = { shrine, mill, workshop, shack, forestry, ...Object.fromEntries(stairKeys().map((key, i) => [key, stairDraw(i + 1)])) };

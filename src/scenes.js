@@ -584,9 +584,9 @@ function afterSite(until) {
 // The shrine stood with its faithful, doing `mode` (render/after/stations.js,
 // SHRINE), its clock started now and run `ahead` seconds on, framed with the
 // ring over it. The faithful are drawn, not walked there.
-function shrineAt(mode, at) {
+function shrineAt(mode, at, pray = null) {
   window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
-  SHRINE.mode = mode; SHRINE.folk = 6; SHRINE.t0 = S.after.t - at;
+  SHRINE.mode = mode; SHRINE.folk = 6; SHRINE.pray = pray; SHRINE.t0 = S.after.t - at;
   const b = stationBox('shrine');
   window.__look(b.x + b.w / 2 - S.viewW / 2); window.__fast(0); window.__holdShot();
 }
@@ -3406,6 +3406,15 @@ export const SCENES = {
   'faith8-c': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-smooth, a review branch, never merged',
     option: "C the click: full, then emptied into the faith count (round 7 C, smoothed and on the combined ring)",
     say: 'full for five seconds, then the click (stood in, not a real press): the arc unwinds, the faith flies to the counter, the ring fills again', run: () => shrineAt('click', 0) },
+  'faith9-a': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-pray, a review branch, never merged',
+    option: 'A the bow: each follower kneels, bows low and rises in held poses, staggered; a prayer leaves at the low point',
+    say: 'each follower bows on its own beat, held low, and the prayer leaves at the bottom of the bow', run: () => shrineAt('fill', 19, 'bow') },
+  'faith9-b': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-pray, a review branch, never merged',
+    option: 'B hands up: each raises its arms in a held pose and sways, the prayer released at the top of the reach',
+    say: 'each raises its arms, sways at the top, and the prayer is released there', run: () => shrineAt('fill', 19, 'hands') },
+  'faith9-c': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-pray, a review branch, never merged',
+    option: 'C the wave: the bow travels round the ring like a chant, one follower after the next, prayers following the wave',
+    say: 'the bow passes down the line, one after the next, and each prayer follows its follower', run: () => shrineAt('fill', 19, 'wave') },
   'stair4-a': { about: 'the acts', review: "act 3: the stair's layout", stage: 'built: review-stair-build, a review branch, never merged',
     option: 'A one flight going up: the pile, the builders at its base, half risen',
     say: 'the first flight raised like a workshop: its pile under the landing, builders hammering at its base, two of four bands risen from the floor', run: () => stairSite(0, r => r.n >= 2) },
