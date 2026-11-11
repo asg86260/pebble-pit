@@ -88,6 +88,34 @@ export let CLOUD_SETTLE_S = 30;
 // How far a cloud's puffs' radii grow at a full swell, as a share of
 // themselves: the front is a bigger cloud, not a new shape.
 export const CLOUD_GROW_R = 0.5;
+// REVIEW yardsky2
+// How the sky grows toward a front, one of CLOUD_GROWTHS by its place (a
+// number, so the dev panel can turn it): the front's own clouds blooming in
+// among the swelled ones, or the sky's clouds alone doing all of it -- each
+// swelling where it is, the near ones drawn together over the window's
+// middle, or new puffs budding out of each one's edge. `r` is the radii's
+// grow at a full swell, `storm` whether the front brings clouds of its own,
+// `pull` the share of the way a cloud is drawn toward the middle, `bud` the
+// buds it puts out (CLOUD_BUDS), and `tint` how far the storm's grey goes,
+// as a share of CLOUD_STORM_TINT. `sink` is how many of the yard's cells its
+// base comes down by at a full swell, so a growing cloud is a lowering one
+// and its growth is seen under it rather than lost off the top of the
+// window; `dark` the crown and base it greys toward, when not the front's
+// (CLOUD_STORM_TONE, _UNDER): with no storm clouds of their own, the sky's
+// clouds are the darkest thing in it, so they go darker.
+export let CLOUD_GROWTH = 0;
+const DARK = ['#8a8a94', '#4a4a56'];
+export const CLOUD_GROWTHS = [
+  { name: 'front', storm: true, r: CLOUD_GROW_R, pull: 0, bud: 0, tint: 1, sink: 0, dark: null },
+  { name: 'swell', storm: false, r: 1.4, pull: 0, bud: 0, tint: 1.2, sink: 4, dark: DARK },
+  { name: 'gather', storm: false, r: 0.5, pull: 0.5, bud: 0, tint: 1.2, sink: 3, dark: DARK },
+  { name: 'bud', storm: false, r: 0.25, pull: 0, bud: 1, tint: 1.2, sink: 3, dark: DARK }
+];
+// A cloud's buds (CLOUD_GROWTHS' `bud`): how many it is made with, each the
+// size of the lobe it grows from by `r`, its middle `out` of that lobe's
+// radius from the lobe's, somewhere round the top half; each opens over
+// `span` of the swell, one after another, so a cloud grows a bud at a time.
+export const CLOUD_BUDS = { n: [6, 10], r: [0.7, 1.1], out: 0.9, span: 0.3 };
 // The murk: the clouds are the sky's dirt readout (DESIGN.md, "The sky is the
 // clouds"). One number, `S.haze / SMOG_CAP`, grows and browns every cloud
 // together. Murk grows a cloud less than a storm swells it -- a dirty sky is a
@@ -175,6 +203,8 @@ export const WEATHER_KNOBS = [
     get: () => CUT_MS, set: v => { CUT_MS = v; } },
   { key: 'CLOUD_SETTLE_S', label: 'cloud settle', min: 0, max: 120, step: 1,
     get: () => CLOUD_SETTLE_S, set: v => { CLOUD_SETTLE_S = v; } },
+  { key: 'CLOUD_GROWTH', label: 'cloud growth', min: 0, max: 3, step: 1,
+    get: () => CLOUD_GROWTH, set: v => { CLOUD_GROWTH = v; } },
   { key: 'CLOUD_MURK_POW', label: 'murk bend', min: 0.2, max: 1, step: 0.05,
     get: () => CLOUD_MURK_POW, set: v => { CLOUD_MURK_POW = v; } }
 ];
