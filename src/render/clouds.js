@@ -23,6 +23,7 @@
 // Place-agnostic: a caller makes sheets of a kind (CLOUDS_KINDS), ticks them,
 // and draws them where its own camera puts them. Nothing here reads S.
 
+import { stream } from '../rng.js';
 import { CLOUDS_TONES, CLOUDS_THRESHOLD, CLOUDS_HYST, CLOUDS_BUDGET_MS, CLOUDS_SLICE,
          CLOUDS_RECIPE, CLOUDS_BILLOW, CLOUDS_KINDS, CLOUDS_ONE_TONE_ROWS, CLOUDS_BAND_MIN, CLOUDS_CREASE_MIN, CLOUDS_CORE_MIN, CLOUDS_LOBE_LIGHT, CLOUDS_SEA,
          CLOUDS_TREATMENTS, CLOUDS_SKY, CLOUDS_LOD, CLOUDS_BANK, CLOUDS_LIFE, CLOUDS_SHAPES, CLOUDS_VOLUME, CLOUDS_TIERS,
@@ -32,16 +33,8 @@ const smooth = v => v * v * (3 - 2 * v);
 
 // A cloud's shape is its own seed's, not a draw from the yard's `rand()`: a
 // drawing must never move the game's stream, or a seeded run would play out
-// differently with the sky on screen. mulberry32, as rng.js.
-function gen(seed) {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6D2B79F5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
+// differently with the sky on screen. rng.js `stream`.
+const gen = seed => stream(seed);
 const lerp = (r, [a, b]) => a + (b - a) * r;
 // A band (a belly, a rim) a share of a tier's lobe radius deep,
 // and none on a tier whose lobes are under CLOUDS_BAND_MIN times that: on a

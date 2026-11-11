@@ -35,6 +35,7 @@ import { P, AFTER_UPGRADES, AFTER_JOBS, AFTER_JOB_POST, AFTER_SEAT_BILLS, AFTER_
          AFTER_RECRUIT_COST0, AFTER_RECRUIT_RATE, MEET_MEMBERS, SLOW_SHARE, STRIKE_SHARE, AFTER_BOARD_SLOTS, SHADES, SHARD_CELL, SPORE_CELL, SPARK_CELL, FIND_TONES, SCALE_SHADE, SCALE_SPREAD } from '../config.js';
 import { registerBoard, openBoardByKey } from '../boardrows.js';
 import { purse, leftText } from '../words.js';
+import { rungCost } from '../upgrades/price.js';
 import { payTo } from '../pit.js';
 import { upCount, built, seatKey, seatsBought } from './levels.js';
 import { crewAt, spareMembers } from './bodies.js';
@@ -208,7 +209,7 @@ const recruits = () => (S.after && S.after.ups[RECRUIT]) || 0;
 const recruitLine = () => msg('after-recruit-ready', { ready: ready(), idle: spareMembers() });
 const recruitRow = {
   key: RECRUIT, name: msg('after-row-recruit'), card: 'pedestal', ...ACT_ROW, repeats: true, from: recruits,
-  bill: () => [['rebel', Math.round(AFTER_RECRUIT_COST0 * Math.pow(AFTER_RECRUIT_RATE, recruits()))]],
+  bill: () => [['rebel', rungCost(AFTER_RECRUIT_COST0, recruits(), AFTER_RECRUIT_RATE)]],
   show: () => !!S.after,
   dead: () => ready() < 1,
   // Greyed for want of a soul, not of rebel: it says so, and how one is won.
@@ -247,7 +248,7 @@ registerRows(AFTER_ROWS.filter(u => u.kind));
 export const afterRow = key => AFTER_ROWS.find(u => u.key === key) || null;
 
 // --- buying ------------------------------------------------------------------------------
-export const afterMaxed = u => !!u.rung && u.rung() >= u.rungs();
+// The row's own bill, as written: billOf (upgrades.js) also adds a build's clock and a dust equivalent, which a reader of the raw coins must not see.
 export const afterBill = u => (u.bill ? u.bill() : []);
 
 // --- the boards ----------------------------------------------------------------------------

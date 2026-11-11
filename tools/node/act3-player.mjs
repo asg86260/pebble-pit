@@ -25,7 +25,8 @@ import { stationX0, groundOf, plotX, AP } from '../../src/after/place.js';
 import { afterGround } from '../../src/state.js';
 import { bubbles } from '../../src/after/bubbles.js';
 import { built } from '../../src/after/levels.js';
-import { afterRow, afterBill, afterMaxed } from '../../src/after/rows.js';
+import { maxed } from '../../src/words.js';
+import { afterRow, afterBill } from '../../src/after/rows.js';
 import { crewAt, spareMembers, walkingOut } from '../../src/after/bodies.js';
 import { seatsOf, seatKey } from '../../src/after/levels.js';
 import { purse } from '../../src/words.js';
@@ -107,7 +108,7 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
       full: () => crewAt(job) >= seatsOf(job),
       show: () => seat().show(),
       bill: () => (crewAt(job) >= seatsOf(job) ? afterBill(seat()) : []),
-      dead: () => crewAt(job) >= seatsOf(job) && afterMaxed(seat()),
+      dead: () => crewAt(job) >= seatsOf(job) && maxed(seat()),
       from: () => crewAt(job)
     });
     return jobRows.get(key);
@@ -156,12 +157,12 @@ export function playAct3({ minutes = 180, seed = 1, pop = 0.85, hand = 0.25, hum
     const u = row(key);
     if (!u) return true;
     if (u.post) return u.from() >= n;
-    if (key === 'after-plot' || key === 'after-selfseed') return afterMaxed(u) || u.rung() >= n;
-    return afterMaxed(u);
+    if (key === 'after-plot' || key === 'after-selfseed') return maxed(u) || u.rung() >= n;
+    return maxed(u);
   }
   function buy(key) {
     const u = row(key);
-    if (!u || !u.show() || u.dead?.() || afterMaxed(u)) return false;
+    if (!u || !u.show() || u.dead?.() || maxed(u)) return false;
     const bill = afterBill(u);
     if (shortOf(bill).length) return false;
     const yardPart = Object.fromEntries(bill.filter(([c]) => YARD_COINS.includes(c)).map(([c, n]) => [GRANT_KEY[c], n]));

@@ -8,19 +8,18 @@
 // drawing where it left off.
 
 import { S } from '../state.js';
+import { next } from '../rng.js';
 import { AFTER_WALK } from '../config.js';
 import { secs, walkLine } from '../placebodies.js';
 
 export const A = () => S.after;
 
-// A number in [0, 1) off the act's own word (mulberry32, as rng.js).
+// A number in [0, 1) off the act's own word (rng.js next).
 export function arand() {
   const a = S.after;
-  const s = a.seed = ((a.seed | 0) + 0x6D2B79F5) | 0;
-  let t = s;
-  t = Math.imul(t ^ (t >>> 15), t | 1);
-  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  const [word, value] = next(a.seed | 0);
+  a.seed = word;
+  return value;
 }
 export const apick = list => list[Math.floor(arand() * list.length)];
 
