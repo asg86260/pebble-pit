@@ -14,7 +14,7 @@
 import { S, afterGround as G } from '../state.js';
 import { AFTER_PILES, AFTER_LOG_TIMBER, AFTER_PILE_SETTLE_S, KINDS } from '../config.js';
 import { colOf, cellOf, kindOf } from '../grid.js';
-import { afterX0, afterX1, stationDoor, stationX0, buildPileAt, plotX, plotSpan, AP } from './place.js';
+import { afterX0, afterX1, stationDoor, stationX0, plotX, plotSpan, AP } from './place.js';
 import { bedLand } from './mill.js';
 import { PILED, stripOf, slotTop, slotNear, colX, rowY, units, counted, uncovered, takeAt, putIn, putSomewhere, putBeside,
          standGround, settleGround, countOf, fallTag } from './ground.js';
@@ -120,8 +120,7 @@ function settleAll() { for (let i = 0; i < 400 && settleGround(); i++) { /* to r
 // Every pile stood up again: the act begun, or a save just read. `lay` the
 // list an older save handed over (after/index.js, `S.after.lay`): a pile's
 // count ({ what, n }), a good lying at an x ({ kind, x }), the log the
-// sawyer held, laid at the saw mill's door ({ kind, near: 'mill' }), or a
-// load on a site's strip ({ kind: 'load', site, at }, `at` its place across);
+// sawyer held, laid at the saw mill's door ({ kind, near: 'mill' });
 // and, from the grove's rebuild, a unit in its own tone on a pile's strip
 // ({ what, kind, tone }), near a plot by its offset off the plot's line,
 // kept inside the plot ({ kind, tone, plot, off }), or near a station by its
@@ -131,14 +130,14 @@ export function standPiles() {
   const lay = Array.isArray(S.after.lay) ? S.after.lay : [];
   S.after.lay = [];
   standGround(lay.map(item => () => {
-    if (!item || typeof item !== 'object') return;
+    // a retired kind (a station's load, before 2026-11-10) is laid nowhere
+    if (!item || typeof item !== 'object' || KINDS[item.kind]?.retired) return;
     const v = KINDS[item.kind] ? cellOf(item.kind, item.tone) : 0, half = v ? KINDS[item.kind].size * AP / 2 : 0;
     if (isPiled(item.what)) standPile(item.what, item.kind ? 1 : Math.max(0, Math.floor(+item.n || 0)), item.tone);
     else if (v && Number.isInteger(item.plot) && Number.isFinite(item.off)) {
       const [x0, x1] = plotSpan(item.plot);
       putSomewhere(v, Math.max(x0 + half, Math.min(x1 - half, plotX(item.plot) + item.off + half)));
     } else if (v && item.near && Number.isFinite(item.dx)) putSomewhere(v, stationX0(item.near) + item.dx + half);
-    else if (item.kind === 'load' && item.site) putSomewhere(cellOf('load'), buildPileAt(item.site) + (((item.at | 0) % 6) * 2 + 1) * AP);
     else if (KINDS[item.kind] && Number.isFinite(item.x)) putSomewhere(cellOf(item.kind), item.x + KINDS[item.kind].size * AP / 2);
     else if (KINDS[item.kind] && item.near === 'mill') putSomewhere(cellOf(item.kind), stationDoor('mill'));
   }));

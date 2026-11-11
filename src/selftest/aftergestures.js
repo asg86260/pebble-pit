@@ -136,7 +136,7 @@ export const TESTS = [
     newRun();
     await settle();
     await upThere(['mill', 'workshop']);
-    const KEYS = ['after-grove', 'after-mill', 'after-workshop', 'after-shack', 'after-pedestal', 'after-crowd'];
+    const KEYS = ['after-grove', 'after-mill', 'after-workshop', 'after-pedestal', 'after-crowd'];
     const res = {};
     for (const key of KEYS) {
       // God's camp slides at its own rate, so the look is asked twice to settle on his button.

@@ -183,7 +183,7 @@ export function take(money, n, to = null) {
   else if (money === 'spark') { S.sparks -= n; spendHeld(n, SPARK_CELL); }
   // Act 3's rebel, on the act. Its timber is not taken here: the row's own
   // buy makes it an order whose blocks bodies carry off the mound
-  // (after/rows.js, after/build.js).
+  // (after/rows.js, after/orders.js).
   else if (money === 'rebel') S.after.rebel -= n;
 }
 

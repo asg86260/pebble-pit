@@ -45,7 +45,7 @@ import { DRAW } from './render/after/stations.js';
 import { silhouette } from './render/after/kit.js';
 import { furnaceBox, barrierBox } from './hell/place.js';
 import { riftOpen } from './rift.js';
-import { fencePosts } from './fence.js';
+import { fencePosts, claimStanding, FENCE_CLAIMED } from './fence.js';
 
 export const PLACES = ['yard', 'deep', 'after', 'hell'];
 
@@ -329,7 +329,7 @@ export const claimSigns = f => { signRects = f; };
 // standing in an empty lot (buildsign.js) is the lot's, under its id: what is
 // built there is the same object, so the two may share ground and nothing
 // else may touch either.
-const FENCED = new Set(['after']);
+claimStanding(standingIn);
 export const footprints = place => {
   const out = PARTS[place]();
   // A fence round a building going up (fence.js) is the building's ground for
@@ -338,7 +338,7 @@ export const footprints = place => {
   // neighbors (the ram's on the shack, the pods' on the first station), and
   // join once those are moved (TODO.md, "The yard's fences stand on their
   // neighbors").
-  for (const s of [...signRects(place), ...(FENCED.has(place) ? fencePosts(place) : [])]) {
+  for (const s of [...signRects(place), ...(FENCE_CLAIMED.has(place) ? fencePosts(place) : [])]) {
     const lot = out.find(o => o.id === s.id);
     if (lot) lot.rects = [...lot.rects, ...s.rects]; else out.push(s);
   }

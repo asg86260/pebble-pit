@@ -132,19 +132,6 @@ export const pilePlace = what => {
   const p = g.size * AP;
   return { x: pileAt(key, what), y: groundOf(key) - g.rows * p, cols: g.cols, rows: g.rows, p };
 };
-// Where a station's loads are piled while it is raised (after/build.js): on
-// its ground beside its drawing, where its own product pile will stand,
-// BUILD_PILE_W art cells across and kept on the ground. Its left edge.
-export const BUILD_PILE_W = 12;
-export const buildPileAt = key => {
-  const art = ART[key], x0 = stationX0(key);
-  const last = Object.keys(art.pile).at(-1);
-  const want = last == null ? art.box[0] + art.box[1] + 1 : (pileAt(key, last) - x0) / AP - 1;
-  return x0 + Math.max(0, Math.min(art.ground - BUILD_PILE_W, want)) * AP;
-};
-// Where a builder stands to lay a load into a band: either side of the
-// drawing (`side` 0 its left, 1 its right), a cell off it.
-export const buildLayAt = (key, side) => { const b = stationBox(key); return side ? b.x + b.w + P * 2 : b.x - P * 2; };
 // Where a body stands to put a thing down on a pile or take one off it, its
 // middle column: beside the pile on the side away from its station's
 // drawing (after/art.js, `standCol`), so the load stacked over its head
@@ -315,13 +302,12 @@ export function floorFlats() {
   out.push([ACT_GATES_CELL - 20, ACT_GATES_CELL + 20]);
   return out;
 }
-// Whether a station's ground is taken: standing, or ordered and going up.
-// Before the act begins, the two that stand from its first frame.
-// Every station of the camp stands on its ground from the start, closed until
-// it is built, drawn as its dotted plan (render/after.js).
-export const sited = key => (S.after ? S.after.built.includes(key) || !!S.after.raising[key] || key in AFTER_STATIONS : AFTER_START_BUILT.includes(key));
-// Whether a station stands closed: standing whole but not built yet, its
-// dotted plan until its rebuild fills it in.
+// Whether a station's ground is taken. Before the act begins, the ones that
+// stand from its first frame; once it has, every station of the camp: its
+// lot is laid out from the start, its build sign in it until it is bought.
+export const sited = key => (S.after ? S.after.built.includes(key) || key in AFTER_STATIONS : AFTER_START_BUILT.includes(key));
+// Whether a station is not built yet: its lot empty but for its build sign,
+// or its build on the yard's works rising there.
 export const closed = key => !!S.after && !AFTER_START_BUILT.includes(key) && !S.after.built.includes(key) && key in AFTER_STATIONS;
 // Which grounds are taken, as a key: the profile is worked out again only
 // when that changes.

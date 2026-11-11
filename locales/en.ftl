@@ -3624,9 +3624,6 @@ after-wait-support = needs { $share }% support
 # act 3 card heading (placeholder): the seats for the station's jobs
 after-sect-seats = seats
 
-# act 3 shack heading (placeholder): the stations to build
-after-sect-build = build
-
 # act 3 station card heading (placeholder)
 after-sect-card = upgrades
 

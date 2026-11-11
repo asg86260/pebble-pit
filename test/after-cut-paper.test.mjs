@@ -41,7 +41,7 @@ group('a save from before the cut loads as one chain: the chipper\'s logs at the
     ok(piled.logs + lyingOf('log') === was.stock.logs + was.stock.chiplogs, 'the chipper\'s logs are laid on the saw mill\'s pile',
        `${was.stock.logs} + ${was.stock.chiplogs} -> ${piled.logs} + ${lyingOf('log')} lying`),
     ok(piled.timber + lyingOf('plank') === Math.floor(was.stock.timber / 2), 'timber is only halved into blocks', `${was.stock.timber} -> ${piled.timber} + ${lyingOf('plank')} lying`),
-    ok(!CUT.some(k => a.built.includes(k)) && !CUT.some(k => k in a.raising), 'the three stations are neither built nor going up', JSON.stringify(a.built)),
+    ok(!CUT.some(k => a.built.includes(k)) && !CUT.some(k => k in (a.raising || {})), 'the three stations are neither built nor going up', JSON.stringify(a.built)),
     ok(!('posters' in a), 'no posters are left on the fence'),
     ok(a.ups['after-seat-sawyer'] === carried && !CUT_JOBS.some(j => `after-seat-${j}` in a.ups) && !CUT_UPS.some(k => k in a.ups),
        'the seats bought on the cut jobs are the sawyer\'s, the larger kept, and the cut upgrades are gone', JSON.stringify(a.ups)),

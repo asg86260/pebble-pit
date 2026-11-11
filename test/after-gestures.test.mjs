@@ -334,8 +334,8 @@ group('hovered, a part brings its ghost hand back; taken hold of, the hand goes;
 // gives it, under the station: centered on it, and where a roster stands,
 // over its count.
 const meets = (a, b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
-const BOARDS = ['after-grove', 'after-mill', 'after-workshop', 'after-shack', 'after-pedestal', 'after-crowd'];
-const GROUND = { 'after-grove': 'forestry', 'after-mill': 'mill', 'after-workshop': 'workshop', 'after-shack': 'shack', 'after-pedestal': 'pedestal' };
+const BOARDS = ['after-grove', 'after-mill', 'after-workshop', 'after-pedestal', 'after-crowd'];
+const GROUND = { 'after-grove': 'forestry', 'after-mill': 'mill', 'after-workshop': 'workshop', 'after-pedestal': 'pedestal' };
 group('every station\'s UPGRADES button asks for its own board, centered under its station and over its roster; a station not built has none', async () => {
   up(['mill', 'workshop'], { logs: 4, timber: 20 });
   const pressed = Object.fromEntries(BOARDS.map(k => [k, pressShop(k)]));

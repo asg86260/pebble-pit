@@ -16,7 +16,7 @@
 // The comments over the scenes say why each is set up as it is.
 
 import { S, floor } from './state.js';
-import { signMid } from './buildsign.js';
+import { signMid, signPress } from './buildsign.js';
 import { addGrain, bottomY } from './grid.js';
 import { JOB, TYPE, AFTER_JOB } from './jobs.js';
 import { P, PROP_FROM, NET_COST, ARCH_COST, DOME_BILL, DOME_WORK, DOME_RINGS, DOME_FADE_MS, LADDER, TIER_OWN, MACHINE_TUNE_RUNGS, LAND_HOP_MS, INTRO_CHAT_MS } from './config.js';
@@ -39,7 +39,7 @@ import { buildStation, nextSlot } from './deep/party.js';
 import { lookAt, seatRails } from './deep/rails.js';
 import { press as pressBuildButton } from './deep/buildbutton.js';
 import { lay } from './deep/statuses.js';
-import { worksAt, progressOf, markDoneSeen } from './works.js';
+import { worksAt, progressOf, markDoneSeen, workOn } from './works.js';
 import { SAVE as CREW_SAVE } from './crew/records.js';
 import { goDeep, goUp, poseGlide } from './view.js';
 import { floorAt, stationX0, stationBox, signBox, soulX, afterFloor, afterOpenX, workshopsX1, unionJoinAt, campEdges, plotX, groundOf, AP } from './after/place.js';
@@ -52,7 +52,6 @@ import { millView, bedWants } from './after/mill.js';
 import { gestureDown, gestureMove, gestureUp, partsOf } from './after/gestures.js';
 import { STEPS } from './game.js';
 import { demoHand } from './render/aftercues.js';
-import { siteLoads } from './after/build.js';
 import { dropSpot, goodsRead } from './after/piles.js';
 import { stripOf as groundStrip, units as groundUnits, counted as groundCounted } from './after/ground.js';
 import { afterGround } from './state.js';
@@ -562,21 +561,48 @@ function handNails(taps, after) {
   window.__holdShot();
 }
 
-// Track A: the workshop ordered with the saw mill standing beside its spot,
-// four members in the camp to carry it, run on until `until(site)` holds
-// (null: never ordered), framed on the spot.
+// The workshop bought with the saw mill standing beside its lot, members in
+// the camp to build it, run on until `until(work)` holds of its work on the
+// yard's works (null: never bought), framed on the lot. Bought at its build
+// sign, as a player buys it (DESIGN.md, "Act 3 builds through the yard's
+// construction").
 function afterSite(until) {
   window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
   for (const k of ['mill']) if (!S.after.built.includes(k)) S.after.built.push(k);
   for (let k = 0; k < 90 && window.__afterRead().walking > 0; k++) window.__fast(1);
   S.after.camp = 4;
   window.__afterGrant({ rebel: 400, timber: 40 }); yardPurse();
-  if (until) {
-    window.__buy('after-build-workshop');
-    for (let k = 0; k < 2400 && !(S.after.raising.workshop && until(S.after.raising.workshop)); k++) window.__fast(0.1);
-  }
   const b = stationBox('workshop');
+  window.__look(b.x + b.w / 2 - S.viewW / 2); window.__fast(0.1);
+  if (until) {
+    const at = signMid('after-workshop', 'after');
+    if (at) signPress(at.x, at.y);
+    for (let k = 0; k < 2400 && !(workOn('after-build-workshop') && until(workOn('after-build-workshop'))); k++) window.__fast(0.1);
+  }
   window.__look(b.x + b.w / 2 - S.viewW / 2); window.__holdShot();
+}
+
+// The review "act 3: building through the yard's construction": the camp
+// with members at the podium and the saw mill's lot empty, the mill bought
+// at its build sign as a player presses it. `going`: run on until it is a
+// third risen, its builder hammering, framed on its lot; else until it
+// stands, framed on it and the workshop's empty lot beside it.
+function a3Build(going) {
+  window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+  window.__afterCrowd((i, v) => (i < 12 ? 8 : v));
+  for (let k = 0; k < 90 && window.__afterRead().walking > 0; k++) window.__fast(1);
+  window.__afterGrant({ rebel: 400 }); yardPurse();
+  const mill = stationBox('mill');
+  window.__look(mill.x + mill.w / 2 - S.viewW / 2); window.__fast(0.1);
+  const at = signMid('after-mill', 'after');
+  if (at) signPress(at.x, at.y);
+  const w = () => workOn('after-build-mill');
+  if (going) for (let k = 0; k < 2400 && !(w() && progressOf(w()) >= 0.33); k++) window.__fast(0.1);
+  else for (let k = 0; k < 2400 && !S.after.built.includes('mill'); k++) window.__fast(0.1);
+  if (!going) window.__fast(1);
+  const shop = stationBox('workshop');
+  window.__look(going ? mill.x + mill.w / 2 - S.viewW / 2 : (mill.x + shop.x + shop.w) / 2 - S.viewW / 2);
+  window.__holdShot();
 }
 
 // Act 3's crowds and God at a point of the pan (track C, render/aftercrowd.js):
@@ -3138,18 +3164,6 @@ export const SCENES = {
     run: () => { afterChain(true); window.__afterGrant({ logs: 4, timber: 6 }); window.__fast(60); window.__look(stationX0('mill') - P * 30); window.__holdShot(); } },
   'after-camp-art-2': { about: 'the acts', say: "the camp's right half: the workshop's hammer, the shack, the cloud pillar and the pair's bubbles",
     run: () => { afterChain(true); window.__afterGrant({ timber: 12 }); window.__fast(60); window.__look(stationX0('workshop') - P * 4); window.__holdShot(); } },
-  // The shack ordering: the saw mill bought, its glyph filling over the shack
-  // as the builders raise it a piece at a time.
-  'after-shack': { about: 'the acts', say: 'the construction shack ordering the saw mill: its glyph filling over the shack a piece at a time',
-    run: () => {
-      window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
-      window.__afterCrowd((i, v) => (i < 12 ? 8 : v));
-      for (let k = 0; k < 90 && window.__afterRead().walking > 0; k++) window.__fast(1);
-      window.__afterGrant({ rebel: 400 }); yardPurse();
-      window.__buy('after-build-mill');
-      for (let k = 0; k < 80 && !(S.after.raising.mill && S.after.raising.mill.n >= 2); k++) window.__fast(0.5);
-      window.__look(stationX0('shack') - S.viewW / 2); window.__holdShot();
-    } },
   // The yard paying (DESIGN.md, "The yard pays too"): the saw bought on the
   // grove's card, its dust come up out of the thin patch as motes and arcing
   // over to the grove.
@@ -3185,18 +3199,27 @@ export const SCENES = {
       window.__holdShot();
     } },
 
-  // --- track A of the act-3 build: the camp (docs/wave-act3-build.md) ---------------
-  // A station ordered on the shack (docs/mocks/act3-unbuilt-2026-10-18, pile
-  // a): the empty spot between its neighbors, members carrying its loads
-  // onto it, the pile whole, and a band going up off it.
-  'after-site-empty': { about: 'the acts', say: "an unbuilt station's spot: open floor between its neighbors, nothing drawn",
+  // --- a station built through the yard's construction ---------------------------
+  // (DESIGN.md, "Act 3 builds through the yard's construction"): the empty
+  // lot with its build sign, then the workshop bought there, a member
+  // hammering at its lot inside the fence, the station rising out of the
+  // cloud a course at a time.
+  'after-site-empty': { about: 'the acts', say: "an unbuilt station's lot: open floor between its neighbors, its build sign in it",
     run: () => afterSite(null) },
-  'after-site-carry': { about: 'the acts', say: 'the workshop ordered: members carrying its planks and blocks onto its spot',
-    run: () => afterSite(() => siteLoads('workshop') >= 3) },
-  'after-site-pile': { about: 'the acts', review: 'act 3: one resource system', supersedes: ['act 3: workers carry every block', 'act 3: picking up goods', 'act 3: shops and block piles'],stage: 'built: the real build on branch res-step4 -- not on main yet; lands when you sign it off', branch: 'res-step4', option: 'C a station going up is a strip', say: "the workshop's pile whole on its spot, the two builders beside it",
-    run: () => afterSite(r => r.whole != null) },
-  'after-site-band': { about: 'the acts', say: 'the workshop going up a band at a time, the pile shrinking',
-    run: () => afterSite(r => r.n >= 2) },
+  'after-site-rising': { about: 'the acts', say: 'the workshop bought at its sign: a member hammering inside the fence, the workshop a third risen',
+    run: () => afterSite(w => progressOf(w) >= 0.33) },
+  'after-site-late': { about: 'the acts', say: 'the workshop nearly up: the fence, the builder, the glyph over it nearly full',
+    run: () => afterSite(w => progressOf(w) >= 0.8) },
+  // The review of it, against the real game: a station going up, and the
+  // same station standing beside the next empty lot.
+  'review-a3-build-a': { about: 'the acts', review: 'act 3: building through the yard\'s construction', stage: 'built: design-act3-build, not on main yet', branch: 'design-act3-build',
+    option: 'A an act 3 station going up: the sign pressed, a member walking over, hammering, the rise',
+    say: 'the saw mill bought at its build sign: a member walks over from the podium, hammers inside the fence, and the mill rises out of the cloud',
+    run: () => a3Build(true) },
+  'review-a3-build-b': { about: 'the acts', review: 'act 3: building through the yard\'s construction', stage: 'built: design-act3-build, not on main yet', branch: 'design-act3-build',
+    option: 'B the same station standing, the lot empty beside it with its sign',
+    say: 'the saw mill standing, built; the workshop\'s lot beside it empty but for its build sign',
+    run: () => a3Build(false) },
 
   // The UPGRADES buttons over the camp's rosters (roster.js), framed as the
   // review that chose them was: the chain bought, the saw mill four-fifths
@@ -3256,9 +3279,9 @@ export const SCENES = {
   'after-bubbles': { about: 'the acts', say: "the pair's speech bubbles rising off the pillar at uneven gaps, small, middling and big, a symbol in each",
     run: () => { window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(14);
                  window.__look(stationX0('pedestal') - S.viewW / 2); window.__holdShot(); } },
-  // The saw mill bought on the shack with nobody waiting in the camp: the
-  // pair stay up on the pillar speaking (they never come down to build), and
-  // the site waits for a member (after/build.js, `fillBuilders`).
+  // The saw mill bought with nobody waiting in the camp: the pair stay up on
+  // the pillar speaking (they never come down to build), and a member at a
+  // post is lent to it (after/bodies.js, `manBuilders`).
   'after-pair-build': { about: 'the acts', say: 'the saw mill bought with the camp empty: the pair still up on the pillar, speaking',
     run: () => { window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(2);
                  window.__afterGrant({ rebel: 9000, timber: 40 }); yardPurse(); S.after.camp = 0;
@@ -3486,7 +3509,7 @@ export const SCENES = {
   // hired (DESIGN.md, "Act 3's workers are bought with rebel").
   'act3-recruit': { about: 'the acts', say: "act 3's pedestal board with souls won and waiting: the recruit row's count of ready and idle",
     run: () => { act3Board('pedestal'); window.__afterCrowd((i, v) => (i >= CROWD_FILES * 2 && i < CROWD_FILES * 2 + 12 ? 8 : v), true); window.__holdShot(); } },
-  ...Object.fromEntries(['shack', 'grove', 'pedestal', 'mill', 'workshop', 'crowd'].map(key =>
+  ...Object.fromEntries(['grove', 'pedestal', 'mill', 'workshop', 'crowd'].map(key =>
     [`act3-board-${key}`, { about: 'the acts', ...(key === 'crowd' ? {} : { review: 'act 3: shops and block piles', stage: 'built: the real build on branches a3-station-shop and a3-pile-plots -- not on main yet; lands when you sign it off', option: `${key} board open` }), say: `act 3's ${key} board open in the yard's sheet, its shelves, bills in the act's marks`,
       run: () => act3Board(key) }])),
   // God's pushback as drawn (render/aftercrowd.js): the throne's speech

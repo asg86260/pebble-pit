@@ -141,8 +141,10 @@ const boardAt = (x, y) => (overOrb(x, y) || overWork(x, y) ? null : stationAt(x,
 const atStation = (x, y) => boardAt(x, y) !== null;
 // The board a click on a station opens: none where the board has its UPGRADES
 // button standing (every act 3 station's), which is then the one way in (the
-// owner, 2026-10-28: a board is asked for, never come upon).
-const clickBoard = (x, y) => { const k = boardAt(x, y); return k && !shopBoxOf(k) ? k : null; };
+// owner, 2026-10-28: a board is asked for, never come upon); and none on a
+// station with no board at all (act 3's construction shack, which sells
+// nothing since its builds went to their signs).
+const clickBoard = (x, y) => { const k = boardAt(x, y); return k && station(k)?.board && !shopBoxOf(k) ? k : null; };
 // A press on a roster; on an UPGRADES button it opens that board or, up
 // already, puts it away.
 const rosterPress = (x, y) => {

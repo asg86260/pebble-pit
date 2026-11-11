@@ -9,9 +9,9 @@
 // out of the souls won; a station's members are put on
 // through the roster under it (after/roster.js), each job holding one to
 // start, and a seat row a job buys it room for one more (AFTER_SEAT_BILLS,
-// the owner, 2026-10-20). The construction shack sells
-// every station, all of them on its board and priced from the start, each
-// raised a piece at a time once bought (build.js).
+// the owner, 2026-10-20). A station not standing from the start is sold by
+// the build sign in its lot, priced from the start, and raised on the
+// yard's works once bought (after/builders.js).
 //
 // A bill names the act's coins (rebel, timber: `S.after`) and the
 // yard's (dust, crops, ore, sparks: DESIGN.md, "The yard pays too"), so a
@@ -36,11 +36,12 @@ import { P, AFTER_UPGRADES, AFTER_JOBS, AFTER_JOB_POST, AFTER_SEAT_BILLS, AFTER_
 import { registerBoard, openBoardByKey } from '../boardrows.js';
 import { purse, leftText } from '../words.js';
 import { payTo } from '../pit.js';
-import { upCount, built, raising, seatKey, seatsBought } from './levels.js';
+import { upCount, built, seatKey, seatsBought } from './levels.js';
 import { crewAt, spareMembers } from './bodies.js';
 import { clearPlot } from './grove.js';
 import { SEEDS_ROW, seedsBought, seedsRoom, seedBill, owe } from './seeds.js';
-import { raiseStation, placeOrder, orderedOf, onOrderLanded } from './build.js';
+import { placeOrder, orderedOf, onOrderLanded } from './orders.js';
+import { registerRows } from '../works.js';
 import { stationBox, plotX, groveX1, afterFloor, afterX0, floorAt, AP } from './place.js';
 import { union, won, ready, hire, support } from './union.js';
 import { setCrowdAt } from './stations.js';
@@ -170,25 +171,30 @@ const seatRow = job => {
   };
 };
 
-// --- the shack: every station ------------------------------------------------------------
-// On the board from the act's first frame, each with its price; one that
-// needs another standing first is dead until then, saying which.
+// --- the builds: every station not standing from the start ------------------------------
+// Sold by the build sign in each station's lot and nowhere else, the deep's
+// shape (the owner, 2026-11-10: no board lists them), each with its price
+// from the act's first frame; one that needs another standing first is dead
+// until then, saying which. Bought, it is a building on the yard's works,
+// raised on its own lot (`site`) by the act's builders (after/builders.js)
+// and drawn rising (`raises`, render/rise.js); it stands when the work lands
+// (DESIGN.md, "Act 3 builds through the yard's construction").
 const BUILD_NAMES = {
   mill: () => msg('after-build-mill'), workshop: () => msg('after-build-workshop')
 };
 const WAITS = { workshop: () => msg('after-wait-mill') };
 const needsMet = st => { const n = AFTER_BUILDS[st].needs; return !n.length || n.some(k => built(k)); };
 const buildRow = st => ({
-  key: `after-build-${st}`, name: BUILD_NAMES[st](), card: 'shack', lands: st, ...ACT_ROW,
-  // A station standing stays on the shack's board, done, whatever the
-  // finished-rows switch says: the board is the list of what the camp has.
-  keep: true,
-  rung: () => (built(st) || raising(st) ? 1 : 0), rungs: () => 1,
+  key: `after-build-${st}`, name: BUILD_NAMES[st](), card: null, lands: st, ...ACT_ROW,
+  kind: 'building', site: `after-${st}`, raises: `after-${st}`,
+  // the station on the map it is, for what asks whether it stands yet
+  stands: st,
+  rung: () => (built(st) ? 1 : 0), rungs: () => 1,
   bill: () => AFTER_BUILDS[st].bill.map(([c, n]) => [c, n]),
   show: () => !!S.after,
   dead: () => !needsMet(st),
   waits: () => (needsMet(st) ? null : WAITS[st]()),
-  buy: () => { raiseStation(st); }
+  buy: () => { if (S.after && !built(st)) S.after.built.push(st); S.shopStale = true; }
 });
 
 // --- the recruit ----------------------------------------------------------------------------
@@ -235,6 +241,8 @@ export const AFTER_ROWS = [
 ].map(inAct);
 // First on the pedestal's board; its line is a getter, so it is not spread.
 AFTER_ROWS.unshift(recruitRow);
+// The builds are works: a save reads a station going up back by its row.
+registerRows(AFTER_ROWS.filter(u => u.kind));
 export const afterRow = key => AFTER_ROWS.find(u => u.key === key) || null;
 
 // --- buying ------------------------------------------------------------------------------
@@ -244,11 +252,10 @@ export const afterBill = u => (u.bill ? u.bill() : []);
 // --- the boards ----------------------------------------------------------------------------
 // A card's rows, and its planks (tabs choice A, the owner, 2026-10-18): its
 // jobs' seats' shelf, its heading counting the members at work there, then
-// its upgrades'; the shack one shelf, every station in camp order. Registered
+// its upgrades'. Registered
 // under `after-<card>` (boardrows.js), the key of the card's station row.
 const jobsAt = card => AFTER_JOBS.filter(j => AFTER_JOB_POST[j] === card);
 const sectionsOf = card => {
-  if (card === 'shack') return [{ key: 'after-build', title: msg('after-sect-build'), keys: Object.keys(AFTER_BUILDS).map(s => `after-build-${s}`) }];
   const rows = AFTER_ROWS.filter(u => u.card === card);
   return [{ key: `after-${card}-seats`, title: msg('after-sect-seats'), keys: rows.filter(u => u.seat).map(u => u.key),
             heads: () => jobsAt(card).reduce((n, j) => n + crewAt(j), 0) },
@@ -256,7 +263,7 @@ const sectionsOf = card => {
     .filter(s => s.keys.length);
 };
 // A station not yet built has no board (after/stations.js): its build is
-// sold by the sign in its lot and on the shack's board.
+// sold by the sign in its lot alone.
 export const afterBoard = card => ({ rows: AFTER_ROWS.filter(u => u.card === card), sections: sectionsOf(card) });
 // Each board's title, the ground it stands over and the click that opens it
 // are its station row's (after/stations.js, in the one station table).

@@ -119,7 +119,9 @@
    "hell barriers",
    "hell cage",
    "after piles",
-   "after pile marks"
+   "after pile marks",
+   "after build sites",
+   "after grit"
   ],
   "src/render/fish.js": [
    "Lantern angler",

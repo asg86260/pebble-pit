@@ -15,7 +15,7 @@ import { UPGRADES, building, take } from '../src/upgrades.js';
 import { afterRow } from '../src/after/rows.js';
 import { boardOf } from '../src/boardrows.js';
 import { built, raising } from '../src/after/levels.js';
-import { station } from '../src/stations.js';
+import { station, BOARDS } from '../src/stations.js';
 import { shopBoxOf } from '../src/roster.js';
 import { footprints } from '../src/footprints.js';
 import { msg } from '../src/lang.js';
@@ -92,12 +92,13 @@ group('pressed, the shack\'s sign pays once, hides while the hut goes up, and a 
   ];
 });
 
-group('act 3: the saw mill\'s sign is its shack row; the workshop\'s greys with its row; each wears its station\'s name', async () => {
+group('act 3: a station not yet built is sold by the sign in its lot alone; the workshop\'s greys with its row; each wears its station\'s name', async () => {
   up();
   window.__afterGrant({ rebel: 30 });
   run(0.2);
   const mill = afterRow('after-build-mill'), shop = afterRow('after-build-workshop');
-  const listed = boardOf('after-shack').rows().filter(u => revealed(u)).map(u => u.key);
+  // No board lists the builds (the owner, 2026-11-10): the sign is the way in.
+  const listed = BOARDS.flatMap(k => boardOf(k)?.rows() || []).filter(u => u.key === mill.key || u.key === shop.key).map(u => u.key);
   const m = signOf('after-mill', 'after'), w = signOf('after-workshop', 'after');
   const rebel0 = S.after.rebel;
   const lockedPress = pressSign('after-workshop', 'after');
@@ -108,7 +109,7 @@ group('act 3: the saw mill\'s sign is its shack row; the workshop\'s greys with 
   run(0.2);
   const ok2 = signOf('after-mill', 'after')?.state;
   return [
-    ok(listed.includes(mill.key) && listed.includes(shop.key) && !!m && !!w, 'both rows are listed on the shack\'s board, and both lots wear a sign', listed.join(' ')),
+    ok(!listed.length && revealed(mill) && revealed(shop) && !!m && !!w, 'neither row is on any board, and both lots wear a sign', listed.join(' ')),
     ok(w.state === 'locked' && shop.dead(), 'the workshop\'s sign greys while its row is dead', w.state),
     ok(m.name === 'SAW MILL' && w.name === 'WORKSHOP', 'each wears its station\'s name', `${m.name} / ${w.name}`),
     ok(lockedPress && !lockedPaid, 'a press on it is the sign\'s, and buys nothing', `rebel ${rebel0} -> ${S.after.rebel}`),

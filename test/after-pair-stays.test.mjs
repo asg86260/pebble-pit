@@ -1,7 +1,7 @@
 // The pair stay up on the pedestal (the owner, 2026-10-20: "the Couple still
 // arent rendered on the pedestal"). They are the act's leads and never come
 // down to build; a station bought with nobody in the camp is raised by
-// members off their posts (after/build.js, `fillBuilders`). Played two ways
+// members off their posts (after/bodies.js, `manBuilders`). Played two ways
 // through the act's first fifteen minutes, every row bought through `__buy`:
 // act3-pace's player, and an owner who buys early -- every post the camp can
 // fill and every station the moment it opens, which empties the camp before

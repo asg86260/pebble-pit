@@ -15,7 +15,6 @@ import { P, AFTER_BUBBLE_EVERY_S, AFTER_BUBBLE_LIFE_S, AFTER_BUBBLE_RISE, AFTER_
          AFTER_BUBBLE_MID, WORKER } from '../config.js';
 import { S } from '../state.js';
 import { speakerAt } from './place.js';
-import { pairBuilding } from './build.js';
 import { secs } from './util.js';
 import { useBubbles } from './gestures.js';
 
@@ -38,7 +37,7 @@ const gapAt = n => AFTER_BUBBLE_EVERY_S * (AFTER_BUBBLE_GAP[0] + roll(n, 3) * (A
 // on the pillar's top (at its foot, or climbing), and not down building.
 export const pairSpeaking = () => {
   const pair = S.acts && S.acts.pair;
-  return !!S.after && !(pair && pair.y < 0 && pair.at !== 'pedestal') && !pairBuilding();
+  return !!S.after && !(pair && pair.y < 0 && pair.at !== 'pedestal');
 };
 
 // One more off speaker `k`'s head, now.

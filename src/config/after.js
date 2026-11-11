@@ -92,11 +92,12 @@ export const STRIKE_SHARE = 0.8;           // default
 export const AFTER_GATES = ['meeting', 'slowdown', 'strike'];
 
 // --- the camp's cards and the chain ----------------------------------------------
-// The five cards: the pedestal (the speech and the agitators), the
-// construction shack (every station that can be built), the grove (the saw
-// and the trees), the saw mill and the workshop. Keys, not words: every
+// The four cards: the pedestal (the speech and the agitators), the grove
+// (the saw and the trees), the saw mill and the workshop. The construction
+// shack sells nothing: a station is bought at the build sign in its lot
+// (the owner, 2026-11-10). Keys, not words: every
 // name a player reads is the owner's, in locales/en.ftl.
-export const AFTER_CARDS = ['pedestal', 'shack', 'grove', 'mill', 'workshop'];
+export const AFTER_CARDS = ['pedestal', 'grove', 'mill', 'workshop'];
 
 // --- act 3's loop, placeholder (track A, 2026-10-17; reworked 2026-10-18) ----------
 // The grove and the press on the scaffold, every drawing a placeholder of
@@ -232,12 +233,10 @@ export const AFTER_SIGN_BOARD = CAMP_SIGN;
 // the rack's flags this many cells apart; a carried one this many cells over
 // the carrier's head.
 export const AFTER_SIGN_FLAG_U = { rack: 3, held: 2, apart: 8, up: 4 };
-export const AFTER_BUILD_FADE_S = 2;       // a piece of a station, a plot cleared or a post put up fades in over this
-// A station bought on the shack is raised a piece at a time, a band of its
-// box from the floor up, by a builder at its door: a member from the camp,
-// or the pair down off the pedestal when nobody is waiting there.
+export const AFTER_BUILD_FADE_S = 2;       // a plot cleared or a post put up fades in over this
+// How many bands a station went up in before 2026-11-10, read only by the
+// migration that read a save of those days (config/aftercamp.js).
 export const AFTER_BUILD_PIECES = 4;
-export const AFTER_BUILD_PIECE_S = 3;      // a builder's piece
 // The crowd field: files across God's yard, the near ranks drawn as bodies
 // (a soul and its eight rim cells, three cells square) and the far ranks a
 // cell a soul, thinning back up the screen.

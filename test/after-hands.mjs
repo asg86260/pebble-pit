@@ -6,7 +6,7 @@
 import { run, yard, P } from './helpers.mjs';
 import { GESTURE_SAW_AMP, GESTURE_STUMP_DRAG, GESTURE_NAILS, GESTURE_NAIL_TAPS, GESTURE_SWING_S } from '../src/config.js';
 import { gestureDown, gestureMove, gestureUp, gestureUnder, handSawAt, partsOf } from '../src/after/gestures.js';
-import { stationAt } from '../src/stations.js';
+import { stationAt, station } from '../src/stations.js';
 import { shopBoxOf, rosterHit, rosterUp } from '../src/roster.js';
 import { AFTER_MILL, AFTER_BLOCK } from '../src/config.js';
 import { track, sweep, release } from '../src/hands.js';
@@ -27,8 +27,8 @@ export const click = p => { const took = gestureDown(p.x, p.y); gestureUp(p.x, p
 export const asks = p => (click(p) ? null : stationAt(p.x, p.y));
 // ...and the board that press opens (input.js `clickBoard`): none on a
 // station whose board has its UPGRADES button standing, the button being
-// the one way in there.
-export const opens = p => { const k = asks(p); return k && !shopBoxOf(k) ? k : null; };
+// the one way in there, nor on a station with no board.
+export const opens = p => { const k = asks(p); return k && station(k)?.board && !shopBoxOf(k) ? k : null; };
 // A press on a board's UPGRADES button, through the roster's own hit test
 // (the call input.js makes): the board it asks for, or null off every one.
 export const pressShop = key => {

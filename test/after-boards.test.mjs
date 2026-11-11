@@ -27,7 +27,7 @@ const up = () => {
 const shelves = key => boardOf(`after-${key}`).sections().map(s => [s.title, s.keys]);
 const reading = key => boardOf('after-crowd').rows().find(u => u.key === key).price();
 
-group('each board lists its rows on its shelves: seats, then upgrades; the shack one shelf in camp order', async () => {
+group('each board lists its rows on its shelves: seats, then upgrades; no board lists the builds', async () => {
   up();
   // Built, each station's board is the spec's shelves; one not yet built has
   // no board (its build sign sells it: test/build-sign.test.mjs).
@@ -36,7 +36,6 @@ group('each board lists its rows on its shelves: seats, then upgrades; the shack
   const all = Object.fromEntries([...AFTER_CARDS, 'crowd'].map(k => [k, shelves(k)]));
   const seats = msg('after-sect-seats'), ups = msg('after-sect-card');
   const want = {
-    shack: [[msg('after-sect-build'), ['mill', 'workshop'].map(s => `after-build-${s}`)]],
     pedestal: [[ups, ['after-recruit', 'after-podium']]],
     grove: [[seats, ['after-seat-woodcutter']], [ups, ['after-saw', 'after-plot', 'after-grow', 'after-stumps', 'after-seeds', 'after-selfseed']]],
     mill: [[seats, ['after-seat-sawyer']], [ups, ['after-blade']]],
@@ -52,7 +51,7 @@ group('each board lists its rows on its shelves: seats, then upgrades; the shack
   ];
 });
 
-group('the shack locks a station behind the one it needs, saying which, and a built one stays listed, done', async () => {
+group('a station is locked behind the one it needs, saying which, and is on no board, its sign the way in', async () => {
   up();
   const say = k => afterRow(`after-build-${k}`).waits();
   const locked0 = { workshop: say('workshop') };
@@ -68,7 +67,7 @@ group('the shack locks a station behind the one it needs, saying which, and a bu
     ok(locked0.workshop === msg('after-wait-mill'), 'a locked station says what it waits on', JSON.stringify(locked0)),
     ok(deadFirst, 'the workshop is refused before the saw mill stands'),
     ok(bought, 'the saw mill is bought through the yard\'s press, its own act\'s purse paying'),
-    ok(mill.rung() === mill.rungs() && mill.keep && boardOf('after-shack').rows().includes(mill), 'and stays on the shack\'s board, done, kept past the finished-rows switch'),
+    ok(mill.rung() === mill.rungs() && !AFTER_CARDS.some(c => boardOf(`after-${c}`).rows().includes(mill)), 'and once standing it is done, listed on no board: its sign was the way in (the owner, 2026-11-10)'),
     ok(raisingLock === msg('after-wait-mill'), 'while the saw mill is still going up, the workshop waits on it', String(raisingLock)),
     ok(S.after.built.includes('mill') && open === null, 'and once it stands the workshop\'s lock comes off', String(open))
   ];
@@ -81,7 +80,7 @@ group('a job\'s seats climb a written table, each no cheaper than the last, and 
   window.__afterGrant({ rebel: 1e5, timber: 1e4 });
   const bills = [];
   // The timber pile topped up to its brim before each: it holds no more (after/piles.js);
-  // a seat billed in timber lands once its blocks are carried (after/build.js).
+  // a seat billed in timber lands once its blocks are carried (after/orders.js).
   for (let k = 0; k < AFTER_SEAT_BILLS.length + 2; k++) { window.__afterGrant({ timber: AFTER_PILES.timber.brim }); bills.push(row.bill()[0][1]); if (!buy(row)) break; runUntil(() => !S.after.orders.length, 240); }
   const seats = window.__afterRoster().find(r => r.job === 'sawyer')?.cap;
   window.__actsOn(null);

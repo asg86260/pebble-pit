@@ -3,11 +3,11 @@
 // everywhere but under what is built on it. Pressed flat under the grove,
 // every standing station's whole ground, the crowd and the stair, it once
 // billowed in a tenth of its columns and read as flat. A station nobody has
-// ordered is open floor (the owner, 2026-10-18): its spot billows like any
-// other until it is bought on the shack. Each station stands on its own
+// bought is open floor (the owner, 2026-10-18): its spot billows like any
+// other until it is bought at its build sign. Each station stands on its own
 // shelf of cloud, ramps between them (the owner, 2026-10-22), the puffs
 // kept only in front of God's crowd. What is checked is the profile the drawing and the bodies
-// both read; how it looks is the shot (`after-site-empty`, `after-site-pile`,
+// both read; how it looks is the shot (`after-site-empty`, `after-site-rising`,
 // `after-crowd-mass`).
 import { group, ok, run, yard } from './helpers.mjs';
 import { P, AFTER_W, AFTER_STATIONS, AFTER_STATION_GAP, AFTER_SHELF } from '../src/config.js';

@@ -50,11 +50,11 @@ group('the played chain is quiet, and every door that made or unmade a unit is n
   let quiet = true;
   try { for (let k = 0; k < 1200; k++) run(1); } catch (e) { quiet = false; console.log(e.message); }
   const by = flowBy();
-  const doors = ['log:tree', 'log:saw', 'plank:saw', 'plank:sign', 'sign:workshop', 'load:shack', 'load:band'];
+  const doors = ['log:tree', 'log:saw', 'plank:saw', 'plank:sign', 'sign:workshop'];
   const missing = doors.filter(d => !(d in by));
   window.__actsOn(null);
   return [
-    ok(raised, 'the saw mill and the workshop raised off the shack'),
+    ok(raised, 'the saw mill and the workshop built'),
     ok(quiet, 'twenty minutes of the chain, a tree felled, logs cut, signs joined: not one frame breaks the rule'),
     ok(!missing.length, 'and every door on the way spoke up', `missing ${missing.join(' ')} of ${JSON.stringify(by)}`)
   ];

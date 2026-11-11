@@ -20,7 +20,7 @@ import { putBlock, cellOf } from '../src/grid.js';
 import { stripOf, slotTop } from '../src/after/ground.js';
 import { afterGround } from '../src/state.js';
 import { stationBox, stationDoor, pileMid } from '../src/after/place.js';
-import { orderAt } from '../src/after/build.js';
+import { orderAt } from '../src/after/orders.js';
 import { afterRow } from '../src/after/rows.js';
 import { purse } from '../src/words.js';
 import { msg } from '../src/lang.js';

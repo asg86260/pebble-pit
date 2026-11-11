@@ -8,6 +8,7 @@ import { AFTER_START_BUILT, AFTER_UPGRADES, AFTER_PLOTS0, AFTER_PODIUM_REBEL, AF
          AFTER_BLADE_LOGS, AFTER_BENCH_SIGNS,
          SIGN_REACH, SIGN_REACH_UP, AFTER_SEAT_BILLS } from '../config.js';
 import { podiumStood } from './place.js';
+import { workOn } from '../works.js';
 
 export const upCount = key => Math.max(0, Math.min(AFTER_UPGRADES[key].bills.length, (S.after && S.after.ups[key]) || 0));
 export const has = key => upCount(key) > 0;
@@ -44,5 +45,5 @@ export const signReach = big => (big ? SIGN_REACH_UP : SIGN_REACH);
 // The grove, and the stations standing from the act's first frame, stand in
 // any save, one made before a station was added to them too.
 export const built = key => !!S.after && (key === 'grove' || AFTER_START_BUILT.includes(key) || S.after.built.includes(key));
-// Whether it is bought and going up a piece at a time.
-export const raising = key => !!S.after && !!S.after.raising[key] && !built(key);
+// Whether it is bought and going up: its build a work on the yard's works.
+export const raising = key => !!S.after && !built(key) && !!workOn(`after-build-${key}`);

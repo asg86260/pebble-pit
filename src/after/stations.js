@@ -104,13 +104,15 @@ const row = (card, more) => {
 };
 
 // A station the camp builds, while it is not standing: its lot, for the build
-// sign staked in it (buildsign.js). Its row is the shack's build row for it,
-// listed on the shack's board; the sign stands in the station's drawing at
-// its middle, on the floor as the floor runs under it.
+// sign staked in it (buildsign.js), the one way it is bought (the owner,
+// 2026-11-10: no board lists the builds). The sign stands in the station's
+// lot at its middle, on the floor as the floor runs under it; the lot is
+// also the station's site on the yard's works (stations.js, `registerSites`),
+// built on that floor.
 const lotOf = card => ({
   id: () => card,
   row: () => (closed(card) ? afterRow(`after-build-${card}`) : null),
-  board: 'after-shack',
+  board: null,
   box: () => stationBox(card),
   mid: () => drawnMid(card),
   floor: floorAt,
@@ -122,10 +124,12 @@ const STATION_CARDS = ['mill', 'workshop', 'shack', 'pedestal'];
 export const AFTER_STATION_ROWS = [
   ...STATION_CARDS.map(card => row(card, {
     // Standing only once built: a station not yet built has no board and no
-    // button, and its drawing opens nothing; its build sign is the way in,
-    // and the shack's board the other.
+    // button, and its drawing opens nothing; its build sign is the way in.
     open: () => live() && built(card),
-    ...(card in AFTER_BUILDS ? { lot: lotOf(card) } : {})
+    ...(card in AFTER_BUILDS ? { lot: lotOf(card) } : {}),
+    // The construction shack sells nothing (the owner, 2026-11-10): it
+    // stands, named, with no board and no button.
+    ...(card === 'shack' ? { board: null, line: null, boardAnchor: null } : {})
   })),
   // A press on a tree is the saw's (after/gestures.js).
   row('grove', { open: live }),

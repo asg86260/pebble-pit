@@ -14,19 +14,20 @@
 // frame to frame). Everything that comes or goes fades, but the goods: every
 // block is brought and taken by a body or the hand, so none ever fades.
 
-import { P, GREY, AFTER_BLOCK, AFTER_CARRY_SHOWN, AFTER_STATIONS, AFTER_START_BUILT, AFTER_SIGN_FLAG_U, AFTER_ART_SCALE, AFTER_CARDS, AFTER_BUILD_FADE_S, AFTER_BUILD_PIECES,
+import { P, GREY, AFTER_BLOCK, AFTER_CARRY_SHOWN, AFTER_STATIONS, AFTER_START_BUILT, AFTER_SIGN_FLAG_U, AFTER_ART_SCALE,
          AFTER_ART_WORK_S,
-         AFTER_SAW_S, AFTER_SIGN_S, SHELF_GLYPH_CELLS,
+         AFTER_SAW_S, AFTER_SIGN_S,
          NUM_FONT_PX, AFTER_COUNT_PAD } from '../config.js';
 import { S } from '../state.js';
 import { ctx } from './ctx.js';
 import { fillDots } from './dots.js';
-import { buildingGlyph } from './bars.js';
+import { withRise } from './rise.js';
+import { AFTER_JOB } from '../jobs.js';
 import { writeCount, widthOf, drawable, GH } from './numfont.js';
 import { screenAt } from './frame.js';
 import { stationBox, stationX0, fileAt, rankAtY, groundOf, ART, AP } from '../after/place.js';
 import { airMotes } from '../after/rebel.js';
-import { built } from '../after/levels.js';
+import { built, raising } from '../after/levels.js';
 import { atStation, bodyInk, carried as carryOf } from '../after/bodies.js';
 import { gestureView } from '../after/gestures.js';
 import { loadKind } from '../carry.js';
@@ -35,7 +36,7 @@ import { drawFloor } from './after/floor.js';
 import { deepAt } from '../after/sky.js';
 import { drawCloudSky } from './after/cloudsky.js';
 import { drawGrove } from './after/pine.js';
-import { DRAW, workerPose, GLYPHS, backOf } from './after/stations.js';
+import { DRAW, workerPose, backOf } from './after/stations.js';
 import { drawFistFlag } from './aftercrowd.js';
 import { heap, heapCells, drawGround, goodBlock } from './after/piles.js';
 import { drawBasket, drawBasketBack } from './after/basket.js';
@@ -48,7 +49,6 @@ import { now as wallNow } from '../clock.js';
 import { motePos } from './cursor.js';
 
 const A = () => S.after;
-const snap = v => Math.round(v / P) * P;
 const cell = (x, y, tone) => { ctx.fillStyle = GREY[tone]; ctx.fillRect(x, y, P, P); };
 // A drawing laid with its origin at a world point put on a whole device
 // pixel (render/crew.js, `rigid`), drawn off (0, 0) in whole pixels: a thing
@@ -59,7 +59,6 @@ function onPixel(x, y, draw) {
   ctx.translate(tx, ty);
   try { draw(); } finally { ctx.translate(-tx, -ty); }
 }
-const fadeIn = at => (at == null ? 1 : Math.min(1, (now() - at) / AFTER_BUILD_FADE_S));
 
 // The crowd's files and ranks in view: God's crowd draws only these
 // (render/aftercrowd.js), and the cost check reads them.
@@ -113,72 +112,23 @@ const readHands = () => { hands = {}; for (const r of gestureView() || []) hands
 // none: its timber is the plot of blocks carried to its rack (after/piles.js,
 // `benchtimber`), drawn with the other piles, never a count of the mound.
 const extras = () => ({});
-// The glyph over a station, `at` of it built: hung where the yard hangs one,
-// seven cells over the top.
-function glyphOver(b, rows, at) {
-  if (!rows) return;
-  buildingGlyph(snap(b.x + b.w / 2), b.y - P * 7 - (SHELF_GLYPH_CELLS / 2 - 1.5) * P, rows, clamp01(at));
-}
-// How far a station's build has taken its closed look down, 0 to 1: each
-// piece landed, faded in over AFTER_BUILD_FADE_S, its share.
-const openedBy = r => (r ? r.at.slice(0, r.n).reduce((s, at) => s + fadeIn(at), 0) / AFTER_BUILD_PIECES : 0);
-const openedOf = key => { const r = A().raising[key]; return built(key) ? (r ? openedBy(r) : 1) : openedBy(r); };
-const alphaDo = (a, fn) => { if (a <= 0) return; const was = ctx.globalAlpha; ctx.globalAlpha = was * Math.min(1, a); fn(); ctx.globalAlpha = was; };
-// Its outline: the drawing's own cells (its silhouette) at its edge, every
-// other one, in the mid grey: a plan of what will stand.
-const OUTLINES = {};
-function outlineOf(key) {
-  if (OUTLINES[key]) return OUTLINES[key];
-  const on = new Set();
-  for (const [row, a, b] of backOf(key)) for (let c = a; c <= b; c++) on.add(`${c},${row}`);
-  const out = [];
-  for (const k of on) {
-    const [c, row] = k.split(',').map(Number);
-    const edge = !on.has(`${c - 1},${row}`) || !on.has(`${c + 1},${row}`) || !on.has(`${c},${row - 1}`) || !on.has(`${c},${row + 1}`);
-    if (edge && (c + row) % 2 === 0) out.push([c, row]);
-  }
-  return (OUTLINES[key] = out);
-}
-// A closed station: its dotted outline, faded off as its build lands, and
-// the station going up a course a piece, the floor up, each fading in as it
-// lands.
-function closedStation(key, draw, opened) {
-  const d = frameOf(key), b = stationBox(key), r = A().raising[key], rows = b.h / P;
-  alphaDo(1 - opened, () => { for (const [c, row] of outlineOf(key)) d.c(c, row, MID); });
-  for (let k = 0; r && k < r.n; k++) {
-    const top = Math.round(rows * (k + 1) / AFTER_BUILD_PIECES), bot = Math.round(rows * k / AFTER_BUILD_PIECES);
-    ctx.save();
-    ctx.beginPath(); ctx.rect(b.x - AP * 4, groundOf(key) - top * P, b.w + AP * 10, (top - bot) * P + (k ? 0 : P)); ctx.clip();
-    ctx.globalAlpha = fadeIn(r.at[k]);
-    draw(d, false, 0);
-    ctx.restore();
-  }
-}
+// A station in one of three states, as the yard's are (DESIGN.md, "Act 3
+// builds through the yard's construction"): not bought, its lot empty but
+// for its build sign (buildsign.js); bought, rising out of the cloud a course
+// of cells at a time with its work (render/rise.js, `withRise`), the fence,
+// the builder and the glyph over it the yard's; built, drawn whole.
 function drawStation(key) {
   const b = stationBox(key);
   if (!inView(b.x - P * 16, b.w + P * 32)) return;
-  const a = A(), r = a.raising[key];
+  const a = A();
   // Each drawn on its paper backing, so the camp's crowd behind it does not
   // show through its open parts; the pillar is paper through already.
   const draw = key === 'pedestal' ? drawPillar : (d, work, t) => { backing(d, backOf(key)); DRAW[key](d, work, t, hands[key], atStation(key).length > 0, extras(key)); };
-  // Closed, or just built and its closed look still fading off as the last
-  // piece lands: its loads on the spot while it goes up.
-  const opened = openedOf(key);
-  if (opened < 1 && key !== 'pedestal' && !AFTER_START_BUILT.includes(key)) {
-    closedStation(key, draw, opened);
-    return;
-  }
-  draw(frameOf(key), working(key).work, a.t);
-}
-// The shack, ordering: the glyph of the station going up filling over it a
-// piece at a time, each fading in as it lands.
-function drawShackOrder() {
-  const a = A(), b = stationBox('shack');
-  const key = AFTER_CARDS.find(k => a.raising[k] && !built(k));
-  if (!key) return;
-  const r = a.raising[key];
-  const last = r.at.length ? fadeIn(r.at[r.at.length - 1]) : 1;
-  glyphOver(b, GLYPHS[key], (r.n - 1 + last) / AFTER_BUILD_PIECES);
+  if (key === 'pedestal' || AFTER_START_BUILT.includes(key) || built(key)) { draw(frameOf(key), working(key).work, a.t); return; }
+  if (!raising(key)) return;
+  // `withRise` draws straight through a place that is not rising, so it is
+  // asked only of a station whose work is on.
+  withRise(`after-${key}`, b.x, groundOf(key), b.w, groundOf(key) - b.y, () => draw(frameOf(key), false, 0));
 }
 // Each station's counted piles, on its own ground, the workshop's signs and
 // timber among them: drawn over the lip of billows along the path's front
@@ -203,7 +153,6 @@ export function drawAfterCamp() {
   drawUnionCrowd();
   // the forestry shack, the grove's, then the cards' stations
   for (const key of Object.keys(AFTER_STATIONS)) drawStation(key);
-  drawShackOrder();
   drawRebelPile();
   drawPair();
   drawBubbles();
@@ -225,13 +174,7 @@ function drawLoad(x, y, kind, n, load = null) {
   // Logs and timber as the blocks they lie on their piles as
   // (render/after/piles.js, `goodBlock`), stacked a block on a block over the
   // body's middle column.
-  if (kind === 'load') {
-    // A station's load on a head, a paper rim round it so it stands clear of
-    // the black station rising behind it.
-    const z = AFTER_BLOCK.load * AP, lx = x + 1.5 * P - z / 2, ly = y - z;
-    ctx.fillStyle = GREY[W]; ctx.fillRect(lx - 2, ly - 2, z + 4, z + 4);
-    goodBlock(lx, ly, kind);
-  } else if (kind === 'log' || kind === 'plank') {
+  if (kind === 'log' || kind === 'plank') {
     const z = AFTER_BLOCK[kind] * AP, lx = x + 1.5 * P - z / 2;
     for (let k = 0; k < n; k++) goodBlock(lx, y - (k + 1) * z, kind, load && load[k]);
   } else if (kind === 'sign') {
@@ -269,7 +212,10 @@ function drawMember(w) {
     const s = working(w.at), pose = workerPose(w.at, s.work, A().t);
     if (pose) { frameOf(w.at).body(pose.x, pose.y, pose.dx, 0, pose.squat); return; }
   }
-  onPixel(w.x - P, w.y - 3 * P, () => {
+  // A builder's blow lunges it down into the work, as the yard's does
+  // (render/crew.js, `LOOK.builder`).
+  const lunge = w.job === AFTER_JOB.BUILD ? (w.lunge || 0) * P : 0;
+  onPixel(w.x - P, w.y - 3 * P + lunge, () => {
     const x = 0, y = 0;
     drawBody(x, y);
     ctx.fillStyle = GREY[K];

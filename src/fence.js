@@ -33,20 +33,42 @@ const groundAt = (site, foot, x) => {
   return Math.round((f ?? groundOf(foot.y)) / P) * P;
 };
 
+// The places whose map claims the fence (footprints.js): there a post is
+// placed, not hand-put -- FENCE_GAP cells off its work's ground if that
+// touches nothing else, else the nearest spot a cell nearer the work that
+// does, as far in as standing on the work's own edge (a lot packed between
+// its neighbors' piles). Elsewhere it stands where it always has, until the
+// yard's and the deep's fences are claimed too (TODO.md).
+export const FENCE_CLAIMED = new Set(['after']);
+const meets = (a, b) => Math.min(a.x + a.w, b.x + b.w) > Math.max(a.x, b.x) && Math.min(a.y + a.h, b.y + b.h) > Math.max(a.y, b.y);
+
 // The fence of one work: its two posts as rects, and the tape's run.
 export function fenceOf(site, work) {
   const foot = siteBox(site, work);
   if (!foot) return null;
   const postW = P * FENCE_POST_W, postH = P * FENCE_POST_BANDS;
-  const left = Math.round(foot.x / P) * P - P * FENCE_GAP - postW;
-  const right = Math.round((foot.x + foot.w) / P) * P + P * FENCE_GAP;
-  const gl = groundAt(site, foot, left + postW / 2), gr = groundAt(site, foot, right + postW / 2);
-  const mid = groundAt(site, foot, foot.x + foot.w / 2);
-  return {
-    posts: [{ x: left, y: gl - postH, w: postW, h: postH }, { x: right, y: gr - postH, w: postW, h: postH }],
-    tape: { x0: left + postW, x1: right, y: mid - P * TAPE_UP }
+  const x0 = Math.round(foot.x / P) * P, x1 = Math.round((foot.x + foot.w) / P) * P;
+  const postAt = x => { const g = groundAt(site, foot, x + postW / 2); return { x, y: g - postH, w: postW, h: postH }; };
+  const place = placeOfSite(site);
+  // Each post from FENCE_GAP cells out in toward the work (`dir`), a cell at
+  // a time, the first spot clear of every other object standing there.
+  let others = null;
+  const clear = q => !(others ||= standingNear(place).filter(o => o.id !== fenceOwner(site, work)).flatMap(o => o.rects)).some(r => meets(q, r));
+  const seat = (from, to, dir) => {
+    if (!FENCE_CLAIMED.has(place)) return postAt(from);
+    for (let x = from; dir > 0 ? x <= to : x >= to; x += dir * P) { const q = postAt(x); if (clear(q)) return q; }
+    return postAt(to);
   };
+  const left = seat(x0 - P * FENCE_GAP - postW, x0, 1);
+  const right = seat(x1 + P * FENCE_GAP, x1 - postW, -1);
+  const mid = groundAt(site, foot, foot.x + foot.w / 2);
+  return { posts: [left, right], tape: { x0: left.x + postW, x1: right.x, y: mid - P * TAPE_UP } };
 }
+
+// What else stands in a place, handed over by footprints.js (which reads
+// this file, so cannot be read back from it).
+let standingNear = () => [];  // page: the wiring, handed over once at load
+export const claimStanding = f => { standingNear = f; };
 
 // Every fence standing, keyed by the site it fences.
 export const fences = () => SITES.flatMap(site => fencedWorks(site).map(w => ({ site, work: w, fence: fenceOf(site, w) })))

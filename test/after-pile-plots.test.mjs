@@ -64,7 +64,7 @@ group('each pile holds exactly its stock in blocks through a played run, a timbe
   }
   // A bill paid in timber, bought the player's way: an order, its blocks
   // spoken for on the pile and carried off it by bodies, a block at a time,
-  // the row landing with the last (after/build.js).
+  // the row landing with the last (after/orders.js).
   window.__afterGrant({ timber: Math.max(0, BILL_TIMBER + 1 - goodCount('timber')) });
   const t0 = goodCount('timber'), bill = BILL_TIMBER;
   const bought = window.__buy('after-blade');
