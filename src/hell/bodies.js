@@ -366,7 +366,11 @@ export const HELL_CREW = {
     const c = chamberUnder(b.x);
     return { y: chamberFloor(c), x0: chamberX0(c) + P, x1: chamberX1(c) - P };
   },
-  // Its way is asked again from the chamber it came down in (`goTo`).
+  mid: b => b.x,
+  // Its way is asked again from the chamber it came down in (`goTo`). No
+  // spill: what a ghost carries is a claimed errand, kept through a shaking.
+  // No assign: the muster deals the jobs, in order, and a member put to a
+  // face is there for good.
   landed(b) { b.c = chamberUnder(b.x); b.way = []; }
 };
 

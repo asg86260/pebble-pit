@@ -2,7 +2,7 @@
 // wearing. Neither of them negotiates with the day's work, which is why both sit
 // at the top of the stage list.
 
-import { WORKER, GRAV, HURL_DRAG, SINK_PULL, SINK_DRAG } from '../config.js';
+import { WORKER, GRAV, SINK_PULL, SINK_DRAG } from '../config.js';
 import { S, floor, pit } from '../state.js';
 import { addGrain } from '../grid.js';
 import { atStation, blocked } from '../world.js';
@@ -12,7 +12,7 @@ import { restOnRock } from '../rock.js';
 import { JOB_OF } from '../levels.js';
 import { now, frames } from '../clock.js';
 import { settle, retask } from './commute.js';
-import { sfx } from '../audio.js';
+import { fallIn } from './gravity.js';
 import { dropScale } from '../deep/scales.js';
 import { source } from '../flow.js';
 
@@ -89,67 +89,47 @@ function sink(w) {
   retask(w, w.type);                // and swims back to its work from there
 }
 
-// one frame of that fall, and what happens when it stops
-export function fall(w) {
-  if (w.y > S.worldH) { sink(w); return; }
-  // The foot is read after the x step, or a body thrown onto the rock stops
-  // in the air where the rock was not. Speeds are pixels a frame, gravity
-  // pixels a frame a frame, and the drag a proportion of what is left, so it
-  // is raised to the frame count instead of multiplied by it.
-  const f = frames();
-  if (w.vx) {
-    w.x += w.vx * f;
-    w.vx *= HURL_DRAG ** f;
-    // The ends are the WORLD's, not `yardLeft`: that is the first heap, and
-    // the farm, the tower and the air filter all stand left of it.
-    const lo = floor.x, hi = pit.x + pit.w - WORKER;
-    if (w.x < lo) { w.x = lo; w.vx = -w.vx * 0.4; }
-    if (w.x > hi) { w.x = hi; w.vx = -w.vx * 0.4; }
-    if (Math.abs(w.vx) < 0.05) w.vx = 0;
-  }
-  const foot = landing(w);
-  w.vy += GRAV * f;
-  w.y += w.vy * f;
-  if (w.y < foot) return;
-  w.y = foot;
-  w.vy = 0;
-  w.vx = 0;
-  w.falling = false;
-  sfx('body-land', { x: w.x + WORKER / 2 });
-  w.foot = w.footAt = null;        // it climbs to wherever it is standing now
-  // and if it was shaken on the way up, it stands there seeing stars first
-  if (w.dizzyFor) {
-    w.dizzyUntil = now() + w.dizzyFor;
-    w.say = { mark: 'dizzy', until: w.dizzyUntil };
-    w.dizzyFor = 0;
-    w.landedAt = w.x;                       // what it wobbles about
-    // Whatever it was carrying lands where the body is standing, hill
-    // included.
-    if (w.spill) {
-      for (let i = 0; i < w.spill; i++) {
-        const x = w.x + WORKER / 2;
-        if (!restOnRock(x, 1)) addGrain(floor, x, blocked);
-      }
-      w.spill = 0;
+// The yard's answers. Its x range is the WORLD's, not `yardLeft`: that is the
+// first heap, and the farm, the tower and the air filter all stand left of it.
+export const YARD_GROUND = {
+  land: w => ({ y: landing(w), x0: floor.x, x1: pit.x + pit.w - WORKER }),
+  mid: w => w.x + WORKER / 2,
+  // A body let go of under the yard's world is in the deep's water.
+  sink(w) {
+    if (!(w.y > S.worldH)) return false;
+    sink(w);
+    return true;
+  },
+  down(w) { w.foot = w.footAt = null; },    // it climbs to wherever it is standing now
+  // Whatever it was carrying lands where the body is standing, hill included.
+  spill(w) {
+    if (!w.spill) return;
+    for (let i = 0; i < w.spill; i++) {
+      const x = w.x + WORKER / 2;
+      if (!restOnRock(x, 1)) addGrain(floor, x, blocked);
     }
-    // The hat is NOT put back on here: the body has to go and get it.
-    return;                                 // it is in no state to be given a job
+    w.spill = 0;
+  },
+  landed(w) {
+    // A body that lands mid-commute keeps its legs and only re-routes from
+    // where it is now: a hand-assignment (`assignDrop`) retasks the body in
+    // the air, hat first, and settling it because it came down on the station
+    // threw the hat leg away and stood it there bare-headed. A lift drops the
+    // walk, so a thrown body never lands walking; only a drop onto a station
+    // does. A leg is somewhere to go: `walking` alone is a flag a check can set.
+    if (w.walking && w.walkTo != null) { w.route = null; return; }
+    // Straight back to it if this is where it works, a walk if not -- unless
+    // it fell mid-errand with a claim held, in which case only the stale route
+    // is dropped and the mess stage steers it on. Re-tasking that body sends
+    // it home across the world and straight back to the same dip, a lap a
+    // fall. The claim is asked first: a rockhand sent off the rock for a patch
+    // steps off its edge and lands at its own station's foot, and settling it
+    // there dropped the patch it was on its way to.
+    if (w.goal === 'muck' && w.muckAt != null) w.route = null;
+    else if (atStation(JOB_OF[w.type], w.x + WORKER / 2)) settle(w);
+    else retask(w, w.type);
   }
-  // A body that lands mid-commute keeps its legs and only re-routes from where
-  // it is now: a hand-assignment (`assignDrop`) retasks the body in the air,
-  // hat first, and settling it because it came down on the station threw the
-  // hat leg away and stood it there bare-headed. A lift drops the walk, so a
-  // thrown body never lands walking; only a drop onto a station does. A leg
-  // is somewhere to go: `walking` alone is a flag a check can set.
-  if (w.walking && w.walkTo != null) { w.route = null; return; }
-  // Straight back to it if this is where it works, a walk if not -- unless it
-  // fell mid-errand with a claim held, in which case only the stale route is
-  // dropped and the mess stage steers it on. Re-tasking that body sends it
-  // home across the world and straight back to the same dip, a lap a fall.
-  // The claim is asked first: a rockhand sent off the rock for a patch steps
-  // off its edge and lands at its own station's foot, and settling it there
-  // dropped the patch it was on its way to.
-  if (w.goal === 'muck' && w.muckAt != null) w.route = null;
-  else if (atStation(JOB_OF[w.type], w.x + WORKER / 2)) settle(w);
-  else retask(w, w.type);
-}
+};
+
+// one frame of a yard body's fall, and what happens when it stops
+export const fall = w => fallIn(w, frames(), YARD_GROUND);

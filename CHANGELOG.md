@@ -302,6 +302,8 @@ this section; the release that switches it on moves these under Unreleased.
 - Switching saves no longer carries dust on the cursor, scales in the water or blocks lying in act 3 from the old game into the new one (test/save-switch.test.mjs).
 - A card's refund and another buttons stand one over the other with room round their words instead of touching side by side (src/selftest/boardwords.js).
 - A scene's camera pin no longer holds the view under the next check (src/selftest/view.js).
+- In heaven and hell a member let go of lands with a thud, and one shaken first sees stars and drops what it was carrying where it lands, as in the yard (test/act-bodies-engine.test.mjs).
+- In heaven, a member dropped on a station is put on that station's job, instead of being thrown at it (test/act-bodies-engine.test.mjs).
 
 ## v0.6.1 — 2026-10-19
 

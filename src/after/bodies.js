@@ -42,7 +42,7 @@ import { built, seatsOf, bladeLogs, benchSigns } from './levels.js';
 // the body this frame.
 import { pullStep } from './stump.js';
 import { plantStep, fetchStep, seedsOwed } from './seeds.js';
-import { afterX0, afterX1, afterFloor, floorAt, stationDoor, stationBox, signFetchX, pileMid, pileOwner, plotX, soulX, soulY, groveX1, campSpot, idleX, idleSpots, podiumMid, overCrowd, crowdEdge, AP } from './place.js';
+import { afterX0, afterX1, afterTop, afterFloor, floorAt, stationDoor, stationBox, signFetchX, pileMid, pileOwner, plotX, soulX, soulY, groveX1, campSpot, idleX, idleSpots, podiumMid, overCrowd, crowdEdge, AP } from './place.js';
 import { agitate } from './rebel.js';
 import { standing, chopTree, settled, layGood } from './grove.js';
 import { isPiled, setBlock, pileCount, pileRoom, pileBrim } from './piles.js';
@@ -53,6 +53,7 @@ import { workAfter } from './work.js';
 import { isIdle, handsFree, timberReserved, nextOrder, orderOf, orderAt, orderBrought } from './orders.js';
 import { stepActBuilder, builds as building } from './builders.js';
 import { manSites } from '../crew/sitework.js';
+import { targetAt } from '../crew/assign.js';
 import { busySitesIn, onTheGo, siteBox, siteX } from '../works.js';
 
 const floorY = () => afterFloor();
@@ -783,6 +784,33 @@ export const AFTER_JOB_ROWS = {
 // fading into it; every job's frame and the idle at the podium; then each
 // job staffed to its roster and the sites given builders.
 const BODY_H = 3 * P;
+// A member let go of over a station, read the yard's way (crew/assign.js,
+// `targetAt`): the station a job's post is (`after-<post>`, its ground the
+// station's), a seat free there, and not the job it is on already (a body
+// lent off a job is still that job's).
+const DROPS = {
+  jobs: Object.fromEntries(AFTER_JOBS.map(job => [`after-${AFTER_JOB_POST[job]}`, job])),
+  room: job => seatsOf(job) - crewAt(job),
+  jobOf: w => w.lentFrom || w.job || null,
+  at: w => ({ x: w.x, y: w.y - BODY_H / 2 }),
+  rock: false,
+  top: () => afterTop()
+};
+// The drop itself: THIS body put on the job, where it was let go, as the
+// yard's `assignDrop` retrains the body dropped and no other. The job it was
+// on is one fewer on its roster, the new one one more, and whatever errand or
+// loan it had is let go.
+function dropOn(w) {
+  const at = DROPS.at(w), t = targetAt(w, at.x, at.y, DROPS);
+  if (!t) return false;
+  const c = S.after.crew, old = DROPS.jobOf(w);
+  if (old && AFTER_JOBS.includes(old)) { c[old] = crewAt(old) - 1; if (!c[old]) delete c[old]; }
+  c[t.job] = crewAt(t.job) + 1;
+  takeJob(w, t.job);
+  delete w.lentFrom;
+  Object.assign(w, { state: 'work', full: false, site: null, workId: null, goal: null, dest: null });
+  return true;
+}
 export const AFTER_CREW = {
   list: () => (S.after ? S.after.bodies : null),
   route: walkTo,
@@ -836,7 +864,22 @@ export const AFTER_CREW = {
   // it walks back to its tree rather than standing there again at once.
   lifted(w) { w.at = null; unsaw(w); },
   land: w => ({ y: floorAt(w.x), x0: afterX0() + P, x1: afterX1() - P * 2 }),
-  landed() {}
+  mid: w => w.x,
+  // Shaken, what was in its arms is laid on the floor where it came down, as
+  // goods (`layAll`), for whoever gathers next; a bought row's timber it was
+  // carrying is let go off the order, which takes it up again from the floor.
+  spill(w) {
+    if (isEmpty(w)) return;
+    const o = w.order != null ? orderOf(w.order) : null;
+    if (o) o.claimed = Math.max(0, o.claimed - count(w));
+    layAll(w);
+    Object.assign(w, { to: null, pick: false, out: false, order: null, target: null, log: null });
+  },
+  // Back to its work from where it came down: the spot it was dealt and the
+  // door it stood at are asked again by its job's own frame.
+  landed(w) { w.dest = null; w.at = null; },
+  assign: w => dropOn(w),
+  drops: DROPS
 };
 
 // One frame of every member up here.
