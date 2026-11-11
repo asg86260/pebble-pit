@@ -76,7 +76,7 @@ export function holdBody(w, x, y) {
 // slow, so it can be caught. The stamp is refreshed on every pointermove, so
 // the slow outlives the hover by HOVER_SLOW_MS and no more.
 export function hoverAt(x, y) {
-  const w = isActView(S.view) ? grabAt(x, y) : workerAt(x, y);
+  const w = grabAt(x, y);
   if (!w || w.lifted || S.crewSight == null) return w;
   w.slowUntil = now() + HOVER_SLOW_MS;
   return w;

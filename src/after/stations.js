@@ -14,11 +14,11 @@
 
 import { held } from '../reset.js';
 import { S } from '../state.js';
-import { P, AFTER_ROSTER_DOWN, AFTER_ROSTER_SHOP_DROP, AFTER_BUILDS } from '../config.js';
+import { P, AFTER_ROSTER_DOWN, AFTER_ROSTER_SHOP_DROP, AFTER_BUILDS, AFTER_PILE_REACH } from '../config.js';
 import { msg } from '../lang.js';
 import { afterlifeOn } from '../acts.js';
 import { built } from './levels.js';
-import { stationBox, groundOf, afterFloor, closed, pilePlace, pileOwner, floorAt } from './place.js';
+import { stationBox, groundOf, afterFloor, closed, pilePlace, pileOwner, pileBox, floorAt } from './place.js';
 import { afterRow } from './rows.js';
 import { boardFlag } from '../stations.js';
 import { PILED, pileFull } from './piles.js';
@@ -107,29 +107,34 @@ const lotOf = card => ({
   name: NAMES[card]
 });
 
-// In the order a press asks them: the standing stations, the grove, God's camp.
+// In the order the pointer asks them: the piles, the standing stations, the
+// grove, God's camp.
 const STATION_CARDS = ['mill', 'workshop', 'shack', 'pedestal'];
 export const AFTER_STATION_ROWS = [
+  // The counted piles at their brims (after/piles.js): each wears the same
+  // mark over its plot, and its hover is the yard's own "pile is full". The
+  // pointer opens nothing on one (`hit`), but names it over its heap
+  // (`over`, the footprint it claims, footprints.js); first, since a heap
+  // stands in front of its station's ground and is the nearer thing named.
+  ...PILED.map(what => ({
+    key: `after-pile-${what}`, place: 'after', glyph: 'crate', after: [], needs: () => false,
+    get name() { return msg(PILE_NAMES[what]); },
+    open: () => live() && built(pileOwner(what)), stand: () => pileTop(what), hit: () => false,
+    over: () => pileBox(pileOwner(what), what, AFTER_PILE_REACH),
+    pile: () => pileFull(what)
+  })),
   ...STATION_CARDS.map(card => row(card, {
     // Standing only once built: a station not yet built has no board and no
     // button, and its drawing opens nothing; its build sign is the way in.
     open: () => live() && built(card),
     ...(card in AFTER_BUILDS ? { lot: lotOf(card) } : {}),
     // The construction shack sells nothing (the owner, 2026-11-10): it
-    // stands, with no board and no button, and the pointer asks nothing of
-    // it, as of a pile (`hit`).
-    ...(card === 'shack' ? { board: null, line: null, boardAnchor: null, hit: () => false } : {})
+    // stands, with no board and no button, and the pointer opens nothing on
+    // it, as of a pile (`hit`), but names it over its drawing (`over`).
+    ...(card === 'shack' ? { board: null, line: null, boardAnchor: null, hit: () => false, over: () => stationBox(card) } : {})
   })),
   // A press on a tree is the saw's (after/gestures.js).
   row('grove', { open: live }),
-  // The counted piles at their brims (after/piles.js): each wears the same
-  // mark over its plot, and its hover is the yard's own "pile is full".
-  ...PILED.map(what => ({
-    key: `after-pile-${what}`, place: 'after', glyph: 'crate', after: [], needs: () => false,
-    get name() { return msg(PILE_NAMES[what]); },
-    open: () => live() && built(pileOwner(what)), stand: () => pileTop(what), hit: () => false,
-    pile: () => pileFull(what)
-  })),
   row('crowd', {
     open: live,
     // God's camp: his middle, sliding at his layer's rate, and the main

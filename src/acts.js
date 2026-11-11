@@ -22,6 +22,7 @@ import { HELL_PLACE, HELL_ROUTE } from './hell/place.js';
 import { AFTER_CREW } from './after/bodies.js';
 import { AFTER_LANDING } from './after/piles.js';
 import { plantLand } from './after/seeds.js';
+import { lyingSays } from './after/grove.js';
 import { DEEP_LANDING } from './deep/scales.js';
 import { takeAt, takeTopOf } from './after/ground.js';
 import { blockAt, takeUnit, kindOf } from './grid.js';
@@ -71,8 +72,11 @@ const AFTER_AT_YARD = {
   get margin() { const m = S.worldH - S.groundY; return Number.isFinite(m) && m > 0 ? m : AFTER_PLACE.margin; },
   get crew() { return AFTER_CREW; },
   // Its ground, for the one hand (hands.js, groundAt).
-  get ground() { return AFTER_GROUND; }
-,
+  get ground() { return AFTER_GROUND; },
+  // What of its own lies under the pointer, in a word, for the shared hover
+  // (input.js, `whatIsAt`): a good on its floor, as the yard's floor answers
+  // with a grain. Its stations and piles are named off their rows.
+  sayAt: (x, y) => lyingSays(x, y),
   // Where a good of its own, thrown into the air, comes down (game.js, `stepChips`).
   // the saw mill's bed, then a bare plot's soil bed (an acorn let go over it
   // is planted, after/seeds.js), then the ground: built on first ask, since
@@ -99,6 +103,25 @@ export const crewHolding = w => {
 // floor, so only the rise riding up the road sees it.
 export const afterUnder = () => AFTER_AT_YARD.floor() + AFTER_AT_YARD.margin + ACT_ROAD_UNDER;
 export const actPlace = v => PLACES[v] || null;
+// Each act's own hand (DESIGN.md, "Clicks on the yard's engine"): the work a
+// press does in its place beyond what the shared pointer does there -- act
+// 3's gestures, hell's pick. Handed over by the act's module, as a place
+// hands over its roster's buttons (roster.js, `rosterShops`), and asked by
+// input.js on the shared hit test and camera, in world px:
+//   press(x, y)  before the station table: true if the hand took it
+//   shuts        a press it took puts the open board and any tip away
+//   click(x, y)  after the station table: the place's own click
+//   under(x, y)  whether a press there would be the hand's (the cursor's
+//                grab, no board or label over it, a finger claimed)
+//   held(), move(x, y), up(x, y)   a press held until the release
+//   taken()      the last press was the hand's: its release is no tap
+//   hover(x, y)  the pointer over the place, null when it leaves
+// Kept on the function, not a module const: an act's module may hand its
+// hand over while this module is still being read (the imports run both
+// ways), and a const would not be there yet.
+export function placeHand(v, hand) { (placeHand.hands ||= new Map()).set(v, hand); }
+export const handOf = v => placeHand.hands?.get(v) || null;
+export const hands = () => [...(placeHand.hands?.values() || [])];
 // The act place a world point is in, or null for the yard and the deep: the
 // places stand over the yard on the same x, so where a pointer is is asked of
 // both coordinates (hands.js keeps the yard's floor out of an act's sweep).

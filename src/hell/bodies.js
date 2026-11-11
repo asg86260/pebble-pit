@@ -25,6 +25,7 @@
 // registry of jobs; its ladders are ways and links the one router walks.
 
 import { S } from '../state.js';
+import { msg } from '../lang.js';
 import { HELL_JOB } from '../jobs.js';
 import { P, HELL_TIERS, HELL_JOBS, GANG_MAX, GHOST_WALK, MUSTER_EVERY_S, GHOST_FADE_S,
          HOPPER_MAX, FURNACE_FUEL_MAX, WALL_RATE } from '../config.js';
@@ -333,6 +334,8 @@ export const HELL_CREW = {
   // Drawn a square two cells across, x its middle and y its feet
   // (render/hell.js, `ghost`).
   box: b => ({ x: b.x - P, y: b.y - 2 * P, w: 2 * P, h: 2 * P }),
+  // What the hover calls one (input.js, `whatIsAt`).
+  says: () => msg('hover-ghost'),
   // Not one still on the road down, or still fading in at its top.
   pickable: b => b.job != null && b.age >= GHOST_FADE_S,
   hold(b, x, y) { b.x = x; b.y = y + P; },

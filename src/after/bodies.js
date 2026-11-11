@@ -25,7 +25,9 @@
 // has walked out by the thousand costs the frame nothing while it waits.
 
 import { S } from '../state.js';
+import { msg } from '../lang.js';
 import { sink } from '../flow.js';
+import { JOB_NAMES } from './rows.js';
 import { AFTER_JOB } from '../jobs.js';
 import { P, AFTER_SLOT_GAP, AFTER_JOBS, AFTER_JOB_POST, AFTER_AGITATE_S, AFTER_SAW_HEFT, AFTER_TREE, TREE_CHOPS, AFTER_PLANT_S,
          AFTER_PUT_S, AFTER_SAW_S, AFTER_CHOP_HOLD_S,
@@ -855,6 +857,9 @@ export const AFTER_CREW = {
   // Drawn as the yard's square, x its middle column and y its feet
   // (render/after.js, `body`).
   box: w => ({ x: w.x - P, y: w.y - BODY_H, w: 3 * P, h: BODY_H }),
+  // What the hover calls one (input.js, `whatIsAt`), as the yard's are
+  // called by their type: its job, a builder, else a member.
+  says: w => (w.job && JOB_NAMES[w.job] ? JOB_NAMES[w.job]() : w.job === AFTER_JOB.BUILD ? msg('hover-builder') : msg('hover-member')),
   // Not one drawn somewhere else than where it stands: a body out among
   // God's crowd (drawn in depth), one walking into ours or still fading in,
   // the pair building (they are the pedestal's), and the first through a

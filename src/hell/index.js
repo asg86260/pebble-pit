@@ -13,7 +13,7 @@
 import { held } from '../reset.js';
 import { S } from '../state.js';
 import { HELL_TIERS } from '../config.js';
-import { hellOn } from '../acts.js';
+import { hellOn, placeHand } from '../acts.js';
 import { stepChambers } from './chambers.js';
 import { stepOre, strikeAt } from './ore.js';
 import { stepForge } from './forge.js';
@@ -129,6 +129,11 @@ export function clickHell(wx, wy) {
   lastSwing = { x: wx, y: wy, at: S.hell.clock, did: hit.did };
   return true;
 }
+// The pick is hell's hand on the shared pointer (acts.js, `placeHand`): a
+// blow, asked before the station's board, which a walk-up has opened
+// already and which stays up through it. Nothing is held and nothing taken,
+// so a finger's tap on a face both strikes it and opens its board.
+placeHand('hell', { press: clickHell });
 
 // --- the story's seams (Track C wires the beats) -------------------------------
 // Where the camera should hold: the deepest chamber reached, its next barrier
