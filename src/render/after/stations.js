@@ -19,7 +19,7 @@
 
 // REVIEW act-3-the-cabin-built
 // MOCK faith8
-import { P, AFTER_SAW_TEETH, AFTER_ART_SCALE, AFTER_MILL, AFTER_CABIN_SMOKE, AFTER_SHRINE_MOTES, AFTER_SHRINE_SAUCE, AFTER_SHRINE_FULL, AFTER_COIN_LIFE_S, AFTER_LINE_DARK } from '../../config.js';
+import { P, AFTER_SAW_TEETH, AFTER_ART_SCALE, AFTER_MILL, AFTER_CABIN_SMOKE, AFTER_SHRINE_MOTES, AFTER_SHRINE_SAUCE, AFTER_SHRINE_FULL, AFTER_SHRINE_FEEL, AFTER_COIN_LIFE_S, AFTER_LINE_DARK } from '../../config.js';
 import { K, W, PALE, MID, hash, silhouette, clamp01, square } from './kit.js';
 import { ART } from '../../after/art.js';
 import { CABIN } from '../../after/cabin.js';
@@ -341,7 +341,7 @@ function forestry(d, work, t) {
 //         off the tip to the counter in the corner on the same coin arc,
 //         motes bursting outward
 // Nothing here pops: everything comes and goes by opacity.
-export const SHRINE = { mode: 'fill', fill: 0, folk: 0, t0: 0, pray: null, shake: false, stream: false };   // MOCK faith13
+export const SHRINE = { mode: 'fill', fill: 0, folk: 0, t0: 0, pray: null, shake: false, stream: false, feel: null };   // MOCK faith13
 // MOCK faith12
 // The faithful at prayer: the frame's own body (kit.js `body`), whole, never
 // squashed or sheared, moved as one piece at its true position, eased.
@@ -450,6 +450,32 @@ function glint(d, rx, ry, c, g) {
   }
 }
 
+// MOCK faith14
+// What the full ring is doing at the scene's time `tl` in feel `name`: its
+// tremor off rest in cells (tx, ty), its scale, and the bursts of motes
+// begun (the start time of each, with its size). Smooth sums of sines under
+// an envelope, never a pose.
+function feelAt(name, tl, gate) {
+  const F = AFTER_SHRINE_FEEL, E = F[name], ph = tl % E.every, m = Math.floor(tl / E.every);
+  let env = E.base * gate, pulse = 0;
+  const bursts = [];
+  for (const b of E.beats) {
+    const up = clamp01((ph - (b.at - b.rise)) / b.rise), down = clamp01((b.at + b.fall - ph) / b.fall);
+    const e = ph < b.at ? Math.pow(up, b.curve) : ease3(down);
+    env = Math.max(env, e * b.amp * gate);
+    pulse = Math.max(pulse, ease3(clamp01(1 - Math.abs(ph - b.at) / (F.win / 2))) * b.pulse * gate);
+    bursts.push({ tb: ph - b.at, seed: m * 7 + b.at * 13, n: b.shed });
+  }
+  const w = tl * Math.PI * 2;
+  return { tx: env * Math.sin(w * F.hz[0]), ty: env * F.ySeen * Math.sin(w * F.hz[1] + 1), sc: 1 + pulse, bursts };
+}
+// the spawn of a mote off a ring cell: the cell, then outward from the hub and a little up
+function offRing(life, seed, out, up, pad = 0) {
+  return (u, k, n) => {
+    const c = RING.cells[Math.floor(hash(k * 5.1 + seed) * RING.cells.length)], hx = c.i - 9, hy = 9 - c.j, len = Math.hypot(hx, hy) || 1, e = easeOut(u);
+    return [hx + hx / len * out * e, hy + hy / len * out * e + up * u + pad];
+  };
+}
 function shrine(d, work, t) {
   const x0 = SH.x, run = (y, a, b, tone = K) => d.r(x0 + a, y, b - a + 1, 1, tone);
   const tl = Math.max(0, (t || 0) - SHRINE.t0), live = SHRINE.mode !== 'ring';
@@ -473,14 +499,35 @@ function shrine(d, work, t) {
     if (k < FU.shake.poses.length) [sx, sy] = FU.shake.poses[k];
   }
   const rx = x0 + FAITH_AT.x + sx, ry = FAITH_AT.y + sy;
+  // MOCK faith14: the feel's tremor and swell, drawn by moving the ring as one piece
+  const FL = SHRINE.feel && !d.sinking ? feelAt(SHRINE.feel, tl, clamp01((f - 0.97) / 0.03)) : null;
   // nothing paper in or round it: the sky and clouds run right up to the ring, and a backing read off this drawing (`silhouette`) holds no ring either
-  if (!d.sinking) ringAt(d, RING, rx, ry, f, false);
+  const hubPx = { x: d.ox + (rx + 9.5) * P, y: d.oy + (ry + 9.5) * P };
+  const move = fn => {
+    if (!FL) { fn(); return; }
+    ctx.save();
+    ctx.translate(hubPx.x + Math.round(FL.tx * P), hubPx.y + Math.round(FL.ty * P));
+    ctx.scale(FL.sc, FL.sc);
+    ctx.translate(-hubPx.x, -hubPx.y);
+    fn();
+    ctx.restore();
+  };
+  // MOCK faith14: swollen, the cells overlap by a pixel so scaling leaves no seam between them
+  const dd = FL && FL.sc > 1.001 ? { ...d, c: (x, y, tone) => d.px(x * P - 1, y * P - 1, P + 2, P + 2, tone) } : d;
+  if (!d.sinking) move(() => ringAt(dd, RING, rx, ry, f, false));
   const c = SA.click, w = tl % clickLoop(), t1 = c.hold + c.press, t2 = t1 + c.unwind;
   if (!d.sinking) {
     const C = AFTER_SHRINE_MOTES, hubX = rx + 9, hubUp = -ry - 9.5;
     // the rising motes, as many as the ring is full
+    if (!FL) {
     risePuffs(d, t || 0, C, C.puffs, rx + 9, -ry + 0.5, f);
     risePuffs(d, t || 0, { ...C, ...C.big }, C.big.puffs, rx + 9, -ry + 0.5, clamp01((f - 0.4) / 0.6));
+    } else {   // MOCK faith14: every mote leaves a ring cell
+      const M = AFTER_SHRINE_FEEL.motes, B = AFTER_SHRINE_FEEL.burst, ox = rx + 9 + FL.tx, oy = -ry - 10 - FL.ty;
+      risePuffs(d, t || 0, { ...M, path: offRing(M.life, 3, M.out, M.up) }, M.puffs, ox, oy, f);
+      for (const bu of FL.bursts) if (bu.tb >= 0 && bu.tb < B.life)
+        risePuffs(d, bu.tb, { ...B, once: true, path: offRing(B.life, bu.seed, B.out, B.up) }, bu.n, ox, oy, 1);
+    }
     if (SHRINE.stream) {   // MOCK faith13
       const ST = { ...C, ...FU.stream }, sh = clamp01((f - 0.9) / 0.1);
       risePuffs(d, t || 0, ST, ST.puffs, rx + 9 - sx, -ry + 0.5 + sy, sh);
@@ -490,7 +537,7 @@ function shrine(d, work, t) {
     const lit = f * N, u = (tl / SA.turnS) % 1, g = u * (lit + SA.glintCells), env = ease3(clamp01(Math.min(u, 1 - u) * 4));
     RING.cells.forEach(({ i, j }, k) => {
       const dr = g - k, tail = dr >= -1 && dr < SA.glintCells ? ease3(dr < 0 ? 1 + dr : 1 - dr / SA.glintCells) : 0;
-      if (tail > 0 && k < lit) d.fade(tail * env * SA.glintInk * clamp01(lit - k), () => d.c(rx + i, ry + j, W));
+      if (tail > 0 && k < lit) move(() => d.fade(tail * env * SA.glintInk * clamp01(lit - k), () => d.c(rx + i, ry + j, W)));
     });
     // the prayers: one sets out from a kneeler every `flyEvery`, but not while it is being emptied
     const every = SA.flyEvery, life = AFTER_COIN_LIFE_S, n = SHRINE.folk || 1, tail = life + SA.bounce.s + 0.4;
