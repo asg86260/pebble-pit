@@ -19,7 +19,7 @@
 
 // REVIEW act-3-the-cabin-built
 // MOCK faith8
-import { P, AFTER_SAW_TEETH, AFTER_ART_SCALE, AFTER_MILL, AFTER_CABIN_SMOKE, AFTER_SHRINE_MOTES, AFTER_SHRINE_SAUCE, AFTER_SHRINE_FULL, AFTER_SHRINE_FEEL, AFTER_COIN_LIFE_S, AFTER_LINE_DARK } from '../../config.js';
+import { P, AFTER_SAW_TEETH, AFTER_ART_SCALE, AFTER_MILL, AFTER_CABIN_SMOKE, AFTER_SHRINE_MOTES, AFTER_SHRINE_SAUCE, AFTER_SHRINE_FULL, AFTER_SHRINE_FEEL, AFTER_SHRINE_HEART, AFTER_COIN_LIFE_S, AFTER_LINE_DARK } from '../../config.js';
 import { K, W, PALE, MID, hash, silhouette, clamp01, square } from './kit.js';
 import { ART } from '../../after/art.js';
 import { CABIN } from '../../after/cabin.js';
@@ -456,6 +456,7 @@ function glint(d, rx, ry, c, g) {
 // begun (the start time of each, with its size). Smooth sums of sines under
 // an envelope, never a pose.
 function feelAt(name, tl, gate) {
+  if (AFTER_SHRINE_HEART[name]) return heartAt(AFTER_SHRINE_HEART[name], tl, gate);
   const F = AFTER_SHRINE_FEEL, E = F[name], ph = tl % E.every, m = Math.floor(tl / E.every);
   let env = E.base * gate, pulse = 0;
   const bursts = [];
@@ -469,11 +470,38 @@ function feelAt(name, tl, gate) {
   const w = tl * Math.PI * 2;
   return { tx: env * Math.sin(w * F.hz[0]), ty: env * F.ySeen * Math.sin(w * F.hz[1] + 1), sc: 1 + pulse, bursts };
 }
+// MOCK faith15
+// The heartbeat (config, AFTER_SHRINE_HEART): the same shape as `feelAt`'s, but
+// the tremor, swell and motes all follow each beat's own envelope, a quick
+// rise and a slower ease back, and a beat strays from the mean by a seeded hash.
+function heartAt(E, tl, gate) {
+  const V = E.vary, cyc = m => E.every * (1 + (E.breathe ? E.breathe * Math.sin(Math.PI * 2 * m / E.breatheEvery) : 0));
+  let start = 0, m = 0;
+  while (start + cyc(m) <= tl) { start += cyc(m); m++; }
+  const ph = tl - start, str = (c, bi) => 1 + (hash(c * 3.1 + bi * 7.7 + 1) - 0.5) * 2 * V.str;
+  let tx = 0, ty = 0, pulse = 0;
+  E.beats.forEach((b, bi) => {
+    const up = clamp01((ph - (b.at - b.rise)) / b.rise), down = clamp01((b.at + b.fall - ph) / b.fall);
+    const e = ph < b.at ? ease3(up) : Math.pow(down, 1.6), s = str(m, bi) * gate, w = Math.PI * 2 * (ph - (b.at - b.rise));
+    tx += e * b.amp * s * E.tremorScale * Math.sin(w * E.hz[0]);
+    ty += e * b.amp * s * E.tremorScale * E.ySeen * Math.sin(w * E.hz[1] + 1);
+    pulse = Math.max(pulse, e * b.pulse * s * E.pulseScale);
+  });
+  const bursts = [];
+  for (const c of m > 0 ? [m, m - 1] : [m]) {
+    const cs = c === m ? start : start - cyc(c);
+    E.beats.forEach((b, bi) => bursts.push({ tb: tl - cs - b.at, seed: c * 7 + bi * 13, n: Math.round(b.shed * (1 + (hash(c * 5.3 + bi * 2.9 + 2) - 0.5) * 2 * V.shed)), vary: V }));
+  }
+  return { tx, ty, sc: 1 + pulse, bursts, B: E.burst };
+}
 // the spawn of a mote off a ring cell: the cell, then outward from the hub and a little up
-function offRing(life, seed, out, up, pad = 0) {
+function offRing(life, seed, out, up, pad = 0, V = null) {
   return (u, k, n) => {
     const c = RING.cells[Math.floor(hash(k * 5.1 + seed) * RING.cells.length)], hx = c.i - 9, hy = 9 - c.j, len = Math.hypot(hx, hy) || 1, e = easeOut(u);
-    return [hx + hx / len * out * e, hy + hy / len * out * e + up * u + pad];
+    // MOCK faith15: each mote its own speed, heading and lift, by hash
+    const r = q => (hash(k * q + seed + 9) - 0.5) * 2, sp = V ? 1 + r(2.3) * V.speed : 1, an = V ? r(4.7) * V.ang : 0, ul = V ? 1 + r(6.1) * V.up : 1;
+    const ux = hx / len, uy = hy / len, dx = ux * Math.cos(an) - uy * Math.sin(an), dy = ux * Math.sin(an) + uy * Math.cos(an);
+    return [hx + dx * out * sp * e, hy + dy * out * sp * e + up * ul * u + pad];
   };
 }
 function shrine(d, work, t) {
@@ -523,10 +551,10 @@ function shrine(d, work, t) {
     risePuffs(d, t || 0, C, C.puffs, rx + 9, -ry + 0.5, f);
     risePuffs(d, t || 0, { ...C, ...C.big }, C.big.puffs, rx + 9, -ry + 0.5, clamp01((f - 0.4) / 0.6));
     } else {   // MOCK faith14: every mote leaves a ring cell
-      const M = AFTER_SHRINE_FEEL.motes, B = AFTER_SHRINE_FEEL.burst, ox = rx + 9 + FL.tx, oy = -ry - 10 - FL.ty;
+      const M = AFTER_SHRINE_FEEL.motes, B = FL.B || AFTER_SHRINE_FEEL.burst, ox = rx + 9 + FL.tx, oy = -ry - 10 - FL.ty;
       risePuffs(d, t || 0, { ...M, path: offRing(M.life, 3, M.out, M.up) }, M.puffs, ox, oy, f);
       for (const bu of FL.bursts) if (bu.tb >= 0 && bu.tb < B.life)
-        risePuffs(d, bu.tb, { ...B, once: true, path: offRing(B.life, bu.seed, B.out, B.up) }, bu.n, ox, oy, 1);
+        risePuffs(d, bu.tb, { ...B, once: true, path: offRing(B.life, bu.seed, B.out, B.up, 0, bu.vary) }, bu.n, ox, oy, 1);
     }
     if (SHRINE.stream) {   // MOCK faith13
       const ST = { ...C, ...FU.stream }, sh = clamp01((f - 0.9) / 0.1);

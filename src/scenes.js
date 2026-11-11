@@ -3494,6 +3494,16 @@ export const SCENES = {
   'faith14-c': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-full, a review branch, never merged', branch: 'review-faith-full',
     option: 'C heartbeat',
     say: 'full: two quick beats, each a tremor and a swell with motes shed off the ring, then rest; every three seconds', run: () => shrineAt('full', 0.25, 'hop', { feel: 'beat' }) },
+  // MOCK faith15
+  'faith15-a': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-full, a review branch, never merged', branch: 'review-faith-full',
+    option: 'A steady heartbeat',
+    say: 'full: a strong lub and a softer dub, an even rhythm; each beat a little different in strength and motes', run: () => shrineAt('full', 0.3, 'hop', { feel: 'heartA' }) },
+  'faith15-b': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-full, a review branch, never merged', branch: 'review-faith-full',
+    option: 'B a resting pulse',
+    say: 'full: the same heartbeat, its rest between beats slowly lengthening and shortening', run: () => shrineAt('full', 0.3, 'hop', { feel: 'heartB' }) },
+  'faith15-c': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-full, a review branch, never merged', branch: 'review-faith-full',
+    option: 'C softer edges',
+    say: 'full: the heartbeat with a gentler tremor, a bigger swell and motes that fade out slower', run: () => shrineAt('full', 0.3, 'hop', { feel: 'heartC' }) },
 
   'level-carry': { about: 'the acts', say: "the chain running: a carrier with a sign over the cloud, climbing the stage's plinth or out on its top",
     run: () => {
