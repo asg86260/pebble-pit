@@ -791,3 +791,25 @@ export const AFTER_SHRINE_FEEL = {
   motes: { puffs: 12, size: 1, life: 3, out: 6, up: 4, fadeIn: 5, peak: 0.8, greyAt: 0.55, greyFade: 0.2, tones: ['ink', 'ink'], ease: true, sway: 0, swayRate: 0, swayPhase: 0, drift: 0, rise: 0 },
   burst: { size: 1, life: 1.9, out: 9, up: 5, fadeIn: 8, peak: 0.95, greyAt: 0.55, greyFade: 0.2, tones: ['ink', 'ink'], ease: true, sway: 0, swayRate: 0, swayPhase: 0, drift: 0, rise: 0 }
 };
+
+// MOCK faith15
+// The heartbeat of the full ring (render/after/stations.js, `heartAt`), three
+// ways. A cycle is `every` seconds with `breathe` (a share, 0 for none) of
+// slack in its rest swelling and shrinking over `breatheEvery` cycles; two
+// beats in it, the lub strong and the dub its softer echo, each peaking `at`
+// seconds in, rising over `rise` and easing back over `fall`; the tremor, the
+// swell (`pulse`, a share of scale) and the motes shed (`shed`) all follow
+// the beat's own envelope. `vary` is how far a beat strays from its mean, by
+// seeded hash so a scene is repeatable: `str` the strength, `shed` the mote
+// count, and per mote `speed`, `ang` (radians off straight out) and `up`.
+const HEART = {
+  every: 2.4, breathe: 0, breatheEvery: 9, hz: [11, 14], ySeen: 0.6, tremorScale: 1, pulseScale: 1,
+  beats: [{ at: 0.18, rise: 0.18, fall: 0.5, amp: 0.4, pulse: 0.06, shed: 20 }, { at: 0.62, rise: 0.14, fall: 0.4, amp: 0.26, pulse: 0.035, shed: 12 }],
+  vary: { str: 0.12, shed: 0.25, speed: 0.3, ang: 0.35, up: 0.4 },
+  burst: { size: 1, life: 1.5, out: 9, up: 5, fadeIn: 8, peak: 0.95, greyAt: 0.55, greyFade: 0.2, tones: ['ink', 'ink'], ease: true, sway: 0, swayRate: 0, swayPhase: 0, drift: 0, rise: 0 }
+};
+export const AFTER_SHRINE_HEART = {
+  heartA: HEART,
+  heartB: { ...HEART, breathe: 0.08 },
+  heartC: { ...HEART, tremorScale: 0.65, pulseScale: 1.3, burst: { ...HEART.burst, life: 2.3, fadeIn: 3, out: 10 } }
+};
