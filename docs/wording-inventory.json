@@ -8232,6 +8232,13 @@
   "text": "second blade"
  },
  {
+  "id": "after-row-prayer",
+  "group": "Act 4 (placeholder)",
+  "where": "src/after/rows.js",
+  "context": "act 3 card row (placeholder): the shrine's prayer ladder, each rung multiplying the faith a prayer adds",
+  "text": "prayer"
+ },
+ {
   "id": "after-row-bench",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
@@ -8391,6 +8398,20 @@
   "where": "src/after/stations.js",
   "context": "act 3 board title (placeholder): the construction shack's board, every station to build",
   "text": "construction shack"
+ },
+ {
+  "id": "after-board-shrine",
+  "group": "Act 3 boards (track C, placeholder)",
+  "where": "src/after/stations.js",
+  "context": "act 3 board title (placeholder): the shrine's board, its prayer ladder",
+  "text": "shrine"
+ },
+ {
+  "id": "hover-faith-ring",
+  "group": "Act 3 boards (track C, placeholder)",
+  "where": "src/after/stations.js",
+  "context": "hover tip (placeholder): the full faith ring over the shrine, a click collects it",
+  "text": "collect faith"
  },
  {
   "id": "after-board-grove",

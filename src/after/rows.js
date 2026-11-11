@@ -109,6 +109,7 @@ const UP_NAMES = {
   'after-plot': () => msg('after-row-plot'), 'after-grow': () => msg('after-row-grow'),
   'after-selfseed': () => msg('after-row-selfseed'), 'after-stumps': () => msg('after-row-stumps'),
   'after-blade': () => msg('after-row-blade'),
+  'after-prayer': () => msg('after-row-prayer'),   // MOCK faith16
   'after-bench': () => msg('after-row-bench'), 'after-signreach': () => msg('after-row-signreach')
 };
 // What a purchase does beyond counting itself: a plot cleared, its bed bare

@@ -21,6 +21,7 @@ import { afterlifeOn } from '../acts.js';
 import { built } from './levels.js';
 import { stationBox, groundOf, afterFloor, closed, pilePlace, pileOwner, floorAt } from './place.js';
 import { afterRow } from './rows.js';
+import { faith, overFaith } from './faith.js';   // MOCK faith16
 import { boardFlag } from '../stations.js';
 import { PILED, pileFull } from './piles.js';
 import { godCampAt, godMid, faceY } from './sky.js';
@@ -61,7 +62,7 @@ export const setCrowdAt = at => { crowdAt = at; };
 
 const NAMES = {
   pedestal: () => msg('after-board-pedestal'), shack: () => msg('after-board-shack'), grove: () => msg('after-board-grove'),
-  mill: () => msg('after-build-mill'), workshop: () => msg('after-build-workshop'), crowd: () => msg('after-board-crowd')
+  shrine: () => msg('after-board-shrine'), mill: () => msg('after-build-mill'), workshop: () => msg('after-build-workshop'), crowd: () => msg('after-board-crowd')
 };
 
 const row = (card, more) => {
@@ -108,7 +109,7 @@ const lotOf = card => ({
 });
 
 // In the order a press asks them: the standing stations, the grove, God's camp.
-const STATION_CARDS = ['mill', 'workshop', 'shack', 'pedestal'];
+const STATION_CARDS = ['mill', 'workshop', 'shack', 'pedestal', 'shrine'];
 export const AFTER_STATION_ROWS = [
   ...STATION_CARDS.map(card => row(card, {
     // Standing only once built: a station not yet built has no board and no
@@ -120,6 +121,10 @@ export const AFTER_STATION_ROWS = [
     // it (`hit`), but names it over its drawing (`over`).
     ...(card === 'shack' ? { board: null, line: null, boardAnchor: null, hit: () => false, over: () => stationBox(card) } : {})
   })),
+  // MOCK faith16: the full faith ring, asked about where it is drawn: the hover tip's "collect faith" under the pointer, for the option that shows it
+  { key: 'after-faith', place: 'after', glyph: 'crate', after: [], needs: () => false,
+    get name() { return msg('hover-faith-ring'); },
+    open: () => live() && faith.full && faith.cue === 'hand+', stand: () => faith.box, hit: (x, y) => overFaith(x, y) },
   // A press on a tree is the saw's (after/gestures.js).
   row('grove', { open: live }),
   // The counted piles at their brims (after/piles.js): each wears the same

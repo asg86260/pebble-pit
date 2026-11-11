@@ -3562,6 +3562,9 @@ after-row-stumps = stump removal
 # act 3 card row (placeholder): the saw mill's second blade, two logs a cut
 after-row-blade = second blade
 
+# act 3 card row (placeholder): the shrine's prayer ladder, each rung multiplying the faith a prayer adds
+after-row-prayer = prayer
+
 # act 3 card row (placeholder): the workshop's second bench, two signs at once
 after-row-bench = second bench
 
@@ -3626,6 +3629,12 @@ after-board-pedestal = pedestal
 
 # act 3 board title (placeholder): the construction shack's board, every station to build
 after-board-shack = construction shack
+
+# act 3 board title (placeholder): the shrine's board, its prayer ladder
+after-board-shrine = shrine
+
+# hover tip (placeholder): the full faith ring over the shrine, a click collects it
+hover-faith-ring = collect faith
 
 # act 3 board title (placeholder): the grove's board, the saw and the trees
 after-board-grove = grove

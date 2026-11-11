@@ -181,6 +181,7 @@ export const GLYPH_OF = {
   'after-seat-joiner': ['cap', 'plus'], 'after-seat-carrier': ['cart', 'plus'],
   'after-podium': ['bell', 'up'], 'after-saw': ['blade'], 'after-plot': ['furrow', 'plus'], 'after-grow': ['ear', 'up'],
   'after-seeds': ['ear', 'plus'], 'after-selfseed': ['ear', 'crop'], 'after-stumps': ['shovel'], 'after-blade': ['blade', 'plus'],
+  'after-prayer': ['bell', 'plus'],   // MOCK faith16
   'after-bench': ['bench', 'plus'], 'after-signreach': ['planks', 'up'],
   'after-build-mill': ['blade'], 'after-build-workshop': ['bench'],
 };

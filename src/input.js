@@ -58,6 +58,7 @@ import { actPlace, crewHolding, handOf, hands } from './acts.js';
 import { portalAt, handAt, throughPortal } from './portals.js';
 import { sayGoOn } from './actbeats.js';
 import { onGoOn } from './render/portals.js';
+import { faith, overFaith } from './after/faith.js';   // MOCK faith16
 import { onShaftArrow } from './render/shaftway.js';
 import { onPortal } from './render/portal.js';
 import { clickDeep, onOrb } from './deep/serpent.js';
@@ -763,6 +764,8 @@ const CURSORS = [
   // up in act 3, a part the hand works: open on it, closed while it is held
   [() => handHeld(), 'grabbing'],
   [(x, y) => overWork(x, y), 'grab'],
+  // MOCK faith16: the full faith ring is a click, the option that says so
+  [(x, y) => S.view === 'after' && faith.cue === 'hand+' && overFaith(x, y), 'pointer'],
   // a station a click opens: one whose board has its button promises nothing
   [(x, y) => !!clickBoard(x, y), 'pointer'],
   // a mark that will tell you why something has stopped

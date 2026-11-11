@@ -97,7 +97,7 @@ export const AFTER_GATES = ['meeting', 'slowdown', 'strike'];
 // shack sells nothing: a station is bought at the build sign in its lot
 // (the owner, 2026-11-10). Keys, not words: every
 // name a player reads is the owner's, in locales/en.ftl.
-export const AFTER_CARDS = ['pedestal', 'grove', 'mill', 'workshop'];
+export const AFTER_CARDS = ['pedestal', 'grove', 'mill', 'workshop', 'shrine'];   // MOCK faith16: the shrine sells its upgrade
 
 // --- act 3's loop, placeholder (track A, 2026-10-17; reworked 2026-10-18) ----------
 // The grove and the press on the scaffold, every drawing a placeholder of
@@ -444,6 +444,9 @@ export const AFTER_UPGRADES = {
   'after-podium':      { card: 'pedestal',  bills: [[['rebel', 30], ['timber', 2]], [['rebel', 80], ['timber', 6]],
                                                     [['rebel', 200], ['timber', 15]], [['rebel', 500], ['timber', 18]]],
                          marks: [0.1, 0.25, 0.45, 0.7] },
+  // MOCK faith16: the shrine's prayer ladder: each rung multiplies the faith a prayer adds (AFTER_PRAYER_MULT), the podium's shape without its marks
+  'after-prayer':      { card: 'shrine',    bills: [[['rebel', 60], ['timber', 3]], [['rebel', 150], ['timber', 8]],
+                                                    [['rebel', 350], ['timber', 15]], [['rebel', 700], ['timber', 18]]] },
   'after-saw':         { card: 'grove',     bills: [[['rebel', 50], ['dust', 8000]]] },                  // the saw: the woodcutter fells (the owner, 2026-10-30)
   'after-plot':        { card: 'grove',     bills: [[['rebel', 60], ['dust', 15000]],
                                                     [['rebel', 200], ['timber', 5], ['dust', 40000], ['spore', 10000]],
@@ -813,3 +816,19 @@ export const AFTER_SHRINE_HEART = {
   heartB: { ...HEART, breathe: 0.08 },
   heartC: { ...HEART, tremorScale: 0.65, pulseScale: 1.3, burst: { ...HEART.burst, life: 2.3, fadeIn: 3, out: 10 } }
 };
+
+// MOCK faith16
+// What the shrine's prayer ladder is worth (after/levels.js, `prayerMult`):
+// the faith one prayer adds, a multiple a rung, the foot first.
+export const AFTER_PRAYER_MULT = [1, 2, 3, 4, 6];
+// The full ring's heartbeat, softened (render/after/stations.js `heartAt`): the
+// round-15 heartbeat with every onset slowed and every swing smaller, so
+// nothing snaps -- a longer rise and fall, a slower, fainter tremor, a soft
+// swell, fewer motes that drift further and fade out slower.
+const HEART16 = {
+  every: 2.8, breathe: 0, breatheEvery: 9, hz: [7, 9], ySeen: 0.6, tremorScale: 1, pulseScale: 1,
+  beats: [{ at: 0.4, rise: 0.4, fall: 0.9, amp: 0.2, pulse: 0.045, shed: 14 }, { at: 0.95, rise: 0.3, fall: 0.7, amp: 0.13, pulse: 0.028, shed: 9 }],
+  vary: { str: 0.12, shed: 0.25, speed: 0.3, ang: 0.35, up: 0.4 },
+  burst: { size: 1, life: 2.8, out: 8, up: 5, fadeIn: 2.5, peak: 0.85, greyAt: 0.55, greyFade: 0.2, tones: ['ink', 'ink'], ease: true, sway: 0, swayRate: 0, swayPhase: 0, drift: 0, rise: 0 }
+};
+AFTER_SHRINE_HEART.heart16 = HEART16;
