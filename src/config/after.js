@@ -751,14 +751,13 @@ export const AFTER_SHRINE_MOTES = { puffs: 22, size: 1, life: 3.6, rise: 12, dri
 // What more the faith ring does (render/after/stations.js, `shrine`), in seconds
 // and cells: `fly` how often a prayer sets out and how long the tip glints, the
 // fill's slow rise and its drop; `turn` the glint's lap, its length in cells and
-// ink, the breath, and the orbiting motes; `click` the full hold, the pressed
+// ink; `click` the full hold, the pressed
 // beat, the unwind, the empty wait, the refill, how often a mote leaves the tip,
 // and the burst.
 export const AFTER_SHRINE_SAUCE = {
   flyEvery: 0.4, glintS: 0.9, trail: [0.07, 0.14, 0.21], bounce: { s: 0.7, r: 5 },
   fillFrom: 0.3, fillTo: 0.7, fillRise: 40, fillDrop: 3,
-  turnS: 7, glintCells: 8, glintInk: 0.8, breathS: 5, haloInk: 0.22,
-  orbit: { puffs: 10, size: 1, life: 7, rise: 0, drift: 0, sway: 0, swayRate: 0, swayPhase: 0, fadeIn: 8, peak: 0.9, greyAt: 0.5, greyFade: 0.1, spread: 0, tones: ['ink', 'ink'], turns: 1.25, r0: 12.5, r1: 3.5, ease: true },
+  turnS: 7, glintCells: 8, glintInk: 0.8,
   click: { hold: 5, press: 0.5, unwind: 3, empty: 1.5, refill: 8, every: 0.1,
     burst: { puffs: 18, size: 1, life: 1.8, rise: 0, drift: 0, sway: 0, swayRate: 0, swayPhase: 0, fadeIn: 8, peak: 0.95, greyAt: 0.5, greyFade: 0.1, spread: 0, tones: ['ink', 'ink'], r0: 10.5, r1: 11, ease: true } }
 };

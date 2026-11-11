@@ -336,34 +336,25 @@ function forestry(d, work, t) {
 // `SHRINE.mode` says what more it does, all of it read off the act's clock:
 //   fly   prayers rise off the kneelers and arc into the ring's tip, the
 //         yard's coin arc (aftercoins.js, `coinAt`); the tip glints as each lands
-//   turn  a glint travels the inked arc, the ring breathes a cell wider and
-//         back, motes orbit it before drifting off
+//   turn  a glint travels the inked arc
 //   click the ring full, then emptied: the arc unwinds and the faith streams
 //         off the tip to the counter in the corner on the same coin arc,
 //         motes bursting outward
 // Nothing here pops: everything comes and goes by opacity.
 export const SHRINE = { mode: 'fill', fill: 0, folk: 0, t0: 0, pray: null };
-// MOCK faith10
+// MOCK faith11
 // The faithful at prayer: the frame's own body (kit.js `body`), whole, never
 // squashed or sheared, moved as one piece at its true position, eased.
 // `SHRINE.pray` picks the movement and when each follower goes:
-//   bob  rises a cell and settles, the prayer leaving at the top
-//   nod  dips a cell toward the shrine and back, the prayer leaving on the dip
 //   hop  a small hop as the prayer leaves, still between
 // Prayer times are read off the same cycle as the movement, so one beat is both.
 const PRAY = {
-  bob: { T: 5.4, launch: 1.6, off: k => hash(k * 3.7 + 1) * 5.4 },
-  nod: { T: 5.4, launch: 1.6, off: k => hash(k * 5.3 + 2) * 5.4 },
   hop: { T: 5.4, launch: 0.3, off: k => hash(k * 4.1 + 3) * 5.4 }
 };
 const FEET_Y = -4;                                    // cells: the body's own row, a cell up out of the ground's dip
-// 0..1 along a hold-and-ease timeline: rest to `a`, up to `b`, held to `c`, back down by `d`
-const reach = (u, a, b, c, d) => u < a || u > d ? 0 : u < b ? ease3((u - a) / (b - a)) : u <= c ? 1 : ease3((d - u) / (d - c));
 // where the whole body is, in px off its rest place: dx toward the shrine, dy down
 function folkAt(kind, k, tl) {
   const { T, off } = PRAY[kind], u = (((tl - off(k)) % T) + T) % T;
-  if (kind === 'bob') return { dx: 0, dy: -P * reach(u, 0.9, 1.6, 2.0, 3.0) };
-  if (kind === 'nod') return { dx: P * reach(u, 0.9, 1.6, 2.0, 2.8), dy: 0 };
   const e = u - PRAY.hop.launch;
   return { dx: 0, dy: e > 0 && e < 0.6 ? -P * 1.5 * Math.sin(Math.PI * e / 0.6) : 0 };
 }
@@ -388,7 +379,6 @@ function makeRing(size, inner, outer) {
   return { mask, cells, face: ringFace(mask), size };
 }
 const RING = makeRing(19, 7.5, 9.6);
-const HALO = makeRing(23, 10.6, 11.5);      // one cell thick, a cell clear of the ring: the breath, by opacity alone
 const FAITH_AT = { x: 0, y: -45 };          // the ring's top left off the shrine's left and the floor, cells: its hub over the cross, two cells clear of it
 // What is not yet inked is the ink itself, faint: so it reads as the ink's own
 // ghost on either page (the ink is the page's light tone in the dark), where a
@@ -480,9 +470,6 @@ function shrine(d, work, t) {
   if (!d.sinking) ringAt(d, RING, rx, ry, f, false);
   const c = SA.click, w = tl % clickLoop(), t1 = c.hold + c.press, t2 = t1 + c.unwind;
   if (!d.sinking) {
-    // the breath: a faint ring a cell clear of the ring, fading in and out
-    const breath = 0.5 - 0.5 * Math.cos(tl / SA.breathS * Math.PI * 2);
-    d.fade(breath * SA.haloInk * (darkPage ? 0.6 : 1), () => { for (const { i, j } of HALO.cells) d.c(rx - 2 + i, ry - 2 + j, K); });
     // the pulse at full, and the pressed beat of a click
     const pressed = SHRINE.mode === 'click' && w >= c.hold && w < t1 + 0.3 ? 0.6 * ease3(Math.min(1, (w - c.hold) / 0.15)) * (1 - ease3(clamp01((w - t1) / 0.3))) : 0;
     if (f >= 0.999) {
@@ -493,10 +480,6 @@ function shrine(d, work, t) {
     // the rising motes, as many as the ring is full
     risePuffs(d, t || 0, C, C.puffs, rx + 9, -ry + 0.5, f);
     risePuffs(d, t || 0, { ...C, ...C.big }, C.big.puffs, rx + 9, -ry + 0.5, clamp01((f - 0.4) / 0.6));
-    // motes circling the ring, out and round before they fade
-    const O = SA.orbit;
-    risePuffs(d, tl, { ...O, path: (u, k, n) => { const a = k / n * Math.PI * 2 + u * Math.PI * 2 * O.turns - Math.PI / 2, r = O.r0 + u * O.r1; return [Math.cos(a) * r, -Math.sin(a) * r]; } },
-      O.puffs, hubX, hubUp - 0.5, 1);
     // the glint travelling the inked arc, eased in and out along it, and over its leading and trailing edge
     const lit = f * N, u = (tl / SA.turnS) % 1, g = u * (lit + SA.glintCells), env = ease3(clamp01(Math.min(u, 1 - u) * 4));
     RING.cells.forEach(({ i, j }, k) => {

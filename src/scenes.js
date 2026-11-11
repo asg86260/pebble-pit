@@ -3401,15 +3401,15 @@ export const SCENES = {
   // cross. The fill and the faithful are stood in the run, not earned or
   // walked: a real build would read the fill off the shrine's own count and
   // send members to kneel at its door.
-  'faith10-a': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-simple, a review branch, never merged',
-    option: 'A the bob: each square rises a cell and settles, staggered; its prayer leaves at the top',
-    say: 'each square rises a cell and settles on its own beat; the prayer leaves at the top', run: () => shrineAt('fill', 19, 'bob') },
-  'faith10-b': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-simple, a review branch, never merged',
-    option: 'B the nod: each square dips toward the shrine a cell and back, its prayer leaving on the dip',
-    say: 'each square dips toward the shrine and back; the prayer leaves on the dip', run: () => shrineAt('fill', 19, 'nod') },
-  'faith10-c': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-simple, a review branch, never merged',
-    option: 'C the hop: each square gives a small hop when its prayer leaves, still between',
-    say: 'each square hops as its prayer leaves, and is still between', run: () => shrineAt('fill', 19, 'hop') },
+  'faith11-a': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-hop, a review branch, never merged',
+    option: 'A the hop, half full: no orbit, no halo',
+    say: 'each square hops as its prayer leaves; the ring fills, the glint laps it, motes rise', run: () => shrineAt('fill', 19, 'hop') },
+  'faith11-b': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-hop, a review branch, never merged',
+    option: 'B the same at full, held',
+    say: 'full: the face pulses, each prayer is turned away off the tip', run: () => shrineAt('full', 3, 'hop') },
+  'faith11-c': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-hop, a review branch, never merged',
+    option: 'C the click',
+    say: 'full for five seconds, then the click (stood in): the arc unwinds, the faith flies to the counter, the ring fills again', run: () => shrineAt('click', 0, 'hop') },
 
 
   'level-carry': { about: 'the acts', say: "the chain running: a carrier with a sign over the cloud, climbing the stage's plinth or out on its top",
