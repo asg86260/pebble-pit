@@ -593,7 +593,7 @@ function afterSite(until) {
 // ring over it. The faithful are drawn, not walked there.
 function shrineAt(mode, at, pray = null, extra = {}) {
   window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
-  SHRINE.mode = mode; SHRINE.folk = 6; SHRINE.pray = pray; SHRINE.shake = !!extra.shake; SHRINE.stream = !!extra.stream; SHRINE.feel = extra.feel || null; faith.cue = extra.cue || 'hand'; S.mouse = extra.over ? { get x() { return faith.box ? faith.box.x + faith.box.w / 2 : 0; }, get y() { return faith.box ? faith.box.y + faith.box.h / 2 : 0; } } : null; SHRINE.t0 = S.after.t - at;
+  SHRINE.mode = mode; SHRINE.folk = 6; SHRINE.pray = pray; SHRINE.shake = !!extra.shake; SHRINE.stream = !!extra.stream; SHRINE.feel = extra.feel || null; faith.cue = extra.cue || 'hand'; SHRINE.path = extra.path || null; SHRINE.loop = !!extra.path; S.mouse = extra.over ? { get x() { return faith.box ? faith.box.x + faith.box.w / 2 : 0; }, get y() { return faith.box ? faith.box.y + faith.box.h / 2 : 0; } } : null; SHRINE.t0 = S.after.t - at;
   const b = stationBox('shrine');
   window.__look(b.x + b.w / 2 - S.viewW / 2); window.__fast(0); window.__holdShot();
 }
@@ -3504,6 +3504,16 @@ export const SCENES = {
   'faith16-d': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-full, a review branch, never merged', branch: 'review-faith-full',
     option: 'D the shrine board',
     say: 'the shrine board open: its prayer row, each rung multiplying the faith a prayer adds', run: () => { shrineAt('full', 0.3, 'hop', { feel: 'heart16', cue: 'hand' }); window.__afterGrant({ rebel: 400, timber: 20 }); window.__fast(0.2); window.__openAfterBoard('shrine'); window.__holdShot(); } },
+  // MOCK faith17
+  'faith17-a': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-full, a review branch, never merged', branch: 'review-faith-full',
+    option: 'A cross to church',
+    say: 'the five looks in a loop, each rising as the old fades: a wayside cross, an altar, a chapel, the chapel with a bell tower, the church', run: () => shrineAt('full', 0.3, 'hop', { feel: 'heart16', cue: 'hand', path: 'A' }) },
+  'faith17-b': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-full, a review branch, never merged', branch: 'review-faith-full',
+    option: 'B stone to church',
+    say: 'the five looks in a loop: a standing stone, a stone circle, a lintel on two uprights, a stone hall, the church', run: () => shrineAt('full', 0.3, 'hop', { feel: 'heart16', cue: 'hand', path: 'B' }) },
+  'faith17-c': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-full, a review branch, never merged', branch: 'review-faith-full',
+    option: 'C the church built up',
+    say: 'the church laid piece by piece in a loop: its foundation, walls, roof, spire, cross', run: () => shrineAt('full', 0.3, 'hop', { feel: 'heart16', cue: 'hand', path: 'C' }) },
 
   'level-carry': { about: 'the acts', say: "the chain running: a carrier with a sign over the cloud, climbing the stage's plinth or out on its top",
     run: () => {
