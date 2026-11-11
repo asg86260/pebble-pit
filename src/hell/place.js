@@ -91,9 +91,10 @@ export const HELL_ROUTE = {
     road: { key: 'road', feet: () => roadTop() },
     ...Object.fromEntries(HELL_TIERS.map((_, i) => [floorKey(i), { key: floorKey(i), c: i, feet: () => chamberFloor(i) }]))
   }),
+  // a link named by a key, as its ways are: the route report reads it, no player
   links: () => [
     { x: roadX(), a: 'road', b: floorKey(0), name: 'road', pace: GHOST_CLIMB },
-    ...HELL_TIERS.slice(1).map((_, k) => ({ x: ladderX(k + 1), a: floorKey(k), b: floorKey(k + 1), name: `ladder ${k + 1}`, pace: GHOST_CLIMB }))
+    ...HELL_TIERS.slice(1).map((_, k) => ({ x: ladderX(k + 1), a: floorKey(k), b: floorKey(k + 1), name: `ladder-${k + 1}`, pace: GHOST_CLIMB }))
   ],
   wayAt: b => (b.c == null ? 'road' : floorKey(b.c)),
   onWay(b, way) { if (way.c != null) b.c = way.c; }

@@ -25,9 +25,10 @@ export const AFTER_ROUTE = {
     floor: { key: 'floor', feet: x => floorAt(x) },
     crowd: { key: 'crowd', free: true, feet: x => floorAt(x) }
   }),
+  // a link named by a key, as its ways are: the route report reads it, no player
   links: () => [
-    { x: crowdEdge(-Infinity), a: 'floor', b: 'crowd', name: 'crowd near edge', pace: AFTER_WALK },
-    { x: crowdEdge(Infinity), a: 'floor', b: 'crowd', name: 'crowd far edge', pace: AFTER_WALK }
+    { x: crowdEdge(-Infinity), a: 'floor', b: 'crowd', name: 'crowd-near', pace: AFTER_WALK },
+    { x: crowdEdge(Infinity), a: 'floor', b: 'crowd', name: 'crowd-far', pace: AFTER_WALK }
   ],
   wayAt: w => (overCrowd(w.x) ? 'crowd' : 'floor')
 };
