@@ -5917,7 +5917,7 @@
  {
   "id": "hover-builder",
   "group": "Hover",
-  "where": "src/input.js",
+  "where": "src/after/bodies.js",
   "context": "the hover over a body, as the job it does (its type, builder)",
   "text": "builder"
  },
@@ -5945,56 +5945,35 @@
  {
   "id": "hover-member",
   "group": "Hover",
-  "where": "src/input.js",
+  "where": "src/after/bodies.js",
   "context": "the hover over a member of act 3 with no job: the idle at the podium or in the crowd",
   "text": "member"
  },
  {
-  "id": "hover-pile-logs",
+  "id": "hover-ghost",
   "group": "Hover",
-  "where": "src/after/stations.js",
-  "context": "the hover over a counted pile in act 3 (the logs of the saw mill and grove)",
-  "text": "log pile"
- },
- {
-  "id": "hover-pile-planks",
-  "group": "Hover",
-  "where": "src/after/stations.js",
-  "context": "the hover over a counted pile in act 3 (the timber at the saw mill)",
-  "text": "plank pile"
- },
- {
-  "id": "hover-pile-signs",
-  "group": "Hover",
-  "where": "src/after/stations.js",
-  "context": "the hover over a counted pile in act 3 (the workshop's signs)",
-  "text": "sign pile"
- },
- {
-  "id": "hover-pile-seeds",
-  "group": "Hover",
-  "where": "src/after/stations.js",
-  "context": "the hover over a counted pile in act 3 (the grove's seed basket by the forestry shack)",
-  "text": "seed basket"
+  "where": "src/hell/bodies.js",
+  "context": "the hover over a ghost of act 4, whatever it is doing down there",
+  "text": "ghost"
  },
  {
   "id": "hover-log",
   "group": "Hover",
-  "where": "src/input.js",
+  "where": "src/after/grove.js",
   "context": "the hover over a log in the hand's reach in act 3, lying on the floor",
   "text": "log"
  },
  {
   "id": "hover-plank",
   "group": "Hover",
-  "where": "src/input.js",
+  "where": "src/after/grove.js",
   "context": "the hover over a plank in the hand's reach in act 3, lying on the floor",
   "text": "plank"
  },
  {
   "id": "hover-sign",
   "group": "Hover",
-  "where": "src/input.js",
+  "where": "src/after/grove.js",
   "context": "the hover over a sign in the hand's reach in act 3, lying on the floor",
   "text": "sign"
  },
@@ -8276,7 +8255,7 @@
  {
   "id": "after-job-woodcutter",
   "group": "Act 4 (placeholder)",
-  "where": "src/after/rows.js",
+  "where": "src/jobs.js",
   "context": "act 3 job name (placeholder): a woodcutter, named on its seat row",
   "text": "woodcutter"
  },
@@ -8290,7 +8269,7 @@
  {
   "id": "after-job-sawyer",
   "group": "Act 4 (placeholder)",
-  "where": "src/after/rows.js",
+  "where": "src/jobs.js",
   "context": "act 3 job name (placeholder): a sawyer, named on its seat row",
   "text": "sawyer"
  },
@@ -8304,7 +8283,7 @@
  {
   "id": "after-job-joiner",
   "group": "Act 4 (placeholder)",
-  "where": "src/after/rows.js",
+  "where": "src/jobs.js",
   "context": "act 3 job name (placeholder): a joiner, named on its seat row",
   "text": "joiner"
  },

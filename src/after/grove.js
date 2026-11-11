@@ -27,6 +27,7 @@
 // A plot is exactly one of: bare, growing, standing, falling, stumped.
 
 import { S } from '../state.js';
+import { msg } from '../lang.js';
 import { source, sink } from '../flow.js';
 import { P, TREE_CHOPS, AFTER_FALL_S, AFTER_FALL_BOUNCE_S, AFTER_DIG_CLICKS, AFTER_PLOTS0, AFTER_SEED_SINK_S,
          AFTER_TREE, AFTER_BREAK_S, AFTER_BREAK_SPREAD, AFTER_CROWN_S, KINDS } from '../config.js';
@@ -165,6 +166,14 @@ export function lyingAt(x, y, pad = 0) {
   const list = lying();
   for (let i = list.length - 1; i >= 0; i--) if (settled(list[i]) && under(list[i], x, y, pad)) return list[i];
   return null;
+}
+// What the hover calls the good lying under (x, y), a cell of slack round
+// it, or null: the place's answer to the shared hover (acts.js, `sayAt`), as
+// the yard's floor answers with the grain under the pointer.
+const GOOD_SAYS = { log: 'hover-log', plank: 'hover-plank', sign: 'hover-sign' };
+export function lyingSays(x, y) {
+  const q = lyingAt(x, y, P);
+  return q ? msg(GOOD_SAYS[kindOf(q)] || 'hover-log') : null;
 }
 // Whether (x, y) is on a lying good, `pad` px of slack round it.
 const under = (q, x, y, pad) => x >= q.x - pad && x <= q.x + q.w + pad && y >= q.y - pad && y <= q.y + (q.h ?? q.w) + pad;

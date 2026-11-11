@@ -23153,6 +23153,40 @@ spills its load as goods and sees stars; a ghost dropped on a far chamber
 climbs back up by the ladders; a reload mid-ladder keeps the ghost on its
 rung.
 
+### Clicks on the yard's engine (built on branch audit-clicks)
+
+Step 1 had already put both acts' stations on the one table, and with them
+`offTable`, `cardAt`, the gestures `boardAt` and `hellBoardAt` were gone.
+What was left was in input.js. Act 3 had its own hover registry,
+`afterAt`. It ran a second station loop beside `buildingAt`, kept its own
+pile boxes and pile names, and named members itself. In hell the hover fell
+through to the yard's readers, so ghosts were never named. About a dozen
+`S.view === 'after'` and `'hell'` checks wired act 3's gestures, its sweep
+and its speech click into the press, the move, the release, the tap, the
+cursor, the tip and the touch claim, and wired in hell's `clickHell`. One of
+them (`asked`) kept the hover from opening or shutting act 3's boards.
+
+These now fold onto the shared readers. A body under the pointer is read by
+`grabAt` in every place and named by its crew's `says`, as the yard's are
+named by type. An act's goods are named by the place's `sayAt`. The
+construction shack, which opens nothing, is named by an `over` column on its
+row, which `buildingAt` reads. Piles are not named at all (the owner,
+2026-11-11: "lets drop the pile hovers"); a full one still says so over its
+mark. A pointer passing over opens the board a click would
+open (`clickBoard`), and it neither opens nor shuts a board whose UPGRADES
+button stands (`shopBoxOf`). That is a fact about the row, not the view.
+
+Each act keeps its hand. Act 3 keeps its gestures and the pair's speech, and
+hell keeps its pick. Each act hands its hand to the pointer through
+`placeHand` (acts.js), in world pixels and on the shared hit test and
+camera, as a place hands over its roster's buttons. input.js no longer holds
+a view branch for an act or imports an act's internals. Hell's pick takes no
+press (`taken`), so a finger's tap on a face both strikes it and opens its
+board, as before. The deep's own targets (the coil, the orb, the fauna) stay
+inline, since the deep is the yard's world and not a place. The pad's focus
+stops (stops.js, `gestureStops`) are not the pointer and are left for their
+own audit.
+
 ## Clouds stack the way cumulus does (built 2026-10-20)
 
 The owner approved the depth direction and asked for "a little bit harder on

@@ -8,7 +8,7 @@
 import { msg, placeOf } from './lang.js';
 import { S } from './state.js';
 import { RUNGS } from './config.js';
-import { isHellCoin, hellPurse } from './hell/coins.js';
+import { isHellCoin, hellPurse, HELL_COINS } from './hell/coins.js';
 import { timberReserved } from './after/orders.js';
 import { pileCount } from './after/piles.js';
 
@@ -54,7 +54,11 @@ export const MARK = {
   // yard's on the camp's bills.
   rebel: '<i class="rebel"></i>',
   timber: '<i class="timber"></i>',
-  time: '<i class="clock"></i>'
+  time: '<i class="clock"></i>',
+  // Hell's coins (hell/coins.js), not drawn yet: the act's placeholder, the
+  // hollow square the counter's card draws for them (render/counter.js,
+  // `drawActMark`). Without a mark a bill wrote the word "undefined".
+  ...Object.fromEntries(HELL_COINS.map(coin => [coin, '<i class="actcoin"></i>']))
 };
 
 // What you have of one. You cannot be short of time, so a bill asking for it

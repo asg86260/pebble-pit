@@ -35,6 +35,7 @@ import { P, AFTER_UPGRADES, AFTER_JOBS, AFTER_JOB_POST, AFTER_SEAT_BILLS, AFTER_
          AFTER_RECRUIT_COST0, AFTER_RECRUIT_RATE, MEET_MEMBERS, SLOW_SHARE, STRIKE_SHARE, AFTER_BOARD_SLOTS, SHADES, SHARD_CELL, SPORE_CELL, SPARK_CELL, FIND_TONES, SCALE_SHADE, SCALE_SPREAD } from '../config.js';
 import { registerBoard, openBoardByKey } from '../boardrows.js';
 import { purse, leftText } from '../words.js';
+import { AFTER_JOB_NAMES } from '../jobs.js';
 import { rungCost } from '../upgrades/price.js';
 import { payTo } from '../pit.js';
 import { upCount, built, seatKey, seatsBought } from './levels.js';
@@ -156,15 +157,12 @@ const upRow = key => {
 // --- the seats ---------------------------------------------------------------------------
 // A row a job: a seat more at its station, a bill a seat (AFTER_SEAT_BILLS),
 // the roster under the station drawing the seats and its + stopping at them.
-export const JOB_NAMES = {
-  woodcutter: () => msg('after-job-woodcutter'), sawyer: () => msg('after-job-sawyer'), joiner: () => msg('after-job-joiner')
-};
 const seatRow = job => {
   const key = seatKey(job), card = AFTER_JOB_POST[job];
   const bill = () => AFTER_SEAT_BILLS[Math.min(seatsBought(job), AFTER_SEAT_BILLS.length - 1)].map(([c, n]) => [c, n]);
   LAND[key] = () => { S.after.ups[key] = seatsBought(job) + 1; S.after.upAt[key] = S.after.t; };
   return {
-    key, name: msg('after-row-seat', { job: JOB_NAMES[job]() }), card, seat: job, ...ACT_ROW,
+    key, name: msg('after-row-seat', { job: AFTER_JOB_NAMES[job]() }), card, seat: job, ...ACT_ROW,
     rung: () => seatsBought(job), rungs: () => AFTER_SEAT_BILLS.length, bill,
     show: () => cardOpen(card),
     dead: () => carrying(key),

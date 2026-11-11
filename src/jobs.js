@@ -106,6 +106,11 @@ export const AFTER_JOB = Object.freeze({
   // bought by no post of its own.
   BUILD:   'builder'
 });
+// How act 3's posted jobs are SAID: a seat's row, a roster's tip, and the
+// hover over a member at one.
+export const AFTER_JOB_NAMES = {
+  woodcutter: () => msg('after-job-woodcutter'), sawyer: () => msg('after-job-sawyer'), joiner: () => msg('after-job-joiner')
+};
 
 export const HELL_JOB = Object.freeze({
   MINE:  'miner',

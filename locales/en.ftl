@@ -2738,16 +2738,8 @@ hover-delver = delver
 # the hover over a member of act 3 with no job: the idle at the podium or in the crowd
 hover-member = member
 
-# the hover over a counted pile in act 3 (the logs of the saw mill and grove)
-hover-pile-logs = log pile
-
-# the hover over a counted pile in act 3 (the timber at the saw mill)
-hover-pile-planks = plank pile
-
-# the hover over a counted pile in act 3 (the workshop's signs)
-hover-pile-signs = sign pile
-# the hover over a counted pile in act 3 (the grove's seed basket by the forestry shack)
-hover-pile-seeds = seed basket
+# the hover over a ghost of act 4, whatever it is doing down there
+hover-ghost = ghost
 
 # the hover over a log in the hand's reach in act 3, lying on the floor
 hover-log = log

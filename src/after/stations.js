@@ -1,3 +1,4 @@
+// REVIEW clicks-
 // Act 3's stations as rows of the one station table (stations.js; DESIGN.md,
 // "One place engine", step 1): each card's board, and God's crowd's, stands
 // where the station is drawn, so the pointer's one hit test (`stationAt`),
@@ -27,10 +28,9 @@ import { shopBoxOf, rosterShops } from '../roster.js';
 import { drawnMid } from '../footprints.js';
 
 const live = () => afterlifeOn() && !!S.after;
-// A counted pile's name, and the box its mark hangs from: `pileMarkAt` hangs
+// A counted pile's box, the one its mark hangs from: `pileMarkAt` hangs
 // a pile row's mark five cells over its box's top, so the box's top is the
 // plot's at its fullest.
-const PILE_NAMES = { logs: 'hover-pile-logs', grovelogs: 'hover-pile-logs', timber: 'hover-pile-planks', benchtimber: 'hover-pile-planks', signs: 'hover-pile-signs', seeds: 'hover-pile-seeds' };
 function pileTop(what) {
   const g = pilePlace(what);
   return { x: g.x, y: g.y, w: g.cols * g.p, h: g.rows * g.p };
@@ -116,17 +116,17 @@ export const AFTER_STATION_ROWS = [
     open: () => live() && built(card),
     ...(card in AFTER_BUILDS ? { lot: lotOf(card) } : {}),
     // The construction shack sells nothing (the owner, 2026-11-10): it
-    // stands, with no board and no button, and the pointer asks nothing of
-    // it, as of a pile (`hit`).
-    ...(card === 'shack' ? { board: null, line: null, boardAnchor: null, hit: () => false } : {})
+    // stands, with no board and no button, and the pointer opens nothing on
+    // it (`hit`), but names it over its drawing (`over`).
+    ...(card === 'shack' ? { board: null, line: null, boardAnchor: null, hit: () => false, over: () => stationBox(card) } : {})
   })),
   // A press on a tree is the saw's (after/gestures.js).
   row('grove', { open: live }),
   // The counted piles at their brims (after/piles.js): each wears the same
-  // mark over its plot, and its hover is the yard's own "pile is full".
+  // mark over its plot, and its hover is the yard's own "pile is full". No
+  // name: the pointer neither opens nor names one (the owner, 2026-11-11).
   ...PILED.map(what => ({
     key: `after-pile-${what}`, place: 'after', glyph: 'crate', after: [], needs: () => false,
-    get name() { return msg(PILE_NAMES[what]); },
     open: () => live() && built(pileOwner(what)), stand: () => pileTop(what), hit: () => false,
     pile: () => pileFull(what)
   })),
