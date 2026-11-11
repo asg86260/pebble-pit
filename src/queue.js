@@ -70,6 +70,9 @@ export function fillQueue() {
     const list = worksAt(site);
     const going = roomAt(site);
     for (const r of runsOf(list)) {
+      // A standing job nobody bought (the ending's mansion) is not the
+      // player's to wait on or hand back.
+      if (rowFor(r.key)?.unlisted) continue;
       // A run at the front holds a copy waiting behind the one being built
       // once it is two long: that one can be handed back.
       const front = r.start < going;

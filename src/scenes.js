@@ -3258,6 +3258,18 @@ export const SCENES = {
     say: 'the saw mill standing, built; the workshop\'s lot beside it empty but for its build sign',
     run: () => a3Build(false) },
 
+  // The mansion and the house on the one construction (DESIGN.md): the
+  // ending's mansion carried up by the yard's builders as a work on works.js,
+  // and the finale's house, whose timeline is its own, beside it.
+  'review-mansion-a': { about: 'the acts', review: 'the mansion and the house on the shared construction', stage: 'built: audit-mansion-home, not on main yet', branch: 'audit-mansion-home',
+    option: "A the mansion going up: the yard's builders carrying it a piece a trip",
+    say: "the mansion a work on the yard's construction: its builders fetch each piece off the woodpile or the blocks pile, walk it over by the yard's routes, and set it at its place",
+    run: () => { actsYard('mansion', 20); for (let i = 0; i < 30; i++) window.__fast(1); pinCamera(0); window.__holdShot(); } },
+  'review-mansion-b': { about: 'the acts', review: 'the mansion and the house on the shared construction', stage: 'built: audit-mansion-home, not on main yet', branch: 'audit-mansion-home',
+    option: "B the house going up in the finale: its own timeline, the pieces laid out the mansion's way",
+    say: "the finale's house: the builders put it up a piece a trip while the two of them walk, timed to finish before they reach the door",
+    run: finaleAt('walk', 12, true) },
+
   // The UPGRADES buttons over the camp's rosters (roster.js), framed as the
   // review that chose them was: the chain bought, the saw mill four-fifths
   // across the window, the workshop's and the forestry shack's buttons in

@@ -24942,6 +24942,101 @@ remaining reason was a look, and the owner has now overruled it.
   ordering scene is gone.
 
 
+## The mansion and the house on the one construction (built 2026-11-10, on audit-mansion-home)
+
+The owner, 2026-11-10: every construction goes through the one construction
+system, no parallel copies. Act 3 is on the yard's works (above). An audit
+found two more copies: mansion.js (`stepMansion`, `mansionBody`, `nextPiece`,
+`walkTo`) is home.js's builders again -- `free` is `canBuild` plus two flags,
+`first` is `builderFirst` less the cart, and its walk slides x when no route
+answers. home.js's own builders are timed to the finale's cutscene.
+
+**No per-site way exists to reuse.** Act 3's fold deleted carrying (its loads,
+pile and laying went); every work on works.js goes up one way: a builder walks
+to `nearestIn(ownBox)`, hammers (`workJig`), and the work gains worker-seconds
+while it stands `'at'`. The mansion's fetch, carry and set is the first other
+way, and it is added once, as data a row carries, so the stair (act 3) or any
+later piecewise build uses it rather than writing a third.
+
+- **The way.** A row may carry `way: { pieces, from(i), to(i), laid(), next(),
+  set(i) }`: the plan, where piece i is fetched and set, the count laid, the
+  next piece a hand may take (unclaimed, every earlier stage set), and the
+  record of one set. works.js `stepWorks` reads a carried work's `done` from
+  `laid()` instead of crediting standing hands; the landing (`buy`, `work-land`)
+  is unchanged. crew/builders.js `stepBuilder` asks the row: a carried work is
+  fetch (routed walk to `from`), take, carry (routed walk to `to`), set, a
+  piece a trip, the body's trip on `w.piece` (session only, not in `KEEPS`). The
+  hammer way is untouched. Take and set seconds are divided by the build-speed
+  ladder, as the hammer's worker-seconds are (one speed, every build).
+- **The mansion's work.** Site `mansion` (place yard, `JOB.BUILD`), row
+  `mansion` (`kind: 'building'`, `of` the piece count, `hands`
+  `MANSION_BUILDERS`, registered so a save reads it back). Begun where
+  `beginMansion` is today (`start('mansion', row)`, as the deep's `layStation`
+  starts its own), and started again on any frame the mansion is begun, not
+  done, and has no work (the deep's catch-up): an old save mid-build picks up
+  with no migration. Landing sets `S.acts.mansion.done`.
+- **Who carries.** The yard's builders through `manSites`: the spare first,
+  then the nearest posted body lent, the loan home when nothing is left to
+  build. `free`, `first`, `claimed`, `letGo`, `walkTo` and `mansionBody` are
+  deleted, and crew/step.js's mansion step with them. **One seam is not this
+  branch's to cut:** staffing.js `rebalance` asks `want: sites.length`, one
+  builder a site, so the mansion would get one carrier where it has six. The
+  fix is one line there -- `want` the sum of each site's `hands` (works.js
+  `buildersWanted`, one a work by default, so the yard and the deep do not
+  change) -- and crew/sitework.js `claimWork` fills a work to its `hands`
+  before the next.
+- **What stays the mansion's.** The plan (`mansionPieces`), the drawing's
+  record (`S.acts.mansion`: `T`, `set` times for the fades, `done`, `G`), the
+  rock and blocks reckoning, the gathering. One truth: which pieces are set is
+  `set`; the work's `done` is read off it.
+- **Not a station.** No tick over it (`workFinished` passes a site with no
+  board), and no tape or bar: a carried way's progress is the pieces, and its
+  scaffold is its fence (buildsites.js and bars.js pass a carried work).
+
+**home.js: thinner, its timeline kept.** The house is built inside a cutscene
+that holds the yard (`finaleBody`), finishing `FINALE_BUILD_SPARE_S` before the
+pair reach the door; works.js has no deadline and should not grow one for a
+single beat, so `takeBuilders`, `planBuild` and `stepBuilder`'s timeline stay.
+Shared with the mansion: the piece geometry (`cx`, `top`, `w`, and the spot a
+piece is set from), in one small module both plans run through. The gang
+predicate is the house's alone once the mansion goes through `manSites`.
+
+**What the player sees.** The mansion still goes up a piece in a hand at a
+time, same pieces, same order, same six hands. Changed: the carriers are the
+yard's builders (a hauler put on it wears the builder's look, as at any
+build), a station may be short a body while it lends one, every walk is
+routed (no slide), and a faster build-speed ladder speeds the takes and sets.
+No tape, no bar. The house: unchanged.
+
+**Saves.** No saved field changes: the work is in `S.works.mansion` (works.js
+saves it), `S.acts.mansion` keeps its shape, `w.piece` is not saved. No
+migration, no `SAVE_V`.
+
+**Checks.** mansion.test (carriers are `TYPE.BUILD`, the work lands through
+`stepWorks`, a reload keeps every piece and starts the work again, each piece
+set at its spot), finale.test (the house unchanged), works.test,
+build-throughput, spare-hand-builds (`want` unchanged for one-hand sites),
+build-anim, wave31-buildings, act3-intro, acts-travel*, persist-roundtrip. The
+look on the review bench, review "the mansion and the house on the shared
+construction".
+
+### What building it changed
+
+- **The seam.** staffing.js asks `want: buildersWanted(sites)` (works.js:
+  each work on the go its row's `hands`, one by default), cleared by the
+  coordinator as the one line in that file.
+- **A carrier with nothing to take** (a stage still being set) waits on the
+  building's own ground (`way.near`), not wherever it was lent from.
+- **The queue card** passes a row marked `unlisted` (queue.js): the mansion is
+  a standing job nobody bought, so it is not the player's to wait on or hand
+  back; it showed there as "MANSION queued" on the first shot.
+- **`__finish` does not finish the mansion**: `stepWorks` reads a carried
+  work's progress off its pieces, so filling `done` by hand is overwritten.
+  Scenes set the pieces (`__actsAt('mansion', n)`).
+- **The review**: scenes `review-mansion-a` (the mansion going up) and `-b`
+  (the finale's house), review "the mansion and the house on the shared
+  construction".
+
 ## A dialog system (design, approved)
 
 The owner, 2026-10-31, straight after act 3's intro (the meteor on the
