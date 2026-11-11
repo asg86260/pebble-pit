@@ -442,16 +442,18 @@ function readRecord(rec) {
     else ai = putSomewhere(v, G.x + c0 * AP + z * AP / 2);
     if (ai >= 0 && kept.has(from)) tag(ai, kept.get(from));
   };
+  // A unit of a retired kind (config/blocks.js) is not laid again: nothing
+  // makes one any more, so one read back from an old save is dropped here.
   for (const ai of Array.isArray(rec.blocks) ? rec.blocks : []) {
     const v = cells[ai], k = kindOf(v);
     if (!k || k.size < 2 || !Number.isInteger(ai)) continue;
     const c0 = ai % rec.cols, r0 = Math.floor(ai / rec.cols);
     for (let j = 0; j < k.h; j++) for (let i = 0; i < k.size; i++) { const q = (r0 + j) * rec.cols + c0 + i; if (q < part.length) part[q] = 1; }
-    place(v, c0, r0, ai);
+    if (!k.retired) place(v, c0, r0, ai);
   }
   for (let i = 0; i < cells.length; i++) {
     const v = cells[i], k = kindOf(v);
-    if (k && k.size === 1 && !part[i]) place(v, i % rec.cols, Math.floor(i / rec.cols), i);
+    if (k && k.size === 1 && !part[i] && !k.retired) place(v, i % rec.cols, Math.floor(i / rec.cols), i);
   }
 }
 

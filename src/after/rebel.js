@@ -23,7 +23,6 @@ import { P, AFTER_MOTE_FALL, AFTER_MOTE_RISE, AFTER_MOTES_A_HIT, AFTER_AGITATE_R
 import { secs } from './util.js';
 import { shoutRebel } from './levels.js';
 import { afterFloor, speakerAt, pileX } from './place.js';
-import { pairBuilding } from './build.js';
 
 // --- the motes ------------------------------------------------------------------------
 // The motes coming down: { x, y, v, up, age } -- knocked up `up` px first,
@@ -70,7 +69,7 @@ export const wonRebel = at => { shed(at.x, at.y - WORKER, AFTER_WON_REBEL); };
 // plain click on a station its board.
 export function clickPlace(x, y) {
   if (!S.after) return false;
-  if (!pairBuilding() && inBox(x, y, pairBox())) { shout(); return true; }
+  if (inBox(x, y, pairBox())) { shout(); return true; }
   return false;
 }
 

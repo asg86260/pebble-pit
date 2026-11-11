@@ -9,7 +9,7 @@ import { msg, placeOf } from './lang.js';
 import { S } from './state.js';
 import { RUNGS } from './config.js';
 import { isHellCoin, hellPurse } from './hell/coins.js';
-import { timberReserved } from './after/build.js';
+import { timberReserved } from './after/orders.js';
 import { pileCount } from './after/piles.js';
 
 // Every currency is a mark, never a word. Adding one is a line here and a line
@@ -71,7 +71,7 @@ export const purse = money =>
   // Hell's, off its store and its anvil (hell/coins.js).
   isHellCoin(money) ? hellPurse(money) :
   // Act 3's: rebel on the act; timber the mound less the blocks orders have
-  // spoken for (after/build.js).
+  // spoken for (after/orders.js).
   money === 'rebel' ? (S.after ? S.after.rebel : 0) :
   money === 'timber' ? (S.after ? Math.max(0, pileCount('timber') - timberReserved()) : 0) :
   S.stored;

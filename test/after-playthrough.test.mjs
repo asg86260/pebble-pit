@@ -125,9 +125,9 @@ const hireIfNone = () => { if (read().camp < 1 && read().ready > 0 && window.__b
 // press tried as the clock turns, up to ten minutes, while the signs win more
 // and the recruit row hires them.
 const putOnWhenFree = job => until(() => { hireIfNone(); return buyRow(`post-${job}`); }, 600) < Infinity;
-// A station bought on the shack and the clock turned until it stands: up to
-// ten minutes, since with the camp emptied onto posts the pair step down and
-// carry its loads across the camp themselves (after/build.js).
+// A station bought and the clock turned until it stands: up to ten minutes,
+// a member lent off its post when the camp is emptied onto posts
+// (after/bodies.js, `manBuilders`).
 const raise = key => { fund(AFTER_BUILDS[key].bill); return window.__buy(`after-build-${key}`) && until(() => read().built.includes(key), 600) < Infinity; };
 
 group('act 3 from the go-on card to the strike, played as a player plays it', async () => {

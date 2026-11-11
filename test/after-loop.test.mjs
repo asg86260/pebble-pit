@@ -8,12 +8,12 @@
 // beats marked played, since the story before the loop is not what is checked.
 import { bestMs, group, ok, run, runUntil, yard, P } from './helpers.mjs';
 import { goodCount } from '../src/after/piles.js';
-import { siteLoads } from '../src/after/build.js';
+import { workOn, progressOf } from '../src/works.js';
 import { lying } from '../src/after/ground.js';
 import { TREE_CHOPS, AFTER_TREE, CROWD_FILES, RIM_PIECES, MEET_MEMBERS, AFTER_GATES,
          ACT_CAPTION_S, AFTER_DIG_CLICKS, AFTER_PODIUM_REBEL, AFTER_PODIUM_CLIMB, AFTER_PODIUM_TOPS, AFTER_PODIUM_U, AFTER_PLOTS0, AFTER_PLOT_MAX, AFTER_SELF_SEED,
          AFTER_UPGRADES, AFTER_CARDS, AFTER_YARD_COINS, AFTER_FIRST_MEMBERS, STRIKE_SHARE, AFTER_AGITATE_REBEL, AFTER_AGITATE_S,
-         AFTER_BUILD_PIECES, AFTER_LOG_TIMBER, AFTER_MILL, AFTER_SAW_S,
+         AFTER_LOG_TIMBER, AFTER_MILL, AFTER_SAW_S,
          AFTER_BUILDS, AFTER_SEAT_BILLS, AFTER_WALK, AFTER_SIGN_INK_S, AFTER_BURN_S,
          GESTURE_STRAIN_S, AFTER_PILES } from '../src/config.js';
 import { speechTarget } from '../src/after/union.js';
@@ -58,7 +58,7 @@ const settle = () => runUntil(() => read().walking === 0, 120);
 // pile holds no more than its brim (after/piles.js), so a check buying
 // several rows grants it again between them.
 const topUp = () => window.__afterGrant({ timber: AFTER_PILES.timber.brim });
-// A bill paid in timber is an order (after/build.js): its row lands when idle
+// A bill paid in timber is an order (after/orders.js): its row lands when idle
 // members have carried its last block to its station.
 const landed = () => runUntil(() => !S.after.orders.length, 240);
 const putOn = job => window.__afterPress(job) || (topUp(), !!window.__buy(`after-seat-${job}`) && (landed(), window.__afterPress(job)));
@@ -291,51 +291,48 @@ group('a soul whose rim closes walks out of God\'s yard to the camp', async () =
   ];
 });
 
-// Stations bought on the shack, each in turn (one may need the one before),
-// and stood up at once: the carry and the raising are checked on their own
-// above, and their walks are minutes of setup no other check is about.
+// Stations bought, each in turn (one may need the one before), and stood
+// up at once: the building is checked on its own above, and its walks are
+// minutes of setup no other check is about.
 function raise(...keys) {
   return keys.every(k => { const took = window.__buy(`after-build-${k}`); if (took) S.after.built.push(k); run(0.1); return took; });
 }
 
-group('a station bought on the shack is carried in as a pile and raised off it a band at a time', async () => {
+group('a station bought goes up on the yard\'s works, built by one member, who goes back after', async () => {
   up();
   settle();
   window.__afterGrant({ rebel: 200 });
-  const shown = window.__afterRows().filter(r => r.card === 'shack' && r.shown).map(r => r.key);
+  const shown = window.__afterRows().filter(r => r.key.startsWith('after-build-') && r.shown).map(r => r.key);
   const locked = window.__buy('after-build-workshop');
-  const camp0 = read().camp;
+  const idle0 = S.after.bodies.filter(b => b.job == null && b.state === 'work').length;
   const bought = window.__buy('after-build-mill');
   run(0.1);
   const crew = S.after.bodies.filter(b => b.job === 'builder');
-  // Turned a tenth at a time, so every band and the pile's top are seen.
-  const bands = [], piles = [];
-  let carried = false;
+  // Turned a tenth at a time: the work only ever goes forward, and stands
+  // only once it is through.
+  const at = [];
+  let early = false;
   for (let k = 0; k < 6000 && !read().built.includes('mill'); k++) {
     run(0.1);
-    const r = S.after.raising.mill;
-    if (bands.at(-1) !== r.n) bands.push(r.n);
-    const on = siteLoads('mill');
-    if (piles.at(-1) !== on) piles.push(on);
-    carried ||= S.after.bodies.some(b => b.phase === 'carry');
+    const w = workOn('after-build-mill');
+    if (w) at.push(progressOf(w));
+    if (read().built.includes('mill') && at.at(-1) < 0.99) early = true;
   }
-  const n = S.after.raising.mill.at.length;
+  const rising = at.every((v, i) => !i || v >= at[i - 1]) && at.some(v => v > 0 && v < 1);
   run(60);
-  const back = read().camp;
+  const idle1 = S.after.bodies.filter(b => b.job == null && b.state === 'work').length;
   window.__actsOn(null);
   return [
     ok(['mill', 'workshop'].every(k => shown.includes(`after-build-${k}`)),
-       'every station is on the shack\'s board from the start', shown.join(' ')),
+       'every station is for sale from the start', shown.join(' ')),
     ok(!locked, 'one that needs another first cannot be bought before it'),
-    ok(bought && crew.length === Math.min(4, camp0) && crew.every(b => b.pair == null), 'bought, members leave the camp to carry it', `${crew.length} of ${camp0}`),
-    ok(carried && Math.max(...piles) === 8, 'they carry its eight loads onto its spot as a pile', piles.join(' ')),
-    ok(bands.join(' ') === '0 1 2 3 4' && n === AFTER_BUILD_PIECES, 'it goes up a band at a time, standing only with the last', bands.join(' ')),
-    ok(piles.at(-1) === 0, 'and the pile is used up as it goes', piles.join(' ')),
-    ok(back === camp0, 'and every hand walks back out of the camp after', `${camp0} -> ${back}`)
+    ok(bought && crew.length === 1 && crew.every(b => b.pair == null), 'bought, one member, not the pair, goes to build it', `${crew.length}`),
+    ok(rising && !early, 'it goes up with its work, standing only once the work is through', `${at.length} frames, last ${at.at(-1)}`),
+    ok(!S.after.bodies.some(b => b.job === 'builder') && idle1 >= idle0, 'and its builder goes back to the podium after', `${idle0} -> ${idle1}`)
   ];
 });
 
-group('with nobody idle members step off their jobs to build, and the pair stay up speaking', async () => {
+group('with nobody idle a member steps off its job to build, and the pair stay up speaking', async () => {
   up();
   settle();
   window.__afterGrant({ rebel: 2000, timber: 200 });
@@ -348,15 +345,15 @@ group('with nobody idle members step off their jobs to build, and the pair stay 
   window.__buy('after-build-mill');
   run(0.1);
   const crew = S.after.bodies.filter(b => b.job === 'builder');
-  const borrowed = n >= 2 && crew.length === 2 && crew.every(b => b.pair == null) && cutting() === n - 2;
+  const borrowed = n >= 2 && crew.length === 1 && crew.every(b => b.pair == null) && cutting() === n - 1;
   const speaks = !!line();
   const stood = runUntil(() => read().built.includes('mill'), 900);
   const back = runUntil(() => !S.after.bodies.some(b => b.job === 'builder') && cutting() === n, 180);
   window.__actsOn(null);
   return [
-    ok(borrowed, 'two woodcutters step off their job to build, and the pair do not come down', `${n} on, ${JSON.stringify(crew.map(b => b.pair))}`),
+    ok(borrowed, 'one woodcutter steps off its job to build, and the pair do not come down', `${n} on, ${JSON.stringify(crew.map(b => b.pair))}`),
     ok(speaks, 'and a click on the pedestal still gives a line'),
-    ok(stood && back, 'the station stands and the two walk back to the grove', `${stood} ${back}`)
+    ok(stood && back, 'the station stands and the builder walks back to the grove', `${stood} ${back}`)
   ];
 });
 

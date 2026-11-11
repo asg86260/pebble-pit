@@ -24,6 +24,7 @@ import { groundRecord, standGround } from './ground.js';
 import { stepUnion, seedCrowd, syncRims } from './union.js';
 import { stepStrike } from './strike.js';
 import { stepBodies } from './bodies.js';
+import { settleBuilders } from './builders.js';
 import { handRecord, settleHand } from './hand.js';
 import './roster.js';                   // the act's posts, stood on the yard's roster
 import { stepBubbles, forgetBubbles } from './bubbles.js';
@@ -37,9 +38,9 @@ import { readOver } from '../placesave.js';
 // (`camp`, a count), the share of their next line owed (`lines`) and the
 // spot it was last said at (`said`), and how many of each job the rosters
 // want (`crew`); the grove's plots and each tree's growth; the signs
-// planted; the camp's stations built and those going up a piece
-// at a time (`raising`), the rows bought in timber whose blocks are still
-// being carried (`orders`, build.js), and how many times each named upgrade and each
+// planted; the camp's stations built (a station going up is a work on the
+// yard's works, `S.works`), the rows bought in timber whose blocks are still
+// being carried (`orders`, orders.js), and how many times each named upgrade and each
 // job's seat is bought (`ups`); the gate reached. When each upgrade was
 // bought (`upAt`), so what it puts on screen fades in. And what the loop
 // added to stand it up: the act's clock (`t`) and its chance (`seed`) and
@@ -63,7 +64,6 @@ export const blankAfter = () => ({
   plots: [],
   signs: [],
   built: [],
-  raising: {},
   orders: [],
   ups: {},
   upAt: {},
@@ -172,7 +172,7 @@ export const SAVE = {
     S.after = a && typeof a === 'object' ? readOver(blankAfter(), a) : null;
     // The ground stood up from its cells, the terrain laid under them again
     // (ground.js), and anything an older save handed over laid on it.
-    if (S.after) { standPiles(); settleHeld(S.after.bodies); settleHand(); }
+    if (S.after) { standPiles(); settleHeld(S.after.bodies); settleBuilders(S.after.bodies); settleHand(); }
     else standGround();
   },
   // No act: the plot is put down with it, or a slot switched to from an act

@@ -243,7 +243,12 @@ function jigSpan(w, zone = null) {
   return { from: at - BUILD_SHIFT_SPAN, to: at };
 }
 
-export function workJig(w, at, zone = null) {
+// `body` says where the drawn body stands about (`x`, `y`) for a place whose
+// bodies are kept another way (an act's: x the middle column, y the feet,
+// `dx`/`dy` back to the yard's top-left), and the ground its chips stop at
+// (`ground`), for a place whose floor is not the yard's line.
+const YARD_BODY = { dx: 0, dy: 0, ground: null };
+export function workJig(w, at, zone = null, body = YARD_BODY) {
   if (w.jigAt == null) {
     // On to the patch before the first blow: `stepBuilder` calls a body
     // arrived within a pixel of the mark, and that pixel can be off the near
@@ -290,7 +295,7 @@ export function workJig(w, at, zone = null) {
     sfx('build-blow', { x: w.x + WORKER / 2 });
     // One puff per hit, off the body's waist rather than its feet: a chip at
     // ground level is drawn on the ground line, which is already black.
-    spawnGrit(w.x + WORKER / 2, w.foot + WORKER / 2, { floor: w.foot + WORKER });
+    spawnGrit(w.x + body.dx + WORKER / 2, w.foot + body.dy + WORKER / 2, { floor: w.foot + body.dy + WORKER, ground: body.ground });
     if (++w.hits >= w.hitsWanted) {
       // Burst done: rest a beat, then the next patch a step along, turning
       // back at the edge of the span so a long build does not walk the body

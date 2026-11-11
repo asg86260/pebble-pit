@@ -3,7 +3,7 @@
 import { P, TOWER_SHAFT, SHELF_GLYPH_CELLS as CELLS, BUILD_GHOST_INK } from '../config.js';
 import { glyphFor, inkSpan } from '../glyphs.js';
 import { S, casino, lab, outhouse, filter, tower } from '../state.js';
-import { OPENS_PLACE, SITES, DOWN_THERE, progressOf, rowFor, siteBox, worksAt, doneAt } from '../works.js';
+import { OPENS_PLACE, SITES, DOWN_THERE, progressOf, rowFor, siteBox, worksAt, doneAt, siteShown } from '../works.js';
 import { tintOf } from '../upgrades.js';
 import { farmShedRoofed, quarryShed } from '../world.js';
 import { apothHut } from '../apothecary.js';
@@ -250,7 +250,10 @@ export function workSpots(site) {
 }
 
 export function drawWorkBars() {
+  // Each place draws its own sites' works: an act's over its stations, the
+  // yard's and the deep's over theirs.
   for (const site of SITES) {
+    if (!siteShown(site)) continue;
     for (const { w, bar: b, glyph } of workSpots(site)) {
       if (b) { bar(b.x, b.y, progressOf(w)); continue; }
       const row = rowFor(w.key);

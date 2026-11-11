@@ -48,20 +48,9 @@ export const TESTS = [
     await settle();
     await upThere();
     const missed = [], opened = [];
-    // The shack first, from nothing standing: the saw mill needs nothing;
-    // the workshop waits on the saw mill and says so.
-    window.__openAfterBoard('shack');
-    await settle(0.3);
-    const shackUp = !panel().hidden && !document.getElementById('after-shackboard').hidden;
-    const shop = tiles('shack').find(b => b.dataset.key === 'after-build-workshop');
-    const shopLocked = !!shop && shop.classList.contains('locked') && shop.textContent.includes(msg('after-wait-mill'));
-    for (const key of ['after-build-mill']) {
-      const was = { rows: rowsNow() };
-      tiles('shack').find(b => b.dataset.key === key)?.click();
-      await until(() => bought(key, was));
-      if (!bought(key, was)) missed.push(key);
-    }
-    // Every station standing (the setup the rest is not about), then each
+    // The stations are bought at their build signs, on no board
+    // (selftest/buildsign.js). Every station standing (the setup the rest is
+    // not about), then each
     // station's board, every tile on it pressed once.
     for (const st of ['mill', 'workshop']) if (!S.after.built.includes(st)) S.after.built.push(st);
     // ...and the union's support past the podium ladder's first mark, which
@@ -69,7 +58,7 @@ export const TESTS = [
     // waiting for the recruit row.
     window.__afterCrowd(0.6, true);
     await settle(0.2);
-    for (const card of AFTER_CARDS.filter(c => c !== 'shack')) {
+    for (const card of AFTER_CARDS) {
       window.__openAfterBoard(card);
       await settle(0.2);
       const drawn = tiles(card);
@@ -86,18 +75,16 @@ export const TESTS = [
         await settle(0.05);
         b.click();
         // A row billed in timber is an order: it lands once members have
-        // carried its blocks to its station (after/build.js).
+        // carried its blocks to its station (after/orders.js).
         for (let k = 0; k < 240 && S.after.orders.length; k++) window.__fast(1);
         await until(() => bought(key, was));
         if (!bought(key, was)) missed.push(key);
       }
     }
-    const want = window.__afterRows().filter(r => r.card !== 'shack').length;
+    const want = window.__afterRows().filter(r => r.card != null).length;
     const pressed = opened.reduce((n, s) => n + +s.split(':')[1], 0);
     window.__actsOn(null);
     return [
-      ok(shackUp, 'the shack\'s board opens on the yard\'s sheet'),
-      ok(shopLocked, 'the workshop\'s tile is locked, saying what it waits on', shop?.textContent),
       ok(pressed === want, 'every station\'s board draws every row it sells as a tile', `${pressed} of ${want}: ${opened.join(' ')}`),
       ok(missed.length === 0, 'and a press on each tile buys it', missed.join(' '))
     ];
@@ -122,11 +109,10 @@ export const TESTS = [
       ok(buys.length === 0, 'every line a reading', buys.map(b => b.dataset.key).join(' '))
     ];
   }],
-  // The station is its own shop (DESIGN.md, "Act 3's goods are blocks", rule 4).
-  // Even the shack, with no roster under it, opens only from its UPGRADES
-  // button: up here a board is asked for, never come upon (the owner,
-  // 2026-10-28).
-  ['act 3: the shack opens neither on the pointer nor a click on it, its UPGRADES button opens its board, and a pan off it closes it', async () => {
+  // The construction shack sells nothing (the owner, 2026-11-10: a station
+  // is bought at its build sign): no board opens on the pointer over it or a
+  // click on it, and it has no UPGRADES button.
+  ['act 3: the shack opens nothing, on the pointer or a click, and has no UPGRADES button', async () => {
     newRun();
     await settle();
     await upThere();
@@ -142,22 +128,12 @@ export const TESTS = [
     point('pointerup', r.left + s.x, r.top + s.y);
     await settle(0.3);
     const clicked = openBoard();
-    const k = shopBoxOf('after-shack'), ks = toScreen(k.x + k.w / 2, k.y + k.h / 2);
-    point('pointermove', r.left + ks.x, r.top + ks.y, 0);
-    point('pointerdown', r.left + ks.x, r.top + ks.y);
-    point('pointerup', r.left + ks.x, r.top + ks.y);
-    await until(() => openBoard() === 'after-shack');
-    const open = openBoard();
-    // The wheel pans the shack out of the window: its board goes, as the yard's do.
-    for (let k = 0; k < 6; k++) { canvas().dispatchEvent(new WheelEvent('wheel', { deltaY: 1200, bubbles: true, cancelable: true })); await raf(); }
-    for (let k = 0; k < 40 && openBoard(); k++) await raf();
-    const gone = openBoard(), off = b.x + b.w < S.camX || b.x > S.camX + S.viewW;
+    const button = shopBoxOf('after-shack');
     window.__actsOn(null);
     return [
       ok(hovered === null && clicked === null, 'the pointer over the shack and a click on it open nothing', JSON.stringify([hovered, clicked])),
       ok(cursor !== 'pointer', 'and the cursor over it promises nothing', cursor),
-      ok(open === 'after-shack', 'its UPGRADES button opens its board', String(open)),
-      ok(off && gone === null, 'panned off it, the board closes', `${off} ${gone}`)
+      ok(!button, 'and it has no UPGRADES button', JSON.stringify(button))
     ];
   }],
   ['act 3: a click on a roster\'s + under the saw mill puts a member on, and on its - takes one off; no board opens', async () => {

@@ -50,7 +50,10 @@ import { stripOf, units, counted, uncovered, takeAt, colX, lying } from './groun
 import { sawyerHolds } from './mill.js';
 import { signSpot, plantSign } from './press.js';
 import { workAfter } from './work.js';
-import { fillBuilders, stepBuilder, isIdle, handsFree, timberReserved, nextOrder, orderOf, orderAt, orderBrought } from './build.js';
+import { isIdle, handsFree, timberReserved, nextOrder, orderOf, orderAt, orderBrought } from './orders.js';
+import { stepActBuilder, builds as building } from './builders.js';
+import { manSites } from '../crew/sitework.js';
+import { busySitesIn } from '../works.js';
 
 const floorY = () => afterFloor();
 // A walk that keeps to the floor: the rows of God's crowd stand up the
@@ -307,7 +310,7 @@ const UNIT = { mill: 1, workshop: AFTER_SIGN_TIMBER };
 const goodOf = what => AFTER_PILES[what].good;
 const fedAt = what => pileMid(pileOwner(what), what);
 // What a pile can give up: the timber mound less the blocks a carried order
-// has spoken for (build.js), every other pile all it holds.
+// has spoken for (orders.js), every other pile all it holds.
 const spareOf = what => pileCount(what) - (what === 'timber' ? timberReserved() : 0);
 function fetchLogs(w, key, dt) {
   const a = S.after, mine = PILE[key], from = FROM[key];
@@ -564,7 +567,7 @@ const JOB_STEP = {
     const key = w.target, what = key ? PILE[key] : AFTER_GOODS_HOME[loadKind(w)];
     if (go(w, key ? pileMid(key, what) : fedAt(what), floorY(), dt) && toPile(w, dt, what)) w.target = null;
   },
-  // An idle member's errand only: a bought row's timber (build.js, the
+  // An idle member's errand only: a bought row's timber (orders.js, the
   // orders), taken up off the mound a block a beat, the oldest order first,
   // and carried to the station it is for, where each block set down brings
   // the order a block nearer landing. An order gone from under a load (a new
@@ -598,8 +601,9 @@ const JOB_STEP = {
     w.at = go(w, stationDoor('workshop'), floorY(), dt) ? 'workshop' : null;
   },
   builder(w, dt) {
-    // Carrying the station's loads in and raising it off them (build.js).
-    stepBuilder(w, dt, walkTo);
+    // At a station going up on the yard's works, on the act's own walk
+    // (after/builders.js).
+    stepActBuilder(w, dt, (b, tx, d) => walkTo(b, tx, floorY(), d));
   },
   carrier(w, dt) {
     const a = S.after;
@@ -654,7 +658,7 @@ const ERRANDS = [
   { job: AFTER_JOB.GATHER, kind: 'log', left: () => looseLogs().length },
   // A bought seed owed at heaven's gates (track D, after/seeds.js): one member a seed.
   { job: AFTER_JOB.SEED, kind: 'acorn', per: 1, left: seedsOwed },
-  // A bought row's timber, while any of it waits on the mound (build.js).
+  // A bought row's timber, while any of it waits on the mound (orders.js).
   { job: AFTER_JOB.ORDER, kind: 'plank', left: () => Math.min(timberReserved(), pileCount('timber')) },
   { job: AFTER_JOB.HAUL, kind: 'log', left: haulNeed },
   { job: AFTER_JOB.CARRY, kind: 'sign', left: () => (built('workshop') ? pileCount('signs') : 0) }
@@ -678,13 +682,42 @@ function runErrand(w, dt) {
   return true;
 }
 
+// The builders: a station bought is a work on the yard's works (DESIGN.md,
+// "Act 3 builds through the yard's construction"), and who builds it is the
+// yard's rule (crew/sitework.js, `manSites`): one builder a work on the go,
+// an idle member nearest it first, then one out of the crowd, and with
+// nobody spare the nearest member at a post, lent off it; each goes back to
+// the podium when no work wants it, where its roster takes it again.
+const nearest = (list, x) => list.sort((p, q) => Math.abs(p.x - x) - Math.abs(q.x - x))[0] || null;
+const toBuild = w => { takeJob(w, AFTER_JOB.BUILD); Object.assign(w, { site: null, workId: null, goal: 'to' }); return w; };
+function manBuilders() {
+  const a = S.after;
+  manSites(busySitesIn('after'), {
+    builders: () => a.bodies.filter(building),
+    spare(x) {
+      const w = nearest(idleBodies().filter(o => !o.errand), x ?? podiumMid());
+      if (w) return toBuild(w);
+      if (a.camp <= 0) return null;
+      const n = fromCrowd(AFTER_JOB.BUILD);
+      a.bodies.push(n);
+      return toBuild(n);
+    },
+    lend: x => {
+      const w = nearest(a.bodies.filter(o => o.job && o.job !== AFTER_JOB.BUILD && o.state === 'work' && handsFree(o) && !o.out && !o.pick && !o.errand), x ?? podiumMid());
+      return w ? toBuild(w) : null;
+    },
+    free: w => { dropJob(w); Object.assign(w, { site: null, workId: null, goal: null }); },
+    handsFree
+  });
+}
+
 // The act's JOBS registry, shaped like the yard's (crew/jobs.js): a row a
 // job, in the order the roster lists them, each with its frame; the builders
-// are filled site by site (build.js, `fillBuilders`). None fills itself by a
+// are put on work by work (`manBuilders`). None fills itself by a
 // count through the engine (no `want`): the roster's count is met by members
 // already standing in the place (`staff`), so nobody is made out of nothing.
 // A bought row's timber never waits for want of hands, as a station's
-// raising never does (build.js, `offPosts`): with nobody idle, the member on
+// going up never does (`manBuilders`): with nobody idle, the member on
 // a job nearest the mound, its hands empty, is lent to the order -- it keeps
 // its job, so its roster still counts it, carries a load, and goes back to
 // its post once no order has a block left to take up.
@@ -749,7 +782,7 @@ export const AFTER_CREW = {
     crowdLines(f.dt);
     staff();
     lendHands();
-    fillBuilders();
+    manBuilders();
   },
   spare: () => S.after.camp > 0,
   // Drawn as the yard's square, x its middle column and y its feet

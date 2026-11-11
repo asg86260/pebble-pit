@@ -4,6 +4,40 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
+## Act 3 builds through the yard's construction -- BUILT, ON THE REVIEW BENCH (2026-11-10)
+
+DESIGN.md, "Act 3 builds through the yard's construction", with the owner's
+three answers (one build speed, no dotted outline, no shack board). Built on
+branch `design-act3-build`, not on main: act 3's stations are works on
+works.js, built by one member, risen with `withRise`; old saves' half-raised
+stations migrate to SAVE_V 38. Blocker: the owner's vote on the review "act
+3: building through the yard's construction" (scenes `review-a3-build-a`,
+`-b`), then the landing. SAVE_V 38 collides with any other branch that
+raises it first; the later one renumbers.
+
+## The yard's fences stand on their neighbors -- FOUND, NOT FIXED (2026-11-10)
+
+A building going up is fenced three cells either side (fence.js), and the
+fence has never been on the map. Claimed there, the no-overlap rule went red
+in two groups: the ram's fence posts stand on the shack (build-throughput,
+"a backlog over every site"), and the pods' on the deep's first station
+(deep-works, deep-build-reload). Act 3 claims its fences and seats each post
+clear of its neighbors (`FENCE_CLAIMED`, `fenceOf`); the yard and the deep
+join by adding their place to `FENCE_CLAIMED`, which moves their posts in
+the same way -- a visible change to the yard's fences, so it is a review
+before it is a fix. Blocker: the owner's call on the look.
+
+## Act 3's stair and act 2's abyssal sword -- DESIGNED, AWAITING APPROVAL (2026-11-09)
+
+DESIGN.md, "The stair and the abyssal sword". Act 3's line builds a stair to
+God instead of winning a crowd share; faith is rebel renamed; act 2 gets a
+building (the reliquary) whose ladder strengthens the party; the serpent
+grows mightier by level, its level 25 drops an abyssal fang forged into a
+sword that is carried up and stabs God, unmasking him. Blocker: the owner's
+approval and the four open calls at the end of the section. God's crowd
+redraw (review-godcrowd, rounds 1-2) is parked; its ground fix
+(f7e0b54a, the path runs to the camera's last window) is worth landing alone.
+
 ## A dialog system -- APPROVED, BUILDING (2026-11-01)
 
 The owner: "we need to have some dialog to explain the premise of act 3. we

@@ -25,9 +25,11 @@ const KIND_DEFS = [
   { key: 'log',     size: AFTER_BLOCK.log,   palette: AFTER_GOODS.log,                      home: 'grovelogs' },
   { key: 'plank',   size: AFTER_BLOCK.plank, palette: AFTER_GOODS.plank,                    home: 'timber' },
   { key: 'sign',    size: AFTER_BLOCK.sign,  palette: AFTER_GOODS.sign,                     home: 'signs' },
-  // a construction site's load (after/build.js): made at the shack's door,
-  // laid in a band, carried by nobody home, so no pile is its home
-  { key: 'load',    size: AFTER_BLOCK.load, palette: [GREY[AFTER_TONES.mid]],         home: null },
+  // retired: a construction site's load, from when act 3 raised a station
+  // off a pile of them (before 2026-11-10). Nothing makes one; its run is
+  // kept so the kinds after it keep their saved values, and one read back
+  // from an old save is laid nowhere (after/ground.js, after/piles.js).
+  { key: 'load',    size: AFTER_BLOCK.load, palette: [GREY[AFTER_TONES.mid]],         home: null, retired: true },
   // the grove's seed (DESIGN.md, "Act 3's grove, rebuilt"): three wide and four
   // tall, a dark cap over a warm nut, drawn as one sprite off the log's
   // tones (render/after/pine.js); its one value is the nut's

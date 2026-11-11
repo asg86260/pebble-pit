@@ -1,15 +1,15 @@
 // A site with work on it looks like a building site: barriers, tape, and the
 // chips off the builder's hammer.
 
-import { P, PARTY_IDS, DEEP_GRIT_RUNG } from '../config.js';
+import { P, DEEP_GRIT_RUNG } from '../config.js';
 import { PURPLES } from './deeptones.js';
 import { S } from '../state.js';
-import { SITES, rowFor, siteBox, worksAt } from '../works.js';
+import { rowFor, siteShown } from '../works.js';
 import { ctx } from './ctx.js';
 import { footprints } from '../footprints.js';
 import { groundAt } from '../world.js';
 import { risingPlaces, laidCourses } from './rise.js';
-import { groundOf } from '../deep/place.js';
+import { fences, FENCE_POST_BANDS } from '../fence.js';
 
 // --- a busy site looks like a building site -----------------------------------
 // A station's footprint is its own rect. The yard is one slot shared by every
@@ -25,42 +25,19 @@ function drawBarrierPost(x, y, w, bands) {
   }
 }
 
-// Only a building or a machine rising out of the ground gets fenced: a rung
-// worked at the bench (`kind: 'rung'`) is a body at a bench that was already
-// there, and tape round it would fence off thin air.
-const risingKinds = new Set(['building', 'machine']);
-// Per WORK, not per site: a build in line behind another stands fenced on its
-// own ground too, which is how the yard says the ground is spoken for.
-const construction = site =>
-  worksAt(site).filter(w => risingKinds.has(rowFor(w.key)?.kind));
-
 // The site sheds no dust of its own on purpose: a haze off the foot of a
 // building reads as the ground smoldering. What says building site is the
 // barriers, the tape and the chips off each blow (`workJig` in crew.js).
-// A station of the party going up draws its own scaffold in the deep's tones
-// (`drawDeepStations`, render/deep.js), so it is not fenced a second time
-// here; its site keeps its box for the builder, the bar and the roster.
-const OWN_SCAFFOLD = new Set(PARTY_IDS);
+// The fence's shape is fence.js's, shared with the ground it claims; each
+// place draws its own sites' fences.
 export function drawBuildSites() {
-  for (const site of SITES) for (const work of OWN_SCAFFOLD.has(site) ? [] : construction(site)) {
-    const foot = siteBox(site, work);
-    if (!foot) continue;
-
-    const postW = P * 2, postBands = 5, postH = P * postBands;
-    const left = Math.round(foot.x / P) * P - P * 3 - postW;
-    const right = Math.round((foot.x + foot.w) / P) * P + P * 3;
-    const ground = groundOf(foot.y);
-    const topY = ground - postH;
-
+  for (const { site, fence } of fences()) {
+    if (!siteShown(site)) continue;
     ctx.fillStyle = '#000';
-    drawBarrierPost(left, topY, postW, postBands);
-    drawBarrierPost(right, topY, postW, postBands);
-
+    for (const q of fence.posts) drawBarrierPost(q.x, q.y, q.w, FENCE_POST_BANDS);
     // the tape, at head height, dashed a cell on and a cell off
-    const tapeY = ground - P * 3;
-    for (let x = left + postW; x < right; x += P * 2)
-      ctx.fillRect(x, tapeY, P, 2);
-
+    for (let x = fence.tape.x0; x < fence.tape.x1; x += P * 2)
+      ctx.fillRect(x, fence.tape.y, P, 2);
   }
 }
 
@@ -74,23 +51,28 @@ export function drawBuildSites() {
 // A chip is the paper over what stands and the ink over open sky (the owner,
 // 2026-10-29: plain colors, never a blend), which is the only thing that makes
 // site dust visible: the chips are thrown inside the biggest black mass in the
-// yard, so black grains are black-on-black. What stands is asked of the yard,
-// never of the frame's pixels: under the ground line, inside a placed object's
+// yard, so black grains are black-on-black. What stands is asked of the place,
+// never of the frame's pixels: under its floor, inside a placed object's
 // footprint, or inside the courses a rising building has laid so far
 // (render/rise.js). A footprint is the object's box, not its ink, so a chip
-// over a doorway is the paper as well -- a third of a second, at a fade.
+// over a doorway is the paper as well -- a third of a second, at a fade. A
+// chip thrown in an act carries its floor (`ground`) and is drawn there only.
 export function drawGrit() {
-  if (!S.grit.some(g => !g.sea)) return;
-  const going = new Set(risingPlaces().map(r => r.place));
-  const stand = [...footprints('yard').filter(o => !going.has(o.id)).flatMap(o => o.rects), ...laidCourses()];
-  const solid = (x, y) => y >= groundAt(x) || stand.some(r => x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h);
+  const act = S.view === 'after';
+  const mine = g => !g.sea && (g.ground != null) === act;
+  if (!S.grit.some(mine)) return;
+  // A rising building's own footprint is not yet standing: only its laid
+  // courses are. An act's station stands under its own key (`stands`).
+  const going = new Set(risingPlaces().flatMap(r => [r.place, rowFor(r.key)?.stands].filter(Boolean)));
+  const stand = [...footprints(act ? 'after' : 'yard').filter(o => !going.has(o.id)).flatMap(o => o.rects), ...laidCourses()];
+  const solid = (g, x, y) => y >= (g.ground ?? groundAt(x)) || stand.some(r => x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h);
   for (const g of S.grit) {
-    if (g.sea) continue;
+    if (!mine(g)) continue;
     const a = fade(g);
     if (a <= 0) continue;
     const x = Math.round(g.x / P) * P, y = Math.round(g.y / P) * P;
     ctx.globalAlpha = a;
-    ctx.fillStyle = solid(x + P / 2, y + P / 2) ? '#fff' : '#000';
+    ctx.fillStyle = solid(g, x + P / 2, y + P / 2) ? '#fff' : '#000';
     ctx.fillRect(x, y, P, P);
   }
   ctx.globalAlpha = 1;

@@ -98,12 +98,12 @@ export const AFTER_JOB = Object.freeze({
   JOIN:    'joiner',
   CARRY:   'carrier',
   // An idle member carrying a timber bill's blocks off the mound to the
-  // station it bought (after/build.js, the orders): an errand too.
+  // station it bought (after/orders.js): an errand too.
   ORDER:   'orderer',
   // An idle member fetching a bought seed from heaven's gates (after/seeds.js).
   SEED:    'seeder',
-  // A member raising a station off the shack, or the pair down off the
-  // pedestal: bought by no post of its own.
+  // A member putting up a station on the yard's works (after/builders.js),
+  // bought by no post of its own.
   BUILD:   'builder'
 });
 

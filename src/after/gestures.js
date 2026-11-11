@@ -46,7 +46,6 @@ import { built } from './levels.js';
 import { stationParts, plotX, groundOf, AP } from './place.js';
 import { standing, stumped, chopTree, digStump, trees, treeAt } from './grove.js';
 import { turnWheel, strokesLanded } from './mill.js';
-import { pairBuilding } from './build.js';
 import { pileCount } from './piles.js';
 import { workAfter } from './work.js';
 // track C: the stump's strain, shared with the woodcutter, and its way into the hand
@@ -104,7 +103,7 @@ export function handSawAt(i, s = 0) {
 const DEFS = {
   pedestal: {
     init: () => ({}),
-    open: () => built('pedestal') && !pairBuilding(),
+    open: () => built('pedestal'),
     grab: (g, x, y) => bubbleAt(x, y),
     down(g, b) {
       if (!BUBBLES.pop(b)) return 'tap';

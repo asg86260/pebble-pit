@@ -1,26 +1,25 @@
-// A build site is a strip of the ground (DESIGN.md, "One resource system for
-// every act", section 4): its loads are `load` units made at one named
-// source, the construction shack's door, carried in by members and set down
-// on the site's strip, and taken off its top by the builders to be laid in a
-// band. How many there are is read off the cells and the arms; the site keeps
-// no counters of them, and the drawing is the ground's.
+// Act 3 builds through the yard's construction (DESIGN.md, "Act 3 builds
+// through the yard's construction"): a station bought at the build sign in
+// its lot is a building on the yard's works, put up by one member who walks
+// over and hammers there, and it rises only while that member is at it. It
+// stands when the work lands, and its builder goes back to the podium.
 //
-// Reached the way a player reaches it: the saw mill bought on the shack's
-// board (`__buy`). The setup it is not about: the act on and its opening
-// played, members walked out, coins granted.
+// Reached the way a player reaches it: the sign in the saw mill's lot
+// pressed (`signPress`). The setup it is not about: the act on and its
+// opening played, members walked out, coins granted.
 import { group, ok, run, runUntil, yard } from './helpers.mjs';
-import { P, RIM_PIECES, AFTER_BUILD_PIECES, AFTER_BUILD_A_BAND } from '../src/config.js';
-import { units, colX } from '../src/after/ground.js';
-import { siteLoads } from '../src/after/build.js';
-import { stationDoor, buildPileAt, BUILD_PILE_W, AP } from '../src/after/place.js';
-import { loadKind } from '../src/carry.js';
+import { RIM_PIECES } from '../src/config.js';
+import { AFTER_JOB } from '../src/jobs.js';
+import { workOn, progressOf, handsAt } from '../src/works.js';
+import { signs, signMid, signPress } from '../src/buildsign.js';
 import { flowBy } from '../src/flow.js';
+import { purse } from '../src/words.js';
 
 const S = yard.S;
 const OPENING = ['house-fall', 'arrive', 'meet-god', 'refuse'];
-const BILL = AFTER_BUILD_PIECES * AFTER_BUILD_A_BAND;
+const builders = () => S.after.bodies.filter(b => b.job === AFTER_JOB.BUILD);
 
-group('a station\'s loads are made at the shack\'s door, carried to its strip as units, and laid in bands off the top', async () => {
+group('a station bought at its build sign is built on the yard\'s works by one member at its lot, and stands', async () => {
   window.__actsOn(true);
   window.__goPlace('after');
   for (const k of OPENING) if (!S.beatsDone.includes(k)) S.beatsDone.push(k);
@@ -29,32 +28,34 @@ group('a station\'s loads are made at the shack\'s door, carried to its strip as
   window.__afterCrowd((i, v) => (i < 6 ? RIM_PIECES : v));
   runUntil(() => window.__afterRead().walking === 0, 240);
   window.__afterGrant({ rebel: 9000 });
-  const door = stationDoor('shack'), x0 = buildPileAt('mill');
-  const bought = window.__buy('after-build-mill');
-  let atDoor = true, peak = 0, onStrip = true, made = 0, fresh = 0, lastArms = 0;
-  for (let k = 0; k < 6000 && !window.__afterRead().built.includes('mill'); k++) {
-    run(0.1);
-    // every load made this tick is in the arms of a body standing at the door
-    const arms = S.after.bodies.filter(b => loadKind(b) === 'load');
-    const was = made;
-    made = flowBy()['load:shack'] || 0;
-    if (made > was && !arms.some(b => Math.abs(b.x - door) < P * 6)) atDoor = false;
-    fresh += made - was;
-    peak = Math.max(peak, siteLoads('mill'));
-    // and every load lying about is on the site's strip
-    for (const u of units()) if (u.kind === 'load' && (colX(u.c0) < x0 - AP * 2 || colX(u.c0) > x0 + (BUILD_PILE_W + 2) * AP)) onStrip = false;
-    lastArms = arms.length;
+  const rebel0 = purse('rebel');
+  const at = signMid('after-mill', 'after');
+  const pressed = !!at && signPress(at.x, at.y);
+  const w = workOn('after-build-mill'), now = () => workOn('after-build-mill');
+  const paid = rebel0 - purse('rebel');
+  const signGone = !signs('after').some(s => s.key === 'after-mill');
+  // Nothing moves until the builder is standing at the lot.
+  let early = false, most = 0;
+  for (let k = 0; k < 600 && w && !builders().some(b => b.goal === 'at'); k++) {
+    run(1 / 30);
+    if (now() && progressOf(now()) > 0 && !builders().some(b => b.goal === 'at')) early = true;
+    most = Math.max(most, builders().length);
   }
-  const by = flowBy();
-  const r = S.after.raising.mill;
+  const arrived = builders().some(b => b.goal === 'at' && b.site === 'after-mill');
+  let hammered = false;
+  for (let k = 0; k < 120; k++) { run(1 / 30); if (builders().some(b => b.jigAt != null)) hammered = true; most = Math.max(most, builders().length); }
+  const going = now() ? progressOf(now()) : 0, hands = handsAt('after-mill');
+  const stood = runUntil(() => S.after.built.includes('mill'), 200);
   run(2);
-  const left = units().filter(u => u.kind === 'load').length;
+  const after = builders().length;
+  const by = flowBy();
   window.__actsOn(null);
   return [
-    ok(bought, 'the saw mill is bought on the shack\'s board'),
-    ok(fresh === BILL && atDoor, 'its eight loads are made at the shack\'s door, one at a time, in a member\'s arms', `${fresh} made, at the door ${atDoor}`),
-    ok(peak === BILL && onStrip, 'and set down on the site\'s strip as units of the ground, all eight lying there at once', `${peak} of ${BILL}, on the strip ${onStrip}`),
-    ok(by['load:band'] === -BILL && left === 0 && r.n === AFTER_BUILD_PIECES, 'the builders take them off the top and lay them in bands: none left, the station up', `${by['load:band']} laid, ${left} left, ${r.n} bands`),
-    ok(!['claimed', 'brought', 'taken', 'drop', 'pick'].some(k => k in r), 'the site keeps no counters of loads', Object.keys(r).join(' '))
+    ok(pressed && !!w && w.of > 0, 'the sign\'s press starts the saw mill as a work on the yard\'s works', `pressed ${pressed}, work ${!!w}`),
+    ok(paid > 0 && signGone, 'its bill is taken once and its sign goes', `paid ${paid}, sign gone ${signGone}`),
+    ok(!early && arrived, 'it does not move until a member has walked over and stands at its lot'),
+    ok(hammered && hands === 1 && most === 1 && going > 0, 'one member, and one only, hammers there and it rises', `hammered ${hammered}, hands ${hands}, builders at most ${most}, at ${going}`),
+    ok(stood && after === 0, 'the mill stands when the work lands, and its builder goes back', `stood ${stood}, builders after ${after}`),
+    ok(!Object.keys(by).some(k => k.startsWith('load:')), 'no load is made or laid: the loads are gone', Object.keys(by).join(' '))
   ];
 });

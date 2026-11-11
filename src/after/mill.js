@@ -105,13 +105,17 @@ function land(s, bed, hand) {
 // stroke cannot go, so the wheel stops at its top.
 function feedTo(s, h, hand) {
   while (s.bed) {
-    // a hair short of the foot is the foot: the turn's sum of frames never lands on it exactly
-    const bed = s.bed, u = (h - bed.k - G0) / (G1 - G0), f1 = u > 1 - 1e-9 ? 1 : clamp(u, 0, 1);
-    if (f1 <= bed.f) return true;
+    const bed = s.bed, u = clamp((h - bed.k - G0) / (G1 - G0), 0, 1);
+    if (u <= bed.f && u <= 1 - 1e-9) return true;
     if (bed.f === 0) {
       if (stalled(s, bed)) return false;
       bed.d = strokeD(bed); bed.from = bed.at; bed.to = bed.at + bed.d;
     }
+    // A hair short of the foot is the foot: the turn's sum of frames never
+    // lands on it exactly, and a log carried within EPS of where the stroke
+    // leaves it is read as there (`millView`), so the stroke lands with it.
+    const f1 = u > 1 - 1e-9 || bed.d * (1 - u) < EPS ? 1 : u;
+    if (f1 <= bed.f) return true;
     bed.at += bed.d * (f1 - bed.f); bed.f = f1;
     if (f1 < 1) return true;
     land(s, bed, hand);

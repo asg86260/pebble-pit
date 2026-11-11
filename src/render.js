@@ -231,8 +231,10 @@ const LAYERS = [
   // stand on the floor.
   { name: 'after lip', in: 'after', draw: drawFrontLip },
   { name: 'after piles', in: 'after', draw: drawAfterPiles },   // each station's counted pile, and the workshop's sign rack
+  { name: 'after build sites', in: 'after', draw: drawBuildSites }, // the yard's fence round a station going up, standing on the floor as a pile does
   { name: 'after sight', in: 'after', draw: drawPlaceSight },   // the right button held: the camp behind its members veiled, each ringed
   { name: 'after members', in: 'after', draw: drawAfterMembers },
+  { name: 'after grit', in: 'after', draw: drawGrit },           // the chips off an act 3 builder's hammer, in front of the station
   { name: 'after roster', in: 'after', draw: drawAfterRoster },   // who is on each job, under its station, on the yard's roster
   { name: 'after pile marks', in: 'after', draw: drawPileMarks }, // the yard's pile-full mark over an act 3 row's full pile (render/pilemarks.js)
   { name: 'after coins', in: 'after', draw: drawAfterCoins },  // the yard's coins out of the thin patch to the station bought (render/aftercoins.js)
@@ -301,8 +303,8 @@ const LAYERS = [
   // What a station is putting up and what it has finished hang over it in
   // front of the deep's domes as well as the yard's roofs: behind them, the
   // stack over a station on the deep's floor was inside its own dome.
-  { name: 'work bars', in: YARD_DEEP, draw: drawWorkBars },     // and whatever else the yard is putting up
-  { name: 'done marks', in: YARD_DEEP, draw: drawDoneMarks },   // a tick over any station that finished something
+  { name: 'work bars', in: [...YARD_DEEP, 'after'], draw: drawWorkBars },     // and whatever else the yard is putting up
+  { name: 'done marks', in: [...YARD_DEEP, 'after'], draw: drawDoneMarks },   // a tick over any station that finished something
   { name: 'sight veil', draw: drawSightVeil },   // the right button held: the yard behind the crew veiled pale
   { name: 'roster', in: YARD_DEEP, draw: drawRosterBodies },    // who is working here, under the place they work
   { name: 'build signs', in: ['yard', 'deep', 'after'], draw: drawBuildSigns }, // staked in each empty lot, behind the crew who walk past

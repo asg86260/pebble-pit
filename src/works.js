@@ -55,13 +55,47 @@ export const SITES = Object.keys(SITE_JOB);
 // in stations.js: works.js is imported by every board and cannot import the
 // station table back, so the table hands itself in.
 let stationBox = () => null;  // page: wiring stations.js hands in at load
+// Each entry is [key, job, place, floor]: the place a site stands in (its
+// row's `place`, the yard's when it says none) says whose builders put its
+// works up, and `floor(x)` the ground under it where that is not the yard's.
 export function registerSites(sites, box) {
-  for (const [key, job] of sites) {
+  for (const [key, job, place, floor] of sites) {
     if (!(key in SITE_JOB)) SITES.push(key);
     SITE_JOB[key] = job;
+    if (place) SITE_PLACE[key] = place;
+    if (floor) SITE_FLOOR[key] = floor;
   }
   stationBox = box;
 }
+
+// --- which place a site is in, and whose crew builds it ---------------------------
+// The yard's builders build the yard's sites, the deep's build the deep's, and
+// an act's builds its own (DESIGN.md, "Act 3 builds through the yard's
+// construction"): nobody crosses between them. The deep's own sites are named
+// in `DOWN_THERE`; every other site is the place its station row says.
+const SITE_PLACE = {};
+const SITE_FLOOR = {};
+export const placeOfSite = site => (DOWN_THERE.has(site) ? 'deep' : SITE_PLACE[site] || 'yard');
+// The places outside the yard's world, each drawn on its own: the yard and
+// the deep are one picture, an act is another.
+const worldOf = place => (place === 'after' || place === 'hell' ? place : 'yard');
+// Whether a site's works are drawn in the place on screen.
+export const siteShown = site => worldOf(placeOfSite(site)) === worldOf(S.view || 'yard');
+// The ground under a site at x, for a place whose floor is not the yard's
+// line; null for the yard's and the deep's, which read their own.
+export const siteFloor = (site, x) => (SITE_FLOOR[site] ? SITE_FLOOR[site](x) : null);
+// An act's sites, put up by the act's own crew (`registerPlaceCrew`).
+export const busySitesIn = place => SITES.filter(site => busyAt(site) && SITE_PLACE[site] === place && !DOWN_THERE.has(site));
+const actSite = site => !!PLACE_CREW[SITE_PLACE[site]];
+
+// An act's crew, handed in by the act: its body list and which of its bodies
+// are builders. The question a site asks of it is the yard's (crew/muster.js,
+// `setHands`): how many builders have ARRIVED (`goal: 'at'`) at it and at
+// each of its works, by the work's `id`.
+const PLACE_CREW = {};
+export const registerPlaceCrew = (place, crew) => { PLACE_CREW[place] = crew; };
+const crewOfSite = site => PLACE_CREW[SITE_PLACE[site]] || null;
+const arrivedAt = (crew, site) => (crew.list() || []).filter(b => crew.builds(b) && b.goal === 'at' && b.site === site && b.workId != null);
 
 // Which row opens which place on the ground, keyed as `SITES` in config.js
 // is. The yard remembers the order these are bought in, so `placeSites` can
@@ -87,7 +121,7 @@ export const builderManned = site => SITE_JOB[site] === JOB.BUILD;
 // The yard's builders build the yard's sites; the deep's build the deep's
 // (DESIGN.md, "Two crews and a portal"). Nobody crosses between them.
 export const busyBuilderSites = () =>
-  SITES.filter(site => busyAt(site) && !DOWN_THERE.has(site)
+  SITES.filter(site => busyAt(site) && !DOWN_THERE.has(site) && !actSite(site)
                        && (SITE_JOB[site] === JOB.BUILD || (noGang(site) && !UP_THERE.has(site))));
 export const busyDeepSites = () =>
   SITES.filter(site => busyAt(site) && DOWN_THERE.has(site) && (SITE_JOB[site] === JOB.BUILD || noGang(site)));
@@ -123,7 +157,13 @@ export const siteX = site => {
 // yard.
 let handsHook = () => 0;  // page: wiring crew.js hands in at load
 export const setHands = fn => { handsHook = fn; };
-export const handsAt = site => Math.max(0, handsHook(site) | 0);
+// An act's site is answered off the act's own crew, with the yard's rule: a
+// pair of hands a work on the go, each body at exactly one.
+export const handsAt = site => {
+  const crew = crewOfSite(site);
+  if (crew) return Math.min(Math.max(1, onTheGo(site).length), arrivedAt(crew, site).length);
+  return Math.max(0, handsHook(site) | 0);
+};
 
 // How many of them are at ONE work of the site's several: a builder is given
 // a work, not just a site, and named by the work's `id`, since a row queued
@@ -131,8 +171,11 @@ export const handsAt = site => Math.max(0, handsHook(site) | 0);
 // case the site total is shared out.
 let handsOnHook = null;  // page: wiring crew.js hands in at load
 export const setHandsOn = fn => { handsOnHook = fn; };
-export const handsOn = (site, id) =>
-  handsOnHook ? Math.max(0, handsOnHook(site, id) | 0) : null;
+export const handsOn = (site, id) => {
+  const crew = crewOfSite(site);
+  if (crew) return arrivedAt(crew, site).filter(b => b.workId === id).length;
+  return handsOnHook ? Math.max(0, handsOnHook(site, id) | 0) : null;
+};
 
 // A build starting makes spare hands into builders and a build landing makes
 // them spare again; both have to happen on the frame it changes or the site
@@ -340,7 +383,11 @@ export const busyAt = site => worksAt(site).length > 0;
 // site has one.
 export const bodiesOn = key => {
   const ids = new Set(worksOf(key).map(w => w.id));
-  return S.workers.filter(w => w.jigAt != null && ids.has(w.workId));
+  // An act's row is built by the act's crew, read off its own list.
+  const site = SITES.find(s => worksAt(s).some(w => w.key === key));
+  const crew = site ? crewOfSite(site) : null;
+  const bodies = crew ? crew.list() || [] : S.workers;
+  return bodies.filter(w => w.jigAt != null && ids.has(w.workId));
 };
 // Where a row's oldest copy stands in its site's list, counting the front as
 // one, so the first behind it is 2, which is what "2nd" in its tag means.

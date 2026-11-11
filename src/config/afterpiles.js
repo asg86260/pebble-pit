@@ -6,8 +6,8 @@
 // lays the camp off after/art.js: this file imports nothing, so both can read it.
 
 // A good's block, in art cells square: a log 4x4, a plank of timber 2x2.
-// ...and a construction site's load (after/build.js), two cells a side, the
-// shape the site's piled loads have always been drawn as; and the grove's
+// ...and a construction site's load (retired, config/blocks.js), two cells a side,
+// the shape a site's piled loads were drawn as; and the grove's
 // acorn, three cells across.
 export const AFTER_BLOCK = { log: 4, plank: 2, sign: 4, load: 2, acorn: 3 };
 // A block taller than it is wide, its height in art cells (the owner,

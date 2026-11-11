@@ -394,7 +394,7 @@ export const TESTS = [
     out.push(ok(S.view === 'after', 'afterlife: the camera is up there', S.view));
     out.push(...await panChecks('afterlife'));
     out.push(...await stationChecks('afterlife', openRows(), true));
-    out.push(...await buyCheck('afterlife', [STATIONS.find(r => r.key === 'after-shack')], true));
+    out.push(...await buyCheck('afterlife', [STATIONS.find(r => r.key === 'after-grove')], true));
     out.push(...await scrollCloses('afterlife'));
     // A member picked up with the hand and put down: it walks back to its
     // spot at the podium (the setup: one waiting in the crowd, who steps out

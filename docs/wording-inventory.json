@@ -8393,13 +8393,6 @@
   "text": "seats"
  },
  {
-  "id": "after-sect-build",
-  "group": "Act 4 (placeholder)",
-  "where": "src/after/rows.js",
-  "context": "act 3 shack heading (placeholder): the stations to build",
-  "text": "build"
- },
- {
   "id": "after-sect-card",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",

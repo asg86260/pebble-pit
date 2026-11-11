@@ -3,11 +3,11 @@
 // when a take returned it. Yard haulers keep each grain's shade, the deep's
 // gatherers hold cells, act 3's members carry logs and timber by weight, take
 // each from the top of a pile and set it down on its home, gather a lying
-// block home, carry a bought row's timber and its station's loads out of the
-// shack's door; an older save's bodies migrate with their loads.
+// block home and carry a bought row's timber; an older save's bodies
+// migrate with their loads.
 //
 // Reached the way a player reaches it where the check is about it: the
-// stations ordered off the shack (`__buy`), the roster's + (`__afterPress`),
+// stations bought (`__buy`), the roster's + (`__afterPress`),
 // the row bought (`__buy`). The setup it is not about: the yard's carry level
 // (`__levels`), the act's coins and its members walked out.
 import { group, ok, run, runUntil, yard, quickCrew } from './helpers.mjs';
@@ -23,7 +23,7 @@ import { P } from '../src/config.js';
 import { units } from '../src/after/ground.js';
 import { layGood } from '../src/after/grove.js';
 import { stationDoor, afterFloor } from '../src/after/place.js';
-import { timberReserved } from '../src/after/build.js';
+import { timberReserved } from '../src/after/orders.js';
 import { tossX } from '../src/deep/place.js';
 import oneCarry from '../src/migrations/2026-10-28-one-carry.js';
 
@@ -150,35 +150,6 @@ group('a bought row\'s timber is carried block by block and the row lands on the
     ok(carried > 0 && phantoms === 0, 'each claimed block was in someone\'s arms', `${carried}`),
     ok(timberReserved() === 0, 'nothing is left spoken for'),
     ok(S.after.bodies.every(b => b.errand !== AFTER_JOB.ORDER || b.carry === 0), 'and nobody on the order is left holding a block')
-  ];
-});
-
-group('a station\'s loads come out of the shack\'s door', async () => {
-  window.__actsOn(true);
-  window.__goPlace('after');
-  for (const k of OPENING) if (!S.beatsDone.includes(k)) S.beatsDone.push(k);
-  window.__grant({ dust: 1e7, spores: 2e6, shards: 2e6, scales: 2e5, sparks: 2e5 });
-  S.after.speech = { next: 1e9, f0: 0, held: null };
-  window.__afterCrowd((i, v) => (i < 4 ? RIM_PIECES : v));
-  runUntil(() => window.__afterRead().walking === 0, 240);
-  window.__afterGrant({ rebel: 9000 });
-  const bought = window.__buy('after-build-mill');
-  const door = stationDoor('shack');
-  const took = [];
-  let was = new Map();
-  for (let f = 0; f < 60 * 300 && !window.__afterRead().built.includes('mill'); f++) {
-    run(1 / 60);
-    for (const b of S.after.bodies) {
-      if (b.phase === 'carry' && !was.get(b.id)) took.push({ x: b.x, load: [...b.load] });
-      was.set(b.id, b.phase === 'carry');
-    }
-  }
-  window.__actsOn(null);
-  return [
-    ok(bought, 'the station bought off the shack'),
-    ok(took.length > 0 && took.every(t => Math.abs(t.x - door) < P * 4), 'every load was taken up at the shack\'s door', JSON.stringify(took.slice(0, 3)) + ' door ' + door),
-    ok(took.every(t => t.load.length === 1 && kindOf(t.load[0]) && kindOf(t.load[0]).key === 'load'), 'as a load unit of its own kind in the arms'),
-    ok(window.__afterRead().built.includes('mill'), 'and the station stands off them')
   ];
 });
 
