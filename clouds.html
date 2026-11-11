@@ -142,7 +142,7 @@ function frame(dt) {
     placed[d.key] = x - views[i].ox * CELLPX;   // where the layer's own first cell is drawn
     placed[d.key + ':ox'] = views[i].ox;          // and the first column of its window
     g.globalAlpha = d.alpha;
-    g.drawImage(r.canvas, 0, a.y, a.w, a.h, x, y, a.w * CELLPX, a.h * CELLPX);
+    g.drawImage(r.canvas, a.x, a.y, a.w, a.h, x, y, a.w * CELLPX, a.h * CELLPX);
   });
   g.globalAlpha = 1;
   if ($('ref').checked && (s === 'all' || s === 'one')) yardStrip();
