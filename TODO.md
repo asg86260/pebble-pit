@@ -230,6 +230,8 @@ HELL sets are gone; what draws where is unchanged, so enabling the shared
 marks (pile marks, work bars, build sites, done marks, roster) in act places
 is now a one-word edit per layer, and comes later. Step 3 is built (branch place-step3): one `buy` in upgrades.js pays every coin through `take` and its place's purse, act 3's rows say `place`, `flyFrom` and `paid` for the yard-coin fly-up, and `buyVia`, `buyAfter`, `afterCanPay` and `afterTag` are gone (the shared `tagOf` writes the tag). Step 4 is built (branch place-step4): hell's five stations are `STATIONS` rows with `place: 'hell'` (hell/stations.js), their boards open on a walk-up with hover and cursor and shut on a pan, `hellBoardAt` is gone, and the pick's blow stays the hand's (`clickHell`, asked first); the play check walks to each hell station and buys from the face board. Step 5 is built (branch place-step5): one body engine (placebodies.js) steps, walks, drops and picks up any act place's own body list, each place handing it a crew through `PLACES` (its list, a JOBS registry shaped like the yard's, its walk -- act 3's floor-and-crowd `go`, hell's ladders -- and its landing); act 3's and hell's pace is unchanged (act3-pace's table identical, the playthrough's strike at 7917 s before and after); the hand picks a member or a ghost up and drops it, and it walks back to its work (play check, both places); `reloadCheck` compares every place's bodies. Open from step 5: the yard's own crew still steps through crew/step.js's stages, not the engine (its stages are yard-only: the rock, the hole, the hats); an act body has no hover card, and the pad's carry is the yard's only; a member lifted over God's crowd is drawn there in depth (render/aftercrowd.js), not on the cursor. Step 7 is built (branch place-step7): one save reader (placesave.js `readOver`: the blank is the shape, keys it lacks dropped, a record laid over its blank one level down) serves act 3 and hell, each keeping its own saver in `SAVERS`; `siteOf`'s backfill derives a pile from a count (not a blank fill), so it stays; test/place-save.test.mjs. Step 6 (one fade) is the open one.
 
+The audit after step 5 (DESIGN.md, "Act bodies on the yard's engine"; branch audit-bodies, built, not on main yet): three copies left in the bodies -- a second fall and hover slow in placebodies.js, act 3's own staffing and order loan, and two hand-built walkers (hell's ladders, act 3's floor). Folded in that order onto crew/falls.js, staffing.js keyed by place and route.js's ways a place supplies.
+
 ## Shared pieces and checks, after the place engine -- AGREED, QUEUED (2026-10-20)
 
 The owner agreed these on 2026-10-20, from what went wrong in act 3. Items
@@ -253,10 +255,9 @@ place engine's early steps, 6 and 7 come before more act 3 art.
    Blocked on: act 3 step 2 landing.
 4. **One cloud renderer for every place, the yard included.** The cloud
    bench built it; act 3's sky and ground clouds are on it
-   (`render/after/cloudsky.js`). The yard's sky, smog and rain clouds
-   (`src/smog/`, ~1.8k lines) move onto it next; the move is designed,
-   awaiting the owner's approval: DESIGN.md, "The yard's sky on the cloud
-   renderer".
+   (`render/after/cloudsky.js`), and the yard's sky is too
+   (`render/yardsky.js`, branch audit-yard-clouds, on the review bench as
+   "the yard's sky on the cloud renderer"). Blocked on: the owner's vote.
 5. **Fades as the only way in or out.** One shared appear/leave every new
    thing uses (fade.js), so a pop like act 3's sign plant cannot happen by
    accident.

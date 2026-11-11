@@ -15,6 +15,17 @@ import { hold } from './input.js';
 import { restore, bootYard } from './persist.js';
 import { loadRaw, saveRaw } from './save.js';
 import { devPane } from './dev.js';
+import { tune, tuned } from './config.js';
+
+// A scene that turns dev knobs to stand (`knobs`: { KEY: value }, the keys
+// TUNABLE's) has them for as long as it stands: the next scene, or your own
+// yard, gets every one back as it was, so a sky sped up for the bench is not
+// the next scene's sky too. A swap turns them on the scene standing.
+const turned = new Map();   // page: each knob a standing scene turned, and what it was
+function knobsBack() { for (const [k, v] of turned) tune(k, v); turned.clear(); }
+function knobsOf(sc) {
+  for (const [k, v] of Object.entries(sc.knobs || {})) { if (!turned.has(k)) turned.set(k, tuned(k)); tune(k, v); }
+}
 
 const KEPT_KEY = 'boulder-clicker/v4.kept';
 const kept = () => { try { return localStorage.getItem(KEPT_KEY); } catch { return null; } };
@@ -30,6 +41,8 @@ export function myYard() {
   saveRaw(raw);
   forget();
   S.staged = false;
+  document.body.classList.remove('scene-bare');
+  knobsBack();
   // Back to your own yard is back to your own motion setting too.
   forceMotion(null);
   restore();
@@ -49,6 +62,12 @@ export function scene(name) {
   forceCoarse(null);
   forceMotion(null);
   letGoDeepFrame();
+  // A scene about the picture (`bare: true`) stands without the story's card,
+  // the notices and the mess tags over it: the beats a scene marks done and
+  // the yard it messes would otherwise say themselves across what is judged.
+  document.body.classList.toggle('scene-bare', !!sc.bare);
+  knobsBack();
+  knobsOf(sc);
   sc.run();
   refresh();
   return true;
@@ -67,6 +86,7 @@ style.textContent = `
   #dev .scenes .head { opacity: .55; }
   #dev .scenes .row { display: flex; flex-wrap: wrap; gap: 3px; }
   #dev .scenes button.mine { align-self: flex-start; }
+  body.scene-bare #objective, body.scene-bare #toast, body.scene-bare #messtags { display: none !important; }
 `;
 
 function refresh() {
@@ -117,7 +137,7 @@ Object.assign(window, {
   // a `swap`: moving between two such options of one review flips the setting
   // on the game already standing, rather than standing the whole scene again.
   // True when it swapped; false when the option has none (stand it instead).
-  __sceneSwap: name => { const sc = SCENES[name]; if (!sc?.swap) return false; sc.swap(); return true; },
+  __sceneSwap: name => { const sc = SCENES[name]; if (!sc?.swap) return false; knobsBack(); knobsOf(sc); sc.swap(); return true; },
   // The review page (review.html) shows the scenes filed under a `review`,
   // each a button labelled by its `option`, in the order they are written.
   // `text` is everything the option's look says about itself -- its fields
@@ -127,7 +147,7 @@ Object.assign(window, {
     const by = new Map();
     for (const [name, sc] of Object.entries(SCENES)) if (sc.review) {
       if (!by.has(sc.review)) by.set(sc.review, []);
-      const text = [sc.option, sc.say, sc.stage, String(sc.run), String(sc.swap || '')].join('\n');
+      const text = [sc.option, sc.say, sc.stage, String(sc.run), String(sc.swap || ''), JSON.stringify(sc.knobs || null)].join('\n');
       by.get(sc.review).push({ scene: name, label: sc.option || name, say: sc.say, swap: !!sc.swap, stage: sc.stage || null, text });
     }
     // A review's `branch`/`branches` (where its build lives) and `supersedes`

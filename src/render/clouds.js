@@ -878,8 +878,11 @@ export function tierOf(sums, was = null) {
 // the last row, the light's way, and each role's tone and color for the page
 // and treatment. Roles are tier * 5 + 1 lit face, + 2 body, + 3 shadowed
 // side and underside, + 4 core (cloudgl.js, ROLES).
-export function layerLook(layer, { page = 'light', treat = 'C' } = {}) {
-  const LL = CLOUDS_LOBE_LIGHT, D = CLOUDS_TREATMENTS[treat], C = CLOUDS_PALETTE[page], P = layer.P, nt = layer.nt, VB = CLOUDS_VOLUME_BANDS;
+// `palette`, when given, is the table the roles are colored from in place of
+// the page's (CLOUDS_PALETTE's shape): the yard's sky, worked out each frame
+// from its murk and its storm (render/yardsky.js).
+export function layerLook(layer, { page = 'light', treat = 'C', palette = null } = {}) {
+  const LL = CLOUDS_LOBE_LIGHT, D = CLOUDS_TREATMENTS[treat], C = palette || CLOUDS_PALETTE[page], P = layer.P, nt = layer.nt, VB = CLOUDS_VOLUME_BANDS;
   const eight = f => Int32Array.from({ length: 8 }, (_, j) => (j < nt ? f(j) : 0));
   const lobes = Array.from({ length: nt }, (_, j) => {
     // the crust's small lumps are not what a tier's bands are sized by
@@ -928,21 +931,98 @@ export function layerLook(layer, { page = 'light', treat = 'C' } = {}) {
 }
 
 // One lone cloud of a shape, as a layer that does not wrap: a clickable
-// cloud, or a cloud to study on the bench. `d` is how near it is, for its
-// tones.
-export function cloudLayer({ kind = 'cumulus', R = 8, seed = 1, flat = 1, d = 0.6 }) {
+// cloud, a cloud of the yard's sky (weather.js), or a cloud to study on the
+// bench. `d` is how near it is, for its tones. `grow` is the most its radii
+// are ever scaled by as it is drawn (the yard's swell, a layer's `scale` in
+// cloudgl.js), so its window holds it at its biggest and is never made again
+// as it grows; `mid` is the column its middle stands on. Its seed is its own
+// stream's too, for whatever of its motion is drawn from one.
+export function cloudLayer({ kind = 'cumulus', R = 8, seed = 1, flat = 1, d = 0.6, grow = 1, buds = null }) {
   const rnd = gen(seed * 7919 + 4243), puffs = [], L = CLOUDS_LIFE[kind];
   const life = { per: TAU / lerp(rnd(), L.life), ph: rnd() * TAU, keep: Math.max(0.6, L.keep) };
-  cloudPuffs(rnd, kind, 0, 0, R, flat, life, 0, puffs);
+  cloudPuffs(rnd, kind, 0, 0, R, flat, life, 0, puffs, seed);
+  if (buds) budPuffs(rnd, puffs, buds, flat);
   let top = 0, bottom = 0, left = 0, right = 0;
   for (const p of puffs) {
-    const m = (p.r * 1.3 + p.a[0]) * REACH;
+    const m = (p.r * 1.3 * grow + p.a[0]) * REACH;
     top = Math.min(top, p.y - m * p.flat); bottom = Math.max(bottom, p.y + m * p.flat);
     left = Math.min(left, p.x - m); right = Math.max(right, p.x + m);
   }
   const ox = Math.ceil(-left) + 1, oy = Math.ceil(-top) + 1;
   for (const p of puffs) { p.x += ox; p.y += oy; if (p.cut !== undefined) p.cut += oy; }
-  return { i: -2, P: { d, e: d, R, parallax: 0.6, wind: 0.2 }, W: 1e6, puffs,
+  return { i: -2, P: { d, e: d, R, parallax: 0.6, wind: 0.2 }, W: 1e6, puffs, mid: ox,
            w: Math.ceil(ox + right) + 2, h: Math.ceil(oy + bottom) + 2, baseRow: oy, ground: false, nt: CLOUDS_TIERS.length,
            rowOf: CLOUDS_TIERS.map(() => 0), fills: null };
+}
+
+// REVIEW yardsky2
+// A lone cloud's buds (`buds`: `n` [least, most], `r` and `out` as shares of
+// the lobe each grows from, `span` of the grow each opens over): puffs set on
+// the upper edge of its lobes, nothing until the layer's `scale.bud` reaches
+// each one's turn. Drawn after the cloud's own puffs, so the cloud is the
+// same cloud with buds or without; made before its window is measured, so a
+// bud at its fullest is inside it. A bud's middle sits inside its lobe, so it
+// comes up out of the cloud's edge rather than beside it, round (the
+// cloud's own squash, not its lobe's: a bud on a long flat heap squashed
+// like the heap is a slab laid on it, not a puff), and it has no crust
+// of its own: a lump riding it would ride its unopened size.
+function budPuffs(rnd, puffs, B, flat) {
+  const lobes = puffs.filter(p => !p.follow);
+  const n = Math.round(lerp(rnd(), B.n)), F = CLOUDS_FLOW;
+  for (let k = 0; k < n && lobes.length; k++) {
+    const on = lobes[Math.floor(rnd() * lobes.length)];
+    const a = -Math.PI * (0.1 + 0.8 * rnd());          // round the top half
+    const r = on.r * lerp(rnd(), B.r), out = on.r * B.out;
+    const b = flowPuff(rnd, on.x + Math.cos(a) * out, on.y + Math.sin(a) * out * on.flat, r, flat, on.tier, on.life, on.stray, F);
+    b.kind = on.kind; b.cut = on.cut;
+    b.bud = (k / n) * (1 - B.span); b.budSpan = B.span;
+    puffs.push(b);
+  }
+}
+// How open a puff is at a layer's scale: one for every puff but a bud, which
+// grows from nothing to its size over its own span of `scale.bud`.
+export function budOf(p, scale) {
+  if (p.bud === undefined) return 1;
+  const k = Math.max(0, Math.min(1, ((scale?.bud ?? 0) - p.bud) / p.budSpan));
+  return k * k * (3 - 2 * k);
+}
+
+// A lone cloud's tiers with every puff where it was made -- before its
+// current carries it or its life thins it, so its biggest -- scaled as the
+// card scales a layer (`scale`: radii by `r`, buds by `bud`,
+// cloudgl.js), worked out on the CPU: -1 open sky, else the front-most tier
+// past the threshold. What the yard's report
+// counts its sky by (weather.js), and what a page without WebGL2 draws it
+// from (render/yardsky.js).
+let restSums = new Float32Array(0);   // cache: scratch, reused call to call
+export function restTiers(layer, scale = null, out = null) {
+  const { w, h, nt } = layer, n = w * h;
+  if (restSums.length < nt * n) restSums = new Float32Array(nt * n);
+  const S = restSums;
+  S.fill(0, 0, nt * n);
+  for (const p of layer.puffs) {
+    const r = (scale ? p.r * scale.r : p.r) * budOf(p, scale), x = p.x, y = p.y;
+    const R = r * REACH, R2 = R * R;
+    if (R <= 0.05) continue;
+    const cut = p.cut === undefined ? Infinity : p.cut, o = p.tier * n;
+    const y0 = Math.max(0, Math.floor(y - R * p.flat)), y1 = Math.min(h, Math.ceil(y + R * p.flat));
+    for (let cy = y0; cy < y1 && cy + 0.5 <= cut; cy++) {
+      const dy = (cy + 0.5 - y) / p.flat, left = R2 - dy * dy;
+      if (left <= 0) continue;
+      const span = Math.sqrt(left);
+      const x0 = Math.max(0, Math.ceil(x - span - 0.5)), x1 = Math.min(w - 1, Math.floor(x + span - 0.5));
+      for (let cx = x0; cx <= x1; cx++) {
+        const dx = cx + 0.5 - x, q = 1 - (dx * dx + dy * dy) / R2;
+        if (q > 0) S[o + cy * w + cx] += q * q * q;
+      }
+    }
+  }
+  if (!out || out.length !== n) out = new Int8Array(n);
+  const T = CLOUDS_THRESHOLD;
+  for (let i = 0; i < n; i++) {
+    let t = -1;
+    for (let j = nt - 1; j >= 0; j--) if (S[j * n + i] > T) { t = j; break; }
+    out[i] = t;
+  }
+  return out;
 }

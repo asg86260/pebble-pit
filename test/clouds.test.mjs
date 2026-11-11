@@ -25,6 +25,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { cloudSheet, tickClouds, bakeNow, setLook, spursOf } from '../src/render/clouds.js';
+import { shelve } from '../src/render/cloudgl.js';
 import { seedRng, rand } from '../src/rng.js';
 import { CLOUDS_KINDS, CLOUDS_TREATMENTS } from '../src/config.js';
 
@@ -237,5 +238,22 @@ test('no layer of the sky is drawn in one-cell lines, slivers or specks', () => 
   for (const o of out) {
     assert.ok(o.cloud > 0, `layer ${o.i} has no cloud`);
     assert.ok(o.thin <= o.cloud * SLIVER_SHARE, said);
+  }
+});
+
+// The card holds every cloud's window at once (render/cloudgl.js `shelve`).
+// One column of them ran a stormy yard's sky past the size a drawing buffer
+// may be, and the buffer cut down to fit drew every cell coarse: a sky's
+// worth of grown windows has to come to a card well inside the limit, with
+// no window over another.
+test('a sky of windows fits on the card, none over another', () => {
+  const views = Array.from({ length: 30 }, (_, i) => ({ w: 260 + (i * 37) % 120, h: 150 + (i * 53) % 110 }));
+  const { spot, W, H } = shelve(views);
+  const LIMIT = 4096;   // the least a WebGL2 drawing buffer is held to
+  assert.ok(W <= LIMIT && H <= LIMIT, `the card is ${W}x${H}`);
+  for (let i = 0; i < views.length; i++) for (let j = i + 1; j < views.length; j++) {
+    const a = { ...spot[i], ...views[i] }, b = { ...spot[j], ...views[j] };
+    const apart = a.x + a.w <= b.x || b.x + b.w <= a.x || a.y + a.h <= b.y || b.y + b.h <= a.y;
+    assert.ok(apart, `windows ${i} and ${j} overlap`);
   }
 });

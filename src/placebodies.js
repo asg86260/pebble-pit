@@ -1,3 +1,4 @@
+// REVIEW bodies-
 // One body engine for the acts' places: the step, the walks, the hand's
 // grab and the fall, over whichever place's own list of bodies.
 //
@@ -26,28 +27,32 @@
 //   hold(w, x, y) the body on the cursor at (x, y)
 //   lifted(w)     what a body taken off its walk forgets (its walk, its door)
 //   land(w)       the floor under a falling body, and the place's x range
-//   landed(w)     what a body that has come down picks up again
+//   mid(w)        the body's middle, for the thud it lands with
+//   spill(w)      what a shaken body's hands held, put down where it lands
+//   landed(w)     back to its work from where it came down
+//   assign(w)     a body let go of over a station put on that station's job:
+//                 true when it was (crew/pointer.js, `drop`)
 //
-// The stages are the yard's, in its order (crew/step.js): a body in the hand
-// is not in the place; a body let go falls before anything else; then the
-// place's own stage, then the job.
+// The stages are the yard's, in its order (crew/step.js), and the ones that
+// are gravity's and the hand's are the yard's own functions (crew/gravity.js):
+// a body in the hand is not in the place; a body let go falls before anything
+// else (`fallIn`, the place answering as its ground); it sees stars where it
+// landed (`stars`); one under the cursor with the right button held walks
+// slow (`slowed`); then the place's own stage, then the job.
 
-import { GRAV, HURL, HURL_MAX, HURL_DRAG, HOVER_SLOW } from './config.js';
+import { HURL, HURL_MAX } from './config.js';
 import { now } from './clock.js';
-
-// A body under the cursor with the right button held walks slow, as the
-// yard's do (crew/step.js): it moves on HOVER_SLOW of the frames and stands
-// through the rest. Kept off the body, since a place saves its bodies whole
-// and a wall-clock stamp read back after a reload would hold one for ever.
-const slow = new WeakMap();
-export const slowBody = (w, until) => { slow.set(w, { until, owed: slow.get(w)?.owed || 0 }); };
+import { fallIn, stars, slowed } from './crew/gravity.js';
 
 // A frame's seconds, clamped: a background tab's long frame is not a long
 // stride for every body.
 export const secs = c => Math.min(0.1, Math.max(0, (c.dt || 0) / 1000));
 
 // --- the walks -------------------------------------------------------------------
-// A straight walk toward (tx, ty) at `speed` px/s: true once it stands there.
+// A place's walks are the one router's (route.js, `routeIn`, `goIn`, over the
+// ways the place supplies). This is only the straight step taken where no
+// way is asked: act 3's body found off its floor stepping down onto it
+// (after/route.js).
 export function walkLine(w, tx, ty, speed, dt) {
   const dx = tx - w.x, dy = ty - w.y, d = Math.hypot(dx, dy);
   const step = speed * dt;
@@ -57,65 +62,22 @@ export function walkLine(w, tx, ty, speed, dt) {
   return false;
 }
 
-// A walk along a way, a list of points [x, y, floor] taken in turn, each leg
-// at the pace `speedOf(dx, dy)` gives it, carrying a frame's leftover on to
-// the next leg. True once the way is walked.
-export function walkWay(b, dt, speedOf) {
-  let left = dt;
-  while (b.way.length && left > 0) {
-    const [tx, ty, tc] = b.way[0];
-    const dx = tx - b.x, dy = ty - b.y, d = Math.hypot(dx, dy);
-    const speed = speedOf(dx, dy);
-    if (d <= speed * left) {
-      b.x = tx; b.y = ty; b.c = tc;
-      left -= d / speed;
-      b.way.shift();
-      continue;
-    }
-    b.x += dx / d * speed * left;
-    b.y += dy / d * speed * left;
-    if (dx) b.face = dx > 0 ? 1 : -1;
-    left = 0;
-  }
-  return !b.way.length;
-}
-
-// --- the fall --------------------------------------------------------------------
-// Let go of, a body falls under the yard's gravity with the yard's flick
-// (crew/falls.js, `fall`), in sixtieths of a second as those are written, and
-// lands on the place's floor under it.
-function fall(crew, w, dt) {
-  const f = dt * 60, at = crew.land(w);
-  if (w.vx) {
-    w.x += w.vx * f;
-    w.vx *= HURL_DRAG ** f;
-    if (w.x < at.x0) { w.x = at.x0; w.vx = -w.vx * 0.4; }
-    if (w.x > at.x1) { w.x = at.x1; w.vx = -w.vx * 0.4; }
-    if (Math.abs(w.vx) < 0.05) w.vx = 0;
-  }
-  w.vy = (w.vy || 0) + GRAV * f;
-  w.y += w.vy * f;
-  const foot = crew.land(w).y;
-  if (w.y < foot) return;
-  w.y = foot;
-  w.vx = w.vy = 0;
-  w.falling = false;
-  crew.landed?.(w);
-}
-
 // --- one frame -------------------------------------------------------------------
 export function stepCrew(crew, c) {
   if (!crew.list()) return;
-  const dt = crew.dt(c);
+  const dt = crew.dt(c), t = now();
   const f = { dt, ...(crew.begin?.(dt) || {}) };
   const list = crew.list();
   for (let k = 0; k < list.length; k++) {
     const w = list[k];
     crew.tick?.(w, f);
     if (w.lifted) continue;
-    if (w.falling) { fall(crew, w, dt); continue; }
-    const s = slow.get(w);
-    if (s && s.until > now()) { s.owed += HOVER_SLOW; if (s.owed < 1) continue; s.owed -= 1; }
+    // the yard's fall, in sixtieths of a second as its speeds are written
+    if (w.falling) { fallIn(w, dt * 60, crew); continue; }
+    const seeing = stars(w, t);
+    if (seeing === 1) { w.y = crew.land(w).y; continue; }
+    if (seeing === 2) { crew.landed(w); continue; }
+    if (slowed(w, t)) continue;
     if (crew.stage?.(w, f, k)) continue;
     const row = crew.jobs[w.job];
     if (row) row.step(w, dt, f); else crew.idle(w, dt, f);
@@ -169,7 +131,16 @@ export function dropBody(w, v) {
 }
 
 // A list read back from a save: a body that was in the hand when it was
-// written is let go where it was, and falls from there.
+// written is let go where it was, and falls from there. A place saves its
+// bodies whole and the clock starts again with the page, so a stamp on it
+// (`now()`) means nothing read back: a slow hover is forgotten, and a body
+// seeing stars stands up from them where it was rocking.
 export function settleHeld(list) {
-  for (const w of list || []) if (w && w.lifted) { w.lifted = false; w.falling = true; w.vx = w.vy = 0; }
+  for (const w of list || []) {
+    if (!w) continue;
+    if (w.lifted) { w.lifted = false; w.falling = true; w.vx = w.vy = 0; }
+    delete w.slowUntil; delete w.slowOwed;
+    if (w.dizzyUntil) { w.dizzyUntil = 0; if (w.landedAt != null) w.x = w.landedAt; w.landedAt = null; w.say = null; }
+    w.dizzyFor = 0;
+  }
 }

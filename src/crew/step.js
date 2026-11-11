@@ -45,8 +45,7 @@
 // `late` on the row: it can lie in the bottom of the hole, and the way down is
 // a route decided with the rest of its errands (`haulerWork`).
 
-import { P, LUNGE_EASE, WOBBLE, WOBBLE_BEAT, WORKER,
-         GROSS_MS, GROSS_COOLDOWN_MS, HOVER_SLOW } from '../config.js';
+import { P, LUNGE_EASE, WORKER, GROSS_MS, GROSS_COOLDOWN_MS } from '../config.js';
 import { S, floor } from '../state.js';
 import { colOf } from '../grid.js';
 import { dropZone } from '../rock.js';
@@ -68,6 +67,7 @@ import { claims } from './hauler.js';
 import { stepLifts } from './lifts.js';
 import { stepRoombas, bookRoombas } from './roomba.js';
 import { fall, stepHat } from './falls.js';
+import { stars, slowed } from './gravity.js';
 import { retask, stepCommute } from './commute.js';
 import { relieve } from './nature.js';
 import { takeMess } from './shovel.js';
@@ -127,15 +127,9 @@ const STAGES = [
 
   // Seeing stars: it rocks where it landed and does nothing until they clear.
   (w, c) => {
-    if (w.dizzyUntil && c.now < w.dizzyUntil) {
-      w.x = w.landedAt + Math.sin(c.now / 1000 * WOBBLE_BEAT + w.ph) * WOBBLE;
-      w.y = stand(w);
-      return true;
-    }
-    if (!w.dizzyUntil) return false;
-    w.dizzyUntil = 0;
-    w.x = Math.round(w.landedAt);
-    w.landedAt = null;
+    const seeing = stars(w, c.now);
+    if (seeing === 1) { w.y = stand(w); return true; }
+    if (!seeing) return false;
     // If its hat came off, the stage below takes it from here on this very
     // frame, and finds out there whether somebody took the hat meanwhile.
     if (w.hatOff || w.robbed) return false;
@@ -204,9 +198,7 @@ const STAGES = [
   // mostly mid-walk; held out of a dance, whose feet are off the ground.
   // Nothing is dropped and no claim is released.
   (w, c) => {
-    if (!(w.slowUntil > c.now) || dancing(c)) return false;
-    w.slowOwed = (w.slowOwed || 0) + HOVER_SLOW;
-    if (w.slowOwed >= 1) { w.slowOwed -= 1; return false; }
+    if (dancing(c) || !slowed(w, c.now)) return false;
     // Standing on whatever is under it now: a hold that only returns true
     // leaves the body at the height it had when the hold began, and the gang
     // take the columns under it. Every hold stands its body every frame. In

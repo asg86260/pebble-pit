@@ -61,6 +61,9 @@ import { FINALE_HOUSE_W, APOTH_POTS_MAX } from './config.js';
 import { houseX } from './home.js';
 import { goOnAlpha } from './actbeats.js';
 import { beginGathering } from './mansion.js';
+import { HELL_JOB } from './jobs.js';
+import { chamberFloor, chamberX1, ladderX } from './hell/place.js';
+import { lift, drop, holdBody } from './crew/pointer.js';
 import { forceMotion, motionForcedNow } from './prefs.js';
 import { stopById } from './stops.js';
 import { INDEX } from './config/index.js';
@@ -2392,6 +2395,40 @@ export const SCENES = {
   sky1: { about: 'the house and the sky', say: 'a light sky', run: () => skyAt(900) },
   sky2: { about: 'the house and the sky', say: 'a heavy sky', run: () => skyAt(2100) },
   sky3: { about: 'the house and the sky', say: 'a sky at the brim', run: () => skyAt(4200) },
+  // The yard's sky on the one cloud renderer (DESIGN.md, "The yard's sky on
+  // the cloud renderer"): the same yard under four skies, each run long
+  // enough for the opening cutscene to have let the camera go.
+  'yardsky-clear': { about: 'the house and the sky', review: "the yard's sky on the cloud renderer", option: 'A a clear day',
+    stage: 'built: audit-yard-clouds, not on main yet', branch: 'audit-yard-clouds', bare: true,
+    say: 'a clear day: the three sheets of cumulus drifting, the near ones lit from the upper left',
+    run: () => { skyAt(0); window.__fast(25); } },
+  'yardsky-front': { about: 'the house and the sky', review: "the yard's sky on the cloud renderer", option: 'B a front coming in',
+    stage: 'built: audit-yard-clouds, not on main yet', branch: 'audit-yard-clouds', bare: true,
+    say: "a heavy front near the end of its brew: every cloud swelled and greyed, the front's own towers come up among them",
+    run: () => { skyAt(0); untilBrewing(); window.__fast(31); } },
+  'yardsky-rain': { about: 'the house and the sky', review: "the yard's sky on the cloud renderer", option: 'C rain',
+    stage: 'built: audit-yard-clouds, not on main yet', branch: 'audit-yard-clouds', bare: true,
+    say: 'the full pour from the swollen sky, a light haze in it',
+    run: () => { skyAt(900); untilRaining(); window.__fast(13); } },
+  'yardsky-smog': { about: 'the house and the sky', review: "the yard's sky on the cloud renderer", option: 'D a heavily polluted sky',
+    stage: 'built: audit-yard-clouds, not on main yet', branch: 'audit-yard-clouds', bare: true,
+    say: 'a sky at the brim, no storm: every cloud browned by the murk and a little swelled by it',
+    run: () => { skyAt(4200); window.__fast(25); window.__air({ haze: 4200 }); window.__fast(1); } },
+  // The whole storm cycle on the bench: the storm's clock turned down to
+  // about half a minute (a few seconds clear, the brew, the shower at its
+  // shortest, the settle), the opening let go, and the next front due a
+  // moment after the scene stands, so it opens on a clear sky and plays
+  // through in real time. The first muck's beat (firstmuck.js) is marked
+  // had: it takes the camera off the sky the moment the first shower is over.
+  'yardsky2-c': { about: 'the house and the sky', review: "the yard's sky on the cloud renderer", option: 'G grow: puffs bud out',
+    stage: 'built: audit-yard-clouds, not on main yet', branch: 'audit-yard-clouds', bare: true,
+    say: 'clear, then each cloud buds new puffs out of its top edge as it greys, the rain, and the buds sink back in',
+    knobs: { STORM_BREW_S: 9, RAIN_LEN_S: 12, RAIN_DRIZZLE_S: 2, RAIN_RISE_S: 2, CLOUD_SETTLE_S: 8 },
+    run: () => {
+      skyAt(0); window.__fast(25);
+      if (!S.beatsDone.includes('firstmuck')) S.beatsDone.push('firstmuck');
+      window.__front(1); S.rainDue = 3;
+    } },
   rainbrew: { about: 'the house and the sky', say: "the storm brewing up, the clouds half swelled",
     run: () => { skyAt(4200); untilBrewing(); window.__fast(20); } },
   cloudswell: { about: 'the house and the sky', say: 'a heavy front at the end of its brew, no rain yet',
@@ -4299,3 +4336,51 @@ Object.assign(SCENES, {
     } }
 });
 
+// Act bodies on the yard's engine (DESIGN.md): the hand, the fall, the drop
+// and the walk are the yard's. A member held over the saw mill wears the
+// yard's ring and is the mill's sawyer when let go; a ghost let go over the
+// first chamber walks the router's ways back down the ladder to its face.
+const BODIES_REVIEW = { about: 'the acts', review: "act bodies on the yard's engine", stage: 'built: audit-bodies, not on main yet',
+                        branch: 'audit-bodies', bare: true };
+function membersUp() {
+  window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+  for (let k = 0; k < 90 && window.__afterRead().walking > 0; k++) window.__fast(1);
+  if (!S.after.built.includes('mill')) S.after.built.push('mill');
+  window.__fast(2);
+  return S.after.bodies.find(b => b.job == null && b.state === 'work' && !b.errand && b.pair == null);
+}
+// Over the mill's roof, in the open sky above it: the drop's box runs from the
+// top of the sky to the mill's foot, so this is over the mill, and the member
+// hangs where nothing of the mill's is drawn behind it.
+const overMill = () => { const m = stationBox('mill'); return { x: m.x + m.w / 2, y: m.y - P * 3 }; };
+Object.assign(SCENES, {
+  'bodies-held-mill': { ...BODIES_REVIEW, option: 'A act 3: held over the saw mill', say: "A member in the hand over the saw mill, about to be let go: the drop asks the yard's table which station is under it (the yard's ring is not drawn up here yet).",
+    run: () => {
+      const w = membersUp();
+      if (!w) return;
+      const at = overMill();
+      lift(w); holdBody(w, at.x, at.y); S.mouse.x = at.x; S.mouse.y = at.y;
+      window.__look(at.x - S.viewW / 2); window.__holdShot();
+    } },
+  'bodies-dropped-mill': { ...BODIES_REVIEW, option: 'B act 3: let go on the saw mill', say: 'Let go over the saw mill, that member is its sawyer: it comes down where it was put and walks in. Before, it was thrown and the roster took somebody else.',
+    run: () => {
+      const w = membersUp();
+      if (!w) return;
+      const at = overMill();
+      lift(w); holdBody(w, at.x, at.y); S.mouse.x = at.x; S.mouse.y = at.y; drop(w);
+      window.__fast(1.2);
+      window.__look(at.x - S.viewW / 2); window.__holdShot();
+    } },
+  'bodies-hell-ladder': { ...BODIES_REVIEW, option: 'C hell: a ghost climbs back down', say: "A miner let go over the first chamber lands on its floor, walks to the ladder and climbs down it to its face, on the yard's router.",
+    run: () => {
+      window.__reset(); window.__actsOn(null); window.__goPlace('hell');
+      window.__hell({ chamber: 1, rungs: { hellmuster: 4 } });
+      window.__fast(40);
+      const b = S.hell.bodies.find(o => o.job === HELL_JOB.MINE && o.c === 1);
+      if (!b) return;
+      lift(b); holdBody(b, chamberX1(0) - P * 4, chamberFloor(0) - P * 10); drop(b);
+      const half = (chamberFloor(0) + chamberFloor(1)) / 2;
+      for (let k = 0; k < 1800 && !(b.y >= half); k++) window.__fast(1 / 60);
+      window.__look(ladderX(1) - S.viewW / 2); window.__holdShot();
+    } }
+});

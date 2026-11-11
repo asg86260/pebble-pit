@@ -27,8 +27,8 @@
 // page to draw scaled up at the layer's true position (drawCloud in
 // clouds.js's terms: one rounding for the whole layer).
 
-import { CLOUDS_THRESHOLD, CLOUDS_HYST, CLOUDS_FADE_S, CLOUDS_SETTLE, CLOUDS_CLEAN } from '../config.js';
-import { puffAt } from './clouds.js';
+import { CLOUDS_THRESHOLD, CLOUDS_HYST, CLOUDS_FADE_S, CLOUDS_SETTLE, CLOUDS_CLEAN, CLOUDS_SHELF_W } from '../config.js';
+import { puffAt, budOf } from './clouds.js';
 
 const REACH = 1 / Math.sqrt(1 - Math.cbrt(CLOUDS_THRESHOLD));
 const STRIP = 8;
@@ -255,6 +255,23 @@ function program(gl, fs) {
 }
 
 // A sky renderer, or null where the page has no WebGL2.
+// The windows on the card, on shelves: left to right, and a shelf under the
+// last when one is full. One column of them all ran past the size a drawing
+// buffer may be once a sky held enough of them, and a buffer cut down to fit
+// is scaled back up as it is read -- every cell drawn coarse. Each window's
+// top-left, and the card's size.
+export function shelve(views) {
+  const SHELF = Math.max(CLOUDS_SHELF_W, ...views.map(v => v.w));
+  const spot = [];
+  let H = 0, W = 0, sx = 0, sh = 0;
+  for (const v of views) {
+    if (sx + v.w > SHELF) { H += sh; sx = 0; sh = 0; }
+    spot.push({ x: sx, y: H });
+    sx += v.w; sh = Math.max(sh, v.h); W = Math.max(W, sx);
+  }
+  return { spot, W, H: H + sh };
+}
+
 export function skyGL() {
   if (typeof document === 'undefined') return null;
   const canvas = document.createElement('canvas');
@@ -322,6 +339,10 @@ export function skyGL() {
       let near = lobe.x + lobe.stray * t - ox; near -= W * Math.floor(near / W);
       if (near > w + reach && near < W - reach) continue;
       puffAt(p, t, q);
+      // a layer that swells as a whole (the yard's front, render/yardsky.js):
+      // every puff's radius by `r`
+      // and a bud by how far open it is (`budOf`)
+      if (layer.scale) q.r *= layer.scale.r * budOf(p, layer.scale);
       const R = q.r * REACH;
       if (R <= 0.05) continue;
       // every copy of a wrapping layer that reaches the window
@@ -380,17 +401,17 @@ export function skyGL() {
   // seconds of game time, for the fade. Returns where each window is in
   // `canvas`.
   function render(views, t, dt) {
-    let H = 0, W = 0;
-    for (const v of views) { H += v.h; W = Math.max(W, v.w); }
+    const { spot, W, H } = shelve(views);
     if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }
     const at = [];
-    let y = 0, puffs = 0, uploadMs = 0;
-    for (const v of views) {
+    let puffs = 0, uploadMs = 0;
+    for (const [vi, v] of views.entries()) {
+      const { x, y } = spot[vi];
       const s = windowOf(v.key, v.w, v.h), L = v.look;
       // a far layer that is not due this frame, and has not moved a cell,
       // keeps last frame's picture: its puffs move too little to tell
       const oy = v.oy || 0;
-      if (v.idle && !s.fresh && s.ox === v.ox && s.oy === oy) { at.push({ key: v.key, x: 0, y, w: v.w, h: v.h }); y += v.h; continue; }
+      if (v.idle && !s.fresh && s.ox === v.ox && s.oy === oy) { at.push({ key: v.key, x, y, w: v.w, h: v.h }); continue; }
       const shift = s.ox === null ? 0 : v.ox - s.ox, lift = s.ox === null ? 0 : oy - s.oy;
       const fresh = s.fresh || Math.abs(shift) >= v.w || Math.abs(lift) >= v.h;
       s.ox = v.ox; s.oy = oy;
@@ -438,8 +459,7 @@ export function skyGL() {
       gl.uniform4fv(P.fade.u.uLut, L.lut); gl.uniform1f(P.fade.u.uStep, Math.min(1, (dt * (v.every || 1)) / CLOUDS_FADE_S));
       draw();
       s.k = b; s.fresh = false;
-      at.push({ key: v.key, x: 0, y, w: v.w, h: v.h });
-      y += v.h;
+      at.push({ key: v.key, x, y, w: v.w, h: v.h });
     }
     // every window into the one canvas
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -450,9 +470,9 @@ export function skyGL() {
     views.forEach((v, i) => {
       const s = windows.get(v.key);
       bind(0, s.D[s.k].t); gl.uniform1i(P.blit.u.uImg, 0);
-      gl.uniform2i(P.blit.u.uAt, 0, at[i].y);
+      gl.uniform2i(P.blit.u.uAt, at[i].x, at[i].y);
       gl.enable(gl.SCISSOR_TEST);
-      gl.scissor(0, H - at[i].y - v.h, v.w, v.h);
+      gl.scissor(at[i].x, H - at[i].y - v.h, v.w, v.h);
       draw();
       gl.disable(gl.SCISSOR_TEST);
     });

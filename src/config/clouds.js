@@ -296,6 +296,10 @@ export const CLOUDS_FLOW = { wander: [0.2, 0.45], period: [120, 300], lift: 0.45
 // A cell that changes tone eases into the new one over this many seconds,
 // so an edge flowing across the grid glides rather than ticks.
 export const CLOUDS_FADE_S = 0.3;
+// How wide a shelf of windows on the card runs before the next starts under
+// it, in cells (render/cloudgl.js `render`): wide enough that a sky of
+// windows comes to a squarish card, well inside any drawing buffer's limit.
+export const CLOUDS_SHELF_W = 2048;
 // A cell takes a new role only once it has been wanted this many worked
 // frames running (cloudgl.js, SETTLE): a tenth of a second at sixty, so an
 // edge where two lobes' turrets meet and part cannot show a tone and take it

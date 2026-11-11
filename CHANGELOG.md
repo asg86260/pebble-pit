@@ -139,6 +139,7 @@ this section; the release that switches it on moves these under Unreleased.
 - The deep's stars and drifting motes fade in and out instead of blinking on and off (src/selftest/deeppalette.js).
 - The deep's stations hold one steady purple: the lit top edge of their props, the pods and the hexer's brew no longer cycle through purples (`node tools/look.mjs deep-all`, test/props.test.mjs).
 
+- A sky full of clouds no longer draws them in coarse blocks (test/clouds.test.mjs).
 - Refreshing the page no longer stops the serpent eating: a meal already under way still lands, its creature still in the orb, and the heal comes at the end of every window however often the page reloads (test/serpent-reload.test.mjs).
 - The serpent no longer sheds more scales than the gatherers can ever carry to the crusher (test/serpent.test.mjs).
 - The deep's build button shows its price, one fang, instead of how many fangs you hold (src/selftest/deep.js).
@@ -179,6 +180,7 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
+- The yard's clouds are drawn the way act 3's are, rounder and lit from one side; before a storm each one grows, darkens and buds new puffs out of its top, and they sink back in once it has rained (test/weather.test.mjs).
 - Hovering the furnace in the deep shows the last minute of the party's damage a second against the pace that breaks the serpent, with a bar and a number for each fighter, highest on top, and one for your own clicks (test/furnace-dps.test.mjs).
 - Act 3 opens with a meteor onto the house that leaves a crater, the two souls floating up out of it to heaven's gates, which now stand over the house with no stairway, and ends on God's line before the two of them walk to the pedestal (test/act3-intro.test.mjs, test/heaven-over-house-save.test.mjs).
 - A fighter's board lists the skills it has under its name, its move from rung 4 and its capstone from rung 8, each saying what it does on hover (test/fighter-skills.test.mjs).

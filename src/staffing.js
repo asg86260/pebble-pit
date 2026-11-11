@@ -203,27 +203,65 @@ export function hire() {
   syncWorkers();
 }
 
+// --- every place's counts, by one rule -------------------------------------------
+// Who is on what job is the same question in every place that assigns by
+// count, so the move is written once (`assign`) and each place answers it as
+// data, registered as roster.js registers its posts (`staffPlace`):
+//
+//   jobs        the jobs it counts
+//   count(job)  how many are wanted on it now
+//   set(job, n) and the count written
+//   spare()     how many of its hands are on nothing
+//   room(job)   seats free there
+//   bodies()    its body list, where a loan rides (`lentFrom`)
+//   live()      whether the place is standing at all
+//   catchUp()   what the bodies do about a press (the yard's at once; an
+//               act's members walk on their next frame)
+//
+// The yard's store is `S[job]`, a loan off its count (`lendNearest`); act 3's
+// is `S.after.crew`, a loan still counted on the job it came off. Hell's
+// muster is no count -- a member put to a face is there for good -- so hell
+// registers nothing.
+// Kept on the function itself: a place registers as its module loads, which
+// may be before this one has run.
+export function staffPlace(place, data) { (staffPlace.places ||= new Map()).set(place, data); }
+const YARD_STAFF = {
+  jobs: JOBS,
+  count: job => S[job],
+  set(job, n) { S[job] = n; },
+  spare: () => yardSpare(),
+  room: job => roomAt(job),
+  bodies: () => S.workers,
+  live: () => true,
+  catchUp() { rebalance(); syncWorkers(); }
+};
+const staffOf = place => (place === 'yard' ? YARD_STAFF : staffPlace.places?.get(place) || null);
+// A place's spare hands, by the place's own count.
+export const spareIn = (place = 'yard') => { const p = staffOf(place); return p && p.live() ? p.spare() : 0; };
+
 // A loan taken off a job the player has just re-set is forgiven, not repaid:
 // the roster shows the count with the loan already off it, so repaying on top
 // of the press undoes what the player just did. `rebalance` borrows again
 // against the new count if the build still needs somebody.
-const forgive = job => { for (const w of S.workers) if (w.lentFrom === job) delete w.lentFrom; };
+const forgive = (job, p) => { for (const w of p.bodies()) if (w.lentFrom === job) delete w.lentFrom; };
 
-// Move one body on to a job, or off it and back to carrying. The hat it was
-// wearing stays at the station.
+// Move one body on to a job, or off it and back to what the place does with
+// nobody's hands (the yard's carrying, act 3's podium). The hat it was
+// wearing stays at the station. True when the count moved.
 //
 // A body keeps to its half (DESIGN.md, "Two crews and a portal"): a yard
 // job takes the yard's spare hands. The deep's fighters are not assigned by
 // count: each stays at the station it first swims to.
-export function assign(job, d) {
-  if (!JOBS.includes(job)) return;
-  if (d > 0 && yardSpare() < 1) return;
-  if (d > 0 && roomAt(job) < 1) return;
-  if (d < 0 && S[job] < 1) return;
-  S[job] += d;
-  forgive(job);
-  rebalance();
-  syncWorkers();
+export function assign(job, d, place = 'yard') {
+  const p = staffOf(place);
+  if (!p || !p.live() || !p.jobs.includes(job)) return false;
+  if (d > 0 && p.spare() < 1) return false;
+  if (d > 0 && p.room(job) < 1) return false;
+  if (d < 0 && p.count(job) < 1) return false;
+  p.set(job, p.count(job) + d);
+  forgive(job, p);
+  p.catchUp();
+  return true;
 }
 
 // A place opens with one spare body sent over through the same `assign` the

@@ -393,9 +393,11 @@ export function links(all = ways()) {
 // is not, and a body picks the near ladder or the far one on the arithmetic.
 const CLIMB_COST = 2.2;      // how much dearer a pixel of ladder is than a pixel of ground
 
+// A place's way says where the feet are itself (`feet`, below): its bodies
+// are measured from their middle, not a yard body's left edge.
+const heightOn = (way, x) => (way.feet ? way.feet(x) : standTop(x, way.at));
 function climbDepth(link, all) {
-  const a = all[link.a], b = all[link.b];
-  return Math.abs(standTop(link.x, a.at) - standTop(link.x, b.at));
+  return Math.abs(heightOn(all[link.a], link.x) - heightOn(all[link.b], link.x));
 }
 
 export function route(fromX, fromWay, toX, toWay, all = ways(), reach = links(all)) {
@@ -665,3 +667,96 @@ export const routeReport = (w, toX) => {
                 legs: r.legs.map(l => l.climb ? `climb ${l.climb.name} to ${l.to.key}`
                                               : `${l.along.key} to ${Math.round(l.to)}`) };
 };
+
+// --- a place's routes ----------------------------------------------------------
+// An act's place is a world of its own with its own ways and links, asked
+// the same way (`route`): adding a place means saying what its ways are and
+// what links them, never writing another walker. The place answers
+// (`PLACES[v].route`, acts.js):
+//
+//   ways()      its ways by key, each { key, feet(x) } -- the height of the
+//               feet standing at x, since a place's body is measured from its
+//               middle and its feet, not the yard's left edge and top -- and
+//               `free` on a way walked straight at a point in it, height and
+//               all (God's crowd, as the deep's water is swum)
+//   links()     where they join: { x, a, b, name, pace }, the pace in the
+//               place's own px/s
+//   wayAt(w)    the key of the way a body is on now
+//   onWay(w, way)  told when a body steps on to another way
+//
+// The yard's cache (`ways`) is never asked: the perf gate counts its builds,
+// and a place's ways are a handful of live functions.
+//
+// A place saves its bodies whole, so its legs name their way by key and the
+// link as plain numbers, and each frame looks the way up again: a body read
+// back halfway down a ladder carries on down the same rung.
+export function routeIn(place, w, toX, toKey) {
+  const all = place.ways(), from = all[place.wayAt(w)], to = all[toKey];
+  const r = route(w.x, from, toX, to, all, place.links());
+  return r && r.legs.map(l => (l.climb ? { climb: { ...l.climb }, to: l.to.key } : { along: l.along.key, to: l.to }));
+}
+
+// One frame of a place's route, on the place's clock: `dt` its seconds and
+// `pace` its px/s along a way; a link is gone at its own pace. A frame's
+// leftover is carried on to the next leg, so a corner costs no time. The
+// feet are put on the way as it goes (a place's floors have no face to
+// climb). True while there is walking left.
+export function walkRoute(place, w, pace, dt) {
+  const legs = w.route;
+  if (!legs || !legs.length) return false;
+  const all = place.ways();
+  let left = dt;
+  while (legs.length && left > 1e-9) {
+    const leg = legs[0];
+    if (leg.climb) {
+      const way = all[leg.to], rate = leg.climb.pace || pace;
+      w.x = leg.climb.x;
+      const want = way.feet(w.x), d = Math.abs(want - w.y);
+      if (d <= rate * left) {
+        w.y = want;
+        left -= d / rate;
+        place.onWay?.(w, way);
+        legs.shift();
+        continue;
+      }
+      w.y += Math.sign(want - w.y) * rate * left;
+      break;
+    }
+    const way = all[leg.along];
+    // The last leg on a free way is walked to the height asked for; one on
+    // its way to a link, to where the link stands in it.
+    const ty = way.free ? (legs.length === 1 && w.routeY != null ? w.routeY : way.feet(leg.to)) : null;
+    const dx = leg.to - w.x, dy = way.free ? ty - w.y : 0, d = Math.hypot(dx, dy);
+    if (d <= pace * left) {
+      w.x = leg.to;
+      w.y = way.free ? ty : way.feet(w.x);
+      left -= d / pace;
+      legs.shift();
+      continue;
+    }
+    w.x += dx / d * pace * left;
+    w.y = way.free ? w.y + dy / d * pace * left : way.feet(w.x);
+    if (dx) w.face = dx > 0 ? 1 : -1;
+    break;
+  }
+  return legs.length > 0;
+}
+
+// Keep a body of a place walking to (toX, on way `toKey`, at height `toY` on
+// a free way), the route asked again only when where it is going has moved
+// or it is not where its route left it. True once it stands there.
+export function goIn(place, w, toX, toKey, pace, dt, toY = null) {
+  const same = w.routeTo != null && Math.abs(w.routeTo - toX) < RETARGET && w.routeWay === toKey
+    && (toY == null ? w.routeY == null : w.routeY != null && Math.abs(w.routeY - toY) < RETARGET);
+  const at = () => Math.abs(w.x - toX) < 0.5 && place.wayAt(w) === toKey
+    && (toY == null || Math.abs(w.y - toY) < 0.5);
+  if (!same || (!(w.route && w.route.length) && !at())) {
+    w.route = routeIn(place, w, toX, toKey);
+    w.routeTo = toX;
+    w.routeWay = toKey;
+    w.routeY = toY;
+    if (!w.route) return false;
+  }
+  walkRoute(place, w, pace, dt);
+  return !w.route.length;
+}
