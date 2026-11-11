@@ -112,13 +112,24 @@ function partyRow(id) {
     lot: deepLot(id)
   };
 }
-for (const id of PARTY_IDS) {
-  Object.defineProperty(S, `${id}BoardOpen`, {
+// One accessor of its own name over `S.stationBoardOpen` (its `board`). The
+// party's rows and the later acts' rows all read and write the one flag this
+// way, so two boards up at once is a state nothing can hold. `onClose` runs
+// when this board's own setter shuts it.
+export function boardFlag(key, onClose) {
+  const name = `${key.replace(/-(\w)/g, (_, c) => c.toUpperCase())}BoardOpen`;
+  Object.defineProperty(S, name, {
     enumerable: false, configurable: true,
-    get: () => S.stationBoardOpen === id,
-    set: v => { if (v) S.stationBoardOpen = id; else if (S.stationBoardOpen === id) S.stationBoardOpen = null; }
+    get: () => S.stationBoardOpen === key,
+    set: v => {
+      const was = S.stationBoardOpen === key;
+      if (v) S.stationBoardOpen = key; else if (was) S.stationBoardOpen = null;
+      if (was && S.stationBoardOpen !== key && onClose) onClose();
+    }
   });
+  return name;
 }
+for (const id of PARTY_IDS) boardFlag(id);
 
 // A row is the whole of a place. What it is called (`name`: the pointer's
 // label, the queue card's line, its board's title) and drawn as (`glyph`: the
