@@ -51,8 +51,7 @@ import { aimGliding } from './shot.js';
 import { openPortal, freePortal, portalEnd, portalBetween, stepPortals } from './portals.js';
 import { sendPair, stepPair, pairAt, placeFor, placeAt, ruinX, yardFeet, cageX, takeLoad, LOOP_CAGE, ghostPace,
          tear, seenAt, atGates, DOWN_FLOAT } from './ghosts.js';
-import { beginMansion, mansionDone, mansionX, MANSION_W, beginGathering, gathered, stepMansion, stepGathering,
-         forgetMansionHands } from './mansion.js';
+import { beginMansion, mansionDone, mansionX, MANSION_W, beginGathering, gathered, stepMansion, stepGathering } from './mansion.js';
 import { houseX, IN_DONE_S } from './home.js';
 import { afterFloor } from './after/place.js';
 import { godFront } from './after/sky.js';
@@ -499,5 +498,4 @@ export const SAVE = {
 export function forgetActs() {
   run = null; caption = null;
   forgetLines();
-  forgetMansionHands();
 }

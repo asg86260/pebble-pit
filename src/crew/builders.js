@@ -5,17 +5,21 @@
 // `rebalance` in staffing.js. Which work a
 // builder is on, where it stands and when it has arrived are every place's
 // (crew/sitework.js); the walk there over the yard's ground is this file's.
+// A work goes up one of two ways: hammered where it stands (every station,
+// door and machine), or carried up a piece a trip by its row's `way` (the
+// ending's mansion): fetched from its pile, carried to its place and set
+// there by the body that carried it.
 
-import { WORKER } from '../config.js';
+import { WORKER, BUILD_EFFORT } from '../config.js';
 import { S, bench } from '../state.js';
 import { walkY } from '../world.js';
-import { busyBuilderSites, busyDeepSites, siteX, handsAt } from '../works.js';
+import { busyBuilderSites, busyDeepSites, siteX, handsAt, rowFor, worksAt, effortAt } from '../works.js';
 import { deepPost } from './deep.js';
 import { keepTo, stepRoute, wayOver, climbTo, feetOn, ways, belowYard, inShaft } from '../route.js';
 import { DOWN_THERE } from '../works.js';
 import { commutePace } from '../levels.js';
 import { TYPE } from '../jobs.js';
-import { now } from '../clock.js';
+import { now, frames } from '../clock.js';
 import { stopJig, workJig } from './dance.js';
 import { hireSpot, stand } from './body.js';
 import { claimWork, nearestIn, ownBox, arrivedSlack } from './sitework.js';
@@ -53,7 +57,47 @@ function buildStationX(w) {
   return nearestIn(box, w.x);
 }
 
+// Walk to x over the yard's ground by its routes, at a trip's pace: true on
+// arrival. With no route there it stands, as a hammerer does.
+function walkTo(w, x) {
+  if (Math.abs(x - w.x) < 0.5 && !w.route) return true;
+  w.goal = 'to';
+  if (!keepTo(w, x, wayOver(x))) return false;
+  if (stepRoute(w, commutePace())) return false;
+  w.route = null;
+  w.x = x;
+  w.y = feetOn(wayOver(x + WORKER / 2), x);
+  return true;
+}
+
+// One frame of a carried work's builder: a piece a trip, its trip on the body
+// (`w.piece`, this session's: a reload lets it go, and the piece, not yet
+// set, is carried again). The take and the set are hurried by the build-speed
+// ladder, as a hammerer's worker-seconds are.
+function stepCarrier(w, way) {
+  if (w.jigAt != null) { stopJig(w); w.lunge = 0; }
+  let me = w.piece;
+  if (me && !way.open(me.i)) me = w.piece = null;
+  if (!me) {
+    const i = way.next();
+    if (i < 0) { w.goal = 'at'; return; }
+    me = w.piece = { i, st: 'fetch', u: 0 };
+  }
+  const dt = frames() / 60 * effortAt(w.site) / BUILD_EFFORT;
+  if (me.st === 'fetch') { if (walkTo(w, way.from(me.i))) { me.st = 'take'; me.u = 0; } return; }
+  w.goal = 'at';
+  if (me.st === 'take') { me.u += dt; if (me.u >= way.takeS) { me.st = 'carry'; me.u = 0; } return; }
+  if (me.st === 'carry') { if (walkTo(w, way.to(me.i))) { me.st = 'set'; me.u = 0; } return; }
+  me.u += dt;
+  if (me.u >= way.setS) { way.set(me.i); w.piece = null; }
+}
+
 export function stepBuilder(w) {
+  const site = siteFor(w);
+  const work = site && worksAt(site).find(x => x.id === w.workId);
+  const way = work && rowFor(work.key)?.way;
+  if (way) { stepCarrier(w, way); return; }
+  if (w.piece) w.piece = null;
   const to = buildStationX(w);
   if (to !== null) {
     const d = to - w.x;

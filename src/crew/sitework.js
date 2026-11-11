@@ -8,14 +8,16 @@
 // construction").
 
 import { WORKER, BUILD_SHIFT, BUILD_SHIFT_SPAN } from '../config.js';
-import { siteBox, worksAt, onTheGo, siteX } from '../works.js';
+import { siteBox, worksAt, onTheGo, siteX, handsFor } from '../works.js';
 
 // Which (site, work) slot a builder is on, among `busy` sites, `mates` the
 // other builders of its crew. The unit is a work, not a site: a place can
 // hold two builds at once, and a body has to be at one of them or its
 // presence credits a bar it is nowhere near. It keeps its slot while the work
 // is on the go; when the work lands it takes the emptiest slot next, oldest
-// first on a tie, so a queue finishes in the order it was bought.
+// first on a tie, so a queue finishes in the order it was bought. Emptiest
+// against the hands the work wants (`handsFor`): a gang's work (the
+// mansion's) is filled to its gang before a lone hand's is doubled.
 export function claimWork(w, busy, mates) {
   if (w.site && busy.includes(w.site)
       && onTheGo(w.site).some(x => x.id === w.workId)) return w.site;
@@ -24,7 +26,7 @@ export function claimWork(w, busy, mates) {
     // Only what is being built: a work in line has nobody walking to it until
     // it reaches the front (`stepWorks` in works.js).
     for (const work of onTheGo(site)) {
-      const n = mates.filter(o => o !== w && o.site === site && o.workId === work.id).length;
+      const n = mates.filter(o => o !== w && o.site === site && o.workId === work.id).length / handsFor(work);
       if (n < fewest) { fewest = n; pick = site; pickId = work.id; }
     }
   }

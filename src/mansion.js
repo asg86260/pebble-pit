@@ -5,34 +5,34 @@
 // render/mansion.js. A placeholder shape, before any mock.
 //
 // It is a standing job from the cage's fall (actbeats.js, `unchain`), so it
-// can top out while the two of them walk home. The yard's own builders do it
-// (spare hands if it has none), borrowed off their work the way the finale
-// borrowed them for the house, and nothing pops: the scaffold goes up a pole
-// a trip off the old house's woodpile; the fallen rock is broken up a row a
-// trip onto the blocks pile beside the ground; every piece after is carried
-// off that pile and set at its place by the body that carried it, floor by
-// floor; the scaffold comes down last. A set piece fades in.
+// can top out while the two of them walk home. It goes up on the yard's one
+// construction (DESIGN.md, "The mansion and the house on the one
+// construction"): a work on works.js, its own site, built by the yard's
+// builders -- the spare, short of them a body lent off its post -- a piece a
+// trip by its row's `way` (crew/builders.js). Nothing pops: the scaffold goes
+// up a pole a trip off the old house's woodpile; the fallen rock is broken up
+// a row a trip onto the blocks pile beside the ground; every piece after is
+// carried off that pile and set at its place by the body that carried it,
+// floor by floor; the scaffold comes down last. A set piece fades in.
 //
 // Saved on `S.acts.mansion` (actbeats.js saves `S.acts`): the build's clock,
-// and for each piece the clock when it was set. Who is carrying what is this
-// session's (`w.mansion` on the body): a reload lets the builders go and the
-// build takes hands again, each walking from where it stands; a piece it was
-// carrying was not yet set, so it is carried again.
+// and for each piece the clock when it was set; the work is saved by
+// works.js. Who is carrying what is this session's (`w.piece` on the body,
+// not kept): a reload lets the carriers go, and a piece one was carrying was
+// not yet set, so it is carried again.
 
 import { S } from './state.js';
-import { P, WORKER, MANSION_AT, MANSION_FLOORS, MANSION_FLOOR_ROWS, MANSION_WING_W, MANSION_WING_FLOORS,
+import { P, MANSION_AT, MANSION_FLOORS, MANSION_FLOOR_ROWS, MANSION_WING_W, MANSION_WING_FLOORS,
          MANSION_MAIN_W, MANSION_TOWER_W, MANSION_TOWER_FLOORS, MANSION_DOOR_W, MANSION_DOOR_H, MANSION_POLES,
          MANSION_BUILDERS, MANSION_BLOCKS_AT, MANSION_BLOCKS_W, MANSION_TAKE_S, MANSION_SET_S, MANSION_FADE_S,
          MANSION_SOULS, MANSION_SOUL_EVERY_S, MANSION_SHEET_AFTER_S, MANSION_FILE_W, MANSION_FILE_AT,
          ACT_ROCK_H, ACT_ROCK_W, GHOST_PX_S, ACT_FLOAT_PX_S, FINALE_PILE_CELL, FINALE_PILE_W, FINALE_HOUSE_W } from './config.js';
 import { threshold, underGates, driftAt } from './ghosts.js';
 import { craterRows } from './crater.js';
-import { frames } from './clock.js';
-import { commutePace } from './levels.js';
-import { feetOn, ways, keepTo, stepRoute, belowYard } from './route.js';
-import { onYard } from './crew/body.js';
-import { TYPE, isDeepType } from './jobs.js';
-import { retask } from './crew.js';
+import { feetOn, ways } from './route.js';
+import { TYPE } from './jobs.js';
+import { start, abandonAt, workOn, registerRows } from './works.js';
+import { shapePieces, pieceSpot } from './pieces.js';
 import { houseX } from './home.js';
 
 const R = MANSION_FLOOR_ROWS;
@@ -87,13 +87,10 @@ export function mansionPieces() {
   const dx = MANSION_WING_W + MANSION_MAIN_W / 2 - MANSION_DOOR_W / 2;
   add({ kind: 'door', segs: [[dx, -MANSION_DOOR_H, MANSION_DOOR_W, MANSION_DOOR_H]], from: 'blocks', to: 'piece', stage: roofStage + 1 });
   MANSION_POLES.forEach((x, i) => add({ kind: 'off', segs: [], pole: i, from: 'pole', to: 'blocks', stage: roofStage + 2, x }));
-  for (const p of out) {
-    p.cx = p.segs.length ? (Math.min(...p.segs.map(s => s[0])) + Math.max(...p.segs.map(s => s[0] + s[2]))) / 2 : (p.x ?? 0) + 0.5;
-  }
-  return (LAYOUT = out);
+  return (LAYOUT = shapePieces(out));
 }
 // Where a piece is set from: the ground under its middle.
-const spotOf = p => mansionX() + Math.round(p.cx - WORKER / P / 2) * P;
+const spotOf = p => pieceSpot(mansionX(), p);
 const pileOf = p => p.from === 'wood' ? woodX() : p.from === 'rock' ? rockMidX() : p.from === 'pole' ? spotOf(p) : blocksX();
 const destOf = p => (p.to === 'blocks' ? blocksX() : spotOf(p));
 
@@ -129,119 +126,77 @@ export function blocksLeft() {
   const all = mansionPieces();
   const brought = all.filter((p, i) => p.kind === 'clear' && m.set[i] != null).length * ACT_ROCK_W;
   const fromPile = all.filter(p => p.from === 'blocks');
-  const taken = fromPile.filter((p, i) => m.set[all.indexOf(p)] != null || claimed.has(all.indexOf(p))).length;
+  const taken = fromPile.filter((p, i) => m.set[all.indexOf(p)] != null || carrying(all.indexOf(p))).length;
   return Math.max(0, brought - Math.round(taken * brought / Math.max(1, fromPile.length)));
 }
 export function woodLeft() {
   const m = M();
   const poles = mansionPieces().map((p, i) => [p, i]).filter(([p]) => p.kind === 'pole');
   if (!m) return poles.length;
-  return poles.filter(([, i]) => m.set[i] == null && !claimed.has(i)).length;
+  return poles.filter(([, i]) => m.set[i] == null && !carrying(i)).length;
 }
 export const mansionDone = () => !!(M() && M().done);
 export const mansionStands = () => !!M();
 
 // --- the job -------------------------------------------------------------------
-// Begun: the clock and the empty set. Once.
-export function beginMansion() {
-  if (!S.acts || S.acts.mansion) return;
-  S.acts.mansion = { T: 0, set: [], done: false, G: null };
-}
-
-// Pieces claimed by a body this session.
-const claimed = new Set();
-const free = w => !w.parade && !w.house && !w.mansion && !w.lifted && !w.falling && !w.aloft && !w.floating && !w.inside
-  && w.craft == null && w.homeward == null && !w.carry && onYard(w) && !belowYard(w) && !isDeepType(w.type);
-const first = w => (w.type === TYPE.BUILD ? 0 : w.type === TYPE.HAUL ? 1 : 2);
-
-// One frame of the job: its clock, hands taken up to MANSION_BUILDERS, and
-// done once every piece is set.
-export function stepMansion(c) {
-  const m = M();
-  if (!m) return;
-  m.T += c.dt / 1000;
-  if (m.done) return;
-  const all = mansionPieces();
-  if (all.every((_, i) => m.set[i] != null)) { m.done = true; letGo(); return; }
-  const have = S.workers.filter(w => w.mansion).length;
-  if (have >= MANSION_BUILDERS || S.tick % 30) return;
-  const x0 = mansionX();
-  const pool = S.workers.filter(free).sort((a, b) => first(a) - first(b) || Math.abs(a.x - x0) - Math.abs(b.x - x0));
-  const spare = pool.filter(w => first(w) < 2);
-  for (const w of (spare.length ? spare : pool).slice(0, MANSION_BUILDERS - have)) {
-    w.mansion = { st: 'idle', i: -1, u: 0 };
-    w.walking = false; w.route = null; w.say = null;
-    if (w.claim != null) w.claim = -1;
-  }
-}
-// Every body let go back to its work.
-function letGo() {
-  for (const w of S.workers) if (w.mansion) { delete w.mansion; w.route = null; retask(w, w.type); }
-  claimed.clear();
-}
-// For a new game or a read save: nobody is carrying anything.
-export function forgetMansionHands() {
-  claimed.clear();
-  for (const w of S.workers) if (w.mansion) delete w.mansion;
-}
-
-// The next piece a body may take: unclaimed, unset, every earlier stage set.
+// A work on the yard's construction (works.js), on its own site, built by the
+// yard's builders (`manSites`, crew/builders.js) a piece a trip: the row's
+// `way` is the plan the builders carry by. Which pieces are set is this
+// file's record (`set`, the fades' clock); the work's progress is read off it.
+const carrying = i => S.workers.some(w => w.piece && w.piece.i === i && w.type === TYPE.BUILD && w.site === 'mansion');
+// The next piece a hand may take: unset, nobody carrying it, every earlier
+// stage set, so the floors go up in order.
 function nextPiece() {
   const m = M(), all = mansionPieces();
+  if (!m || m.done) return -1;
   for (let i = 0; i < all.length; i++) {
-    if (m.set[i] != null || claimed.has(i)) continue;
+    if (m.set[i] != null || carrying(i)) continue;
     const st = all[i].stage;
     if (all.some((p, j) => p.stage < st && m.set[j] == null)) return -1;
     return i;
   }
   return -1;
 }
+export const MANSION_WAY = {
+  count: () => mansionPieces().length,
+  // With no mansion begun there is nothing to build: a work left over lands.
+  laid: () => { const m = M(); return m ? mansionPieces().filter((_, i) => m.set[i] != null).length : mansionPieces().length; },
+  next: nextPiece,
+  from: i => pileOf(mansionPieces()[i]),
+  to: i => destOf(mansionPieces()[i]),
+  open: i => { const m = M(); return !!m && !m.done && i >= 0 && i < mansionPieces().length && m.set[i] == null; },
+  set: i => { const m = M(); if (m && m.set[i] == null) m.set[i] = m.T; },
+  takeS: MANSION_TAKE_S,
+  setS: MANSION_SET_S
+};
+const ROW = { key: 'mansion', kind: 'building', site: 'mansion', hands: MANSION_BUILDERS, way: MANSION_WAY,
+              buy() { const m = M(); if (m) m.done = true; } };
+registerRows([ROW]);
 
-// Walk toward x along the yard, by the yard's routes where it can. True on arrival.
-function walkTo(w, x) {
-  const pace = commutePace();
-  if (keepTo(w, x, ways().yard)) {
-    if (stepRoute(w, pace)) return false;
-    w.route = null;
-  } else {
-    const d = x - w.x;
-    w.x += Math.sign(d) * Math.min(Math.abs(d), pace * frames());
-    w.y = feet(w.x);
-    if (Math.abs(x - w.x) > 0.5) return false;
-  }
-  w.x = x; w.y = feet(x);
-  return true;
+// Begun: the clock, the empty set, and the work. Once.
+export function beginMansion() {
+  if (!S.acts || S.acts.mansion) return;
+  S.acts.mansion = { T: 0, set: [], done: false, G: null };
+  start('mansion', ROW, mansionDoorX());
 }
 
-// One of a borrowed body's frames (crew/step.js): true while the job has it.
-export function mansionBody(w) {
-  const me = w.mansion;
-  if (!me) return false;
+// One frame of the job: its clock, and its work kept on the go while it is
+// not done -- an old save, or one read back before the work was, picks it up
+// here -- and taken off once it is.
+export function stepMansion(c) {
   const m = M();
-  if (!m || m.done) { delete w.mansion; return false; }
-  const all = mansionPieces(), dt = frames() / 60;
-  if (me.st === 'idle') {
-    const i = nextPiece();
-    if (i < 0) return true;
-    claimed.add(i);
-    me.i = i; me.st = 'fetch'; me.u = 0;
-  }
-  const p = all[me.i];
-  if (!p || m.set[me.i] != null) { claimed.delete(me.i); me.st = 'idle'; return true; }
-  if (me.st === 'fetch') { if (walkTo(w, pileOf(p))) { me.st = 'take'; me.u = 0; } return true; }
-  if (me.st === 'take') { me.u += dt; if (me.u >= MANSION_TAKE_S) { me.st = 'carry'; me.u = 0; } return true; }
-  if (me.st === 'carry') { if (walkTo(w, destOf(p))) { me.st = 'set'; me.u = 0; } return true; }
-  if (me.st === 'set') {
-    me.u += dt;
-    if (me.u >= MANSION_SET_S) { m.set[me.i] = m.T; claimed.delete(me.i); me.st = 'idle'; me.i = -1; }
-  }
-  return true;
+  if (!m) return;
+  m.T += c.dt / 1000;
+  const on = workOn('mansion');
+  if (m.done) { if (on) abandonAt('mansion'); return; }
+  if (!on) start('mansion', ROW, mansionDoorX());
 }
-// What a borrowed body holds, for the drawing: the piece's kind while it
-// carries or sets it, else null.
+
+// What a builder holds, for the drawing: the piece while it carries or sets
+// it, else null.
 export function mansionHeld(w) {
-  const me = w.mansion;
-  if (!me || me.i < 0 || (me.st !== 'carry' && me.st !== 'set')) return null;
+  const me = w.piece;
+  if (!me || w.type !== TYPE.BUILD || w.site !== 'mansion' || (me.st !== 'carry' && me.st !== 'set')) return null;
   return mansionPieces()[me.i] || null;
 }
 

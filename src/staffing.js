@@ -15,7 +15,7 @@ import { fightersOn, seatUpTo, unseatNearest } from './deep/party.js';
 import { TRADE_OF, JOB_OF } from './kit.js';
 import { MACHINES, machine } from './machines.js';
 import { syncWorkers, FACTORY, newRecord } from './crew.js';
-import { busyBuilderSites, busyDeepSites, siteX } from './works.js';
+import { busyBuilderSites, busyDeepSites, siteX, buildersWanted } from './works.js';
 import { capOf, roomAt } from './levels.js';
 import { manSites } from './crew/sitework.js';
 
@@ -90,7 +90,7 @@ export function rebalance() {
   // spare, `S.crew` less the jobs less `S.deepCrew` (held above at least
   // the fighters), is the same before and after them, since `fightersOn`
   // falls out of it.
-  S.builders = manSites({ want: sites.length, spare: yardSpare, lend: () => lendNearest(sites), home: repayLoans });
+  S.builders = manSites({ want: buildersWanted(sites), spare: yardSpare, lend: () => lendNearest(sites), home: repayLoans });
   // A loan off a job this build no longer has is forgiven -- after the
   // lending, so a body still carrying one is not lent again on the same pass.
   for (const w of S.workers) if (w.lentFrom && !JOBS.includes(w.lentFrom)) delete w.lentFrom;

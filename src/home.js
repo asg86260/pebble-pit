@@ -37,6 +37,7 @@ import { onYard } from './crew/body.js';
 import { wearing } from './kit.js';
 import { TYPE, isDeepType } from './jobs.js';
 import { clamp01, held, lerp, smoothstep as ease } from './motion.js';
+import { shapePieces, pieceSpot } from './pieces.js';
 
 // A held step: `k` 0..1 in `n` whole steps, each taken as its stretch ends.
 const seg = (t, a, b) => clamp01((t - a) / (b - a));
@@ -92,13 +93,7 @@ export function pieces() {
   add('plank', [[pl, FINALE_PLANK_ROW, plankW, 1]], { off: 2 });
   add('pole', [[pr, FINALE_PLANK_ROW, 1, poleH]], { off: 1 });
   add('pole', [[pl, FINALE_PLANK_ROW, 1, poleH]], { off: 0 });
-  for (const p of out) {
-    const x0 = Math.min(...p.segs.map(s => s[0])), x1 = Math.max(...p.segs.map(s => s[0] + s[2]));
-    p.cx = (x0 + x1) / 2;
-    p.top = Math.min(...p.segs.map(s => s[1]));
-    p.w = Math.max(...p.segs.map(s => s[2]));
-  }
-  return (LAYOUT = out);
+  return (LAYOUT = shapePieces(out));
 }
 const STANDING = () => pieces().filter(p => p.off == null).length;
 
@@ -142,7 +137,7 @@ export function planBuild(f, doorT) {
   h.from = FINALE_BUILD_FROM_S;
 }
 
-export const spotOf = p => houseX() + Math.round(p.cx - WORKER / P / 2) * P;
+export const spotOf = p => pieceSpot(houseX(), p);
 const upY = () => S.groundY + (FINALE_PLANK_ROW - WORKER / P) * P;
 const poleOf = p => {
   const [pl, pr] = FINALE_POLES, at = Math.round(p.cx - WORKER / P / 2);

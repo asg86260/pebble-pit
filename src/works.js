@@ -25,7 +25,10 @@ export const SITE_JOB = {
   // tender pours them from the ring (`setHands` in crew/muster.js).
   sphere: JOB.WIZARD,
   // A door of the deep, raised where its station will stand.
-  deep: JOB.BUILD
+  deep: JOB.BUILD,
+  // The ending's mansion, on the house's ground: carried up a piece a trip
+  // (mansion.js, its row's `way`), no station and no board of its own.
+  mansion: JOB.BUILD
   // ...and every station that is a site, built by the spare hands unless its
   // row says otherwise (`registerSites`, from stations.js).
 };
@@ -125,6 +128,11 @@ export const busyBuilderSites = () =>
                        && (SITE_JOB[site] === JOB.BUILD || (noGang(site) && !UP_THERE.has(site))));
 export const busyDeepSites = () =>
   SITES.filter(site => busyAt(site) && DOWN_THERE.has(site) && (SITE_JOB[site] === JOB.BUILD || noGang(site)));
+// How many builders the yard's busy sites want: each work on the go one,
+// unless its row says it takes more hands (`hands`: the mansion's gang, a
+// piece in each pair of hands). The count `manSites` is asked to fill.
+export const handsFor = work => Math.max(1, Math.round(rowFor(work.key)?.hands ?? 1));
+export const buildersWanted = sites => sites.reduce((n, site) => n + onTheGo(site).reduce((k, w) => k + handsFor(w), 0), 0);
 // The sites in the air, which a spare hand lent from the ground could walk
 // under and never reach: their work is done by whoever is up there (the
 // sphere's rungs, by its tender).
@@ -522,9 +530,14 @@ export function stepWorks(dt) {
     // walked.
     for (let i = going - 1; i >= 0; i--) {
       const w = list[i];
+      // A work carried up a piece a trip (its row's `way`) is as far along
+      // as the pieces its place has had set, read off the place's own
+      // record so the two can never disagree; nobody standing adds to it.
+      const way = rowFor(w.key)?.way;
+      if (way) w.done = w.of * Math.min(1, way.laid() / Math.max(1, way.count()));
       const own = manned ? handsOn(site, w.id) : null;
       const share = own != null ? Math.min(1, own) : each;
-      if (share > 0) w.done += share * effort * (dt / 1000);
+      if (share > 0 && !way) w.done += share * effort * (dt / 1000);
       // A work that is already through lands whether or not anybody is
       // standing there this frame (`__finish` fills the work in and asks for
       // exactly this).
@@ -560,7 +573,8 @@ export function stepWorks(dt) {
 // center a tick on. A station of the deep's party is its own site, by its id,
 // so its tick lands over the station that went up, and its own board clears it.
 export function workFinished(site, key, bill = null) {
-  if (site === 'yard') return;
+  // A carried build (the mansion) has no board to read the tick off.
+  if (site === 'yard' || rowFor(key)?.way) return;
   // Everything landed since the board was read, oldest first: the stack over
   // the station shows them all, ticked, in the order they landed. A fresh
   // array, as `markRowSeen` writes one, for the save.
