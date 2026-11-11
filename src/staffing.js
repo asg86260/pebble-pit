@@ -17,6 +17,7 @@ import { MACHINES, machine } from './machines.js';
 import { syncWorkers, FACTORY, newRecord } from './crew.js';
 import { busyBuilderSites, busyDeepSites, siteX } from './works.js';
 import { capOf, roomAt } from './levels.js';
+import { manSites } from './crew/sitework.js';
 
 // A job is a count, not a purchase: you buy a body once and move it freely.
 // What a body is twice as good at is its hat, and the hat stays at the station
@@ -80,55 +81,36 @@ export function rebalance() {
   // hook, a save from before) reads as that many down there, and a shrunk
   // crew cannot leave the deep owed a body.
   S.deepCrew = Math.max(fightersOn(), Math.min(S.deepCrew || 0, fightersOn() + Math.max(0, spareHands())));
-  // Builders are derived, one a site, never the whole yard: a build that
-  // swallowed every idle body would stop the dust moving. The yard's build
-  // the yard's sites and the deep's the deep's, each half lending its own.
+  // Builders are derived, one a site, by the rule every place's builders
+  // share (crew/sitework.js, `manSites`): the yard's sites and the deep's
+  // each from their own half's spare hands, each half lending its own.
   const sites = busyBuilderSites();
-  const gang = sites.length;
   const deepSites = busyDeepSites();
-  // Nobody spare: the body standing nearest the site is *lent* -- taken off
-  // its count, which makes it spare -- and given back when nothing is left to
-  // build. The loan rides on the body (`lentFrom`) rather than in a list
-  // beside it, so a reload cannot come back owing a debt no body carries and
-  // a repayment cannot land on top of a move the player made meanwhile.
-  for (let short = sites.length - yardSpare(); short > 0; short--) {
-    const w = nearestLendable(sites);
-    if (!w) break;
-    const job = JOB_OF[w.type];
-    w.lentFrom = job;                    // stood down first, see syncWorkers
-    S[job]--;
-  }
+  // The yard's whole call comes before the deep's unseating and seating: its
+  // spare, `S.crew` less the jobs less `S.deepCrew` (held above at least
+  // the fighters), is the same before and after them, since `fightersOn`
+  // falls out of it.
+  S.builders = manSites({ want: sites.length, spare: yardSpare, lend: () => lendNearest(sites), home: repayLoans });
+  // A loan off a job this build no longer has is forgiven -- after the
+  // lending, so a body still carrying one is not lent again on the same pass.
+  for (const w of S.workers) if (w.lentFrom && !JOBS.includes(w.lentFrom)) delete w.lentFrom;
+  S.lent = S.workers.filter(w => w.lentFrom).map(w => w.lentFrom);
   // The deep borrows off its stations instead: with nobody spare down there,
   // the fighter nearest the build leaves its station to put it up (its
   // second pod is built by the sqwife), and the station stands empty until
-  // a hand is spare again. No loan is carried: a station with nobody at it
-  // is manned again by `seatUpTo` below, oldest first, which is the way home.
+  // a hand is spare again. No loan is carried on the body: the deep's way
+  // home is its ordinary seating, every station with nobody at it manned
+  // again oldest first (`seatUpTo`), on every pass and not only once the
+  // building is done.
   const deepXs = deepSites.map(siteX).filter(x => x != null);
-  for (let short = deepSites.length - deepSpare(); short > 0; short--)
-    if (!unseatNearest(deepXs)) break;
+  S.delvers = manSites({ want: deepSites.length, spare: deepSpare, lend: () => unseatNearest(deepXs), home: () => {} });
   seatUpTo(deepSpare() - deepSites.length);
   // The fighters' count, written where every other job's is read (the
   // roster's rules in verify.js, a report), and never set anywhere else: it
   // is the stations manned.
   S[JOB.FIGHT] = fightersOn();
-  // Given back only if there is still room there and a body spare to be the
-  // one going home; a count handed back that nobody stands behind is a roster
-  // that reads higher than the crew for ever. They come home when the yard
-  // has nothing left to build. A loan off a job this build no longer has is
-  // forgiven.
-  for (const w of S.workers) {
-    const job = w.lentFrom;
-    if (!job) continue;
-    if (!JOBS.includes(job)) { delete w.lentFrom; continue; }
-    if (sites.length) continue;
-    delete w.lentFrom;
-    if (roomAt(job) > 0 && yardSpare() > 0) S[job]++;
-  }
-  S.lent = S.workers.filter(w => w.lentFrom).map(w => w.lentFrom);
-  S.builders = sites.length ? Math.min(gang, yardSpare()) : 0;
   // The deep's crew on no weapon builds what the deep is building, and
   // gathers otherwise; it stays down there doing either.
-  S.delvers = deepSites.length ? Math.min(deepSites.length, deepSpare()) : 0;
   S.gatherers = deepSpare() - S.delvers;
   // Carrying is what a yard body does when it is on nothing, less whoever is
   // building. The carts are the lip's kit and are not held out.
@@ -179,9 +161,13 @@ export const SAVE = {
   blank() { S.haulers = 0; S.deepCrew = 0; }
 };
 
-// The yard station's body nearest any site that wants one and not already
-// lent. `JOBS` is the yard's alone, so the deep is never asked.
-function nearestLendable(sites) {
+// The yard's loan (`manSites`): the station body nearest any site that wants
+// one and not already lent, taken off its count, which makes it spare. `JOBS`
+// is the yard's alone, so the deep is never asked. The loan rides on the body
+// (`lentFrom`) rather than in a list beside it, so a reload cannot come back
+// owing a debt no body carries and a repayment cannot land on top of a move
+// the player made meanwhile.
+function lendNearest(sites) {
   const xs = sites.map(siteX).filter(x => x != null);
   let best = null, dist = Infinity;
   for (const w of S.workers) {
@@ -191,7 +177,24 @@ function nearestLendable(sites) {
     const d = xs.length ? Math.min(...xs.map(x => Math.abs(w.x - x))) : 0;
     if (d < dist) { dist = d; best = w; }
   }
-  return best;
+  if (!best) return false;
+  const job = JOB_OF[best.type];
+  best.lentFrom = job;                   // stood down first, see syncWorkers
+  S[job]--;
+  return true;
+}
+
+// The yard's loans home, once it has nothing left to build: given back only
+// if there is still room there and a body spare to be the one going home; a
+// count handed back that nobody stands behind is a roster that reads higher
+// than the crew for ever.
+function repayLoans() {
+  for (const w of S.workers) {
+    const job = w.lentFrom;
+    if (!job || !JOBS.includes(job)) continue;
+    delete w.lentFrom;
+    if (roomAt(job) > 0 && yardSpare() > 0) S[job]++;
+  }
 }
 
 export function hire() {

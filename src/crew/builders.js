@@ -1,7 +1,8 @@
 // --- the builders -------------------------------------------------------------
 // Spare hands putting up whatever the yard is building. Not a job on the
 // roster: you decide to build something and the idle hands go and do it.
-// `rebalance` in upgrades.js is the one place the count is set. Which work a
+// The count is every place's rule (crew/sitework.js, `manSites`), asked by
+// `rebalance` in staffing.js. Which work a
 // builder is on, where it stands and when it has arrived are every place's
 // (crew/sitework.js); the walk there over the yard's ground is this file's.
 

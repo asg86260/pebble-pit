@@ -38,8 +38,8 @@ export const BUILD_REPEAT_HALF = 12;
 // it is the same kind of work
 export const BUILD_EFFORT = 1;
 
-// The cap of one spare body per build is written into `rebalance` in
-// upgrades.js, the one place that decides who is building. See DESIGN.md,
+// The cap of one spare body per build is written into `manSites` in
+// crew/sitework.js, the one rule for who is building, in every place. See DESIGN.md,
 // "The build yard".
 
 // --- the farm's and the quarry's own sheds -----------------------------------
