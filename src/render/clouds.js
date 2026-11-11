@@ -848,8 +848,11 @@ export function tierOf(sums, was = null) {
 // the last row, the light's way, and each role's tone and color for the page
 // and treatment. Roles are tier * 5 + 1 lit face, + 2 body, + 3 shadowed
 // side and underside, + 4 core (cloudgl.js, ROLES).
-export function layerLook(layer, { page = 'light', treat = 'C' } = {}) {
-  const LL = CLOUDS_LOBE_LIGHT, D = CLOUDS_TREATMENTS[treat], C = CLOUDS_PALETTE[page], P = layer.P, nt = layer.nt, VB = CLOUDS_VOLUME_BANDS;
+// `palette`, when given, is the table the roles are colored from in place of
+// the page's (CLOUDS_PALETTE's shape): the yard's sky, worked out each frame
+// from its murk and its storm (render/yardsky.js).
+export function layerLook(layer, { page = 'light', treat = 'C', palette = null } = {}) {
+  const LL = CLOUDS_LOBE_LIGHT, D = CLOUDS_TREATMENTS[treat], C = palette || CLOUDS_PALETTE[page], P = layer.P, nt = layer.nt, VB = CLOUDS_VOLUME_BANDS;
   const eight = f => Int32Array.from({ length: 8 }, (_, j) => (j < nt ? f(j) : 0));
   const lobes = Array.from({ length: nt }, (_, j) => {
     // the crust's small lumps are not what a tier's bands are sized by
@@ -898,21 +901,65 @@ export function layerLook(layer, { page = 'light', treat = 'C' } = {}) {
 }
 
 // One lone cloud of a shape, as a layer that does not wrap: a clickable
-// cloud, or a cloud to study on the bench. `d` is how near it is, for its
-// tones.
-export function cloudLayer({ kind = 'cumulus', R = 8, seed = 1, flat = 1, d = 0.6 }) {
+// cloud, a cloud of the yard's sky (weather.js), or a cloud to study on the
+// bench. `d` is how near it is, for its tones. `grow` is the most its radii
+// are ever scaled by as it is drawn (the yard's swell, a layer's `scale` in
+// cloudgl.js), so its window holds it at its biggest and is never made again
+// as it grows; `mid` is the column its middle stands on. Its seed is its own
+// stream's too, for whatever of its motion is drawn from one.
+export function cloudLayer({ kind = 'cumulus', R = 8, seed = 1, flat = 1, d = 0.6, grow = 1 }) {
   const rnd = gen(seed * 7919 + 4243), puffs = [], L = CLOUDS_LIFE[kind];
   const life = { per: TAU / lerp(rnd(), L.life), ph: rnd() * TAU, keep: Math.max(0.6, L.keep) };
-  cloudPuffs(rnd, kind, 0, 0, R, flat, life, 0, puffs);
+  cloudPuffs(rnd, kind, 0, 0, R, flat, life, 0, puffs, seed);
   let top = 0, bottom = 0, left = 0, right = 0;
   for (const p of puffs) {
-    const m = (p.r * 1.3 + p.a[0]) * REACH;
+    const m = (p.r * 1.3 * grow + p.a[0]) * REACH;
     top = Math.min(top, p.y - m * p.flat); bottom = Math.max(bottom, p.y + m * p.flat);
     left = Math.min(left, p.x - m); right = Math.max(right, p.x + m);
   }
   const ox = Math.ceil(-left) + 1, oy = Math.ceil(-top) + 1;
   for (const p of puffs) { p.x += ox; p.y += oy; if (p.cut !== undefined) p.cut += oy; }
-  return { i: -2, P: { d, e: d, R, parallax: 0.6, wind: 0.2 }, W: 1e6, puffs,
+  return { i: -2, P: { d, e: d, R, parallax: 0.6, wind: 0.2 }, W: 1e6, puffs, mid: ox,
            w: Math.ceil(ox + right) + 2, h: Math.ceil(oy + bottom) + 2, baseRow: oy, ground: false, nt: CLOUDS_TIERS.length,
            rowOf: CLOUDS_TIERS.map(() => 0), fills: null };
+}
+
+// A lone cloud's tiers with every puff where it was made -- before its
+// current carries it or its life thins it, so its biggest -- scaled as the
+// card scales a layer (`scale`: radii by `r`, the field by `dense`,
+// cloudgl.js), worked out on the CPU: -1 open sky, else the front-most tier
+// past the threshold. What the yard's report
+// counts its sky by (weather.js), and what a page without WebGL2 draws it
+// from (render/yardsky.js).
+let restSums = new Float32Array(0);   // cache: scratch, reused call to call
+export function restTiers(layer, scale = null, out = null) {
+  const { w, h, nt } = layer, n = w * h;
+  if (restSums.length < nt * n) restSums = new Float32Array(nt * n);
+  const S = restSums;
+  S.fill(0, 0, nt * n);
+  for (const p of layer.puffs) {
+    const r = scale ? p.r * scale.r : p.r, x = p.x, y = p.y;
+    const R = r * REACH, R2 = R * R;
+    if (R <= 0.05) continue;
+    const cut = p.cut === undefined ? Infinity : p.cut, o = p.tier * n;
+    const y0 = Math.max(0, Math.floor(y - R * p.flat)), y1 = Math.min(h, Math.ceil(y + R * p.flat));
+    for (let cy = y0; cy < y1 && cy + 0.5 <= cut; cy++) {
+      const dy = (cy + 0.5 - y) / p.flat, left = R2 - dy * dy;
+      if (left <= 0) continue;
+      const span = Math.sqrt(left);
+      const x0 = Math.max(0, Math.ceil(x - span - 0.5)), x1 = Math.min(w - 1, Math.floor(x + span - 0.5));
+      for (let cx = x0; cx <= x1; cx++) {
+        const dx = cx + 0.5 - x, q = 1 - (dx * dx + dy * dy) / R2;
+        if (q > 0) S[o + cy * w + cx] += q * q * q;
+      }
+    }
+  }
+  if (!out || out.length !== n) out = new Int8Array(n);
+  const T = CLOUDS_THRESHOLD / (scale && scale.dense !== undefined ? scale.dense : 1);
+  for (let i = 0; i < n; i++) {
+    let t = -1;
+    for (let j = nt - 1; j >= 0; j--) if (S[j * n + i] > T) { t = j; break; }
+    out[i] = t;
+  }
+  return out;
 }

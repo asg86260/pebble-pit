@@ -50,6 +50,7 @@ uniform int uLobe[8];       // 1: a tier whose lobes are each lit and shadowed a
 uniform vec4 uLobeAt;       // lit cap: facing, rim; shadow: facing, rim (CLOUDS_LOBE_LIGHT)
 uniform float uLobeMin;     // the least reach of a lobe lit on its own
 uniform vec2 uLightN;       // toward the light, unit
+uniform float uDense;       // the puffs' field taken this share: a cloud coming up out of nothing (render/yardsky.js)
 out uint o;                 // tier + 1, and the lobe's light (0, 1 lit, 2 shadow) times 16
 void main() {
   ivec2 c = ivec2(gl_FragCoord.xy);
@@ -71,7 +72,7 @@ void main() {
     // flat, at the height the whole field shares
     if (q > 0. && p.y <= b.y) {
       int j = int(b.x);
-      float v = q * q * q;
+      float v = q * q * q * uDense;
       s[j] += v;
       if (v > w[j]) { w[j] = v; d[j] = vec3(vec2(dx, dy) / (a.z * ${(1 / REACH).toFixed(5)}), a.z); }
     }
@@ -319,6 +320,9 @@ export function skyGL() {
       let near = lobe.x + lobe.stray * t - ox; near -= W * Math.floor(near / W);
       if (near > w + reach && near < W - reach) continue;
       puffAt(p, t, q);
+      // a layer that swells as a whole (the yard's front, render/yardsky.js):
+      // every puff's radius by `r` (its field's `dense`, the FIELD pass)
+      if (layer.scale) q.r *= layer.scale.r;
       const R = q.r * REACH;
       if (R <= 0.05) continue;
       // every copy of a wrapping layer that reaches the window
@@ -404,6 +408,7 @@ export function skyGL() {
       gl.uniform1fv(P.field.u.uFill, Array.from({ length: 8 }, (_, j) => { const f = (v.layer.fills || [])[j]; return f === null || f === undefined ? 1e9 : f - oy; }));
       gl.uniform1iv(P.field.u.uLobe, L.lobe); gl.uniform4fv(P.field.u.uLobeAt, L.lobeAt); gl.uniform1f(P.field.u.uLobeMin, L.lobeMin);
       gl.uniform2f(P.field.u.uLightN, L.lightN[0], L.lightN[1]);
+      gl.uniform1f(P.field.u.uDense, v.layer.scale ? v.layer.scale.dense : 1);
       draw();
       // the roles
       pass(P.roles, s.R[0].f, v.w, v.h);
