@@ -40,8 +40,10 @@ group('a save with sawdust is brought to a yard without it: the heap is gone and
        'the heap, its clocks and its row are gone, the rest of the ups kept', JSON.stringify(s.after.ups)),
     ok(!('dust' in s.after.saw) && !('grains' in s.after.saw), 'the saw keeps no grains'),
     ok(cells[0] === 0 && cells[1] === KINDS.load.first && cells[2] === KINDS.log.first, 'a sawdust cell is empty and the load keeps its unit', [...cells].join(' ')),
-    ok(JSON.stringify(laid) === JSON.stringify(['load', 'log']), 'and the grove lays the load and the log again, nothing for the sawdust', JSON.stringify(laid)),
-    ok(s.after.bodies[0].load[0] === KINDS.load.first && s.after.bodies[0].errand == null && !('tipping' in s.after.bodies[0]), 'a carried load keeps its unit and a sweeper is idle', JSON.stringify(s.after.bodies[0])),
+    // Since 2026-11-10 nothing makes a load (act 3 builds on the yard's works), so the
+    // migration after this one drops a load the grove laid and one a body carried.
+    ok(JSON.stringify(laid) === JSON.stringify(['log']), 'and the grove lays the log again, nothing for the sawdust and no load any more', JSON.stringify(laid)),
+    ok(!(s.after.bodies[0].load || []).length && s.after.bodies[0].carry === 0 && s.after.bodies[0].errand == null && !('tipping' in s.after.bodies[0]), 'a carried load is put down and a sweeper is idle', JSON.stringify(s.after.bodies[0])),
     ok(!!a, 'and the yard reads back whole', String(!!a))
   ];
 });
