@@ -28,7 +28,7 @@ export function drawBalloonPosts() {
   }
 }
 
-// Each craft is drawn among the clouds (`drawClouds` in weather.js asks for
+// Each craft is drawn among the clouds (`drawClouds` in render/yardsky.js asks for
 // these), between the sheets by its depth: behind the clouds nearer than it
 // and in front of the ones behind. Sized and paled by its depth as a cloud of
 // that sheet is, so a far balloon is small and grey and a near one full-sized

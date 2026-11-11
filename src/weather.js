@@ -8,8 +8,8 @@
 // ground when the view scrolls.
 
 import { P, ROCK_SKY, CLOUDS_ON, CLOUDS_WANTED, CLOUD_TONE, CLOUD_UNDER, CLOUD_DRIFT,
-         CLOUD_LAYERS, CLOUD_FAR_JITTER, CLOUD_FADE_FAR, CLOUD_EDGE_STEPS, CLOUD_LANES, CLOUD_BLOOM_S, CLOUD_TONES, CLOUD_LIT, CLOUD_MID, CLOUD_SHADE_REACH, CLOUD_KINDS,
-         CLOUD_SPINE_R, CLOUD_SPINE_LAP, CLOUD_SPINE_LOW, CLOUD_PUFF_R, CLOUD_PUFF_SINK,
+         CLOUD_LAYERS, CLOUD_FAR_JITTER, CLOUD_FADE_FAR, CLOUD_LANES, CLOUD_BLOOM_S, CLOUD_TONES,
+         CLOUD_SHAPES, CLOUD_STORM_SHAPES, CLOUD_R, CLOUD_GRAIN,
          CLOUD_TOP, CLOUDS_STORM, CLOUD_SETTLE_S,
          CLOUD_GROW_R, CLOUD_LEAN, STORM_BREW_S,
          CLOUD_MURK_GROW, CLOUD_MURK_TINT, CLOUD_MURK_POW, CLOUD_MURK_TONE, CLOUD_MURK_UNDER,
@@ -23,6 +23,7 @@ import { dryTime } from './smog/rain.js';
 import { gust } from './wind.js';
 import { spawnChip, bell } from './dust.js';
 import { ctx } from './render.js';
+import { cloudLayer, restTiers } from './render/clouds.js';
 import { rand } from './rng.js';
 import { meet } from './met.js';
 import { sfx } from './audio.js';
@@ -157,89 +158,51 @@ function cloudTones(crown, base, far, off = 0) {
   return out;
 }
 
-// A cell is not always all there. A cloud's outline is a circle's edge, which
-// crosses a cell part way: how much of the cell the cloud fills is drawn as
-// how far its tone has come up from the page, in CLOUD_EDGE_STEPS steps. So a
-// cell arriving as the sky swells comes up out of the page, and one going as
-// the front lets go goes back down into it, instead of either blinking. The
-// styles are built as they are asked for and kept: a cloud uses a dozen at
-// most, and building a string a cell would be a string a cell. The colors
-// slide with the murk and the swell, so the table is emptied when it has
-// grown past what a frame could want.
-const STYLES = new Map();
-function styleOf(col, k) {
-  if (STYLES.size > 600) STYLES.clear();
-  const key = `${col[0]|0},${col[1]|0},${col[2]|0},${k}`;
-  let s = STYLES.get(key);
-  if (s === undefined) {
-    const c = k >= CLOUD_EDGE_STEPS ? col : mix(PAGE, col, k / CLOUD_EDGE_STEPS);
-    s = `rgb(${Math.round(c[0])},${Math.round(c[1])},${Math.round(c[2])})`;
-    STYLES.set(key, s);
-  }
-  return s;
-}
-
-// A cloud is one mass of circles on a flat base, the way a cumulus is: a
-// spine of big ones sitting low along the base, overlapping heavily so the
-// bottom is one long shape with rounded ends, and smaller puffs riding on
-// the spine's surface, which is what gives the top its heaps and dips. Which
-// kind of cumulus is drawn from CLOUD_KINDS -- a puff, a heap, a tower, a
-// long low bank. A circle is `x` and `y` its center in cells from the base's
-// left end (y negative, above the base) and `r` its radius; everything under
-// the circles down to the base line is solid. Its `give` is its own share of
-// the swell, so no two clouds grow a cell on the same frame and the sky never
-// steps in lockstep -- read off its depth rather than drawn, because a draw
-// here is a number off the yard's one generator at seed time and every seeded
-// run, weather or not, would come out differently. A `storm` cloud is one the
-// front brought, which is nothing at all until the swell has grown it and goes
-// as the swell goes. `sheet` is which of CLOUD_LAYERS it is born into, and it
-// stays there: its size, its grain and its depth are the sheet's. Its height
-// is not -- every cloud's base is in the one lane (CLOUD_LANE).
+// A cloud is the one cloud renderer's (render/clouds.js): puffs in tiers, a
+// shape of CLOUD_SHAPES (a front's own, CLOUD_STORM_SHAPES) stood on a flat
+// base, its puffs worked into one field and flowing on their own currents
+// as it is drawn. Here it is the fact the game keeps: where it is, how deep,
+// how fast it drifts, and `layer`, its puffs in its own window of cells
+// (`cloudLayer`), sized for it at the fullest swell so the window is never
+// made again as it grows. The puffs are drawn from a stream of the cloud's
+// own seed, one draw off the yard's generator: a drawing must not spend the
+// yard's chance. Its `give` is its own share of the swell, so no two clouds
+// grow a cell on the same frame and the sky never steps in lockstep -- read
+// off its depth rather than drawn, because a draw here is a number off the
+// yard's one generator at seed time and every seeded run, weather or not,
+// would come out differently. A `storm` cloud is one the front brought,
+// which is nothing at all until the swell has grown it and goes as the swell
+// goes. `sheet` is which of CLOUD_LAYERS it is born into, and it stays there:
+// its size, its grain and its depth are the sheet's. Its height is not --
+// every cloud's base is in its sheet's lane (CLOUD_LANES).
 const between = ([a, b]) => a + rand() * (b - a);
-const count = ([a, b]) => a + Math.floor(rand() * (b - a + 1));
-function pickKind() {
-  let x = rand() * CLOUD_KINDS.reduce((n, k) => n + k.share, 0);
-  for (const k of CLOUD_KINDS) if ((x -= k.share) < 0) return k;
-  return CLOUD_KINDS[CLOUD_KINDS.length - 1];
+function pickShape(shares) {
+  let x = rand() * Object.values(shares).reduce((n, k) => n + k, 0);
+  for (const k in shares) if ((x -= shares[k]) < 0) return k;
+  return Object.keys(shares)[0];
 }
+// How near a depth is, for the renderer's depth bands (CLOUDS_DEPTH_BANDS):
+// nought the farthest sheet's air, one the nearest's -- the fade turned round,
+// so the bands and the paling are the one depth.
+const nearOf = far => 1 - fadeAt(far) / CLOUD_FADE_FAR;
 function makeCloud(x, sheet, storm = false) {
   const L = CLOUD_LAYERS[sheet];
-  const kind = pickKind();
-  const wide = (14 + Math.floor(rand() * 12)) * L.scale * between(kind.wide);
-  const H = wide * between(kind.tall);
-  const spine = [];
-  let bx = 0;
-  for (let i = 0, n = count(kind.spine); i < n; i++) {
-    const r = H * between(CLOUD_SPINE_R);
-    if (i) bx += (spine[i - 1].r + r) * between(CLOUD_SPINE_LAP);
-    spine.push({ x: bx, r, y: -r * between(CLOUD_SPINE_LOW) });
-  }
-  const bumps = spine.slice();
-  const x0 = spine[0].x, x1 = spine[spine.length - 1].x;
-  for (let j = 0, m = count(kind.puffs); j < m; j++) {
-    const px = x0 + rand() * (x1 - x0);
-    // the spine's surface at px, for the puff to sit on
-    let top = 0;
-    for (const sp of spine) top = Math.max(top, -(sp.y - Math.sqrt(Math.max(0, sp.r * sp.r - (px - sp.x) ** 2))));
-    const r = H * between(CLOUD_PUFF_R);
-    bumps.push({ x: px, r, y: -(top - r * between(CLOUD_PUFF_SINK)) });
-  }
-  // the base runs from the leftmost circle's edge to the rightmost one's
-  const left = Math.min(...bumps.map(b => b.x - b.r));
-  for (const b of bumps) b.x -= left;
-  const w = Math.ceil(Math.max(...bumps.map(b => b.x + b.r)));
+  const kind = pickShape(storm ? CLOUD_STORM_SHAPES : CLOUD_SHAPES);
+  const R = between(CLOUD_R) * L.scale * CLOUD_GRAIN;
+  const seed = Math.floor(rand() * 1e9);
   const off = rand() * 2 - 1;                // where in its sheet's thickness it sits
   const far = L.far + off * CLOUD_FAR_JITTER;
   const yb = between(CLOUD_LANES[L.name]) * P;   // its base, in pixels below the band's top
-  return { x, yb, w, bumps, far, sheet, vx: CLOUD_DRIFT * (0.5 + far),
+  const layer = cloudLayer({ kind, R, seed, flat: L.flat, d: nearOf(far), grow: 1 + CLOUD_GROW_R });
+  return { x, yb, w: layer.w, layer, far, sheet, vx: CLOUD_DRIFT * (0.5 + far),
            give: 0.7 + (off + 1) / 2 * 0.6, storm, age: 0, melt: 0 };
 }
 
 // a cloud's cell in world pixels: its sheet's
-const cellOf = c => P * CLOUD_LAYERS[c.sheet].cell;
+const cellOf = c => P * CLOUD_LAYERS[c.sheet].cell / CLOUD_GRAIN;
 
-// A cloud on its way out: it thins from the bottom a cell at a time and climbs
-// as it goes, paling toward the page, the way a cloud actually breaks up. Only
+// A cloud on its way out: its puffs shrink and it pales toward the page, and
+// the cells it sheds fade out through the renderer's own fade. Only
 // a front's own clouds go this way -- the ordinary sky wraps around the strip
 // -- and a melting one no longer counts toward its sheet, so its replacement
 // drifts in while it is still going.
@@ -249,51 +212,27 @@ const fade = c => Math.min(1, c.melt) * 0.9;
 // how many of a sheet's clouds are in the sky, not counting the ones going
 const inSheet = (sheet, storm) => CLOUDS.reduce((n, c) => n + (c.sheet === sheet && c.storm === storm && !melting(c)), 0);
 
-// The columns a cloud is drawn as this frame: for each column across it, how
-// many cells stand above the base line, and how many of the lowest are the
-// underside. Only the bumps' radii grow -- with the murk a little, with the
-// storm's swell a lot -- and never their centers, so every column only ever
-// gets taller as the swell climbs and the cloud never loses a cell on the way
-// up. A storm cloud's radii are scaled by the swell, from nothing.
-function columnsOf(c, sw) {
-  const flat = CLOUD_LAYERS[c.sheet].flat;
+// The swell as size: how the renderer scales a cloud's puffs this frame (a
+// layer's `scale`, render/cloudgl.js) -- `r` their radii, `dense` their
+// field. Only the radii grow -- with the murk a little, with the storm's
+// swell a lot -- and never the puffs' places: a bigger puff in the same place
+// adds more to every cell it reaches, so a swelling cloud gains cells and
+// never loses one. A melting cloud's radii shrink with what is left of it.
+function scaleOf(c, sw) {
   const k = Math.min(1, (sw + murkOf(c) * CLOUD_MURK_GROW) * c.give);
-  const grow = 1 + CLOUD_GROW_R * k;
   // A front's cloud is nothing when it is born and comes up out of nothing
   // over CLOUD_BLOOM_S -- on its own clock, not the sky's, because the front
   // adds its clouds as the swell climbs and one born at nine tenths would
   // otherwise be drawn at nine tenths on the frame it was made.
   //
-  // `up` takes the circles' centers down with their radii, which the swell's
-  // own grow deliberately does not: a cloud that keeps its centers and shrinks
-  // only its radii still stands its full height wherever a circle covers a
-  // column at all, so it arrives at full height in a few columns and spreads
-  // sideways. That is the pop. Growing the centers too is what makes it come
-  // up out of the base line.
+  // It comes up as its field thickens, not as its puffs grow: a puff of any
+  // size is cloud at its middle, so growing them from nothing speckles the
+  // whole cloud's span on the first frame, and scaling the cloud up from a
+  // point loses cells in its dips as they slide out past the grid. A field
+  // taken a share is cloud only where it is thickest -- its heart first --
+  // and gains every cell it had as the share climbs.
   const up = c.storm ? Math.min(1, c.age / CLOUD_BLOOM_S) * Math.min(1, sw * c.give) : 1;
-  const h = [];
-  let lo = Infinity, hi = -Infinity;
-  for (const b of c.bumps) {
-    const r = b.r * up * grow, by = b.y * up;
-    const x0 = Math.floor(b.x - r), x1 = Math.ceil(b.x + r);
-    for (let cx = x0; cx <= x1; cx++) {
-      const dx = cx + 0.5 - b.x;
-      const d2 = r * r - dx * dx;
-      if (d2 <= 0) continue;
-      // the column's height under this bump, from the base line up to the
-      // bump's top edge -- kept as it falls, fraction and all: the part of a
-      // cell the cloud fills is what says how solid that cell is drawn, and
-      // rounding here is what made a cell blink on and off as the sky swelled
-      const top = -(by - Math.sqrt(d2)) * flat;
-      if (top <= 0) continue;
-      h[cx] = Math.max(h[cx] || 0, top);
-      if (cx < lo) lo = cx; if (cx > hi) hi = cx;
-    }
-  }
-  if (lo === Infinity) return { lo: 0, hi: -1, h: [], under: 0 };
-  // The underside is one row, the flat base a cumulus has: a storm darkens
-  // it rather than thickening it, since the shade above is the puffs' own.
-  return { lo, hi, h, under: 1 };
+  return { r: (1 + CLOUD_GROW_R * k) * (1 - Math.min(1, c.melt)), dense: up };
 }
 
 // Where a sky thing is on the screen right now, in world units across the view.
@@ -313,7 +252,11 @@ export function seedWeather() {
   if (!CLOUDS_ON) { CLOUDS.length = 0; return; }
   toSpread = true;
 }
-held('weather-timers', () => { nextBirds = 0; toSpread = true; });
+// The sky's own clock, in seconds: the clouds' currents run on it
+// (render/yardsky.js). The background's clock, so a held scene holds them.
+let skyT = 0;   // held: seconds of sky since the page came up
+export const skyClock = () => skyT;
+held('weather-timers', () => { nextBirds = 0; toSpread = true; skyT = 0; });
 
 // A new run is a new sky. Only from the yard's own reset, never from the
 // layout: the layout runs on every resize, and a sky cleared there is a
@@ -374,14 +317,15 @@ export function stepWeather(now) {
   // the front has peaked and is letting go: neither brewing nor pouring
   const letting = !S.raining && S.stormFor < 0;
   const secs = f / 60;
+  skyT += secs;
   for (let i = CLOUDS.length - 1; i >= 0; i--) {
     const c = CLOUDS[i];
     c.x += (c.vx + lean) * f;
     c.age += secs;
     // A cloud the front brought breaks up as the front lets go of it: its melt
     // is the swell's own fall, so it is gone exactly when the sky has settled
-    // rather than hanging on after it, and every cell it sheds sinks back into
-    // the page on the way (CLOUD_EDGE_STEPS).
+    // rather than hanging on after it, and every cell it sheds fades back into
+    // the page on the way (CLOUDS_FADE_S).
     if (c.storm && letting) c.melt = Math.max(c.melt, 1 - sw);
     if (c.melt >= 1) { CLOUDS.splice(i, 1); continue; }
     // The ordinary sky wraps around the strip instead. A cloud only ever
@@ -452,27 +396,30 @@ export function skyReport() {
   };
 }
 
-// the cells a cloud is drawn as, for the report. Whole cells: a column's
-// height is carried as a fraction now (the part of the top cell the cloud
-// fills, which is how solid it is drawn), and counting those would make every
-// cloud's count change on every frame.
+// The cells a cloud stands on this frame, for the report: the renderer's own
+// field (`restTiers`) at the swell's scale, with every puff where it was made.
+// Not where its current has carried it this second: the currents move every
+// cloud's edge a cell this way or that on every frame, and the count is what
+// the swell has done to the sky, which the currents never change. Kept until
+// the scale moves, so the report's three asks a frame cost one.
+let tiers = null;   // cache: scratch for restTiers
 function cellsOf(c, sw) {
-  const { lo, hi, h } = columnsOf(c, sw);
+  const sc = scaleOf(c, sw);
+  if (c.cells && c.cells.r === sc.r && c.cells.dense === sc.dense) return c.cells.n;
+  // nothing at all is no cells: a front's cloud on the frame it is born
   let n = 0;
-  for (let cx = lo; cx <= hi; cx++) n += Math.ceil(h[cx] || 0);
+  if (sc.r > 0 && sc.dense > 0) {
+    tiers = restTiers(c.layer, sc, tiers && tiers.length === c.layer.w * c.layer.h ? tiers : null);
+    for (let i = 0; i < tiers.length; i++) n += tiers[i] >= 0;
+  }
+  c.cells = { r: sc.r, dense: sc.dense, n };
   return n;
 }
 
-// ...and how much cloud is actually there, fractions and all. A cloud coming
-// up out of nothing covers a dozen columns with a thousandth of a cell each
-// long before there is anything to see, so a check asking whether it arrived
-// whole has to weigh it rather than count its columns.
-function inkOf(c, sw) {
-  const { lo, hi, h } = columnsOf(c, sw);
-  let n = 0;
-  for (let cx = lo; cx <= hi; cx++) n += h[cx] || 0;
-  return Math.round(n * 100) / 100;
-}
+// ...and how much cloud is actually there. The renderer draws a cell whole
+// or not at all, fading it in, so a cloud weighs its cells: one coming up out
+// of nothing is nothing until a cell of it passes the threshold.
+const inkOf = cellsOf;
 
 // A few birds, strung out rather than in a formation: same heading, each a
 // little behind and a little off the last.
@@ -564,7 +511,7 @@ const skyAt = s => s.x + skyCam().x * (1 - s.far);
 // out.
 export function cloudSpot(c) {
   if (melting(c)) return null;
-  return { x: c.x + c.w * cellOf(c) / 2, far: c.far, y: cloudY(c) };
+  return { x: c.x + c.layer.mid * cellOf(c), far: c.far, y: cloudY(c) };
 }
 GUESTS.clouds = () => CLOUDS;
 GUESTS.spot = cloudSpot;
@@ -591,100 +538,14 @@ export function murkTone() {
 }
 const skyX = s => Math.round(skyAt(s) / P) * P;
 
-// The tone of one cell, `cx` across and `r` rows above the base: lit from
-// above, the way a rock cell is shaded by its depth into the rock. Its depth
-// is how far it sits below the nearest bit of the cloud's top outline, looking
-// up its own column and up to CLOUD_SHADE_REACH columns either side (a step
-// sideways counting as one down), as a share of the cloud's height: the top
-// CLOUD_LIT of it is lit, down to CLOUD_MID is the body, and below that is
-// the shade -- so every puff is lit on top and the shade pools under the
-// heaps and thins under the dips, which is what makes the top read as puffs
-// rather than an outline. The base rows are the underside.
-function cellTone(h, peak, cx, r, u) {
-  if (r < u) return CLOUD_TONES - 1;
-  let d = Infinity;
-  for (let k = -CLOUD_SHADE_REACH; k <= CLOUD_SHADE_REACH; k++) {
-    const n = h[cx + k] || 0;
-    if (n > r) d = Math.min(d, n - 1 - r + Math.abs(k));
-  }
-  return d <= CLOUD_LIT * peak ? 0 : d <= CLOUD_MID * peak ? 1 : 2;
-}
-
-// Farthest first, so a near cloud covers a far one and the overlap is what
-// says which is in front -- between the sheets and within one.
-export function drawClouds() {
-  const sw = swell(), mk = murk();
-  const crown = partColor('body', mk, sw), base = partColor('under', mk, sw);
-  // Cut at the top of the window: a storm swollen past it is a ceiling there,
-  // not a wall running up out of the sky. Not the band's top -- a cloud sits
-  // *in* the band, base and all, and cutting there flattened every one that
-  // rode high into the same slab.
-  const top = skyCam().y;
-  // Every edge snapped to a whole device pixel: a sheet's cell is not the
-  // yard's, so its edges land between device pixels at most zooms, and two
-  // fills meeting there blend into a hairline of page through the cloud.
-  const k = S.zoom * S.dpr, snap = v => Math.round(v * k) / k;
-  const order = CLOUDS.slice().sort((a, b) => a.far - b.far);
-  // Where the glass is, for leaving out a cloud wholly off it: the sky runs
-  // the world's whole width, and a cloud is hundreds of cells to tone.
-  const glass = ctx.getTransform(), glassW = ctx.canvas.width;
-  const visitors = GUESTS.list().slice().sort((a, b) => a.far - b.far);
-  let g = 0;
-  for (const c of order) {
-    // Anything farther than this cloud goes down first, so the cloud covers it.
-    while (g < visitors.length && visitors[g].far < c.far) visitors[g++].draw();
-    // A cloud a balloon is drawing in has its own colors; the rest share the sky's.
-    const tones = c.drawn > 0.01
-      ? cloudTones(partColor('body', murkOf(c), sw), partColor('under', murkOf(c), sw), c.far, fade(c))
-      : cloudTones(crown, base, c.far, fade(c));
-    const cp = P * CLOUD_LAYERS[c.sheet].cell;      // the sheet's cell, in pixels
-    const x = skyAt(c), y = cloudY(c);
-    // The farthest any bump can reach at the fullest swell (`columnsOf`),
-    // a cell over: the widest the cloud is ever drawn.
-    let reach = 0;
-    for (const b of c.bumps) reach = Math.max(reach, Math.abs(b.x) + b.r * (1 + CLOUD_GROW_R) + 2);
-    if (glass.a * (x + reach * cp) + glass.e < 0 || glass.a * (x - reach * cp) + glass.e > glassW) continue;
-    const { lo, hi, h, under: u } = columnsOf(c, sw);
-    let peak = 0;
-    for (let cx = lo; cx <= hi; cx++) if ((h[cx] || 0) > peak) peak = h[cx];
-    const cap = Math.min(Math.ceil(peak), Math.floor((y - top) / cp));   // clipped at the window's top
-    // How far a melting cloud has been eaten off its bottom, in cells and
-    // fractions of one; the row it is halfway through is drawn half solid. It
-    // is not lifted as well: a cloud that climbed while it thinned drew the
-    // eye to the one thing that was leaving, which is the opposite of what a
-    // front letting go should do.
-    const ate = c.melt * (peak + 1);
-    // This cloud's styles, a tone and an edge step to each, asked of `styleOf`
-    // once apiece rather than once a cell: a swollen storm cloud is thousands
-    // of cells and three tones.
-    const styles = [];
-    const styleAt = (t, e) => styles[t * (CLOUD_EDGE_STEPS + 1) + e] ??= styleOf(tones[t], e);
-    // Row by row from the base up, runs of one style as one rect: cells
-    // joined along the row rather than up the column, or every column's
-    // edge is a seam once the zoom puts it between device pixels.
-    for (let r = Math.floor(ate); r < cap; r++) {
-      const below = Math.min(1, r + 1 - ate);      // how much of this row the melt has left
-      let from = lo, style = null;
-      for (let cx = lo; cx <= hi + 1; cx++) {
-        let now = null;
-        if (cx <= hi) {
-          const fill = Math.min(below, (h[cx] || 0) - r);   // how much of this cell is cloud
-          if (fill > 0) now = styleAt(cellTone(h, peak, cx, r, u),
-                                      Math.max(1, Math.ceil(fill * CLOUD_EDGE_STEPS)));
-        }
-        if (now === style) continue;
-        if (style) {
-          const x0 = snap(x + from * cp), y0 = snap(y - (r + 1) * cp);
-          ctx.fillStyle = style;
-          ctx.fillRect(x0, y0, snap(x + cx * cp) - x0, snap(y - r * cp) - y0);
-        }
-        style = now; from = cx;
-      }
-    }
-  }
-  // and whatever is nearer than every cloud
-  while (g < visitors.length) visitors[g++].draw();
-  ctx.fillStyle = '#000';
+// A cloud as its drawing wants it this frame (render/yardsky.js): its
+// window's left edge and its base line in the world, its sheet's cell, the
+// swell as size, and its colors crown to base -- the sky's, or its own while
+// a balloon draws it in -- faded by its depth and its melt.
+export function cloudNow(c, sw = swell(), mk = murk()) {
+  const own = c.drawn > 0.01 ? murkOf(c) : mk;
+  return { x: skyAt(c), base: cloudY(c), cell: cellOf(c), scale: scaleOf(c, sw),
+           tones: cloudTones(partColor('body', own, sw), partColor('under', own, sw), c.far, fade(c)) };
 }
 
 export function drawBirds() {

@@ -47,55 +47,37 @@ export const CLOUD_FAR_JITTER = 0.03;
 // picture can have, and it takes the same share off dirt and weather, so a far
 // cloud on a dirty day is a paler brown, not a cleaner one.
 export const CLOUD_FADE_FAR = 0.45;
-// Nothing in the sky blinks. How many steps a cell has between the page and
-// its own tone, for the part of it the cloud actually fills: a cell arriving
-// as the sky swells comes up through them and one going as the front lets go
-// goes back down. Few, deliberately -- this is a cloud's edge softening, not
-// a gradient, and the sky is still a handful of flat tones.
-export const CLOUD_EDGE_STEPS = 3;
 // How long a front's own cloud takes to come up out of nothing where it is
 // born, in seconds of its own age rather than of the sky's swell: the front
 // adds its clouds as the swell climbs, so a late one drawn at the swell it was
 // born into is a cloud appearing whole in the middle of the sky. Slower than
 // the eye looks for the next thing, quicker than the brew.
 export const CLOUD_BLOOM_S = 9;
-// A front's own clouds go further: as the front lets go of them they thin from
-// the bottom a cell at a time and climb as they thin, paling toward the page,
-// on the swell's own fall -- so they are gone exactly when the sky has settled
-// (CLOUD_SETTLE_S), which is slow enough that a melt is never caught happening.
-// The ordinary sky has no such life: it wraps around the strip, well outside
-// the window where nobody sees it.
-// A cloud is shaded like the boulder, in steps between CLOUD_TONE and
-// CLOUD_UNDER: lit, body, shade, and the underside. It is lit from above: a
-// cell's depth is how far below the nearest bit of the top outline it sits
-// (its own column or up to CLOUD_SHADE_REACH either side), as a share of the
-// cloud's height -- lit down to CLOUD_LIT, body down to CLOUD_MID, shade
-// below that -- so the shade pools under the heaps and thins under the dips.
+// A front's own clouds go further: as the front lets go of them they shrink
+// and pale toward the page, on the swell's own fall -- so they are gone
+// exactly when the sky has settled (CLOUD_SETTLE_S), which is slow enough that
+// a melt is never caught happening. The ordinary sky has no such life: it
+// wraps around the strip, well outside the window where nobody sees it.
+// A cloud is drawn by the one cloud renderer (render/clouds.js, on the card
+// in render/cloudgl.js; DESIGN.md, "The yard's sky on the cloud renderer"),
+// its roles -- lit face, body, shade, core -- colored CLOUD_TONES steps from
+// CLOUD_TONE to CLOUD_UNDER (render/yardsky.js).
 export const CLOUD_TONES = 4;
-export const CLOUD_LIT = 0.35;
-export const CLOUD_MID = 0.7;
-export const CLOUD_SHADE_REACH = 4;
-// The kinds of cloud, and how often each is born (`share`, relative): how
-// many big circles its spine has along the base and how many puffs ride on
-// them, how tall it is as a share of its width, and how wide it is against
-// its sheet's size. One recipe for every cloud made a sky of the same cloud
-// over and over; the kinds are what make two clouds two clouds.
-export const CLOUD_KINDS = [
-  { name: 'puff',  share: 3, spine: [1, 2], puffs: [1, 3], tall: [0.55, 0.8], wide: [0.5, 0.75] },
-  { name: 'heap',  share: 4, spine: [2, 4], puffs: [2, 5], tall: [0.45, 0.7], wide: [0.9, 1.2] },
-  { name: 'tower', share: 2, spine: [2, 3], puffs: [3, 5], tall: [0.6, 0.85], wide: [0.8, 1.0] },
-  { name: 'bank',  share: 3, spine: [4, 6], puffs: [2, 4], tall: [0.25, 0.4], wide: [1.2, 1.5] }
-];
-// A spine circle's radius as a share of the cloud's height, how far two
-// neighbors overlap (a share of their radii summed), and how low its center
-// sits (a share of its radius above the base: low, so the bottom is one long
-// rounded shape). A puff's radius, likewise, and how far it sinks into the
-// spine's surface (a share of its radius) -- mostly above it.
-export const CLOUD_SPINE_R = [0.42, 0.6];
-export const CLOUD_SPINE_LAP = [0.55, 0.75];
-export const CLOUD_SPINE_LOW = [0.35, 0.7];
-export const CLOUD_PUFF_R = [0.25, 0.45];
-export const CLOUD_PUFF_SINK = [0.0, 0.4];
+// The shapes of cloud, and how often each is born (relative): the
+// renderer's own (config/clouds.js, CLOUDS_SHAPES), a cumulus, a heap, a
+// tower. A front's own clouds are its towers and anvils.
+export const CLOUD_SHAPES = { cumulus: 5, heap: 4, tower: 1 };
+export const CLOUD_STORM_SHAPES = { tower: 2, anvil: 1 };
+// A cloud's size (the renderer's R, about a third of a cumulus's width) in
+// its sheet's cells, before the sheet's `scale`.
+export const CLOUD_R = [5, 8.5];
+// How many of the renderer's cells a sheet's cell is drawn in, across and
+// down: the renderer models a lobe in the round -- lit cap, shadowed side,
+// the shadow where lobes meet -- only on lobes several cells across
+// (CLOUDS_LOBE_LIGHT, CLOUDS_CORE_MIN), and at a sheet's own cell the
+// yard's clouds are lobes of two and three. The sheets' sizes, and the rain
+// and the balloons that read their `cell`, are unchanged.
+export const CLOUD_GRAIN = 2;
 // The clouds are the front. Through a storm's brew they swell -- each one
 // wider, taller, with a heavier underside -- and more come in off the sides,
 // up to CLOUDS_STORM at a full heft; through the taper and for CLOUD_SETTLE_S
@@ -103,8 +85,8 @@ export const CLOUD_PUFF_SINK = [0.0, 0.4];
 // every frame and never saved (`swell` in weather.js).
 export const CLOUDS_STORM = 22;
 export let CLOUD_SETTLE_S = 30;
-// How far a bump's radius grows at a full swell, as a share of itself: the
-// front is a bigger cloud, not a new shape.
+// How far a cloud's puffs' radii grow at a full swell, as a share of
+// themselves: the front is a bigger cloud, not a new shape.
 export const CLOUD_GROW_R = 0.5;
 // The murk: the clouds are the sky's dirt readout (DESIGN.md, "The sky is the
 // clouds"). One number, `S.haze / SMOG_CAP`, grows and browns every cloud

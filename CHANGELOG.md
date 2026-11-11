@@ -179,6 +179,7 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
+- The yard's clouds are drawn the way act 3's are, rounder and lit from one side, and still swell before a storm, brown with the smog and carry the balloons (test/weather.test.mjs).
 - Hovering the furnace in the deep shows the last minute of the party's damage a second against the pace that breaks the serpent, with a bar and a number for each fighter, highest on top, and one for your own clicks (test/furnace-dps.test.mjs).
 - Act 3 opens with a meteor onto the house that leaves a crater, the two souls floating up out of it to heaven's gates, which now stand over the house with no stairway, and ends on God's line before the two of them walk to the pedestal (test/act3-intro.test.mjs, test/heaven-over-house-save.test.mjs).
 - A fighter's board lists the skills it has under its name, its move from rung 4 and its capstone from rung 8, each saying what it does on hover (test/fighter-skills.test.mjs).

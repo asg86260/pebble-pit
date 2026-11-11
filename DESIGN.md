@@ -13787,7 +13787,7 @@ popping in at the edge while you scroll. It is wound back in with one modulo
 rather than shifted a strip a frame, so a resize, which moves both ends of the
 strip, does not thrash it.
 
-### A cloud is a spine and puffs
+### A cloud is a spine and puffs (superseded: "The yard's sky on the cloud renderer")
 
 A cloud is one mass of circles on a flat base, the way a cumulus is: a spine
 of big circles sitting low along the base and overlapping heavily, so the
@@ -13799,7 +13799,7 @@ cloud made a sky of the same cloud over and over. Circle crowns are rounded to
 the grid, not raised, so a puff's top spans a few cells rather than coming to
 a point.
 
-### Nothing in the sky blinks
+### Nothing in the sky blinks (superseded: "The yard's sky on the cloud renderer")
 
 A column's height is carried as a fraction -- how far up into its top cell the
 circle's edge reaches -- and that fraction is drawn as how far that cell's tone
@@ -13837,7 +13837,7 @@ The layout runs again on every resize, so the spread only ever fills what is
 missing; making a new sky there swapped every cloud in the window each time it
 was dragged, and took the birds out of the air mid-flight.
 
-### Shaded like the boulder
+### Shaded like the boulder (superseded: "The yard's sky on the cloud renderer")
 
 A cloud is lit from above and shaded in steps between `CLOUD_TONE` and
 `CLOUD_UNDER`, the way a rock cell is shaded by its depth into the rock. A
@@ -23098,14 +23098,15 @@ the path never shows a notch of night. By night that surface is the cloud
 palette's haze, so it reads as the lit top of cloud and not as a gap
 (CLOUDS_ACT3.path).
 
-## The yard's sky on the cloud renderer (design, not built)
+## The yard's sky on the cloud renderer (built)
 
 The clouds bench (`clouds.html`, `render/clouds.js`, `render/cloudgl.js`)
 draws a liquid sky: puffs in a field worked on the graphics card each frame,
 so clouds merge, part and breathe, in depth by distance and height, a cloud
 in the round lit from one side. The owner wants it to be the yard's sky too
 (2026-10-20, "think about using this for the surface clouds as well"). This
-is the plan for that move; nothing here is built.
+was the plan for that move; "As built" at the end says where the build
+parted from it.
 
 **The bargain.** The yard's clouds are not scenery. They are the storm's
 warning (they swell before a front), the smog's readout (they brown with the
@@ -23196,6 +23197,34 @@ same brown, a balloon still hangs under the same cloud.
   steps; a murk that pressed two roles together would draw stripes.
 - **Saves.** `CLOUDS` is not saved now (it is reseeded); the puffs must not
   become saved either, so a reload is a fresh sky with the same swell.
+
+### As built
+
+- **One window a cloud.** Every cloud in `CLOUDS` is a lone cloud of the
+  renderer (`cloudLayer`), its own window on the card, worked in the one
+  pass a frame and set down whole at its true position on a whole device
+  pixel (`render/yardsky.js`). The sheets are not wrapping layers: a cloud's
+  depth is its own `far`, so two in a sheet still slide past each other.
+- **A finer grain.** At a sheet's own cell the yard's clouds are lobes of two
+  and three cells, which the renderer draws as flat blocks: it models a lobe
+  in the round only from several cells across. So a cloud is drawn
+  `CLOUD_GRAIN` renderer cells to a sheet's cell, its size in cells scaled to
+  match; the sheets' sizes, and the rain and the balloons that read `cell`,
+  are unchanged.
+- **A front's cloud comes up as its field thickens** (a layer's `dense`), not
+  as its puffs grow. A puff of any size is cloud at its middle, so growing
+  them from nothing speckles the whole span at once; scaling the cloud up
+  from a point loses cells in its dips as they pass the grid (the "only ever
+  grows" check went red on it). A field taken a share is cloud where it is
+  thickest first and only ever gains cells.
+- **The report counts at rest.** `skyReport`'s cells are the renderer's own
+  field (`restTiers`) at the swell's scale with every puff where it was
+  made: the currents move every edge a cell this way or that on every frame,
+  and the count is what the swell has done, which the currents never touch.
+- **No WebGL2:** a cloud is drawn from that same CPU field, held still, in
+  its tiers' body tones, worked again only when the swell or a color moves.
+- **The perf gate** counts the sim's work, not the drawing's, so the sky was
+  already outside its budget.
 
 ### Act 3's crew: assigned like the yard's (built; the owner, 2026-10-20)
 

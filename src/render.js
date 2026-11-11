@@ -11,7 +11,8 @@ import { crewView } from './prefs.js';
 import { ctx, canvas, paintOn } from './render/ctx.js';
 import { inkMode } from './ink.js';
 import { drawAir, drawAirNear } from './air.js';
-import { drawBirds, drawClouds } from './weather.js';
+import { drawBirds } from './weather.js';
+import { drawClouds } from './render/yardsky.js';
 
 import { drawApothecary, drawBrewSteam, drawPotLabels } from './render/apothecary.js';
 import { drawBalloonPosts } from './render/balloon.js';
