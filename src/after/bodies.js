@@ -31,7 +31,8 @@ import { P, AFTER_SLOT_GAP, AFTER_JOBS, AFTER_JOB_POST, AFTER_AGITATE_S, AFTER_S
          AFTER_PUT_S, AFTER_SAW_S, AFTER_CHOP_HOLD_S,
          AFTER_JOIN_FADE_S, AFTER_GOODS_HOME, AFTER_GOODS_FOOT, AFTER_WALK,
          AFTER_PILES, AFTER_SIGN_TIMBER, AFTER_SIGN_S, KINDS } from '../config.js';
-import { secs, walk, nextId } from './util.js';
+import { secs, nextId } from './util.js';
+import { afterGo } from './route.js';
 import { stepCrew } from '../placebodies.js';
 import { kindOf as cellKind } from '../grid.js';
 import { count, push, isEmpty, loadKind, holds, clear, pop, pickUp as takeUp, putDown as setUp, dump } from '../carry.js';
@@ -42,7 +43,7 @@ import { built, seatsOf, bladeLogs, benchSigns } from './levels.js';
 // the body this frame.
 import { pullStep } from './stump.js';
 import { plantStep, fetchStep, seedsOwed } from './seeds.js';
-import { afterX0, afterX1, afterTop, afterFloor, floorAt, stationDoor, stationBox, signFetchX, pileMid, pileOwner, plotX, soulX, soulY, groveX1, campSpot, idleX, idleSpots, podiumMid, overCrowd, crowdEdge, AP } from './place.js';
+import { afterX0, afterX1, afterTop, afterFloor, floorAt, stationDoor, stationBox, signFetchX, pileMid, pileOwner, plotX, soulX, soulY, groveX1, campSpot, idleX, idleSpots, podiumMid, AP } from './place.js';
 import { agitate } from './rebel.js';
 import { standing, chopTree, settled, layGood } from './grove.js';
 import { isPiled, setBlock, pileCount, pileRoom, pileBrim } from './piles.js';
@@ -58,38 +59,15 @@ import { staffPlace } from '../staffing.js';
 import { busySitesIn, onTheGo, siteBox, siteX } from '../works.js';
 
 const floorY = () => afterFloor();
-// A walk that keeps to the floor: the rows of God's crowd stand up the
-// screen, so a body goes up into them only over the crowd, and anything off
-// the floor elsewhere (the pedestal's top) is climbed straight up to and
-// down from. Off the floor where it should not be, it comes down first.
-// The floor rises and falls (after/place.js, `floorAt`), so a spot asked
-// for on its line is the ground under it, and a body walking along keeps
-// its feet on the ground. True once there.
-function along(w, tx, dt) {
-  const there = walk(w, tx, w.y, dt);
-  w.y = floorAt(w.x);
-  return there;
-}
-function walkTo(w, tx, ty, dt) {
-  const toFloor = Math.abs(ty - floorY()) < 0.5, gy = toFloor ? floorAt(tx) : ty;
-  const onFloor = Math.abs(w.y - floorAt(w.x)) < 0.5;
-  if (onFloor && toFloor) return along(w, tx, dt);
-  if (overCrowd(w.x) && overCrowd(tx)) return walk(w, tx, gy, dt);
-  if (!onFloor) {
-    // In the crowd's rows bound out of them, or up on the pedestal bound
-    // elsewhere: straight down to the floor.
-    if (Math.abs(w.x - tx) < 0.5) return walk(w, tx, gy, dt);
-    walk(w, w.x, floorAt(w.x), dt);
-    return false;
-  }
-  // On the floor, bound up: along it to the crowd's edge or to under the spot.
-  const ex = overCrowd(tx) ? crowdEdge(w.x) : tx;
-  if (Math.abs(w.x - ex) >= 0.5) { along(w, ex, dt); return false; }
-  return walk(w, tx, gy, dt);
-}
-// Each member its own spot (polish bar, own spots; the yard's `elbowIdle`
-// nudges two idlers apart, but a nudge fights a walk to a shared pile, so here
-// the spot is given up front): bodies on the floor bound for the same place
+// Every walk is the one router's over the act's ways (after/route.js,
+// `afterGo`): the floor, and God's crowd joined to it at its edges.
+const walkTo = (w, tx, ty, dt) => afterGo(w, tx, ty, dt);
+// Each member its own spot (polish bar, own spots), dealt up front. Not the
+// yard's `elbowIdle`, on purpose: that nudges an idle hauler off another
+// standing between strolls, and touches nobody walking or working; the case
+// here is working bodies converging on one door or one pile's middle, where
+// a nudge would fight the walk every frame (DESIGN.md, "Act bodies on the
+// yard's engine"): bodies on the floor bound for the same place
 // are dealt slots by id, the first on the place itself, the rest alternately
 // right and left of it a body's width apart. The place a body asked for is
 // kept on it (`dest`), and so is the slot, as the others read it.
@@ -886,7 +864,7 @@ export const AFTER_CREW = {
   hold(w, x, y) { w.x = x; w.y = y + BODY_H / 2; },
   // A woodcutter taken up mid-stroke lets go of the cut: set down elsewhere,
   // it walks back to its tree rather than standing there again at once.
-  lifted(w) { w.at = null; unsaw(w); },
+  lifted(w) { w.at = null; w.route = null; unsaw(w); },
   land: w => ({ y: floorAt(w.x), x0: afterX0() + P, x1: afterX1() - P * 2 }),
   mid: w => w.x,
   // Shaken, what was in its arms is laid on the floor where it came down, as
@@ -901,7 +879,7 @@ export const AFTER_CREW = {
   },
   // Back to its work from where it came down: the spot it was dealt and the
   // door it stood at are asked again by its job's own frame.
-  landed(w) { w.dest = null; w.at = null; },
+  landed(w) { w.dest = null; w.at = null; w.route = null; },
   assign: w => dropOn(w),
   drops: DROPS
 };

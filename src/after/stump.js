@@ -28,7 +28,7 @@ import { P, AFTER_TREE, AFTER_DIG_CLICKS, AFTER_PULL, GESTURE_STRAIN_LIFT, GESTU
 import { stumped, standing, digStump, layGood } from './grove.js';
 import { stumpsOn } from './levels.js';
 import { plotX, groundOf, floorAt, AP } from './place.js';
-import { walk } from './util.js';
+import { floorGo } from './route.js';
 import { push, isEmpty } from '../carry.js';
 import { holdUnit } from '../hands.js';
 
@@ -102,14 +102,8 @@ function freeStump(w) {
   });
   return best;
 }
-// A step of the walk to x along the floor, down to it first from wherever
-// the body is off it (the crowd's rows). True once there.
-function toward(w, x, dt) {
-  if (Math.abs(w.y - floorAt(w.x)) >= 0.5) { walk(w, w.x, floorAt(w.x), dt); return false; }
-  const there = walk(w, x, w.y, dt);
-  w.y = floorAt(w.x);
-  return there;
-}
+// A step of the walk to x along the floor (after/route.js). True once there.
+const toward = (w, x, dt) => floorGo(w, x, dt);
 // A woodcutter's frame at a stump, once stump removal is bought: true while
 // the pull has the body (bodies.js asks it each frame, after the logs lying
 // have been carried in). It starts only with empty arms and never off a tree

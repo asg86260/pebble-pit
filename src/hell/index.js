@@ -149,6 +149,8 @@ export const SAVE = {
     if (!h || typeof h !== 'object') { S.hell = null; return; }
     S.hell = readOver(blankHell(), h);
     settleHeld(S.hell.bodies);
+    // a save from before the router kept a ghost's walk as points (`way`): asked again
+    for (const b of S.hell.bodies) if (b.way) { delete b.way; b.route = null; }
   },
   blank() { S.hell = null; }
 };

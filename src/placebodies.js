@@ -48,7 +48,10 @@ import { fallIn, stars, slowed } from './crew/gravity.js';
 export const secs = c => Math.min(0.1, Math.max(0, (c.dt || 0) / 1000));
 
 // --- the walks -------------------------------------------------------------------
-// A straight walk toward (tx, ty) at `speed` px/s: true once it stands there.
+// A place's walks are the one router's (route.js, `routeIn`, `goIn`, over the
+// ways the place supplies). This is only the straight step taken where no
+// way is asked: act 3's body found off its floor stepping down onto it
+// (after/route.js).
 export function walkLine(w, tx, ty, speed, dt) {
   const dx = tx - w.x, dy = ty - w.y, d = Math.hypot(dx, dy);
   const step = speed * dt;
@@ -56,29 +59,6 @@ export function walkLine(w, tx, ty, speed, dt) {
   w.x += dx / d * step; w.y += dy / d * step;
   if (dx) w.face = dx > 0 ? 1 : -1;
   return false;
-}
-
-// A walk along a way, a list of points [x, y, floor] taken in turn, each leg
-// at the pace `speedOf(dx, dy)` gives it, carrying a frame's leftover on to
-// the next leg. True once the way is walked.
-export function walkWay(b, dt, speedOf) {
-  let left = dt;
-  while (b.way.length && left > 0) {
-    const [tx, ty, tc] = b.way[0];
-    const dx = tx - b.x, dy = ty - b.y, d = Math.hypot(dx, dy);
-    const speed = speedOf(dx, dy);
-    if (d <= speed * left) {
-      b.x = tx; b.y = ty; b.c = tc;
-      left -= d / speed;
-      b.way.shift();
-      continue;
-    }
-    b.x += dx / d * speed * left;
-    b.y += dy / d * speed * left;
-    if (dx) b.face = dx > 0 ? 1 : -1;
-    left = 0;
-  }
-  return !b.way.length;
 }
 
 // --- one frame -------------------------------------------------------------------

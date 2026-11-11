@@ -23047,7 +23047,7 @@ The camera and clouds go in with act 3's layout rebuild.
 `VITE_HELL` are set by no build script, and no fixture holds an act save),
 so the act blobs may change shape freely. The yard's save must not move.
 
-### Act bodies on the yard's engine (design, not built; the owner, 2026-11-10)
+### Act bodies on the yard's engine (built on branch audit-bodies; the owner, 2026-11-10)
 
 The owner: no parallel copies of the yard's systems in later acts. An audit
 of "One place engine" step 5 found three left in the bodies. Separate body
@@ -23128,9 +23128,15 @@ GHOST_CLIMB; the muster's road down a link too, from the road's top to the
 first floor. Deleted: `wayTo`, `walkWay`. **Act 3**: the floor (its `at`
 is `floorAt`) and God's crowd, a free way walked straight at its rows as
 the deep's water is swum, joined to the floor at the crowd's two edges.
-Deleted: `walkTo`'s hand-written cases. No member walks to the pedestal's
-top (grep: every off-floor target is a crowd row), so it gets no link;
-the pair's own walk (actbeats.js) is a scene's, not the crew's.
+A body over the crowd's ground is on the crowd's way, floor or row, so it
+walks straight to a row from there as before. Deleted: `walkTo`'s
+hand-written cases and the two floor walkers beside it (seeds.js `go`,
+stump.js `toward`); all three go through after/route.js `afterGo`. No
+member walks to the pedestal's top (grep: every off-floor target is a crowd
+row), so it gets no link; the pair's own walk (actbeats.js) is a scene's,
+not the crew's. A body found off the floor away from the crowd (nothing
+puts one there; a fall lands on the floor) steps straight down first,
+rather than have the floor's way pull its feet down in a frame.
 
 **`slotted` stays, on purpose.** The yard's `elbowIdle` nudges an idle
 hauler off another idle hauler standing between strolls; it touches nobody
@@ -23138,8 +23144,8 @@ walking and nobody working. Act 3's case is working bodies converging on one
 spot -- a door, a pile's middle -- where a nudge would fight the walk every
 frame. Dealing each its spot up front is the rule for that case; the yard
 has no such case (its stations seat their own bodies), so there is nothing
-to share it with yet. It is moved to the act's route as the place's
-`spot(w, x)`, so the walk asks it, not every caller.
+to share it with yet. It stays in front of the act's walk (bodies.js `go`),
+dealing the x the router is then asked for.
 
 Checks, the player's way (lift, hold, drop through crew/pointer.js): an act
 3 member dropped on a station's ground is put on that job; a shaken member

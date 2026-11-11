@@ -5,7 +5,8 @@
 // on the station's job, as the yard's drop does. Reached the player's way:
 // the hand's own calls, the body held where the cursor is.
 import { group, ok, run, runUntil, yard } from './helpers.mjs';
-import { RIM_PIECES, SHAKE_TURNS, P } from '../src/config.js';
+import { RIM_PIECES, SHAKE_TURNS, P, GHOST_WALK } from '../src/config.js';
+import { HELL_JOB } from '../src/jobs.js';
 import { stationBox, idleSpots } from '../src/after/place.js';
 import { lift, drop, holdBody, shakeHeld } from '../src/crew/pointer.js';
 import { push, count } from '../src/carry.js';
@@ -15,7 +16,7 @@ import { dropTargets } from '../src/crew/assign.js';
 import { AFTER_CREW } from '../src/after/bodies.js';
 import { standRect } from '../src/stations.js';
 import { source } from '../src/flow.js';
-import { chamberFloor, ladderX } from '../src/hell/place.js';
+import { chamberFloor, ladderX, chamberX0 } from '../src/hell/place.js';
 
 const S = yard.S;
 const read = () => window.__afterRead();
@@ -84,20 +85,48 @@ group('an act 3 member thrown on open floor keeps its work; shaken, it sees star
   ];
 });
 
-group('a hell ghost dropped on a far chamber comes down by the yard\'s fall', () => {
+group('a hell ghost dropped on a far chamber comes down by the yard\'s fall and climbs down the ladder back to its face', () => {
   window.__actsOn(true); window.__crew(2, 1); window.__goPlace('hell');
   window.__hell({ chamber: 1 });
-  runUntil(() => S.hell.bodies.length >= 3 && S.hell.bodies.every(b => b.job != null && !b.way.length), 120);
-  const b = S.hell.bodies.find(o => o.job != null && o.c === 0);
-  if (!b) return [ok(false, 'a ghost on the first floor', JSON.stringify(S.hell.bodies.map(o => [o.job, o.c])))];
-  const id = b.id;
+  const miner = () => S.hell.bodies.find(o => o.job === HELL_JOB.MINE);
+  runUntil(() => miner() && miner().c === 1 && !(miner().route && miner().route.length), 120);
+  const b = miner();
+  if (!b) return [ok(false, 'a miner on the second chamber', JSON.stringify(S.hell.bodies.map(o => [o.job, o.c])))];
+  const id = b.id, me = () => S.hell.bodies.find(o => o.id === id);
   lift(b);
-  holdBody(b, ladderX(1) + P * 6, chamberFloor(1) - P * 10);
+  holdBody(b, chamberX0(0) + P * 4, chamberFloor(0) - P * 10);
   drop(b);
-  const down = runUntil(() => !S.hell.bodies.find(o => o.id === id).falling, 10);
-  const g = S.hell.bodies.find(o => o.id === id);
-  const onFloor = Math.abs(g.y - chamberFloor(g.c)) < 1;
-  return [ok(down && onFloor, 'it comes down on the floor of the chamber it is over', JSON.stringify({ c: g.c, y: g.y, floor: chamberFloor(g.c) }))];
+  const down = runUntil(() => !me().falling, 10);
+  const g = me(), landedC = g.c, onFloor = Math.abs(g.y - chamberFloor(g.c)) < 1;
+  // Followed a frame at a time down the ladder: never more than a stride a
+  // frame, and down at the ladder's x; read back from a save halfway down,
+  // still on the rung it was on.
+  let most = 0, climbedAt = null, at = { x: g.x, y: g.y }, reread = null;
+  for (let t = 0; t < 30 && !(me().c === 1 && !(me().route && me().route.length)); t += 1 / 60) {
+    run(1 / 60);
+    const w = me();
+    most = Math.max(most, Math.hypot(w.x - at.x, w.y - at.y));
+    if (w.y < chamberFloor(1) - 1 && w.y > chamberFloor(0) + 1) {
+      climbedAt = w.x;
+      if (!reread) {
+        const was = { x: w.x, y: w.y };
+        window.__reload();
+        reread = { was, now: { x: me().x, y: me().y } };
+        run(1 / 60);
+        reread.next = { x: me().x, y: me().y };
+      }
+    }
+    at = { x: me().x, y: me().y };
+  }
+  const home = me().c === 1;
+  const kept = reread && reread.now.x === reread.was.x && reread.now.y === reread.was.y
+    && reread.next.x === reread.was.x && reread.next.y > reread.was.y;
+  return [
+    ok(down && onFloor && landedC === 0, 'it comes down on the floor of the chamber it is over', JSON.stringify({ c: landedC, y: g.y, floor: chamberFloor(landedC) })),
+    ok(home && climbedAt === ladderX(1), 'and climbs back down by the ladder to its work', `${home} ${climbedAt} ${ladderX(1)}`),
+    ok(most <= GHOST_WALK / 60 + 1, 'never more than a stride in a frame', `${most}`),
+    ok(kept, 'read back halfway down, it carries on down the same rung', JSON.stringify(reread))
+  ];
 });
 
 group('a member slowed under the hand and read back from a save walks at its own pace again', () => {
