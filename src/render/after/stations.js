@@ -19,6 +19,7 @@
 
 // REVIEW act-3-the-cabin-built
 // MOCK stair4
+// MOCK faith5
 import { P, AFTER_SAW_TEETH, AFTER_ART_SCALE, AFTER_MILL, AFTER_CABIN_SMOKE } from '../../config.js';
 import { K, W, PALE, MID, hash, silhouette, clamp01 } from './kit.js';
 import { ART, STAIR, stairW, stairKeys } from '../../after/art.js';
@@ -340,7 +341,51 @@ function stairFlight(d, k) {
 }
 const stairDraw = k => d => stairFlight(d, k);
 
-export const DRAW = { mill, workshop, shack, forestry, ...Object.fromEntries(stairKeys().map((key, i) => [key, stairDraw(i + 1)])) };
+// --- the shrine: a gable with an arch cut in it ---------------------------------------
+// MOCK faith5
+// One ink mass like the shack and the stump house: a pointed gable on a step,
+// a pointed arch cut out of it in paper, a cross on the apex. How full the
+// faith is reads one of three ways (SHRINE.mode, set by the review's scene):
+// candles lit one by one on the step, the arch filled from its foot in bands,
+// or neither, the prayers lying on their pile beside it. The faithful kneel
+// either side, the frame's own squat body.
+export const SHRINE = { mode: 'candles', fill: 0, folk: 0 };
+const SH = { x: 13, w: 19, wall: 12, niche: [3, 15], candles: 7 };
+function shrine(d) {
+  const x0 = SH.x, run = (y, a, b, tone = K) => d.r(x0 + a, y, b - a + 1, 1, tone);
+  // the step, then the gable: walls to the eaves, then a cell in a row to the apex
+  run(-1, 0, SH.w - 1); run(-2, 0, SH.w - 1);
+  d.r(x0, -SH.wall, SH.w, SH.wall - 2, K);
+  for (let k = 1; k <= 9; k++) run(-SH.wall - k, k, SH.w - 1 - k);
+  // the cross
+  const cx = x0 + 9;
+  d.r(cx, -24, 1, 3, K); d.r(cx - 1, -23, 3, 1, K);
+  // the arch, paper: straight sides, then a cell in a row to a point
+  const rows = [];
+  for (let y = 3; y <= 9; y++) rows.push([y, SH.niche[0], SH.niche[1]]);
+  for (let k = 1; k <= 6; k++) rows.push([9 + k, SH.niche[0] + k, SH.niche[1] - k]);
+  const lit = Math.round(SHRINE.fill * rows.length);
+  rows.forEach(([y, a, b], i) => {
+    run(-y, a, b, W);
+    if (SHRINE.mode === 'door' && i < lit) d.px((x0 + a) * P + 2, -y * P + 2, (b - a + 1) * P - 4, P - (i % 2 ? 2 : 4), MID);
+  });
+  // the candles on the step, each an ink cell two high, its flame a mid cell
+  if (SHRINE.mode === 'candles') {
+    const on = Math.round(SHRINE.fill * SH.candles);
+    for (let i = 0; i < SH.candles; i++) {
+      const cxx = x0 + SH.niche[0] + i * 2;
+      d.r(cxx, -4, 1, 2, K);
+      if (i < on) d.c(cxx, -5, MID);
+    }
+  }
+  // the faithful, three a side on the floor, kneeling
+  if (!d.sinking) for (let i = 0; i < SHRINE.folk; i++) {
+    const left = i < SHRINE.folk / 2, j = left ? i : i - Math.ceil(SHRINE.folk / 2);
+    d.body(left ? 1 + j * 4 : x0 + SH.w + 3 + j * 4, -3, 0, 0, true);
+  }
+}
+
+export const DRAW = { shrine, mill, workshop, shack, forestry, ...Object.fromEntries(stairKeys().map((key, i) => [key, stairDraw(i + 1)])) };
 
 // Each station's paper backing (kit.js, `silhouette`), read off its idle
 // drawing once: the moving parts swing inside it, and what they carry is

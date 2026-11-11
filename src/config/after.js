@@ -63,7 +63,7 @@ export const AFTER_LIP = { seed: 17, r: [5, 8], round: 0.45, step: 0.8, drop: 2,
 // The grove and the forestry shack stand on a floor raised 3 cells, so a
 // plot's soil bed reads above the cloud's lip (DESIGN.md, "Act 3's grove,
 // rebuilt", call 2).
-export const AFTER_SHELF = { grove: 3, forestry: 3, mill: 9, workshop: 18, shack: 6, pedestal: 0 };
+export const AFTER_SHELF = { grove: 3, forestry: 3, mill: 9, workshop: 18, shrine: 12, shack: 6, pedestal: 0 };
 
 // --- the click: the pair's speech, and rebel ------------------------------------
 // The act's coin is rebel (the owner, 2026-10-18; a working name, the label
@@ -213,7 +213,7 @@ export const AFTER_PODIUM_PILE = 9;
 export const AFTER_PODIUM_CLIMB = { s: 10, fade: 0.8, rise: [0.2, 0.8], step: [0.8, 0.9] };
 // The stations standing from the act's first frame: the pedestal the pair
 // speak from and the construction shack that sells every other.
-export const AFTER_START_BUILT = ['pedestal', 'shack', 'forestry'];
+export const AFTER_START_BUILT = ['pedestal', 'shack', 'forestry', 'shrine'];   // MOCK faith5
 // The camp's other stations stand whole from the start, closed until they are
 // built: the build sign staked in each (buildsign.js) and the shack's board
 // sell its build, and the station works once it is built. The ground each station's board stands

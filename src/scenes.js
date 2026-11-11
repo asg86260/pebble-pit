@@ -44,6 +44,7 @@ import { SAVE as CREW_SAVE } from './crew/records.js';
 import { goDeep, goUp, poseGlide } from './view.js';
 import { floorAt, stationX0, stationBox, signBox, soulX, afterFloor, afterOpenX, workshopsX1, unionJoinAt, campEdges, plotX, groundOf, AP } from './after/place.js';
 import { godFront } from './after/sky.js';
+import { SHRINE } from './render/after/stations.js';   // MOCK faith5
 // The window's middle at the camera's last window over act 3: God in it,
 // his stage square under him.
 const godView = () => godFront();
@@ -579,6 +580,17 @@ function afterSite(until) {
   window.__look(b.x + b.w / 2 - S.viewW / 2); window.__holdShot();
 }
 
+// MOCK faith5
+// The shrine stood with its faithful and `fill` of its faith shown
+// (render/after/stations.js, SHRINE); `pile` blocks laid on its prayer pile
+// through the pile system's own door when given.
+function shrineAt(mode, fill, pile = 0) {
+  window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+  SHRINE.mode = mode; SHRINE.fill = mode === 'pile' ? 0 : fill; SHRINE.folk = 6;
+  if (pile) window.__afterGrant({ prayers: Math.round(pile * fill) });
+  const b = stationBox('shrine');
+  window.__look(b.x + b.w / 2 + P * 10 - S.viewW / 2); window.__fast(0.5); window.__holdShot();
+}
 // MOCK stair4
 // The stair to God, one flight raised by the shared build as a workshop is
 // (after/build.js): `done` flights standing, the next ordered and run until
@@ -3381,18 +3393,20 @@ export const SCENES = {
       window.__look(godView() - S.viewW / 2); window.__fast(1 / 60);
       window.__holdShot();
     } },
-  // MOCK: the reviews 'act 3: where faith comes from' (a choice in words, the
-  // frame showing where each would live) and 'act 3: the stair's layout' (a
-  // plain-shape page laid over the game). Nothing here is built.
-  'faith-a': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'mock: plain shapes, not the game; round 4, a Catholic gothic shrine, fullness shown without a meter, one option a frame',
-    option: 'A votive candles: twelve candles on the steps, a prayer lights each, all burning at full',
-    say: 'the most countable and on theme; no new footprint, but a candle is one cell wide', run: () => mockOver('/mocks/a3-faith-4.html?opt=A') },
-  'faith-b': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'mock: plain shapes, not the game; round 4, a Catholic gothic shrine, fullness shown without a meter, one option a frame',
-    option: 'B rose window: twelve panes light clockwise, the window blazes at full',
-    say: 'the least new art; reads as how full, not how many', run: () => mockOver('/mocks/a3-faith-4.html?opt=B') },
-  'faith-c': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'mock: plain shapes, not the game; round 4, a Catholic gothic shrine, fullness shown without a meter, one option a frame',
-    option: 'C halo: prayers climb the spire into a ring round the cross, closed at full',
-    say: 'the best motion and reads from afar; needs a taller frame and a dark ring on the sky', run: () => mockOver('/mocks/a3-faith-4.html?opt=C') },
+  // The review 'act 3: where faith comes from', built in the game: a shrine
+  // station drawn in act 3's language (render/after/stations.js, tagged),
+  // the faithful kneeling beside it. Their number and the fill are stood in
+  // the run, not walked or earned: a real build would count the prayers in
+  // the shrine's pile and send bodies to kneel.
+  'faith5-a': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-shrine, a review branch, never merged',
+    option: "A candles: a row of single-cell candles on the shrine's step, lit one by one, all lit at full",
+    say: 'five of seven candles lit; costs nothing but seven cells of ink on the step, and counts to seven', run: () => shrineAt('candles', 0.7) },
+  'faith5-b': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-shrine, a review branch, never merged',
+    option: "B the door: the shrine's doorway fills from the bottom in flat bands, full when the arch is filled",
+    say: 'the arch two-thirds filled in bands; the least ink, reads as how full not how many', run: () => shrineAt('door', 0.7) },
+  'faith5-c': { about: 'the acts', review: 'act 3: where faith comes from', stage: 'built: review-faith-shrine, a review branch, never merged',
+    option: "C a pile: prayers stack beside the shrine on the yard's own pile strip, full when the strip is full (the pile-full mark shows)",
+    say: 'four of six prayers piled, on the shared pile strip: counts, rests and shows the full mark like any pile; takes floor beside the shrine', run: () => shrineAt('pile', 0.7, 6) },
   'stair4-a': { about: 'the acts', review: "act 3: the stair's layout", stage: 'built: review-stair-build, a review branch, never merged',
     option: 'A one flight going up: the pile, the builders at its base, half risen',
     say: 'the first flight raised like a workshop: its pile under the landing, builders hammering at its base, two of four bands risen from the floor', run: () => stairSite(0, r => r.n >= 2) },

@@ -36,7 +36,9 @@ export const AFTER_PILES = {
   // is drawn
   // `rests`: full is its normal state, so it wears no pile-full mark (the
   // seeds row's dead state says "full" instead)
-  seeds:     { good: 'acorn', brim: 5, cols: 3, rests: true }
+  seeds:     { good: 'acorn', brim: 5, cols: 3, rests: true },
+  // MOCK faith5: the shrine's prayers, a load block each, six at the brim
+  prayers:   { good: 'load', brim: 6, cols: 3 }
 };
 // A pass of the sand rules over a pile, seconds: a block set down rolls off
 // the heap's side a cell a pass, slow enough to be seen rolling (the voted
