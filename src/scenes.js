@@ -59,6 +59,9 @@ import { FINALE_HOUSE_W, APOTH_POTS_MAX } from './config.js';
 import { houseX } from './home.js';
 import { goOnAlpha } from './actbeats.js';
 import { beginGathering } from './mansion.js';
+import { HELL_JOB } from './jobs.js';
+import { chamberFloor, chamberX1, ladderX } from './hell/place.js';
+import { lift, drop, holdBody } from './crew/pointer.js';
 import { forceMotion, motionForcedNow } from './prefs.js';
 import { stopById } from './stops.js';
 import { INDEX } from './config/index.js';
@@ -4199,5 +4202,50 @@ Object.assign(SCENES, {
     run: () => {
       deepYard({ party: [cast('brawler', 2)], fangs: 1, run: 6 });
       standSign('s2', signMid('s2', 'deep').x - S.viewW / 2);
+    } }
+});
+
+// Act bodies on the yard's engine (DESIGN.md): the hand, the fall, the drop
+// and the walk are the yard's. A member held over the saw mill wears the
+// yard's ring and is the mill's sawyer when let go; a ghost let go over the
+// first chamber walks the router's ways back down the ladder to its face.
+const BODIES_REVIEW = { about: 'the acts', review: "act bodies on the yard's engine", stage: 'built: audit-bodies, not on main yet',
+                        branch: 'audit-bodies' };
+function membersUp() {
+  window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+  for (let k = 0; k < 90 && window.__afterRead().walking > 0; k++) window.__fast(1);
+  if (!S.after.built.includes('mill')) S.after.built.push('mill');
+  window.__fast(2);
+  return S.after.bodies.find(b => b.job == null && b.state === 'work' && !b.errand && b.pair == null);
+}
+const overMill = () => { const m = stationBox('mill'); return { x: m.x + m.w / 2, y: m.y + m.h / 3 }; };
+Object.assign(SCENES, {
+  'bodies-held-mill': { ...BODIES_REVIEW, option: 'A act 3: held over the saw mill', say: "A member in the hand over the saw mill, about to be let go: the drop asks the yard's table which station is under it (the yard's ring is not drawn up here yet).",
+    run: () => {
+      const w = membersUp();
+      if (!w) return;
+      const at = overMill();
+      lift(w); holdBody(w, at.x, at.y); S.mouse.x = at.x; S.mouse.y = at.y;
+      window.__look(at.x - S.viewW / 2); window.__holdShot();
+    } },
+  'bodies-dropped-mill': { ...BODIES_REVIEW, option: 'B act 3: let go on the saw mill', say: 'Let go over the saw mill, that member is its sawyer: it comes down where it was put and walks in. Before, it was thrown and the roster took somebody else.',
+    run: () => {
+      const w = membersUp();
+      if (!w) return;
+      const at = overMill();
+      lift(w); holdBody(w, at.x, at.y); S.mouse.x = at.x; S.mouse.y = at.y; drop(w);
+      window.__fast(1.2);
+      window.__look(at.x - S.viewW / 2); window.__holdShot();
+    } },
+  'bodies-hell-ladder': { ...BODIES_REVIEW, option: 'C hell: a ghost climbs back down', say: "A miner let go over the first chamber lands on its floor, walks to the ladder and climbs down it to its face, on the yard's router.",
+    run: () => {
+      window.__reset(); window.__actsOn(null); window.__goPlace('hell');
+      window.__hell({ chamber: 1, rungs: { hellmuster: 4 } });
+      window.__fast(40);
+      const b = S.hell.bodies.find(o => o.job === HELL_JOB.MINE && o.c === 1);
+      if (!b) return;
+      lift(b); holdBody(b, chamberX1(0) - P * 4, chamberFloor(0) - P * 10); drop(b);
+      for (let k = 0; k < 1800 && !(b.y > chamberFloor(0) + P * 2); k++) window.__fast(1 / 60);
+      window.__look(ladderX(1) - S.viewW / 2); window.__holdShot();
     } }
 });

@@ -203,7 +203,7 @@ const LAYERS = [
 
   { name: 'paid', draw: drawPaid },
   { name: 'pile marks', in: YARD_DEEP, draw: drawPileMarks },   // and a bar over anything that has stopped for a full one
-  { name: 'auras', in: ['yard', 'after'], draw: drawAuras },            // the hold-a-body ring; offers fly flags, painted far earlier
+  { name: 'auras', draw: drawAuras },            // the hold-a-body ring; offers fly flags, painted far earlier
   { name: 'build sites', in: YARD_DEEP, draw: drawBuildSites }, // fenced off, for as long as it is under way
   { name: 'grit', draw: drawGrit },              // and the chips off the hammer, in FRONT of the walls
   { name: 'rise landings', draw: stepRiseLandings }, // a puff and a knock, the frame a rising place lands

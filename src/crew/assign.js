@@ -1,3 +1,4 @@
+// REVIEW bodies-
 // Workers assigned by hand: dropping a held body onto a station retrains it.
 // Only the ask moves at the drop, exactly as a roster button does; the body
 // then walks its own retraining, old hat down, new hat on, in through the door.
