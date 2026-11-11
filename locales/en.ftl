@@ -2738,6 +2738,9 @@ hover-delver = delver
 # the hover over a member of act 3 with no job: the idle at the podium or in the crowd
 hover-member = member
 
+# the hover over a ghost of act 4, whatever it is doing down there
+hover-ghost = ghost
+
 # the hover over a counted pile in act 3 (the logs of the saw mill and grove)
 hover-pile-logs = log pile
 

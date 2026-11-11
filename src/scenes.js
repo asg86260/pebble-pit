@@ -4384,3 +4384,45 @@ Object.assign(SCENES, {
       window.__look(ladderX(1) - S.viewW / 2); window.__holdShot();
     } }
 });
+
+// Clicks on the yard's engine (DESIGN.md): the hover, the cursor and a board
+// opening ask one table in every place. Act 3 names the workshop's bench
+// pile off its row (unnamed before), hell names a ghost (nothing before),
+// and the yard's bench opens on a walk-up as it always has.
+import { pileBox, pileOwner } from './after/place.js';
+import { PLACES } from './acts.js';
+import { AFTER_PILE_REACH } from './config.js';
+import { bench } from './state.js';
+const CLICKS_REVIEW = { about: 'the acts', review: "clicks on the yard's engine", stage: 'built: audit-clicks, not on main yet',
+                        branch: 'audit-clicks', bare: true };
+Object.assign(SCENES, {
+  'clicks-after-pile': { ...CLICKS_REVIEW, option: 'A act 3: the hover names a pile', say: "The pointer over the workshop's bench pile: named off the pile's own row in the one station table. Act 3's hover had a copy of its own that left this pile unnamed.",
+    run: () => {
+      window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+      for (const k of ['mill', 'workshop']) if (!S.after.built.includes(k)) S.after.built.push(k);
+      window.__fast(3);
+      const b = pileBox(pileOwner('benchtimber'), 'benchtimber', AFTER_PILE_REACH);
+      window.__look(b.x + b.w / 2 - S.viewW / 2); window.__fast(0.1);
+      hover(b.x + b.w / 2, b.y + b.h - P);
+      window.__holdShot();
+    } },
+  'clicks-hell-ghost': { ...CLICKS_REVIEW, option: 'B hell: the hover names a ghost', say: 'The pointer over a miner at the seam: "ghost", read off hell\'s crew as the yard reads its own (before, hell never named its ghosts), and the seam\'s board up from the walk-up, as a yard station\'s is.',
+    run: () => {
+      window.__reset(); window.__actsOn(null); window.__goPlace('hell');
+      window.__hell({ rungs: { hellmuster: 4 } });
+      window.__fast(40);
+      const crew = PLACES.hell.crew, g = crew.list().find(o => crew.pickable(o) && o.job === HELL_JOB.MINE) || crew.list().find(o => crew.pickable(o));
+      if (!g) return;
+      window.__look(g.x - S.viewW / 2); window.__fast(1 / 60);
+      const b = crew.box(g);
+      hover(b.x + b.w / 2, b.y + b.h / 2);
+      window.__holdShot();
+    } },
+  'clicks-yard-bench': { ...CLICKS_REVIEW, option: 'C the yard: a walk-up opens the bench', say: 'The yard unchanged: the pointer walked up to the bench opens its board, by the same rule (a click\'s board, none where an UPGRADES button stands) every place now reads.',
+    run: () => {
+      window.__reset(); S.seenBench = true; window.__fast(1);
+      window.__look(bench.x + bench.w / 2 - S.viewW / 2); window.__fast(0.1);
+      hover(bench.x + bench.w / 2, bench.y + bench.h / 2);
+      window.__holdShot();
+    } }
+});

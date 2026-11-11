@@ -13,7 +13,8 @@
 
 import { S } from '../state.js';
 import { AFTER_START_BUILT, AFTER_SEEDS0 } from '../config.js';
-import { afterlifeOn } from '../acts.js';
+import { afterlifeOn, placeHand } from '../acts.js';
+import { gestureDown, gestureMove, gestureUp, gestureHeld, gestureUnder, gestureHover, pressTaken } from './gestures.js';
 import { stepRebel, clickPlace } from './rebel.js';
 import { stepGrove, blankPlots } from './grove.js';
 import { stepSeeds } from './seeds.js';
@@ -148,6 +149,17 @@ export function clickAfter(wx, wy) {
   if (!afterlifeOn() || !S.after) return false;
   return clickPlace(wx, wy);
 }
+// Act 3's hand on the shared pointer (acts.js, `placeHand`): its stations'
+// moving parts worked where they stand (after/gestures.js), asked before the
+// station table, and taking hold of one shuts the shop; the pair's speech
+// clicked, asked after it.
+// Each read through when asked: gestures.js may not have been read yet when
+// this module is (the imports run both ways).
+placeHand('after', {
+  press: (x, y) => gestureDown(x, y), shuts: true, click: clickAfter,
+  under: (x, y) => gestureUnder(x, y), held: () => gestureHeld(), move: (x, y) => gestureMove(x, y),
+  up: (x, y) => gestureUp(x, y), taken: () => pressTaken(), hover: (x, y) => gestureHover(x, y)
+});
 
 // The save (persist.js, `SAVERS`): written whole, null before the act
 // begins, and read over a blank so a save from before a field was added
