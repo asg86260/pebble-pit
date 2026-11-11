@@ -6,8 +6,7 @@
 // to stand the act up, marked so in its comment, for the pace tool to move.
 import { P } from './yard.js';
 import { AFTER_JOB as J } from '../jobs.js';
-// MOCK stair4
-import { campLayout, rampRun, ART as CAMP_ART, CAMP_ORDER, SIGN as CAMP_SIGN, stairKeys, stairStep } from '../after/art.js';
+import { campLayout, rampRun, ART as CAMP_ART, CAMP_ORDER, SIGN as CAMP_SIGN } from '../after/art.js';
 import { AFTER_ZONE_GAP, AFTER_UNION_W } from './aftercrowd.js';
 import { ACT_GATES_CELL, ACT_GATES_REACH } from './acts.js';
 import { AFTER_BLOCK } from './afterpiles.js';
@@ -265,14 +264,6 @@ export const AFTER_FAR_W = 456;
 export const AFTER_W = AFTER_STAIR_X + P * 4 + AFTER_FAR_W * P;
 export const AFTER_STAIR_W = P * 36;       // the stair's run, foot to head
 export const AFTER_STAIR_RISE = P * 50;    // how high the throne stands off the floor
-// MOCK stair4
-// The stair's flights stand past God's crowd, each off the one before it
-// (after/art.js, STAIR), in cells off the place's left: the first's sign
-// (8 cells ahead of its foot) a few cells past the crowd's last file.
-{
-  let at = (AFTER_STAIR_X - AFTER_STAIR_W) / P + 12;
-  for (const [k, key] of stairKeys().entries()) { CAMP.stations[key] = { at }; at += stairStep(k + 1); }
-}
 
 // --- rebel ---
 // (The sky's clouds are the one cloud renderer's: config/clouds.js, CLOUDS_ACT3.)

@@ -1,4 +1,3 @@
-// MOCK stair4: the throne-stair solid is its four flights now
 // No two objects of different kinds share ground (the owner, 2026-10-19: "zero
 // overlapping of elements of different objects, as a hard rule").
 //
@@ -103,7 +102,7 @@ group('the deep with hell\'s slit open over it', async () => {
 group('act 3, the camp, the grove and the gates from behind', async () => {
   SCENES['after-chain'].run();
   run(2);
-  return stage('after', ['mill', 'workshop', 'shack', 'pedestal', 'tree:0', 'stair1', 'stair4']);
+  return stage('after', ['mill', 'workshop', 'shack', 'pedestal', 'tree:0', 'throne-stair']);
 });
 
 group('act 3 with heaven gates standing on the cloud floor', async () => {

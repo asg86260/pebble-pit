@@ -18,7 +18,7 @@ import { P, AFTER_SAW, AFTER_GAP, AFTER_H, AFTER_W, AFTER_FLOOR_MARGIN,
          AFTER_SIGN_BOARD, AFTER_PEDESTAL_SIGN_GAP } from '../config.js';
 
 import { S } from '../state.js';
-import { ART as BASE_ART, isStair, standCol, rampRun, pileLeft, pileCells, pileHigh, pileGrid } from './art.js';
+import { ART as BASE_ART, standCol, rampRun, pileLeft, pileCells, pileHigh, pileGrid } from './art.js';
 
 const snap = v => Math.round(v / P) * P;
 // An art cell, world px: a cell of act 3's drawings, AFTER_ART_SCALE grid
@@ -62,8 +62,7 @@ export const inAfter = (x, y) => y >= afterTop() && y <= afterFloor() && x >= af
 // the crowd stops `crowd` art cells short of
 // that spot (`unionHalf`). Farther when the last workshop's shelf stands higher
 // than its ramp down to the pedestal's floor has room for (after/art.js, `rampRun`).
-const works = () => Object.keys(AFTER_STATIONS).filter(k => k !== 'pedestal' && !isStair(k));   // MOCK stair4
-const lastWorks = () => works().reduce((a, k) => (worksEnd(k) > worksEnd(a) ? k : a));
+const lastWorks = () => Object.keys(AFTER_STATIONS).filter(k => k !== 'pedestal').reduce((a, k) => (worksEnd(k) > worksEnd(a) ? k : a));
 const worksEnd = k => stationX0(k) + ART[k].ground * AP;
 const pedSign = () => (workshopsX1() + Math.max(AFTER_PEDESTAL_SIGN_GAP.shack * AP, rampRun(shelfOf(lastWorks()) - shelfOf('pedestal')) * P) - stationX0('pedestal')) / AP;
 export const ART = { ...BASE_ART, pedestal: { ...BASE_ART.pedestal,
@@ -149,18 +148,13 @@ export const pilePlace = what => {
 export const BUILD_PILE_W = 12;
 export const buildPileAt = key => {
   const art = ART[key], x0 = stationX0(key);
-  if (art.buildAt != null) return x0 + art.buildAt * AP;   // MOCK stair4: a pile under the landing
   const last = Object.keys(art.pile).at(-1);
   const want = last == null ? art.box[0] + art.box[1] + 1 : (pileAt(key, last) - x0) / AP - 1;
   return x0 + Math.max(0, Math.min(art.ground - BUILD_PILE_W, want)) * AP;
 };
 // Where a builder stands to lay a load into a band: either side of the
 // drawing (`side` 0 its left, 1 its right), a cell off it.
-export const buildLayAt = (key, side) => {
-  const b = stationBox(key), art = ART[key];
-  if (art.buildAt != null) return side ? stationX0(key) + (art.buildAt + BUILD_PILE_W + 2) * AP : b.x - P * 2;   // MOCK stair4: the pile's far side
-  return side ? b.x + b.w + P * 2 : b.x - P * 2;
-};
+export const buildLayAt = (key, side) => { const b = stationBox(key); return side ? b.x + b.w + P * 2 : b.x - P * 2; };
 // Where a body stands to put a thing down on a pile or take one off it, its
 // middle column: beside the pile on the side away from its station's
 // drawing (after/art.js, `standCol`), so the load stacked over its head
@@ -221,7 +215,7 @@ export const afterOpenX = () => { const b = stationBox('pedestal'); return snap(
 // ground but the pedestal's does; God's camp starts a file short of his
 // crowd's first; the union's camp is the floor round the pedestal, the open
 // floor between it and each neighbor.
-export const workshopsX1 = () => Math.max(...works().map(k => stationX0(k) + ART[k].ground * AP));
+export const workshopsX1 = () => Math.max(...Object.keys(AFTER_STATIONS).filter(k => k !== 'pedestal').map(k => stationX0(k) + ART[k].ground * AP));
 export const godX0 = () => CROWD_X0 - CROWD_PITCH;
 export const unionX0 = () => workshopsX1() + AFTER_ZONE_GAP * P;
 export const unionX1 = () => unionX0() + AFTER_UNION_W * P;

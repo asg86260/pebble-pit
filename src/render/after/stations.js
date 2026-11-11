@@ -18,11 +18,10 @@
 // its machine (after/mill.js) alone, whoever turns it.
 
 // REVIEW act-3-the-cabin-built
-// MOCK stair4
 // MOCK faith8
 import { P, AFTER_SAW_TEETH, AFTER_ART_SCALE, AFTER_MILL, AFTER_CABIN_SMOKE, AFTER_SHRINE_MOTES, AFTER_SHRINE_SAUCE, AFTER_COIN_LIFE_S } from '../../config.js';
 import { K, W, PALE, MID, hash, silhouette, clamp01, square } from './kit.js';
-import { ART, STAIR, stairW, stairKeys } from '../../after/art.js';
+import { ART } from '../../after/art.js';
 import { CABIN } from '../../after/cabin.js';
 import { DOORWAY } from '../../after/doorway.js';
 import { held } from '../../reset.js';
@@ -326,40 +325,6 @@ function forestry(d, work, t) {
   cabinSmoke(b, t || 0);
 }
 
-// --- the stair to God: timber scaffold, a flight a station -------------------------
-// MOCK stair4
-// A flight of steps on a scaffold, built from the floor up: posts down to the
-// ground, a ledger across them, X-braces in every bay, the treads and their
-// stringer on top, and a landing past the head carried on a post and a knee
-// brace, the floor under it left open for the next flight's pile. Flight k
-// rises from k - 1 rises off the floor to k.
-function stairFlight(d, k) {
-  const R = STAIR.rise, run = STAIR.run, w = stairW(k), lo = R * (k - 1), hi = R * k;
-  const n = run / 2, up = i => lo + i;               // tread i's underside off the floor
-  // posts, down to the floor under the stringer
-  const posts = [0, 6, 12, 18];
-  for (const p of posts) { const h = up(Math.floor(p / 2)); if (h > 0) d.r(p, -h, 1, h, K); }
-  // X-braces, a bay between posts, and a ledger across at half the bay's height
-  for (let b = 0; b + 1 < posts.length; b++) {
-    const a = posts[b], z = posts[b + 1], hb = up(Math.floor(a / 2)) - 1;
-    if (hb < 3) continue;
-    d.line(a + 0.5, -1, z + 0.5, -hb, 3, K); d.line(a + 0.5, -hb, z + 0.5, -1, 3, K);
-    d.r(a, -Math.round(hb / 2), z - a + 1, 1, K);
-  }
-  // treads and their stringer
-  for (let i = 0; i < n; i++) {
-    d.r(2 * i, -(lo + i + 1), 2, 1, K);
-    d.r(2 * i, -(lo + i), 2, 1, K);
-  }
-  // the landing: a deck two thick on a post at its near end, a knee brace
-  // under it, and for all but the last flight a bridge on to the next foot
-  d.r(run, -hi, w - run, 1, K); d.r(run, -(hi - 1), w - run, 1, K);
-  d.r(run, -(hi - 1), 1, hi - 1, K);
-  d.line(run + 0.5, -(hi - 6), run + 7.5, -(hi - 1.5), 3, K);
-  d.line(run + 0.5, -(hi - 2), run + 3.5, -(hi - 1.5), 3, K);
-}
-const stairDraw = k => d => stairFlight(d, k);
-
 // --- the shrine: a gable with an arch cut in it ---------------------------------------
 // MOCK faith8
 // One ink mass like the shack and the stump house: a pointed gable on a step,
@@ -605,7 +570,7 @@ function shrine(d, work, t) {
   else if (!d.sinking) for (let i = 0; i < SHRINE.folk; i++) d.body(kneelX(i, SHRINE.folk), -3, 0, 0, true);
 }
 
-export const DRAW = { shrine, mill, workshop, shack, forestry, ...Object.fromEntries(stairKeys().map((key, i) => [key, stairDraw(i + 1)])) };
+export const DRAW = { shrine, mill, workshop, shack, forestry };
 
 // Each station's paper backing (kit.js, `silhouette`), read off its idle
 // drawing once: the moving parts swing inside it, and what they carry is

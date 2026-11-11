@@ -23,8 +23,7 @@ import { P, SKY_FIT, GOD_CELLS, GOD_FIT, GOD_UP, GOD_RATE, GOD_FOOT, GOD_CROWD, 
          GOD_DEPTH_ON, GOD_DEPTH, GOD_TAKE, GOD_TAKES } from '../config.js';
 import { yardCell } from '../world.js';
 import { actPlace } from '../acts.js';
-import { isStair } from './art.js';
-import { afterFloor, afterTop, afterOpenX, campEdges, stairFoot, podiumMid, unionHalf, stationBox, speakerAt, reachTo } from './place.js';
+import { afterFloor, afterTop, afterOpenX, campEdges, podiumMid, unionHalf, stationBox, speakerAt, reachTo } from './place.js';
 import { smoothstep } from '../motion.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -240,13 +239,7 @@ export function walkSeen(x, y, cx) {
 }
 // The share of the way onto God's layer a sim x stands, 0 on the main
 // plane: for what is drawn there as the camp draws it and what is not.
-// MOCK stair4: a body raising a flight of the stair (past God's crowd, on the
-// main plane again) comes back out of the depth over the six cells before
-// the stair's foot, so it is drawn flat there and nowhere in the crowd.
-export const deepAt = (x, w) => {
-  const deep = smoothstep(clamp((x - campEdges()[1]) / (P * 6), 0, 1));
-  return w && w.site && isStair(w.site) ? deep * smoothstep(clamp((stairFoot() - x) / (P * 6), 0, 1)) : deep;
-};
+export const deepAt = x => smoothstep(clamp((x - campEdges()[1]) / (P * 6), 0, 1));
 // Whether world point (x, y) is on God's camp as drawn with the window's
 // middle at `cx`: from his crown down to the stage's front, across it.
 // A click there is a click on his crowd (after/gestures.js).

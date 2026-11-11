@@ -1,5 +1,4 @@
-// Act 3's sky, drawn flat (DESIGN.md, "The sky, redrawn flat"; the owner's
-// MOCK stair4
+// Act 3's sky, drawn flat (DESIGN.md, "The sky, redrawn flat"; the owner's
 // votes, docs/mocks/act3-sky-flat-2026-10-19, a3gaze the cumulative one), and
 // God's camp standing in the clouds (DESIGN.md, "God's camp stands in the
 // clouds", "The camps are far apart for the eye"): God far back on the cloud
@@ -999,7 +998,7 @@ export function seenAt(x, y) {
 function body(w) {
   const v = seenAt(w.x, w.y), u = P * v.k, s = u * 3;
   const x = onPx(v.x - s / 2), y = onPx(v.y - s);
-  alpha(deepAt(w.x, w), () => {
+  alpha(deepAt(w.x), () => {
     rect(x, y, s, s, MID);
     rect(x, y, s, Math.max(2, Math.round(s / 5)), UNION_TONE);
     const kind = loadKind(w);
@@ -1086,7 +1085,7 @@ export function drawSkyCrowd() {
   const items = [];
   for (const q of S.after.signs) items.push({ y: flagBox(q).foot, draw: () => drawFlag(q) });
 
-  for (const w of S.after.bodies) if (!w.lifted && deepAt(w.x, w) > 0) items.push({ y: seenAt(w.x, w.y).ord + 0.25, draw: () => body(w) });
+  for (const w of S.after.bodies) if (!w.lifted && deepAt(w.x) > 0) items.push({ y: seenAt(w.x, w.y).ord + 0.25, draw: () => body(w) });
   watchSigns();
   for (const g of setDown) items.push({ y: g.ord, draw: () => drawSetDown(g) });
   items.sort((a, b) => a.y - b.y);
