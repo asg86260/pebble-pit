@@ -587,7 +587,11 @@ export function verifyWorld() {
     // story the serpent is on its last defense and nowhere else: the return
     // is the one frame the defense goes back, from down to the last.
     const level = S.serpentLevel;
-    if (yardReads !== levelReads) { levelWas = -1; levelReads = yardReads; }
+    // A load forgets the level read before it, and the defense with it: the
+    // return is the first frame after a load whenever the kill was saved down
+    // (`stepDown` reads a saved moment as long past), and a return the rule
+    // cannot see as one would read as the defense going back.
+    if (yardReads !== levelReads) { levelWas = -1; serpentWas = -1; levelReads = yardReads; }
     if (!Number.isInteger(level) || level < 1)
       fail('the serpent is at a level it cannot be', `${level}`);
     if (levelWas >= 0 && (level < levelWas || level > levelWas + 1))
