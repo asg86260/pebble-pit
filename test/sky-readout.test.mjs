@@ -66,8 +66,14 @@ group('the sky reads as one rate, and it can go negative', async () => {
   window.__buy('balloon'); window.__finish();
   window.__buy('balloon'); window.__finish();
   window.__air({ purifiers: 2, haze: 600 });
-  run(40);
-  const winning = state().smog;
+  // The reading is the last second's, and the cut has quiet seconds (its
+  // quarrier going down a level, the jaw idle meanwhile), so the works'
+  // side is the busiest of the last five rather than whichever one the run
+  // happens to stop on: the seed decides that, and nothing in the house does.
+  run(35);
+  let busiest = 0;
+  for (let i = 0; i < 5; i++) { run(1); busiest = Math.max(busiest, state().smog.fouling); }
+  const winning = { ...state().smog, fouling: busiest };
   window.__crew(0, 0);
   window.__air({ haze: 0, muck: 0, open: false, purifiers: 0 });
   healJaw();
