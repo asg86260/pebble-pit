@@ -28,9 +28,9 @@
 // unit comes back where it lay, its kind and tone in its value.
 
 import { S, afterGround as G } from '../state.js';
-import { AFTER_W, AFTER_H, AFTER_PILES, AFTER_TREE, TERRAIN_CELL, KINDS, GRAV } from '../config.js';
+import { P, AFTER_H, AFTER_PILES, AFTER_TREE, TERRAIN_CELL, KINDS, GRAV } from '../config.js';
 import { at, topRow, colOf, bottomY, landed, addBlock, putBlock, takeUnit, blockAt, kindOf, sizeOfCell, heightOfCell, recount, settle } from '../grid.js';
-import { afterX0, afterTop, floorProfile, sitesKey, pileAt, pileOwner, plotX, AP } from './place.js';
+import { afterX0, afterX1, afterTop, floorProfile, sitesKey, pileAt, pileOwner, plotX, AP } from './place.js';
 import { pileGrid, pileCells } from './art.js';
 
 // The stock keys that are strips.
@@ -49,7 +49,7 @@ let laidFor = null; // cache: the sites key the columns above were laid for
 // again from the cells when it has moved.
 let version = 0; // cache: a count of writes, only ever forward, compared and never cleared
 
-const cellsAcross = () => Math.ceil(AFTER_W / AP);
+const cellsAcross = () => Math.ceil((afterX1() - afterX0()) / AP);
 const stripAt = c => (regionOf && c >= 0 && c < G.cols && regionOf[c] <= STRIPS.length ? STRIPS[regionOf[c] - 1] || null : null);
 export const stripOf = what => STRIPS.find(s => s.what === what) || null;
 // A column's world x (its left edge) and the world y of a row's bottom.
@@ -59,10 +59,10 @@ export const rowY = r => bottomY(G) - r * AP;
 // The columns' lay, worked out again only when the sites change (a station
 // ordered reshapes the floor under it).
 function layColumns() {
-  const key = sitesKey();
+  const cols = cellsAcross(), key = `${cols}|${sitesKey()}`;
   if (laidFor === key && terrain) return;
   laidFor = key;
-  const cols = cellsAcross(), prof = floorProfile(), across = AP / (AFTER_W / prof.length);
+  const prof = floorProfile(), across = AP / P;
   terrain = new Int32Array(cols);
   for (let c = 0; c < cols; c++) terrain[c] = Math.round((prof[Math.min(prof.length - 1, Math.floor(c * across))] || 0) / across);
   STRIPS.length = 0;

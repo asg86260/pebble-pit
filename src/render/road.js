@@ -12,10 +12,10 @@
 // cell picking its tone off a hash so no cloud is a flat slab of paint.
 
 import { P, GREY, ACT_ROAD_CLOUDS, ACT_ROAD_CLOUD_W, ACT_ROAD_CLOUD_H, ACT_ROAD_BILLOW, ACT_ROAD_SEED, ACT_ROAD_FAR,
-         ACT_ROAD_SPREAD, ACT_ROAD_JITTER, ACT_ROAD_ROUND, ACT_ROAD_SPECKLE, AFTER_W } from '../config.js';
+         ACT_ROAD_SPREAD, ACT_ROAD_JITTER, ACT_ROAD_ROUND, ACT_ROAD_SPECKLE} from '../config.js';
 import { S } from '../state.js';
 import { ctx } from './ctx.js';
-import { afterX0, billow } from '../after/place.js';
+import { afterX0, afterX1, billow } from '../after/place.js';
 import { tear } from '../ghosts.js';
 import { skyCam } from '../view.js';
 import { roadTones } from '../weather.js';
@@ -72,8 +72,8 @@ let under = null;   // cache: made once from the fixed seed
 function underside(tones) {
   const line = afterUnder();
   if (line + P * (ACT_ROAD_BILLOW + 2) < S.camY || line > S.camY + S.viewH) return;
-  const cols = Math.ceil(AFTER_W / P);
-  under ||= billow(cols, ACT_ROAD_SEED, ACT_ROAD_BILLOW);
+  const cols = Math.ceil((afterX1() - afterX0()) / P);
+  if (!under || under.length !== cols) under = billow(cols, ACT_ROAD_SEED, ACT_ROAD_BILLOW);
   const j0 = Math.max(0, Math.floor((S.camX - afterX0()) / P) - 1);
   const j1 = Math.min(cols, Math.ceil((S.camX + S.viewW - afterX0()) / P) + 1);
   const ink = tones[tones.length - 1], body = GREY[0];

@@ -10,8 +10,8 @@
 // both read; how it looks is the shot (`after-site-empty`, `after-site-rising`,
 // `after-crowd-mass`).
 import { group, ok, run, yard } from './helpers.mjs';
-import { P, AFTER_W, AFTER_STATIONS, AFTER_STATION_GAP, AFTER_SHELF } from '../src/config.js';
-import { floorProfile, floorAt, groundOf, shelfOf, afterFloor, afterX0, stationBox, stationDoor, stationX0, crowdLip, ART, sited, AP } from '../src/after/place.js';
+import { P, AFTER_STATIONS, AFTER_STATION_GAP, AFTER_SHELF } from '../src/config.js';
+import { floorProfile, floorAt, groundOf, shelfOf, afterFloor, afterX0, afterX1, stationBox, stationDoor, stationX0, crowdLip, ART, sited, AP } from '../src/after/place.js';
 
 const S = yard.S;
 const col = x => Math.floor((x - afterX0()) / P);
@@ -26,7 +26,7 @@ group('the cloud floor billows everywhere but under what stands on it', async ()
   S.after = null;
   window.__goPlace('after');
   run(1);
-  const el = floorProfile(), cols = Math.ceil(AFTER_W / P);
+  const el = floorProfile(), cols = Math.ceil((afterX1() - afterX0()) / P);
   const raised = el.filter(v => v > 0).length, [c0] = crowdLip(), camp = el.slice(0, c0);
   const standing = Object.keys(AFTER_STATIONS).filter(sited);
   // God's crowd, which stands on the flat line behind the puffs' lip.

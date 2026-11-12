@@ -36,8 +36,18 @@ export const shelfOf = key => AFTER_SHELF[SHELF_KEY[key] || key] || 0;
 export const groundOf = key => afterFloor() - shelfOf(key) * P;
 export const afterTop = () => afterFloor() - AFTER_H;
 export const afterX0 = () => 0;
-export const afterX1 = () => afterX0() + AFTER_W;
-export const afterRect = () => ({ x: afterX0(), y: afterTop(), w: AFTER_W, h: AFTER_H });
+// The place's right end: AFTER_W, or further where the camera's last window
+// reaches past it -- half a window past God's stage's front, which the sky
+// says (after/sky.js, `camReach`; acts.js clamps the camera to this end).
+// The floor's profile, its lip and the cloud under the road run to this
+// end, so a wide window never looks out past the path onto the bare page.
+// The sky hands its reach in rather than being imported: it stands on this
+// file, and a static import back would run the act's modules before this
+// one's constants are set.
+let camReach = () => 0;
+export const reachTo = fn => { camReach = fn; };
+export const afterX1 = () => afterX0() + Math.max(AFTER_W, snap(camReach()));
+export const afterRect = () => ({ x: afterX0(), y: afterTop(), w: afterX1() - afterX0(), h: AFTER_H });
 export const inAfter = (x, y) => y >= afterTop() && y <= afterFloor() && x >= afterX0() && x <= afterX1();
 
 // --- the stations' drawings, as ground ------------------------------------------------
@@ -312,12 +322,12 @@ export const closed = key => !!S.after && !AFTER_START_BUILT.includes(key) && !S
 // Which grounds are taken, as a key: the profile is worked out again only
 // when that changes.
 export const sitesKey = () => Object.keys(AFTER_STATIONS).filter(sited).join(',');
-let profile = null, profileKey = null; // cache: keyed by `sitesKey()`
+let profile = null, profileKey = null; // cache: keyed by `sitesKey()` and the place's width
 export function floorProfile() {
-  const key = sitesKey();
+  const cols = Math.ceil((afterX1() - afterX0()) / P), key = `${cols}|${sitesKey()}`;
   if (profile && key === profileKey) return profile;
   profileKey = key;
-  const cols = Math.ceil(AFTER_W / P), lvl = new Array(cols).fill(-1);
+  const lvl = new Array(cols).fill(-1);
   for (const [a, b, h = 0] of floorFlats()) for (let j = Math.max(0, a); j < Math.min(cols, b); j++) lvl[j] = Math.max(lvl[j], h);
   const [l0, l1] = crowdLip(), puffs = billow(cols, AFTER_BILLOW_SEED);
   profile = lvl.map(h => Math.max(0, h));
