@@ -41,9 +41,11 @@ Blocker: someone lands each, or drops it.
 ### A dialog system -- BUILT, THE LINES OPEN (2026-11-01)
 
 DESIGN.md, "A dialog system (design, approved)" is on main (src/dialog.js,
-`S.heard`), with God's existing captions standing in as his lines. Blocker:
-the premise's lines are the owner's to write (the five slots in "The first
-use"); none goes in the game until written.
+`S.heard`). God's six opening lines at `meet-god` are the owner's own words
+(script D from the review bench, `act-meet-god-1`..`-6`). Open: the lines
+carry the owner's effect marks (`^ * ~ _`), which main has no renderer for
+(the mock was `dialog-sauce` on a3-review-both), so they show as typed; the
+other premise lines in "The first use" are still unwritten.
 
 ### Acts 3 and 4: the afterlife and hell -- PLAYABLE BEHIND SWITCHES, CALLS OPEN (2026-11-11)
 

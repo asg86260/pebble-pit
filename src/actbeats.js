@@ -251,9 +251,11 @@ export const BODIES = {
   // Through the gates, a breath on the cloud floor, and the camera on to God
   // (the owner's K2, 2026-11-01).
   'arrive': [{ frame: onPair, s: ACT_ARRIVE_S, enter: beginAct3 }],
-  // God's lines, each waiting for a click (dialog.js); the beats' captions
-  // stand in until the owner writes them. The opening ends with the last.
-  'meet-god': [{ frame: atThrone, lines: [{ who: 'god', id: 'act-meet-god' }] }],
+  // God's lines, each waiting for a click (dialog.js); the owner's own words. The opening ends with the last.
+  'meet-god': [{ frame: atThrone, lines: [
+    { who: 'god', id: 'act-meet-god-1' }, { who: 'god', id: 'act-meet-god-2' }, { who: 'god', id: 'act-meet-god-3' },
+    { who: 'god', id: 'act-meet-god-4' }, { who: 'god', id: 'act-meet-god-5' }, { who: 'god', id: 'act-meet-god-6' }
+  ] }],
   // Sent off to the pedestal and over the same frame: the walk there is
   // played, not shown (ACT_PEDESTAL_K, `stepActs`), and the speech is theirs
   // once they stand on it (after/bubbles.js reads `at === 'pedestal'`).

@@ -34,19 +34,19 @@ group('God\'s line waits for a click with the act going on under it, and is read
   // harness's every five seconds: the line comes back up, unread).
   const t0 = S.after.t;
   run(10);
-  const still = { waiting: !!waiting(), beat: S.beat.camera, dt: S.after.t - t0, heard: S.heard.includes('act-meet-god') };
+  const still = { waiting: !!waiting(), beat: S.beat.camera, dt: S.after.t - t0, heard: S.heard.includes('act-meet-god-1') };
   // A click: read now, and saved so.
   const went = window.__goOnLine();
-  const read = S.heard.includes('act-meet-god');
+  const read = S.heard.includes('act-meet-god-1');
   const again = window.__goOnLine();                 // a second click has no line to go on from
   // Read back at once, the line mid-fade: it never comes up again.
   reloadCheck();
   let seenAgain = false;
-  const done = runUntil(() => { if (waiting() && waiting().id === 'act-meet-god') seenAgain = true; return beatDone('meet-god'); }, 30);
+  const done = runUntil(() => { if (waiting() && waiting().id === 'act-meet-god-1') seenAgain = true; window.__goOnLine(); return beatDone('meet-god'); }, 60);
   window.__actsOn(null);
   return [
     ok(said && up, 'the card pressed, the fall and the rise played, God\'s line comes up', `${said} ${up}`),
-    ok(at.beat === 'meet-god' && at.id === 'act-meet-god' && at.who === 'god', 'it is God\'s, at the throne, in the meeting', JSON.stringify(at)),
+    ok(at.beat === 'meet-god' && at.id === 'act-meet-god-1' && at.who === 'god', 'it is God\'s, at the throne, in the meeting', JSON.stringify(at)),
     ok(still.waiting && still.beat === 'meet-god' && !still.heard, 'unanswered it waits: ten seconds on, still up and unread', JSON.stringify(still)),
     ok(still.dt >= 9.5, 'and nothing waits with it: act 3\'s clock ran the whole ten seconds', JSON.stringify(still)),
     ok(went && read && !again, 'a click goes on from it, and it is read at once; a second click finds no line', `${went} ${read} ${again}`),
@@ -60,7 +60,7 @@ group('the held space bar reads every line at once and lets the beat go on', () 
   window.__holdSkip(true);
   run(SKIP_HOLD_MS / 1000 + 0.2);
   window.__holdSkip(false);
-  const read = S.heard.includes('act-meet-god'), gone = !waiting();
+  const read = S.heard.includes('act-meet-god-1'), gone = !waiting();
   const done = runUntil(() => beatDone('meet-god'), DIALOG_FADE_S + 3);
   window.__actsOn(null);
   return [
