@@ -22,7 +22,7 @@ import { P, SKY_FIT, GOD_CELLS, GOD_FIT, GOD_UP, GOD_RATE, GOD_FOOT, GOD_CROWD, 
          CROWD_X0, CROWD_FILES, CROWD_PITCH, CROWD_NEAR, CROWD_ROW, CROWD_FAR_ROW, GOD_BACK, UNION_CROWD, AFTER_SLICE_GAP } from '../config.js';
 import { yardCell } from '../world.js';
 import { actPlace } from '../acts.js';
-import { afterFloor, afterTop, afterOpenX, campEdges, podiumMid, unionHalf, stationBox, speakerAt } from './place.js';
+import { afterFloor, afterTop, afterOpenX, campEdges, podiumMid, unionHalf, stationBox, speakerAt, reachTo } from './place.js';
 import { smoothstep } from '../motion.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -139,6 +139,9 @@ export const godFront = () => {
   fronts.key = key; fronts.x = snap(Math.max(clear, floor), P);
   return fronts.x;
 };
+// The camera's last window ends half a window past the stage's front, and
+// the place runs out to there (place.js, `afterX1`).
+reachTo(() => godFront() + restW() / 2);
 // The union's slice across, world px: its crowd's rows at their widest
 // (render/after/unioncrowd.js: a row's souls from the podium's middle out
 // its half either way, a soul and its jitter past the last, and a newcomer

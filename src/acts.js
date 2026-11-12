@@ -18,7 +18,6 @@ import { AFTERLIFE_ON, HELL_ON, ACT_ROAD_UNDER } from './config.js';
 import { held } from './reset.js';
 import { demoOn } from './demo.js';
 import { AFTER_PLACE } from './after/place.js';
-import { godFront, restW } from './after/sky.js';
 import { HELL_PLACE, HELL_ROUTE } from './hell/place.js';
 import { AFTER_CREW } from './after/bodies.js';
 import { AFTER_LANDING } from './after/piles.js';
@@ -69,7 +68,6 @@ const AFTER_GROUND = {
 let landing = null; // cache: act 3's landing list with the plant surface in it
 const AFTER_AT_YARD = {
   ...AFTER_PLACE,
-  x1: () => godFront() + restW() / 2,
   get margin() { const m = S.worldH - S.groundY; return Number.isFinite(m) && m > 0 ? m : AFTER_PLACE.margin; },
   get crew() { return AFTER_CREW; },
   // Its ground, for the one hand (hands.js, groundAt).
