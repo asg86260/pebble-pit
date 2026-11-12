@@ -44,7 +44,7 @@ export const afterX0 = () => 0;
 // The sky hands its reach in rather than being imported: it stands on this
 // file, and a static import back would run the act's modules before this
 // one's constants are set.
-let camReach = () => 0;
+let camReach = () => 0; // page: the wiring, handed over once at load (after/sky.js)
 export const reachTo = fn => { camReach = fn; };
 export const afterX1 = () => afterX0() + Math.max(AFTER_W, snap(camReach()));
 export const afterRect = () => ({ x: afterX0(), y: afterTop(), w: afterX1() - afterX0(), h: AFTER_H });
