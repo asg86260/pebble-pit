@@ -140,12 +140,14 @@ export const GOD_THRONE = { backTop: 14, backHalf: 30, seatHalf: 36, seatH: 8, b
 //           the crown along every ray, `wave` cells long, at `speed` cells a
 //           second, the rest of the ray `low` as bright
 export const GOD_RAYS = { n: 16, r: 36, long: 40, short: 24, cell: 2, dark: 0.6, hold: 3,
-                          spin: 0.2, breath: 0.2, period: 4, wave: 16, speed: 12, low: 0.4 };
+                          turn: 0.05, spin: 0.2, breath: 0.2, period: 4, wave: 16, speed: 12, low: 0.4 };
 // Which of the rays' two motions is drawn, a dev dial while the owner
-// chooses between them: 0 turn, 1 pulse.
+// chooses between them: 0 turn, 1 pulse; 2 main's stepped ring (`turn`
+// radians a tick, each cell snapped), kept only to set beside them.
+// REVIEW god-motion
 export let GOD_RAY_MOTION = 0;
 export const GOD_KNOBS = [
-  { key: 'GOD_RAY_MOTION', label: 'the rays round his crown: 0 turn, 1 pulse', min: 0, max: 1, step: 1,
+  { key: 'GOD_RAY_MOTION', label: 'the rays round his crown: 0 turn, 1 pulse, 2 stepped', min: 0, max: 2, step: 1,
     get: () => GOD_RAY_MOTION, set: v => { GOD_RAY_MOTION = v; } }
 ];
 // His breath (a cell up and down), and the pupils looking round, in ticks.

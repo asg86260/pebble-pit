@@ -53,6 +53,7 @@ import { P, GREY, GOD_BACK, STRIKE_SHARE, CROWD_X0, CROWD_FILES, CROWD_PITCH, AF
          AFTER_GAZE_SETTLE_S, AFTER_BURN_S, SKY_DRIFT,
          AFTER_SEAT_DARK, AFTER_LINE_DARK, AFTER_GAZE_EDGE, SIGN_FADE_S } from '../config.js';
 import { lerp, smoothstep, quadInOut } from '../motion.js';
+// REVIEW god-motion
 import { ctx } from './ctx.js';
 import { layerAt } from './frame.js';
 import { raw, darkPage, perPage, themeGen } from '../ink.js';
@@ -697,7 +698,9 @@ function drawRays() {
   const th = turning ? t * R.spin : 0;
   // Whole until support has taken most of them, then faded out with the
   // last of their length, so they read on the day's paper to the end.
-  alpha((darkPage ? R.dark : 1) * clamp(left * R.hold, 0, 1), () => {
+  const fade = (darkPage ? R.dark : 1) * clamp(left * R.hold, 0, 1);
+  if (GOD_RAY_MOTION === 2) { stepRays(ox, oy, left, fade); return; }
+  alpha(fade, () => {
     ctx.fillStyle = style(RAY_TONE);
     const tips = [];
     ctx.beginPath();
@@ -721,6 +724,21 @@ function drawRays() {
     }
     ctx.fill();
     for (const [x, y, k] of tips) alpha(k, () => rect(x, y, c * H, c * H));
+  });
+}
+// The rays as main draws them, for the review to set beside the two takes:
+// the ring turning `turn` a tick, every cell snapped to the grid on its own.
+function stepRays(ox, oy, left, fade) {
+  const R = GOD_RAYS, th = TK * R.turn, c = R.cell;
+  alpha(fade, () => {
+    ctx.fillStyle = style(RAY_TONE);
+    for (let i = 0; i < R.n; i++) {
+      const a = th + i / R.n * Math.PI * 2, len = (i % 2 ? R.short : R.long) * left;
+      for (let d = R.r; d < R.r + len; d += c) {
+        const x = c * Math.round(Math.cos(a) * d / c), y = c * Math.round(Math.sin(a) * d / c);
+        rect(ox + x * H, oy + y * H, c * H, c * H);
+      }
+    }
   });
 }
 // How bright a standing ray is `s` cells out from its foot at `t`: `low`,

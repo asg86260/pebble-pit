@@ -114,7 +114,7 @@ import { DEEP_BOARD_KNOBS } from './config/deepboard.js';
 import { ROOMBA_KNOBS } from './config/roomba.js';
 import { CUT_KNOBS } from './config/cutscene.js';   // wave shot, track A
 import { ACT_KNOBS } from './config/acts.js';       // the rise, ridden
-import { GOD_KNOBS } from './config/aftercrowd.js';
+import { GOD_KNOBS } from './config/aftercrowd.js';   // REVIEW god-motion
 
 export const TUNABLE = [
   ...YARD_KNOBS, ...VIEW_KNOBS, ...PIT_KNOBS, ...DUST_KNOBS, ...AIR_KNOBS,
