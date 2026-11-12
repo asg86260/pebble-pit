@@ -18,6 +18,7 @@ import { tuned } from '../src/config.js';
 // What a jaw is worth when nobody has wound it down -- read once, at load, before
 // any group has had a chance to touch it.
 const JAW_WORTH = tuned('MACHINE_GAIN');
+const LOO_WAS = tuned('LOO_EVERY');
 
 // A jaw at its real rate out-fouls a fully staffed house about three to one, and
 // outruns a shower besides, so the groups below that want to watch the house or
@@ -41,6 +42,10 @@ group('the sky reads as one rate, and it can go negative', async () => {
   // Wound well down: what this group is about is the house turning the reading
   // round, not the balance between a jaw and a houseful of bodies.
   woundJaw();
+  // Nobody called away mid-reading: the jaw's lone tender off to the loo is
+  // a machine standing untended, the reading 0 for those seconds, and when
+  // the call comes is the seed's say (crew/nature.js), not the house's.
+  window.__tune('LOO_EVERY', 1e9);
   window.__crew(0, 4, 5);
   window.__machine('jaw', { bought: true });
   window.__invest();
@@ -66,17 +71,12 @@ group('the sky reads as one rate, and it can go negative', async () => {
   window.__buy('balloon'); window.__finish();
   window.__buy('balloon'); window.__finish();
   window.__air({ purifiers: 2, haze: 600 });
-  // The reading is the last second's, and the cut has quiet seconds (its
-  // quarrier going down a level, the jaw idle meanwhile), so the works'
-  // side is the busiest of the last five rather than whichever one the run
-  // happens to stop on: the seed decides that, and nothing in the house does.
-  run(35);
-  let busiest = 0;
-  for (let i = 0; i < 5; i++) { run(1); busiest = Math.max(busiest, state().smog.fouling); }
-  const winning = { ...state().smog, fouling: busiest };
+  run(40);
+  const winning = state().smog;
   window.__crew(0, 0);
   window.__air({ haze: 0, muck: 0, open: false, purifiers: 0 });
   healJaw();
+  window.__tune('LOO_EVERY', LOO_WAS);
   return [
     ok(losing.fouling > 0 && losing.filtering === 0,
        'a yard with nobody in the house is putting up and taking down nothing',
