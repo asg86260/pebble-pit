@@ -735,6 +735,9 @@ export const PAD_HANDLE = {
   mark: () => markAt(fakeT),
   // The marker as the page's own frames draw it, on the wall clock.
   markNow: () => markAt(performance.now()),
+  // The marker at any instant on that clock: the glide is a curve in time,
+  // so a check can read it at even steps whatever the page's frames did.
+  markAt: t => markAt(t),
   page: () => focused(),
   scope: () => scope()?.kind || null,
   inner: id => innerRows(findStop(id)).map(row => row.map(c => c.id)),

@@ -720,8 +720,9 @@ TESTS.push(['deep: a press held in the water catches the scales sinking past it'
 // bodies veiled, each body ringed. Pressed through the real pointer on a
 // body, then the frame drawn with the sight held and with it let go, from the
 // same instant: the ring's left side has gone over to the body's own ink, and
-// the veil has changed a good share of the window (the deep's open water is
-// its paper, and a veil over paper changes nothing). The yard is the control.
+// the veil has taken most of what is not paper toward paper (the deep's open
+// water is its paper, and a veil over paper changes nothing). The yard is the
+// control.
 import { inTheDeep } from '../render/crew.js';
 import { isFighter } from '../render/arms.js';
 import { WORKER, SIGHT_IN_MS, SIGHT_GAP, SIGHT_RING, DEEP_SURFACE } from '../config.js';
@@ -742,6 +743,8 @@ TESTS.push(['deep: the right button held veils the deep and rings its crew, as i
   // furthest over toward the body's ink from what is there with the sight let
   // go -- the yard's ink is the darkest of the body's own pixels.
   const toward = (held, free, ink) => Math.abs(held - ink) + 64 < Math.abs(free - ink);
+  // Paper, or near enough that the veil cannot move it by a whole tone.
+  const PAPER_NEAR = 16;
   // The ring is read along one side of the body, chosen when the frame is
   // drawn: a body stands over its neighbor's ring where they rest together
   // (the crusher's gatherers do), so the side read is one no other body, nor
@@ -808,8 +811,19 @@ TESTS.push(['deep: the right button held veils the deep and rings its crew, as i
     const off = read();
     S.crewSight = keep;
     point('pointerup', x, y, 0, 2);
-    let differ = 0, n = 0;
-    for (let i = 0; i < on.all.length; i += 64, n++) if (on.all[i] !== off.all[i]) differ++;
+    // The veil is paper laid over everything behind the crew, so it takes
+    // whatever is not already paper toward it and leaves paper as it was: of
+    // the samples with ink under them let go, most went toward paper held
+    // (the bodies and what is drawn over the veil are the rest). A share of
+    // the whole window would be a fact about how much sky the camera had in
+    // it. The deep is drawn inverted: its paper is black.
+    const blank = half === 'deep' ? 0 : 255;
+    let inked = 0, paled = 0;
+    for (let i = 0; i < on.all.length; i += 64) {
+      if (Math.abs(off.all[i] - blank) < PAPER_NEAR) continue;
+      inked++;
+      if (Math.abs(on.all[i] - blank) < Math.abs(off.all[i] - blank)) paled++;
+    }
     // Each point's band, held against let go, at the pixel that moved most:
     // in the yard toward the body's ink; in the deep, which is drawn
     // inverted so its ink is the paper's tone, either way at all.
@@ -822,7 +836,7 @@ TESTS.push(['deep: the right button held veils the deep and rings its crew, as i
       ok(held, `${half}: the right button down on a body holds the sight`, String(held)),
       ok(most.every(([h, f]) => (half === 'deep' ? Math.abs(h - f) > 64 : toward(h, f, on.ink))),
          `${half}: and the body wears a ring`, `ink ${on.ink}; held/let go ${most.map(([h, f]) => `${h}/${f}`).join(' ')}`),
-      ok(differ > n / 10, `${half}: and what is behind it is veiled`, `${differ} of ${n} samples`)
+      ok(inked > 0 && paled > inked / 2, `${half}: and what is behind it is veiled`, `${paled} of ${inked} inked samples toward paper`)
     ];
   };
   deepYard();
