@@ -23290,6 +23290,18 @@ built:
 The palette is unchanged. The option that gave the far haze a tone of its
 own by day (C's re-spaced ladder) was shown and not chosen.
 
+The yard's sky draws through the same renderer (the next section), and the
+owner had this landed for both (2026-11-11). What reaches the yard: every
+cloud moves as one body, and its storm buds ride the lobe they open out of
+rather than a current of their own; no base band and the sideways shade test,
+so no ruled line under a yard cloud either; the middle depth band flat, so
+the yard's far and middle sheets are flat silhouettes in their tones; the
+fewer, bigger forms. What does not: where a yard cloud stands is still
+weather.js's (its sheet's lane, its own base, the swell, the sink), so the
+one base line and the gaps are act 3's alone, and the clear, brew, rain and
+settle cycle, the far sheets' `every` and the sky's own stream are as they
+were.
+
 ## The yard's sky on the cloud renderer (built)
 
 The clouds bench (`clouds.html`, `render/clouds.js`, `render/cloudgl.js`)

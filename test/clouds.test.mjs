@@ -90,7 +90,8 @@ test('a shape is its seed, and a cloud never draws from the yard\'s chance', () 
 
 // --- the liquid sky (clouds.js's layers; the card's half is tools/clouds-check.mjs) ---
 
-import { skyLayer, groundLayer, layerParams, puffAt, sumsAt, tierOf } from '../src/render/clouds.js';
+import { skyLayer, groundLayer, cloudLayer, layerParams, puffAt, sumsAt, tierOf } from '../src/render/clouds.js';
+import { CLOUD_BUDS } from '../src/config.js';
 import { CLOUDS_SKY } from '../src/config.js';
 
 test('toward the horizon a layer is smaller, flatter, slower, and worked less often', () => {
@@ -136,6 +137,23 @@ test('a crust lump rides its lobe: it never drifts off it', () => {
     puffAt(p, t, a); puffAt(p.follow, t, b);
     const d = Math.hypot(a.x - b.x, (a.y - b.y) / p.flat);
     assert.ok(d <= b.r * 1.6 + p.r, `a lump ${d.toFixed(1)} cells off a lobe of ${b.r.toFixed(1)} at ${t}s`);
+  }
+});
+
+// The yard's lone clouds (weather.js) move as one body too, buds and all: a
+// bud on a current of its own slid through the cloud it opened out of.
+test("a yard cloud moves as one body: its lobes, lumps and buds keep their places in it", () => {
+  for (const seed of [3, 11, 29]) {
+    const L = cloudLayer({ kind: 'cumulus', R: 7, seed, d: 0.8, grow: 1.4, buds: CLOUD_BUDS });
+    const billows = p => { for (let q = p; q; q = q.follow) if (q.billow) return true; return false; };
+    const still = L.puffs.filter(p => !billows(p)), root = still[0], a = {}, b = {};
+    assert.ok(still.some(p => p.bud !== undefined), 'the cloud has buds that do not billow');
+    const at = t => still.map(p => { puffAt(p, t, a); puffAt(root, t, b); return [a.x - b.x, a.y - b.y]; });
+    const was = at(0);
+    for (const t of [37, 151, 600]) at(t).forEach(([x, y], k) => {
+      const d = Math.hypot(x - was[k][0], y - was[k][1]);
+      assert.ok(d < 0.5, `a ${still[k].bud !== undefined ? 'bud' : 'puff'} of cloud ${seed} slid ${d.toFixed(2)} cells in it by ${t}s`);
+    });
   }
 });
 
