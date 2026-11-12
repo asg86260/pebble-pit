@@ -116,6 +116,9 @@ export const AFTER_STATION_ROWS = [
     // button, and its drawing opens nothing; its build sign is the way in.
     open: () => live() && built(card),
     ...(card in AFTER_BUILDS ? { lot: lotOf(card) } : {}),
+    // REVIEW faith18: the shrine's prayer rungs are built on it, each a new
+    // look put up by the builders (rows.js, `raiseRow`)
+    ...(card === 'shrine' ? { site: { floor: floorAt } } : {}),
     // The construction shack sells nothing (the owner, 2026-11-10): it
     // stands, with no board and no button, and the pointer opens nothing on
     // it (`hit`), but names it over its drawing (`over`).

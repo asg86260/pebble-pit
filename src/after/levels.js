@@ -38,7 +38,11 @@ export const bigSigns = () => has('after-signreach');
 export const stumpsOn = () => has('after-stumps');
 export const bladeLogs = () => (has('after-blade') ? AFTER_BLADE_LOGS : 1);
 // MOCK faith16: the faith one prayer adds, a multiple a rung of the shrine's prayer ladder
-export const prayerRung = () => upCount('after-prayer');   // MOCK faith17
+// REVIEW faith18: the rung the shrine's look stands at, and the work putting
+// up the next (rows.js, `raiseRow`), a raised rung's work keyed `<row>-raise`.
+export const raiseKey = key => `${key}-raise`;
+export const prayerRung = () => upCount('after-prayer');
+export const prayerRaise = () => workOn(raiseKey('after-prayer'));
 export const prayerMult = () => AFTER_PRAYER_MULT[upCount('after-prayer')];
 export const benchSigns = () => (has('after-bench') ? AFTER_BENCH_SIGNS : 1);
 export const signReach = big => (big ? SIGN_REACH_UP : SIGN_REACH);

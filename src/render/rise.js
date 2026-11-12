@@ -54,7 +54,13 @@ export function withRise(place, x, bottom, w, h, fn) {
   if (!r) { fn(); return; }
   // The first work raising this place is the one going up; a copy queued
   // behind it is at nought and has nothing to show yet.
-  const p = Math.max(0, Math.min(1, progressOf(r.w)));
+  laidAt.set(place, layCourses(progressOf(r.w), x, bottom, w, h, fn));
+}
+// The same clip at a share `p` of the rect laid, for a drawing that shows a
+// building going up off a clock of its own (a review scene's loop), handing
+// back the courses it let through.
+export function layCourses(p, x, bottom, w, h, fn) {
+  p = Math.max(0, Math.min(1, p));
   // on the lattice, so a cell is a cell
   const cols = Math.max(1, Math.round(w / P)), rows = Math.max(1, Math.round(h / P));
   const left = Math.round(x / P) * P, foot = Math.round(bottom / P) * P;
@@ -64,12 +70,12 @@ export function withRise(place, x, bottom, w, h, fn) {
   const rects = [];
   if (full) rects.push({ x: left, y: foot - full * P, w: cols * P, h: full * P });
   if (part) rects.push({ x: left, y: foot - (full + 1) * P, w: part * P, h: P });
-  laidAt.set(place, rects);
-  if (!laid) return;
+  if (!laid) return rects;
   ctx.save();
   ctx.beginPath();
   for (const q of rects) ctx.rect(q.x, q.y, q.w, q.h);
   ctx.clip();
   fn();
   ctx.restore();
+  return rects;
 }

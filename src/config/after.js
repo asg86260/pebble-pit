@@ -445,8 +445,10 @@ export const AFTER_UPGRADES = {
                                                     [['rebel', 200], ['timber', 15]], [['rebel', 500], ['timber', 18]]],
                          marks: [0.1, 0.25, 0.45, 0.7] },
   // MOCK faith16: the shrine's prayer ladder: each rung multiplies the faith a prayer adds (AFTER_PRAYER_MULT), the podium's shape without its marks
-  'after-prayer':      { card: 'shrine',    bills: [[['rebel', 60], ['timber', 3]], [['rebel', 150], ['timber', 8]],
-                                                    [['rebel', 350], ['timber', 15]], [['rebel', 700], ['timber', 18]]] },
+  // REVIEW faith18: `raise`, each rung a new look of its station's, put up by the builders once its timber is carried (rows.js, `raiseRow`)
+  'after-prayer':      { card: 'shrine',    raise: true,
+                         bills: [[['rebel', 60], ['timber', 3]], [['rebel', 150], ['timber', 8]],
+                                 [['rebel', 350], ['timber', 15]], [['rebel', 700], ['timber', 18]]] },
   'after-saw':         { card: 'grove',     bills: [[['rebel', 50], ['dust', 8000]]] },                  // the saw: the woodcutter fells (the owner, 2026-10-30)
   'after-plot':        { card: 'grove',     bills: [[['rebel', 60], ['dust', 15000]],
                                                     [['rebel', 200], ['timber', 5], ['dust', 40000], ['spore', 10000]],
@@ -833,13 +835,13 @@ const HEART16 = {
 };
 AFTER_SHRINE_HEART.heart16 = HEART16;
 
-// MOCK faith17
-// The shrine's drawing by prayer rung (render/after/stations.js, `PATHS`): five
-// looks, the foot and the four rungs, each path's last the church. `tops` how
-// many cells up each look reaches, which the ring sits two cells over; `hold`
-// how long a look stands in a scene's loop, `climb` how a rung lands, the
-// podium's (the old look fading, the new standing up a course at a time).
-export const AFTER_SHRINE_STAGES = {
-  hold: 4, climb: { ...AFTER_PODIUM_CLIMB, s: 3 }, gap: 2,
-  tops: { A: [11, 11, 18, 23, 24], B: [10, 11, 16, 18, 24], C: [2, 12, 21, 24, 24] }
-};
+// REVIEW faith18
+// The shrine's looks by prayer rung (render/after/stations.js, `LOOKS`): a
+// wayside cross, an altar, a chapel, the chapel with its bell tower, the
+// church. A rung's look is put up by the act's builders on the yard's works
+// (after/rows.js, `raiseRow`), rising a course at a time over the look
+// standing, which fades out over `fade` seconds once the new one stands.
+// `tops` how many cells up each look reaches, which the ring rides two cells
+// over; `hold` how long each rung takes in a review scene's loop and `rise`
+// how long of it the next look takes to be laid there.
+export const AFTER_SHRINE_LOOKS = { tops: [11, 11, 18, 23, 24], fade: 2.4, hold: 6, rise: 2.5 };
