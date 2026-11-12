@@ -37,13 +37,13 @@ import { registerBoard, openBoardByKey } from '../boardrows.js';
 import { purse, leftText } from '../words.js';
 import { rungCost } from '../upgrades/price.js';
 import { payTo } from '../pit.js';
-import { upCount, built, seatKey, seatsBought } from './levels.js';
+import { upCount, built, seatKey, seatsBought, raiseKey } from './levels.js';
 import { crewAt, spareMembers } from './bodies.js';
 import { clearPlot } from './grove.js';
 import { SEEDS_ROW, seedsBought, seedsRoom, seedBill, owe } from './seeds.js';
 import { placeOrder, orderedOf } from './orders.js';
 import { onOrderLanded } from './landing.js';
-import { registerRows } from '../works.js';
+import { registerRows, start, workOn } from '../works.js';
 import { stationBox, plotX, groveX1, afterFloor, afterX0, floorAt, AP } from './place.js';
 import { union, won, ready, hire, support } from './union.js';
 import { setCrowdAt } from './stations.js';
@@ -140,16 +140,40 @@ function orderOr(key, card, bill) {
   if (n > 0) placeOrder(key, card, n); else LAND[key]();
 }
 
-const upRow = key => {
+// REVIEW faith18
+// A rung that is a new look of its station's (`raise` in AFTER_UPGRADES: the
+// shrine's prayer ladder, a wayside cross grown into a church) is put up on
+// the yard's works by the act's builders, as a station is (`buildRow`): its
+// timber carried first, the order's landing opening the work at the station
+// (`LAND`), the work's landing counting the rung, so the look changes only
+// once somebody has built it. The work's row is on no board; it is how a
+// work coming back out of a save knows what it lands.
+const raisingUp = key => !!AFTER_UPGRADES[key].raise && !!workOn(raiseKey(key));
+const countUp = key => { S.after.ups[key] = upCount(key) + 1; S.after.upAt[key] = S.after.t; UP_DOES[key]?.(); };
+const raiseRow = key => {
   const { card, bills } = AFTER_UPGRADES[key];
+  return {
+    key: raiseKey(key), name: UP_NAMES[key](), card: null, lands: card, ...ACT_ROW,
+    kind: 'building', site: `after-${card}`, raises: `after-${card}-look`,
+    rung: () => upCount(key), rungs: () => bills.length,
+    // the rung's own bill, already paid, for what strokes the work's bar and its mark
+    bill: () => bills[Math.min(upCount(key), bills.length - 1)].map(([c, n]) => [c, n]),
+    show: () => false,
+    buy: () => countUp(key)
+  };
+};
+
+const upRow = key => {
+  const { card, bills, raise } = AFTER_UPGRADES[key];
   const bill = () => bills[Math.min(upCount(key), bills.length - 1)].map(([c, n]) => [c, n]);
-  LAND[key] = () => { S.after.ups[key] = upCount(key) + 1; S.after.upAt[key] = S.after.t; UP_DOES[key]?.(); };
+  LAND[key] = raise ? () => start(`after-${card}`, afterRow(raiseKey(key))) : () => countUp(key);
+  const busy = () => carrying(key) || raisingUp(key);
   return {
     key, name: UP_NAMES[key](), card, ...ACT_ROW,
     rung: () => upCount(key), rungs: () => bills.length, bill,
     show: () => cardOpen(card),
-    dead: () => waitsOn(key) || carrying(key),
-    waits: () => (carrying(key) ? msg('card-building') : waitsOn(key) ? msg('after-wait-support', { share: Math.round(markOf(key) * 100) }) : null),
+    dead: () => waitsOn(key) || busy(),
+    waits: () => (busy() ? msg('card-building') : waitsOn(key) ? msg('after-wait-support', { share: Math.round(markOf(key) * 100) }) : null),
     buy: () => orderOr(key, card, bill())
   };
 };
@@ -240,7 +264,8 @@ export const AFTER_ROWS = [
   ...AFTER_JOBS.map(seatRow),
   // the seeds row stands between stump removal and self-seeding
   ...Object.keys(AFTER_UPGRADES).flatMap(k => (k === 'after-selfseed' ? [seedsRow, upRow(k)] : [upRow(k)])),
-  ...Object.keys(AFTER_BUILDS).map(buildRow)
+  ...Object.keys(AFTER_BUILDS).map(buildRow),
+  ...Object.keys(AFTER_UPGRADES).filter(k => AFTER_UPGRADES[k].raise).map(raiseRow)
 ].map(inAct);
 // First on the pedestal's board; its line is a getter, so it is not spread.
 AFTER_ROWS.unshift(recruitRow);
