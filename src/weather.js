@@ -24,7 +24,17 @@ import { gust } from './wind.js';
 import { spawnChip, bell } from './dust.js';
 import { ctx } from './render.js';
 import { cloudLayer, restTiers } from './render/clouds.js';
-import { rand } from './rng.js';
+import { rand, stream, seed as runSeed } from './rng.js';
+
+// The sky's own chance: where a cloud is born, its shape, when the birds come
+// and how they fly. Off the yard's stream (`rand`) a cloud born as the
+// camera reaches it, or a flight a frame later, moved every draw the yard
+// took after it, and a seeded run played out differently with the sky on --
+// the sky is the yard's picture and must not move the yard. Reseeded off the
+// run's seed with each new run, so a run's sky is its own too. What a bird
+// shakes loose when clicked is the yard's, and stays on `rand`.
+const SKY_SALT = 0x5c1e5;
+let sky = stream(SKY_SALT); // held: the sky's stream, a run's own (`resetWeather`)
 import { meet } from './met.js';
 import { sfx } from './audio.js';
 import { earn } from './notices.js';
@@ -50,7 +60,7 @@ function band() {
 
 function inBand() {
   const { top, low } = band();
-  return top + rand() * (low - top);
+  return top + sky() * (low - top);
 }
 
 // A cloud's height, worked out from the band every frame rather than fixed at
@@ -164,18 +174,17 @@ function cloudTones(crown, base, far) {
 // as it is drawn. Here it is the fact the game keeps: where it is, how deep,
 // how fast it drifts, and `layer`, its puffs in its own window of cells
 // (`cloudLayer`), sized for it at the fullest swell, its buds (CLOUD_BUDS)
-// made with it and shut, so the window is never made again as it grows. The puffs are drawn from a stream of the cloud's
-// own seed, one draw off the yard's generator: a drawing must not spend the
-// yard's chance. Its `give` is its own share of the swell, so no two clouds
+// made with it and shut, so the window is never made again as it grows. Its
+// puffs are drawn from a stream of the cloud's own seed, one draw off the
+// sky's stream. Its `give` is its own share of the swell, so no two clouds
 // grow a cell on the same frame and the sky never steps in lockstep -- read
-// off its depth rather than drawn, because a draw here is a number off the
-// yard's one generator at seed time and every seeded run, weather or not,
-// would come out differently. `sheet` is which of CLOUD_LAYERS it is born into, and it stays there:
-// its size, its grain and its depth are the sheet's. Its height is not --
-// every cloud's base is in its sheet's lane (CLOUD_LANES).
-const between = ([a, b]) => a + rand() * (b - a);
+// off its depth rather than drawn, so a cloud costs the sky's stream no more
+// than it must. `sheet` is which of CLOUD_LAYERS it is born into, and it
+// stays there: its size, its grain and its depth are the sheet's. Its height
+// is not -- every cloud's base is in its sheet's lane (CLOUD_LANES).
+const between = ([a, b]) => a + sky() * (b - a);
 function pickShape(shares) {
-  let x = rand() * Object.values(shares).reduce((n, k) => n + k, 0);
+  let x = sky() * Object.values(shares).reduce((n, k) => n + k, 0);
   for (const k in shares) if ((x -= shares[k]) < 0) return k;
   return Object.keys(shares)[0];
 }
@@ -187,8 +196,8 @@ function makeCloud(x, sheet) {
   const L = CLOUD_LAYERS[sheet];
   const kind = pickShape(CLOUD_SHAPES);
   const R = between(CLOUD_R) * L.scale * CLOUD_GRAIN;
-  const seed = Math.floor(rand() * 1e9);
-  const off = rand() * 2 - 1;                // where in its sheet's thickness it sits
+  const seed = Math.floor(sky() * 1e9);
+  const off = sky() * 2 - 1;                // where in its sheet's thickness it sits
   const far = L.far + off * CLOUD_FAR_JITTER;
   const yb = between(CLOUD_LANES[L.name]) * P;   // its base, in pixels below the band's top
   const layer = cloudLayer({ kind, R, seed, flat: L.flat, d: nearOf(far), grow: 1 + CLOUD_GROW_R, buds: CLOUD_BUDS });
@@ -240,14 +249,15 @@ export function seedWeather() {
 // (render/yardsky.js). The background's clock, so a held scene holds them.
 let skyT = 0;   // held: seconds of sky since the page came up
 export const skyClock = () => skyT;
-held('weather-timers', () => { nextBirds = 0; toSpread = true; skyT = 0; });
+held('weather-timers', () => { nextBirds = 0; toSpread = true; skyT = 0; sky = stream((runSeed() ^ SKY_SALT) >>> 0); });
 
 // A new run is a new sky. Only from the yard's own reset, never from the
 // layout: the layout runs on every resize, and a sky cleared there is a
 // window full of different clouds every time it is dragged. The clouds are
-// drawn out of the run's own chance, so one left standing is a fact of the
-// last run in this one -- which `the same seed is the same run` catches.
+// drawn out of the run's own sky stream, so one left standing is a fact of
+// the last run in this one -- which `the same seed is the same run` catches.
 export function resetWeather() {
+  sky = stream((runSeed() ^ SKY_SALT) >>> 0);
   CLOUDS.length = 0;
   BIRDS.length = 0;
   nextBirds = 0;
@@ -262,7 +272,7 @@ function spreadSky() {
   CLOUD_LAYERS.forEach((L, sheet) => {
     for (let i = inSheet(sheet); i < L.n; i++) {
       const c = makeCloud(0, sheet);
-      c.x = skyCam().x * c.far + (i + rand()) * (skyCam().w / L.n) - c.w * cellOf(c);
+      c.x = skyCam().x * c.far + (i + sky()) * (skyCam().w / L.n) - c.w * cellOf(c);
       CLOUDS.push(c);
     }
   });
@@ -311,7 +321,7 @@ export function stepWeather(now) {
   if (!nextBirds) nextBirds = now + BIRD_GAP / 2;
   if (now >= nextBirds) {
     sendBirds();
-    nextBirds = now + BIRD_GAP * (0.6 + rand() * 0.8);
+    nextBirds = now + BIRD_GAP * (0.6 + sky() * 0.8);
   }
   for (let i = BIRDS.length - 1; i >= 0; i--) {
     const b = BIRDS[i];
@@ -376,12 +386,12 @@ function cellsOf(c, sw) {
 // A few birds, strung out rather than in a formation: same heading, each a
 // little behind and a little off the last.
 export function sendBirds() {
-  const dir = rand() < 0.5 ? 1 : -1;
-  const far = 0.35 + rand() * 0.3;
+  const dir = sky() < 0.5 ? 1 : -1;
+  const far = 0.35 + sky() * 0.3;
   const y = inBand();
-  const speed = BIRD_SPEED * (0.7 + rand() * 0.6) * dir;
+  const speed = BIRD_SPEED * (0.7 + sky() * 0.6) * dir;
   const from = dir > 0 ? -P * 8 : skyCam().w + P * 8;
-  const n = 2 + Math.floor(rand() * (BIRD_FLOCK - 1));
+  const n = 2 + Math.floor(sky() * (BIRD_FLOCK - 1));
   // The lot they came in as, shared by all of them, is what says whether you
   // got the whole lot. On the birds rather than in the save because the birds
   // are not saved either.
@@ -390,13 +400,13 @@ export function sendBirds() {
   for (let i = 0; i < n; i++) {
     BIRDS.push({
       lot,
-      x: skyCam().x * far + from - dir * i * (P * 6 + rand() * P * 8),
-      y: y + (rand() - 0.5) * P * 6,
+      x: skyCam().x * far + from - dir * i * (P * 6 + sky() * P * 8),
+      y: y + (sky() - 0.5) * P * 6,
       vx: speed,
       far,
-      sway: rand() * 1000,
-      flap: rand() * 10,
-      beat: 0.12 + rand() * 0.06
+      sway: sky() * 1000,
+      flap: sky() * 10,
+      beat: 0.12 + sky() * 0.06
     });
   }
 }
@@ -455,7 +465,7 @@ export function startle(wx, wy) {
 // pixels and go soft. A cloud's is not: it is snapped to device pixels as it
 // is drawn, and rounding it to its cell first made it hop a cell at a time
 // against a camera that scrolls smoothly.
-const skyAt = s => s.x + skyCam().x * (1 - s.far);
+export const skyAt = s => s.x + skyCam().x * (1 - s.far);
 
 // Where a balloon hangs under a cloud, in the cloud's own space: the middle of
 // its base, as an `x` the camera is added to the way it is added to a cloud's

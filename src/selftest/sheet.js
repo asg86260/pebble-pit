@@ -53,16 +53,16 @@ const atRest = () => {
 const settled = async () => { was = ''; alike = 0; await frames(1); await until(atRest, 180); };
 
 // The handle in hand: a press at its middle, moved `dy` down (up when
-// negative) over a few moves, and let go.
+// negative) over six moves a sixtieth of a second apart, and let go while
+// still moving. On the finger's own clock (`finger`, below): the sheet reads
+// the speed it is let go at off the events' times, and a drag stamped with
+// the page's frames was a slow one whenever the frames were late -- a drag
+// up from the seat that coasts to tall on a quick machine settled back at
+// the seat on a slow one.
 async function dragHandle(dy, el = handle()) {
-  const r = el.getBoundingClientRect();
-  const x = r.left + r.width / 2, y = r.top + r.height / 2;
-  const ev = (type, at, buttons = 1) => el.dispatchEvent(new PointerEvent(type, {
-    clientX: x, clientY: at, pointerId: 5, isPrimary: true, pointerType: 'touch', button: 0, buttons, bubbles: true }));
-  ev('pointerdown', y);
-  for (let i = 1; i <= 6; i++) { ev('pointermove', y + dy * i / 6); await raf(); }
-  ev('pointerup', y + dy, 0);
-  await settled();
+  const f = finger(el);
+  await f.move(dy, 100);
+  await f.up();
 }
 
 // A touch that begins somewhere and ends somewhere else, through the pointer
@@ -85,28 +85,34 @@ const rect = () => panel().getBoundingClientRect();
 
 // A finger on the handle that can be moved, held still and lifted, each move
 // made in its own moment, so the speed the sheet reads off the last moves is
-// the speed the check moved at: `dy` over `ms`, a step a frame or so.
+// the speed the check moved at: `dy` over `ms`, a step a frame or so. Each
+// event carries the finger's own clock as its `timeStamp`, which is what the
+// sheet reads the speed off: a busy machine that wakes a sleep late would
+// otherwise turn a flick into a finger held still.
 function finger(el = handle()) {
   const r = el.getBoundingClientRect();
   const x = r.left + r.width / 2;
-  let y = r.top + r.height / 2;
-  const ev = (type, buttons = 1) => el.dispatchEvent(new PointerEvent(type, {
-    clientX: x, clientY: y, pointerId: 11, isPrimary: true, pointerType: 'touch', button: 0, buttons, bubbles: true }));
+  let y = r.top + r.height / 2, t = performance.now();
+  const ev = (type, buttons = 1) => {
+    const e = new PointerEvent(type, {
+      clientX: x, clientY: y, pointerId: 11, isPrimary: true, pointerType: 'touch', button: 0, buttons, bubbles: true });
+    Object.defineProperty(e, 'timeStamp', { value: t });
+    el.dispatchEvent(e);
+  };
   ev('pointerdown');
   return {
     async move(dy, ms) {
       const n = Math.max(3, Math.round(ms / 16)), y0 = y;
-      // wall time by design: the sheet reads the finger's speed off the clock
-      for (let i = 1; i <= n; i++) { await sleep(ms / n); y = y0 + dy * i / n; ev('pointermove'); }
+      for (let i = 1; i <= n; i++) { await sleep(ms / n); t += ms / n; y = y0 + dy * i / n; ev('pointermove'); }
     },
+    async hold(ms) { await sleep(ms); t += ms; },
     async up() { ev('pointerup', 0); await settled(); },
   };
 }
 // A flick: quick, lifted while still moving. A slow drag: slow, and the
 // finger still a moment before it lifts, as a thumb that has placed the sheet.
 const flick = async (dy, el) => { const f = finger(el); await f.move(dy, 48); await f.up(); };
-// (the still moment is wall time: the speed at the lift is read off the clock)
-const slow = async (dy, el) => { const f = finger(el); await f.move(dy, 800); await sleep(150); await f.up(); };
+const slow = async (dy, el) => { const f = finger(el); await f.move(dy, 800); await f.hold(150); await f.up(); };
 const shownNow = () => sheetStop()?.height ?? 0;
 // How much shows at the seat; and the way down from tall to just past it.
 const seatPx = () => Math.round(state().H * (1 - SHEET_H));

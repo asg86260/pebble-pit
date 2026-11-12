@@ -8414,6 +8414,34 @@
   "text": "collect faith"
  },
  {
+  "id": "after-pile-logs",
+  "group": "Act 3 boards (track C, placeholder)",
+  "where": "src/after/stations.js",
+  "context": "the name of a counted pile in act 3 (the logs of the saw mill and grove); never a hover",
+  "text": "log pile"
+ },
+ {
+  "id": "after-pile-planks",
+  "group": "Act 3 boards (track C, placeholder)",
+  "where": "src/after/stations.js",
+  "context": "the name of a counted pile in act 3 (the timber at the saw mill and the workshop's bench); never a hover",
+  "text": "plank pile"
+ },
+ {
+  "id": "after-pile-signs",
+  "group": "Act 3 boards (track C, placeholder)",
+  "where": "src/after/stations.js",
+  "context": "the name of a counted pile in act 3 (the workshop's signs); never a hover",
+  "text": "sign pile"
+ },
+ {
+  "id": "after-pile-seeds",
+  "group": "Act 3 boards (track C, placeholder)",
+  "where": "src/after/stations.js",
+  "context": "the name of a counted pile in act 3 (the grove's seed basket by the forestry shack); never a hover",
+  "text": "seed basket"
+ },
+ {
   "id": "after-board-grove",
   "group": "Act 3 boards (track C, placeholder)",
   "where": "src/after/stations.js",

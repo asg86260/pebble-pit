@@ -720,8 +720,9 @@ TESTS.push(['deep: a press held in the water catches the scales sinking past it'
 // bodies veiled, each body ringed. Pressed through the real pointer on a
 // body, then the frame drawn with the sight held and with it let go, from the
 // same instant: the ring's left side has gone over to the body's own ink, and
-// the veil has changed a good share of the window (the deep's open water is
-// its paper, and a veil over paper changes nothing). The yard is the control.
+// the veil has taken most of what is not paper toward paper (the deep's open
+// water is its paper, and a veil over paper changes nothing). The yard is the
+// control.
 import { inTheDeep } from '../render/crew.js';
 import { isFighter } from '../render/arms.js';
 import { WORKER, SIGHT_IN_MS, SIGHT_GAP, SIGHT_RING, DEEP_SURFACE } from '../config.js';
@@ -742,6 +743,8 @@ TESTS.push(['deep: the right button held veils the deep and rings its crew, as i
   // furthest over toward the body's ink from what is there with the sight let
   // go -- the yard's ink is the darkest of the body's own pixels.
   const toward = (held, free, ink) => Math.abs(held - ink) + 64 < Math.abs(free - ink);
+  // Paper, or near enough that the veil cannot move it by a whole tone.
+  const PAPER_NEAR = 16;
   // The ring is read along one side of the body, chosen when the frame is
   // drawn: a body stands over its neighbor's ring where they rest together
   // (the crusher's gatherers do), so the side read is one no other body, nor
@@ -766,10 +769,15 @@ TESTS.push(['deep: the right button held veils the deep and rings its crew, as i
   // rock's dark face (the middle of a phone's glass) has none of that round
   // it. Read in the frame the sight is read in, with it let go (a climbing
   // body has moved since the press): the first free side with paper under
-  // every point of the ring, or -1.
-  const paperSide = w => {
+  // every point of the ring, or -1. In the deep the ring is the water's
+  // opposite, so it shows wherever the water is bare; but the water's
+  // drift -- a builder's silt, the scales sinking -- is drawn in front of the
+  // crew and their rings, so a side is read only where, let go, there is
+  // nothing but the deep's paper under it.
+  const paperSide = (w, half) => {
     draw();
     const ink = inkOf(w);
+    const clear = half === 'deep' ? f => f < PAPER_NEAR : f => Math.abs(f - ink) > 128;
     // the pixels wholly under the ring at a point, or the one it is centered on
     const under = ([x0, y0, x1, y1]) => {
       const [ax, ay] = onScreen(x0, y0), [bx, by] = onScreen(x1, y1);
@@ -780,7 +788,7 @@ TESTS.push(['deep: the right button held veils the deep and rings its crew, as i
       return o;
     };
     return ringSides(w).findIndex(o => !covered(w, o.box) &&
-      o.pts.every(pt => under(pt).every(f => Math.abs(f - ink) > 128)));
+      o.pts.every(pt => under(pt).every(clear)));
   };
   const look = (half, w, paper = false) => {
     const [x, y] = onScreen(w.x + WORKER / 2, w.y + WORKER / 2);
@@ -791,7 +799,7 @@ TESTS.push(['deep: the right button held veils the deep and rings its crew, as i
     if (paper) {
       const keep = S.crewSight;
       S.crewSight = null;
-      pick = paperSide(w);
+      pick = paperSide(w, half);
       S.crewSight = keep;
       if (pick < 0) { point('pointerup', x, y, 0, 2); return null; }
     }
@@ -808,8 +816,19 @@ TESTS.push(['deep: the right button held veils the deep and rings its crew, as i
     const off = read();
     S.crewSight = keep;
     point('pointerup', x, y, 0, 2);
-    let differ = 0, n = 0;
-    for (let i = 0; i < on.all.length; i += 64, n++) if (on.all[i] !== off.all[i]) differ++;
+    // The veil is paper laid over everything behind the crew, so it takes
+    // whatever is not already paper toward it and leaves paper as it was: of
+    // the samples with ink under them let go, most went toward paper held
+    // (the bodies and what is drawn over the veil are the rest). A share of
+    // the whole window would be a fact about how much sky the camera had in
+    // it. The deep is drawn inverted: its paper is black.
+    const blank = half === 'deep' ? 0 : 255;
+    let inked = 0, paled = 0;
+    for (let i = 0; i < on.all.length; i += 64) {
+      if (Math.abs(off.all[i] - blank) < PAPER_NEAR) continue;
+      inked++;
+      if (Math.abs(on.all[i] - blank) < Math.abs(off.all[i] - blank)) paled++;
+    }
     // Each point's band, held against let go, at the pixel that moved most:
     // in the yard toward the body's ink; in the deep, which is drawn
     // inverted so its ink is the paper's tone, either way at all.
@@ -822,7 +841,7 @@ TESTS.push(['deep: the right button held veils the deep and rings its crew, as i
       ok(held, `${half}: the right button down on a body holds the sight`, String(held)),
       ok(most.every(([h, f]) => (half === 'deep' ? Math.abs(h - f) > 64 : toward(h, f, on.ink))),
          `${half}: and the body wears a ring`, `ink ${on.ink}; held/let go ${most.map(([h, f]) => `${h}/${f}`).join(' ')}`),
-      ok(differ > n / 10, `${half}: and what is behind it is veiled`, `${differ} of ${n} samples`)
+      ok(inked > 0 && paled > inked / 2, `${half}: and what is behind it is veiled`, `${paled} of ${inked} inked samples toward paper`)
     ];
   };
   deepYard();
@@ -847,10 +866,12 @@ TESTS.push(['deep: the right button held veils the deep and rings its crew, as i
   run(VIEW_GLIDE_S + 1);
   const below = S.workers.find(w => !w.lifted && inTheDeep(w) && !isFighter(w) && w.y > deepTop() + DEEP_SURFACE + P * 4);
   if (below) { window.__look(below.x - S.viewW / 2); run(0.1); }
-  const down = near(S.workers.filter(w => !w.lifted && inTheDeep(w) && !isFighter(w) &&
-                                             w.y > deepTop() + DEEP_SURFACE + P * 4 && onGlass(w)))[0];
-  const deep = down ? look('deep', down)
-                    : [ok(false, 'deep: a body on the glass', String(S.workers.filter(inTheDeep).length))];
+  const swimmers = near(S.workers.filter(w => !w.lifted && inTheDeep(w) && !isFighter(w) &&
+                                             w.y > deepTop() + DEEP_SURFACE + P * 4 && onGlass(w)));
+  const down = swimmers[0];
+  let deep = null;
+  for (const w of swimmers) if ((deep = look('deep', w, true))) break;
+  deep ||= [ok(false, 'deep: a body on the glass with bare water round its ring', `${swimmers.length} on the glass`)];
   // The rest of the pointer's crew controls down there: with the right button
   // held, the left takes the body under the hand (a chord arrives as a move),
   // and the middle button drags the view along.

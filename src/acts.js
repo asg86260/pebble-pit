@@ -18,7 +18,6 @@ import { AFTERLIFE_ON, HELL_ON, ACT_ROAD_UNDER } from './config.js';
 import { held } from './reset.js';
 import { demoOn } from './demo.js';
 import { AFTER_PLACE } from './after/place.js';
-import { godFront, restW } from './after/sky.js';
 import { HELL_PLACE, HELL_ROUTE } from './hell/place.js';
 import { AFTER_CREW } from './after/bodies.js';
 import { AFTER_LANDING } from './after/piles.js';

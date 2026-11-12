@@ -594,7 +594,12 @@ export function verifyWorld() {
       fail('the serpent\'s level jumped', `level ${levelWas} then ${level}`);
     if (!(S.serpentBest >= level))
       fail('the best level is under the level fought', `best ${S.serpentBest}, level ${level}`);
-    const rose = levelWas >= 0 && level === levelWas + 1;
+    // A load forgets the level read before it, but the return is still known
+    // by its shape -- down to the last, past the story -- and is the first
+    // frame after a load whenever the kill was saved down (`stepDown` reads a
+    // saved moment as long past).
+    const rose = levelWas >= 0 ? level === levelWas + 1
+      : serpentWas === SERPENT_PHASES && stage === SERPENT_PHASES - 1 && level >= 2;
     if (level > 1 && stage !== SERPENT_PHASES - 1)
       fail('the serpent past the story is on a defense before its last', `level ${level}, stage ${stage}`);
     // The recoil is a level's bar emptied, past the story, and lasts its length

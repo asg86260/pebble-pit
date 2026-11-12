@@ -29,9 +29,12 @@ import { shopBoxOf, rosterShops } from '../roster.js';
 import { drawnMid } from '../footprints.js';
 
 const live = () => afterlifeOn() && !!S.after;
-// A counted pile's box, the one its mark hangs from: `pileMarkAt` hangs
+// A counted pile's name, and the box its mark hangs from: `pileMarkAt` hangs
 // a pile row's mark five cells over its box's top, so the box's top is the
-// plot's at its fullest.
+// plot's at its fullest. The name is the row's, as every place's is (a
+// queue's line names its site by it); the pointer never says it, since the
+// row has neither `over` nor a `hit` that answers.
+const PILE_NAMES = { logs: 'after-pile-logs', grovelogs: 'after-pile-logs', timber: 'after-pile-planks', benchtimber: 'after-pile-planks', signs: 'after-pile-signs', seeds: 'after-pile-seeds' };
 function pileTop(what) {
   const g = pilePlace(what);
   return { x: g.x, y: g.y, w: g.cols * g.p, h: g.rows * g.p };
@@ -135,6 +138,7 @@ export const AFTER_STATION_ROWS = [
   // name: the pointer neither opens nor names one (the owner, 2026-11-11).
   ...PILED.map(what => ({
     key: `after-pile-${what}`, place: 'after', glyph: 'crate', after: [], needs: () => false,
+    get name() { return msg(PILE_NAMES[what]); },
     open: () => live() && built(pileOwner(what)), stand: () => pileTop(what), hit: () => false,
     pile: () => pileFull(what)
   })),

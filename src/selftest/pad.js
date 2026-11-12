@@ -329,22 +329,29 @@ export const TESTS = [
     S.beatsDone.push('meet', 'part');
     const mid = s => ({ x: s.x + s.w / 2, y: s.y + s.h / 2 });
     const limit = PAD_GLIDE_SPEED / 60 * 2;
-    // One press, and the marker on the glass each frame the page draws until
-    // it has landed.
+    // One press, and the marker on the glass at every sixtieth of a second of
+    // the wall clock the glide runs on, until it has landed. Read at even
+    // steps rather than at the page's frames: a late frame on a slow machine
+    // is a long step between two readings, not a marker moving any faster.
     const G = m => m && m.seen;      // the box on the glass, CSS pixels
+    const STEP = 1000 / 60;
     const follow = async name => {
-      const start = G(window.__pad.markNow());
+      let t = performance.now();
+      const seen = [G(window.__pad.markAt(t))];
       const b = fake.buttons[BUTTONS[name]];
       b.pressed = true; b.value = 1;
       await raf();
       b.pressed = false; b.value = 0;
-      const seen = [start];
-      for (let i = 0; i < 120; i++) {
+      let landed = false;
+      for (let i = 0; i < 120 && !landed; i++) {
         await raf();
-        const m = window.__pad.markNow();
-        if (!m) break;
-        seen.push(G(m));
-        if (m.landed) break;
+        for (const end = performance.now(); t + STEP <= end && !landed; ) {
+          t += STEP;
+          const m = window.__pad.markAt(t);
+          if (!m) { landed = true; break; }
+          seen.push(G(m));
+          landed = m.landed;
+        }
       }
       const a = mid(seen[0]), z = mid(seen[seen.length - 1]);
       const far = Math.hypot(z.x - a.x, z.y - a.y);

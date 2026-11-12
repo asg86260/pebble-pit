@@ -4,10 +4,11 @@
 import { sleep, newRun, raf, settle, state, ok, canvas, board, panel, shop, point, onScreen, runUntil,
   haveBench, hoverBench, hoverStation, openCrewList, hoverAway, run, cardShows, asScreen, onPage, landed, until } from './kit.js';
 import { objective } from '../objectives.js';
-import { TIER_OWN, TIER_BAND, PROP_FROM, SHELF_HAND_FADE, MACHINE_TUNE_RUNGS } from '../config.js';
+import { P, TIER_OWN, TIER_BAND, PROP_FROM, SHELF_HAND_FADE, MACHINE_TUNE_RUNGS } from '../config.js';
 import { offered, STATIONS, here, station } from '../stations.js';
 import { handsOf } from '../levels.js';
 import { JOB } from '../jobs.js';
+import { poopCols, muckFloor } from '../smog.js';
 
 // The ink standing in the band of sky over a station, where nothing else
 // black stands, so it counts the flag and very little else. Measured in the
@@ -706,15 +707,22 @@ export const TESTS = [
     window.__tune('LOO_EVERY', 3000);
     window.__air({ haze: 0, muck: 0 });         // no weather: all of it is theirs
     run(90);
+    // Looked at where they left it: wherever the walk took them, which on a
+    // phone's narrow window is often off the screen the run ended on.
+    const poo = poopCols();
+    let c = 0;
+    for (let i = 0; i < poo.length; i++) if ((poo[i] || 0) > (poo[c] || 0)) c = i;
+    window.__look(c * P + P / 2 - state().viewW / 2);
     await painted();
 
-    // the band of ground just above the line, across the middle of the yard
+    // the cells over the leavings' foot, a few columns either side of them
     const s = state();
     const dpr = window.devicePixelRatio || 1;
-    const x0 = Math.max(0, Math.round((s.camX + 40 - s.camX) * s.zoom * dpr));
-    const y0 = Math.round((s.groundY - 20 - s.camY) * s.zoom * dpr);
-    const w = Math.round(Math.min(s.viewW - 80, 900) * s.zoom * dpr);
-    const h = Math.round(20 * s.zoom * dpr);
+    const foot = muckFloor(c);
+    const x0 = Math.max(0, Math.round(((c - 3) * P - s.camX) * s.zoom * dpr));
+    const y0 = Math.max(0, Math.round((foot - ((poo[c] || 0) + 2) * P - s.camY) * s.zoom * dpr));
+    const w = Math.round(7 * P * s.zoom * dpr);
+    const h = Math.round(((poo[c] || 0) + 2) * P * s.zoom * dpr);
     const d = canvas().getContext('2d').getImageData(x0, y0, w, h).data;
     // the muck brown: warmer than the black everything else is drawn in
     let brown = 0;
@@ -1929,11 +1937,16 @@ export const TESTS = [
     const words = !!block()?.querySelector('.name')?.textContent && !block()?.querySelector('.note') && !!card.querySelector('.say')?.textContent;
     const unticked = !!dust() && !dust().classList.contains('done');
     const dim = buyBtn()?.disabled === true;
-    // each line is a bar: its fill is have over need of the line's own width
+    // each line is a bar: its fill is have over need of the line's own width.
+    // The share is written on a frame of the page's and the fill slides to it
+    // on the page's clock (`.fill` in style.css): waited for written, then
+    // for the slide to land, not for a stretch of the wall that a late write
+    // can eat into.
     const fillOf = async li => {
-      const t = performance.now();
-      while (performance.now() - t < 700) await new Promise(r => requestAnimationFrame(r));
-      const [h, n] = li.querySelector('.num').textContent.split('/').map(x => parseFloat(x));
+      const said = () => li.querySelector('.num').textContent.split('/').map(x => parseFloat(x));
+      await onPage(() => { const [h, n] = said(); return Math.abs(parseFloat(li.style.getPropertyValue('--p')) - Math.min(1, h / n)) < 1e-6; });
+      await landed(li);
+      const [h, n] = said();
       return { want: h / n, got: parseFloat(getComputedStyle(li, '::before').width) / li.getBoundingClientRect().width, line: li.textContent };
     };
     const fillA = dust() ? await fillOf(dust()) : null;

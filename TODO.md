@@ -4,28 +4,65 @@ Open work only. Each item carries its diagnosis and its blocker, so none of it
 has to be re-derived. What was built is in DESIGN.md (the `(built)` sections)
 and CHANGELOG.md; the old entries are in git history.
 
-## Act 3 builds through the yard's construction -- BUILT, ON THE REVIEW BENCH (2026-11-10)
+## Acts 3 and 4
 
-DESIGN.md, "Act 3 builds through the yard's construction", with the owner's
-three answers (one build speed, no dotted outline, no shack board). Built on
-branch `design-act3-build`, not on main: act 3's stations are works on
-works.js, built by one member, risen with `withRise`; old saves' half-raised
-stations migrate to SAVE_V 38. Blocker: the owner's vote on the review "act
-3: building through the yard's construction" (scenes `review-a3-build-a`,
-`-b`), then the landing. SAVE_V 38 collides with any other branch that
-raises it first; the later one renumbers.
+### Act 3's faith shrine -- BUILT ON A BRANCH, ON THE REVIEW BENCH (2026-11-11)
 
-## The mansion and the house on the one construction -- BUILT, ON THE REVIEW BENCH (2026-11-10)
+Built on branch `review-faith-full`, not on main; on the review bench as
+round 18. Path A is signed off: each prayer rung's look is put up by the
+yard's builders. Open: faith has no count in the sim, so `prayerMult()` only
+drives the ring's fill rate, and the arc jumps once when a rung lands in fill
+mode. Blocker: those two, then the landing.
 
-DESIGN.md, "The mansion and the house on the one construction": the mansion
-is a work on works.js its builders carry up a piece a trip (a row's `way`);
-home.js keeps its cutscene timeline and shares the piece geometry
-(pieces.js). Branch `audit-mansion-home`, on top of `design-act3-build-fold`,
-with one line in staffing.js (`want: buildersWanted(sites)`). Blocker: the
-owner's look at review "the mansion and the house on the shared
-construction" (`review-mansion-a`, `-b`), then landing after the act 3 fold.
+### Act 3's stair and act 2's abyssal sword -- DESIGNED, AWAITING APPROVAL (2026-11-09)
 
-## The yard's fences stand on their neighbors -- FOUND, NOT FIXED (2026-11-10)
+DESIGN.md, "The stair and the abyssal sword". Act 3's line builds a stair to
+God instead of winning a crowd share; faith is rebel renamed; act 2 gets a
+building (the reliquary) whose ladder strengthens the party; the serpent
+grows mightier by level, its level 25 drops an abyssal fang forged into a
+sword that is carried up and stabs God, unmasking him. The stair is to be
+redone on the yard's shared construction (works.js), as act 3's stations and
+the mansion now are; the audit of copied systems deferred it. The mock on
+`review-stair-build` is not that. Blocker: the owner's approval and the four
+open calls at the end of the section. God's crowd redraw (review-godcrowd,
+rounds 1-2) is parked.
+
+### Act 3 work on branches, not on main (2026-11-09)
+
+- **`clouds-build`** (38f4e29f): act 3's clouds move as one body and stand
+  as one sky.
+- **The God's-crowd ground fix** (f7e0b54a, on `review-godcrowd` and the
+  faith and stair review branches): the cloud path runs to the camera's last
+  window, so a wide window never looks past the place's end. Worth landing
+  alone.
+
+Blocker: someone lands each, or drops it.
+
+### A dialog system -- BUILT, THE LINES OPEN (2026-11-01)
+
+DESIGN.md, "A dialog system (design, approved)" is on main (src/dialog.js,
+`S.heard`), with God's existing captions standing in as his lines. Blocker:
+the premise's lines are the owner's to write (the five slots in "The first
+use"); none goes in the game until written.
+
+### Acts 3 and 4: the afterlife and hell -- PLAYABLE BEHIND SWITCHES, CALLS OPEN (2026-11-11)
+
+DESIGN.md, "Acts 3 and 4: the afterlife and hell". Act 3 is built on main
+on the shared systems (grove, saw mill, construction, crowd, the flat sky)
+and act 4's loop on placeholder art; both stay behind `AFTERLIFE_ON` /
+`HELL_ON`, which no released build sets. Open:
+- **The owner's calls 3-8** ("The calls for the owner"): one defeat in
+  heaven or two; Satan in hell or gone, five barriers or four, the cage
+  worked or a cutscene; what the dead can do on the surface and when the
+  yard's boards reopen; who gets their lives back; how it ships; the ending
+  and a tail.
+- **Lifespans and lineage**, the ground both acts stand on, are not built.
+- **Act 4**: the hifi mocks to replace every drawing, a tuning pass on
+  config/hell.js, and the placeholder sources (black water, builders, the
+  stair, flux).
+- **Every word** of the connective beats (plain labels in locales/en.ftl).
+
+### The yard's fences stand on their neighbors -- FOUND, NOT FIXED (2026-11-10)
 
 A building going up is fenced three cells either side (fence.js), and the
 fence has never been on the map. Claimed there, the no-overlap rule went red
@@ -37,104 +74,47 @@ join by adding their place to `FENCE_CLAIMED`, which moves their posts in
 the same way -- a visible change to the yard's fences, so it is a review
 before it is a fix. Blocker: the owner's call on the look.
 
-## Act 3's stair and act 2's abyssal sword -- DESIGNED, AWAITING APPROVAL (2026-11-09)
+---
 
-DESIGN.md, "The stair and the abyssal sword". Act 3's line builds a stair to
-God instead of winning a crowd share; faith is rebel renamed; act 2 gets a
-building (the reliquary) whose ladder strengthens the party; the serpent
-grows mightier by level, its level 25 drops an abyssal fang forged into a
-sword that is carried up and stabs God, unmasking him. Blocker: the owner's
-approval and the four open calls at the end of the section. God's crowd
-redraw (review-godcrowd, rounds 1-2) is parked; its ground fix
-(f7e0b54a, the path runs to the camera's last window) is worth landing alone.
+## Engine and shared pieces
 
-## A dialog system -- APPROVED, BUILDING (2026-11-01)
+### One place engine for every act -- ON MAIN, TWO SEAMS LEFT (2026-11-11)
 
-The owner: "we need to have some dialog to explain the premise of act 3. we
-dont have a dialog system yet though". DESIGN.md, "A dialog system (design,
-approved)": lines as a phase field on the act beats' `BODIES` beside `say`,
-in a bubble over God with the A1 tail, each line waiting for a click (the
-yard never pauses), all ended by the held space bar, each heard line saved
-in `S.heard` so nothing replays after a reload. Only God speaks. Building on
-branch `dialog`, with God's existing captions standing in as his lines.
-Blocker: the premise's lines are the owner's to write (the five slots in
-"The first use"); none goes in the game until written.
+DESIGN.md, "One place engine". All seven steps are on main: stations with
+`place`, render layers by place, one buy, hell's boards, one body engine,
+construction through works.js, one save reader; and the audits of copied
+systems after them (act bodies, clicks, the yard's sky on the cloud renderer,
+the small folds, act 3's construction, the mansion). The one camera is in
+(`frameAfter` is gone). Left:
+- **Act 3's stair** on the shared construction (see its entry above).
+- **The pad's focus stops** (stops.js, `gestureStops`) were left by the
+  clicks audit for their own audit; the pad's carry is still the yard's only.
 
-## Act 3's grove, rebuilt -- DESIGNED, QUESTIONS SETTLED, READY TO BUILD (2026-10-30)
+### Shared pieces and checks, after the place engine -- AGREED, QUEUED (2026-10-20)
 
-The owner's fifteen calls from the live grove review (mock branch
-`a3-review-both`, never merged) are designed onto the shared systems in
-DESIGN.md, "Act 3's grove, rebuilt": oaks planted from acorns, grown row by
-row, sawn down and broken into their four logs; the stump pulled as a fifth
-log; a seed basket, a seeds row and self-seeding. The owner settled the
-three questions on 2026-10-30: plots about 28 cells apart, with the falling
-crown a named exception to the no-overlap rule; blocks taught a height, so
-the acorn stays 3x4; sawdust and dirt are particles that fall and fade. The
-hand saws a tree down from the start; the saw is a bought row that automates
-felling, letting the woodcutter saw trees down, and the axe is renamed to the
-saw everywhere, the save included. Track A (layout, ground, the tree, block
-height, the axe's rename, the migration to SAVE_V 35) is built on branch
-`grove-a`, not on main yet. Blocker: tracks B (the woodcutter's saw, F1), C
-(the stump, F3a-1) and D (seeds) build on it; until B lands the hand still
-puts the saw on a tree by its icon and the woodcutter chops on its old timer.
+The owner agreed these on 2026-10-20, from what went wrong in act 3. The
+cloud renderer, mocks in the real game (review.html) and a play check for
+each place (src/selftest/playcheck.js) are built. Left:
 
-## A browser shard's whole tab stops answering on CI -- PROBE IN (2026-10-31)
+1. **One sprite-and-layer primitive for "art on the grid, motion smooth"**
+   (CLAUDE.md). 86 files snap positions to the grid by hand
+   (`Math.round(x * P)` and kin). A shared helper draws a shape on its own
+   grid once, caches it, and places it at a fractional position; a parallax
+   layer is the same at a rate. Blocked on: nothing.
+2. **Hit areas from the drawing.** A thing's click area comes from where it
+   was drawn, not a separate box table, so a camera change cannot leave
+   clicks behind the art. Blocked on: nothing.
+3. **One crowd renderer.** God's crowd (`render/aftercrowd.js`) and the
+   union's (`render/after/unioncrowd.js`) are separate; one renderer with
+   rows, growth direction, tones and fill/empty rules serves both. Blocked
+   on: nothing.
+4. **Fades as the only way in or out.** One shared appear/leave on the
+   canvas that every new thing uses, so a pop like act 3's sign plant cannot
+   happen by accident (src/fade.js is the sheets' only).
+5. **A jitter check on every scene with motion.** `tools/jitter-check.mjs`
+   is built; nothing runs it across the scenes yet.
 
-Sometimes a CI browser shard's page stops answering CDP altogether. On
-2026-10-31, `800,600 5/8` (run 41174909950) sat in the suite for its whole
-hour, and `390,844 5/8` (run 41179210914) did not answer for 12 minutes and
-would not even pause, so its renderer was gone or wedged below the script.
-Locally, at 3x CPU throttle, about fifty frame boots in a row in one tab
-twice hung the tab the same way. It is not the frame-boot timeout. That one
-was Chrome refusing module requests (net::ERR_INSUFFICIENT_RESOURCES, its cap
-on one renderer's outstanding requests) while a ~540-module dev graph loaded
-in a frame beside the suite's page; `bootFrame` now sees the failed graph
-(`__bootErr = 'graph'`, play.html) and loads the frame again. The same cap is
-a lead here: the landing-page check once lost `/src/console.js` the same
-way, and a renderer short of resources may be what wedges.
-
-The probe: `tools/headless.mjs` gives a shard 12 minutes (`STALL_MIN`), then
-pauses the page from a second debugger session and prints its stack and
-last console lines. All along it watches the network and lists any request
-still open, slower than five seconds or failed. It reports a renderer crash
-when it happens and samples heap, frames and documents every 30 s. In dev,
-`__bootAt` (main.js, lang.js) names the boot step a frame reached. Blocker:
-the next hung shard, to read the probe.
-
-The request budget again, 2026-11-01 (run 41277243340, `390,844 1/8`, fr,
-then ru on the re-run; run 41278613493, `1920,1080 1/8`, es): the frame came
-up as Chrome's error page reload after reload. Even `play.html` itself was
-refused at once with net::ERR_INSUFFICIENT_RESOURCES for the whole 20 s.
-Nothing here is specific to the 390 shard.
-
-- The cap is Chrome's loaders per initiating process:
-  `kMaxOutstandingRequestsPerProcess = 2700`
-  (services/network/network_context.h). Only a testing setter changes it;
-  there is no switch.
-- The watcher's first refusal saw 269 requests open, all from one frame and
-  all 0.2 s old. Afterwards it saw 2 open while every request was still
-  refused.
-- With every target attached (run 41279554300, `390,844 1/8`, green), a
-  refusal came with 264 open, all one frame on one target. So nothing was
-  hidden on another target: the refusal comes at about 260 outstanding,
-  not 2700, from a cap I have not found in the source. That load recovered
-  on the backed-off retry.
-- Not reproduced locally: ~250 boots unthrottled and at 3x/6x CPU throttle,
-  8 frames booted at once, a cold deps cache, and 200 ms of added latency
-  (`Network.emulateNetworkConditions`: 18 s a boot, no refusal).
-- Lingering removed frames are probably not it: locally over 100 detached
-  documents waited for the collector with no refusal. Each holds only
-  finished loads.
-- In place, not proven to fix it: the language groups boot every language
-  in one frame (fewer live documents, 43 -> 25), and `bootFrame` backs off
-  1, 2, 4 s.
-- One frame's unbundled graph is ~540 module requests. On a slow runner
-  about half are outstanding at once, which reaches the ~260 refusal point
-  by itself. The lasting fix lowers one load's peak, or serves the bench
-  frame a graph with fewer requests. Until then the backed-off retry is
-  what recovers, and a burst that outlasts 20 s still reds the check.
-
-## The yard joins the conservation rule (2026-10-28)
+### The yard joins the conservation rule (2026-10-28)
 
 "One resource system for every act" is built (DESIGN.md, `(built)`). Its one
 rule (verify.js, rule 23: a unit appears or vanishes only at a named source or
@@ -148,29 +128,24 @@ and in `S.chips` already, and a hauler's `w.load` is cells. Blocker: someone
 walks the yard's doors (`grep -rn "addGrain\|put(floor" src`) and names each, a
 kind at a time, starting with the finds. Hell has no goods yet and joins when it
 does.
-## Rethink the reduced-motion option -- PARKED BY THE OWNER (2026-10-28)
 
-The owner had the settings sheet's motion option on "limit" and saw the ram's
-cutter wheel stand still while the ram worked. The wheel is drawn to stop under
-reduced motion (`drawRam` / `bore` in `src/render/machines.js`, `RAM_SPIN_*` in
-`src/config/machines.js`), so the game looked broken. The owner: "we should re
-think our reduce motion option, cause it does not work well and is very
-unclear. thats for later though". What "limit" turns off is not said anywhere
-a player sees, and it freezes pieces that read as broken rather than calm.
-Blocker: needs a design (what each motion level keeps and drops, and how the
-option says so) and the owner's approval; parked by the owner for later.
+### Rethink the reduced-motion option -- PARKED BY THE OWNER (2026-10-28)
 
-## Act 3's goods are blocks, carried by bodies -- APPROVED, BUILDING (2026-10-27)
+The ram's cutter wheel is drawn to stop under reduced motion (`drawRam` /
+`bore` in `src/render/machines.js`, `RAM_SPIN_*` in
+`src/config/machines.js`), so with the option on "limit" the game looks
+broken. The owner: "we should re think our reduce motion option, cause it
+does not work well and is very unclear. thats for later though". What
+"limit" turns off is not said anywhere a player sees, and it freezes pieces
+that read as broken rather than calm. Blocker: a design (what each motion
+level keeps and drops, and how the option says so) and the owner's
+approval; parked by the owner for later.
 
-The saw mill as reviewed live (DESIGN.md, "Act 3's goods are blocks, and
-bodies carry every one"): piles as block plots that are the stock, act 1's
-sweep for goods, the station as its shop, the treadwheel and rocker beam, the
-column-at-a-time cut, the chute and mound, and every block moved by a body.
-Building the shared parts and the saw mill first; every other station gets
-its own live review rounds before its own build. Settled: piles have brims and the economy rescales;
-a bill paid in timber is an order, carried.
+---
 
-## Every part of the game stands on its own -- PHASE A APPROVED, BUILDING (2026-10-25)
+## Tests and CI
+
+### Every part of the game stands on its own -- PHASE A APPROVED, BUILDING (2026-10-25)
 
 docs/wave-tests.md. Merged: step 1 (CI shards by measured time, #11), step 2
 (every module-level let held/cache/page/saved, src/reset.js, #12), step 3
@@ -194,7 +169,7 @@ nothing as written: the setup is cheap and the time is in the frames a check
 is about (docs/wave-tests.md, step 6). Its new shape waits on the owner.
 Nothing of phase B is built.
 
-## A pad check leaks in behind the sheet groups -- FOUND, NOT FIXED (2026-10-22)
+### A pad check leaks in behind the sheet groups -- FOUND, NOT FIXED (2026-10-22)
 
 `src/selftest/pad.js`, "pad: Menu holds the yard, the sheet is walked, B
 lets it go", fails when run straight after the other "sheet" groups
@@ -204,7 +179,11 @@ leaves something (an open sheet, a focus, a held pad) that a fresh game does
 not reset. Not seen in any order CI runs. Next: bisect the sheet groups that
 run before it, then reset what leaks in `newRun`, not in the check.
 
-## A tray capped mid-pay holds the hand forever -- FOUND, NOT FIXED (2026-10-20)
+---
+
+## Defects
+
+### A tray capped mid-pay holds the hand forever -- FOUND, NOT FIXED (2026-10-20)
 
 `src/casino.js`: a pay grain that finds no cell sets `tray.capped`, which
 holds the next bin (`stepDrop`, `!chuteOpen()`). Only `trayOut` clears it,
@@ -216,216 +195,154 @@ Seen in test/hauler-in-hole.test.mjs, whose forced-full tray has to be let
 go by hand. Fix: uncap when the pay stage holds on it, or let `trayOut` run
 while the bins wait on the chute.
 
-## One place engine for every act -- APPROVED, BUILDING IN ORDER (2026-10-20)
+### A stirrer stood 21px over the yard -- SEEN, MAY BE FIXED (2026-10-16)
 
-DESIGN.md, "One place engine". Act 3 and hell carry parallel copies of the
-yard's stations, bodies, buying and hit-tests; the deep shows the shared
-path works. The owner approved the order 2026-10-20. Step 1 is built for act
-3 (branch act3-playable): a `place` column on `STATIONS`, act 3's cards and
-God's crowd as rows (after/stations.js), `stationAt` filtered by the view's
-place, `offTable`, `cardAt` and gestures' `boardAt` gone; hover, cursor and
-close-on-scroll now serve act 3. Step 2 is built (branch place-step2): every `LAYERS` entry
-names the places it draws in (`in`), and render.js's hand-kept DEEP / AFTER /
-HELL sets are gone; what draws where is unchanged, so enabling the shared
-marks (pile marks, work bars, build sites, done marks, roster) in act places
-is now a one-word edit per layer, and comes later. Step 3 is built (branch place-step3): one `buy` in upgrades.js pays every coin through `take` and its place's purse, act 3's rows say `place`, `flyFrom` and `paid` for the yard-coin fly-up, and `buyVia`, `buyAfter`, `afterCanPay` and `afterTag` are gone (the shared `tagOf` writes the tag). Step 4 is built (branch place-step4): hell's five stations are `STATIONS` rows with `place: 'hell'` (hell/stations.js), their boards open on a walk-up with hover and cursor and shut on a pan, `hellBoardAt` is gone, and the pick's blow stays the hand's (`clickHell`, asked first); the play check walks to each hell station and buys from the face board. Step 5 is built (branch place-step5): one body engine (placebodies.js) steps, walks, drops and picks up any act place's own body list, each place handing it a crew through `PLACES` (its list, a JOBS registry shaped like the yard's, its walk -- act 3's floor-and-crowd `go`, hell's ladders -- and its landing); act 3's and hell's pace is unchanged (act3-pace's table identical, the playthrough's strike at 7917 s before and after); the hand picks a member or a ghost up and drops it, and it walks back to its work (play check, both places); `reloadCheck` compares every place's bodies. Open from step 5: the yard's own crew still steps through crew/step.js's stages, not the engine (its stages are yard-only: the rock, the hole, the hats); an act body has no hover card, and the pad's carry is the yard's only; a member lifted over God's crowd is drawn there in depth (render/aftercrowd.js), not on the cursor. Step 7 is built (branch place-step7): one save reader (placesave.js `readOver`: the blank is the shape, keys it lacks dropped, a record laid over its blank one level down) serves act 3 and hell, each keeping its own saver in `SAVERS`; `siteOf`'s backfill derives a pile from a count (not a blank fill), so it stays; test/place-save.test.mjs. Step 6 (one fade) is the open one.
+With the meeting's digger sent as the sqhusband rather than the nearest body
+(`sendDigger(true)` in `startMeet`, intro.js), test/scenes-stand-d.test.mjs
+went red on the `everything` scene after its reload: "a body is standing on
+nothing: wick (stirrer) ... has its feet 21px over the yard". The digger was
+changed back. 76dd8cdb (2026-10-26) made a stirrer standing at its pot follow
+the ground, which may be this hole; the repro has not been re-run. Repro: put
+`sendDigger(true)` back in `startMeet` and run that one file.
 
-The audit after step 5 (DESIGN.md, "Act bodies on the yard's engine"; branch audit-bodies, built, not on main yet): three copies left in the bodies -- a second fall and hover slow in placebodies.js, act 3's own staffing and order loan, and two hand-built walkers (hell's ladders, act 3's floor). Folded in that order onto crew/falls.js, staffing.js keyed by place and route.js's ways a place supplies.
+### `wayAt` and `onBridge` still read the ground line to a pixel (2026-10-14)
 
-## Shared pieces and checks, after the place engine -- AGREED, QUEUED (2026-10-20)
+`inWorking` now uses `HOLE_DEPTH` (config/crew.js: the furthest a body's own
+sway and swing carry its feet below its footing), but `wayAt` (route.js, a
+body inside a working's span) and `onBridge` (crew/dance.js) still ask
+`feet > S.groundY + 1`, which the same bob crosses. A body mid-bob at ground
+level over a span, e.g. the bridge deck over the cut, reads as in the cut.
+8e16327f measured it as rare (drop zones never reach a mouth). Blocker: both
+steer routing everywhere, so it is its own change with its own check, like
+test/hole-depth.test.mjs.
 
-The owner agreed these on 2026-10-20, from what went wrong in act 3. Items
-1, 2, 6 and 7 would have prevented most of that day; 1 and 2 ride in the
-place engine's early steps, 6 and 7 come before more act 3 art.
+---
 
-1. **One sprite-and-layer primitive for "art on the grid, motion smooth"**
-   (CLAUDE.md). 86 files snap positions to the grid by hand
-   (`Math.round(x * P)` and kin). A shared helper draws a shape on its own
-   grid once, caches it, and places it at a fractional position; a parallax
-   layer is the same at a rate. Walkers, clouds, flags and backdrops then
-   move smoothly one way and never shear. Blocked on: nothing; first
-   consumer is act 3's step 2.
-2. **Hit areas from the drawing.** A thing's click area comes from where it
-   was drawn, not a separate box table, so a camera change cannot leave
-   clicks behind the art. Rides with the place engine's step 1 (stations
-   with `place`).
-3. **One crowd renderer.** God's crowd (`render/aftercrowd.js`) and the
-   union's (`render/after/unioncrowd.js`) are separate; one renderer with
-   rows, growth direction, tones and fill/empty rules serves both.
-   Blocked on: act 3 step 2 landing.
-4. **One cloud renderer for every place, the yard included.** The cloud
-   bench built it; act 3's sky and ground clouds are on it
-   (`render/after/cloudsky.js`), and the yard's sky is too
-   (`render/yardsky.js`, branch audit-yard-clouds, on the review bench as
-   "the yard's sky on the cloud renderer"). Blocked on: the owner's vote.
-5. **Fades as the only way in or out.** One shared appear/leave every new
-   thing uses (fade.js), so a pop like act 3's sign plant cannot happen by
-   accident.
-6. **Mocks inside the real game.** Candidate art as a dev-panel toggle drawn
-   on the real camera, not side HTML pages with their own camera -- the
-   cause of act 3's layout drift.
-7. **A play check for each act.** A browser test that plays each act's
-   first minutes with real clicks -- open boards, buy, portals, walk -- run
-   before every act landing.
-8. **A jitter check.** Pan the camera and count pixels that shear (the cloud
-   research's `screencheck.mjs` is the start); run on every scene with
-   motion.
-9. **Pan GIFs as the default review** (`tools/review/shoot.mjs`), since
-   motion is where act 3's problems were.
+## The deep and the serpent
 
-## The yard's sound set, by lanes -- BUILT, NOT LISTENED TO IN THE GAME (2026-10-18)
+### Endless serpent -- BUILT, THE WALL OPEN (2026-10-13)
 
-DESIGN.md, "The yard's sound set, by lanes". Open: the owner's ear on every
-lane (the review page and `shots/sound/endgame-lanes.ogg`), the levels of the
-takes against the tuned recipes, and the rest of the beats list (farm, stir,
-weather, the deep, the story, acts 3-4). `node tools/node/sound-audition.mjs`
-is the check for every round.
+"Endless serpent (built)" in DESIGN.md. Open:
+- **The wall**: measured on the old loop at level 3 for seven stations at
+  rung 8 (the constrict stops breaking at 4), far under the level-25
+  notice; the fight is now the constrict alone, so re-measure it there
+  (`tools/node/deep-pace.mjs --stood 7 --wall`) before moving the notices.
 
-## The score and the music bench -- BENCH BUILT, GAME PLAYBACK DESIGNED, AWAITING THE OWNER'S EAR (2026-10-17)
+### The serpent hardens against its strongest foes -- BUILT, TUNING OPEN (2026-10-07)
 
-Next: "The score in the game, and the menu filter" (DESIGN.md). Blocked on
-two by-ear picks: which of the three crushed sketches is the yard, and how
-deep the menus sink it (shots/music/menu-filter-demo.ogg); then the go-ahead.
+"The serpent hardens against its strongest foes" in DESIGN.md. Open:
+- **The barrier's flare sits under where the charge hit the hide**: the
+  Sapper's charge still flies to the hide, not to the barrier under it.
+- **A fang's station's first four rungs ask 500k dust each**
+  (`FANG_RUNG_DUST`, 2026-10-07), and the depths measured again on it:
+  5970 / 5070 / 5560 / 5670 / 9210. Unforced, four parties free him in 71
+  to 94 minutes; of their twenty phases fifteen run 12 to 25 minutes. Left:
+  a party whose first fighter reached rung 7 in a long first phase breaks
+  the second in 3 minutes (its depth is under the first's, since the
+  second resists that fighter), and one party's last two run 28 and 23.
 
+### The serpent heals whole: a phase is a window -- BUILT, TUNING OPEN (2026-10-04)
 
-DESIGN.md, "The score, and the bench it is written on": `music.html`, the
-preview, Surge live, the render and chords first are on main. Open: the
-in-game playback (one loop a place, its own slider), blocked on the owner
-having a song they like. loopMIDI must be installed by hand for the live
-switch. Nobody has listened to the preview patterns or the render's mix.
-The effects chain is built; open on it: pedalboard's Limiter seems to raise
-the mix to 0 dBFS whatever its threshold (the render's report, 2026-10-17),
-so the master limits about 3 dB harder than it needs to -- a by-ear call on
-`MASTER_GAIN_DB` in tools/music/mix.py.
+"The serpent heals whole: a phase is a window" in DESIGN.md. Open:
+- **The driven runs** (`speedrun.mjs --fight --hand 2`, 2026-10-07, yard
+  buying off). The rungs' dust climbs gently now (100k to 2.5M, the yard
+  banking about 145k a minute), and the depths are the median party's best
+  window 17.5 minutes into each phase (`--paced 17.5`, eight parties, the
+  strongest and weakest dropped). Unforced, four parties all free him about
+  71 minutes after the portal; the Mage-first party's phases run 15 / 14 /
+  14 / 17 / 12 minutes, but a phase still falls in 2 to 4 minutes when the
+  next station's first cheap rungs land just short of its depth, and the
+  cloak's phase then runs 28 to 38.
+- **The meal scenes** commit their creature and run on; the shot no longer
+  pins the moment once it has turned.
 
-## Acts 3 and 4: the afterlife and hell -- LOOPS CHOSEN, THIRTEEN CALLS OPEN, SCAFFOLD BUILT (2026-10-17)
+### The serpent eats to heal -- BUILT (2026-09-30; the constrict 2026-10-15)
 
-**The act 3 sky is being redrawn flat** (2026-10-19): the owner voted the
-built sky down to squares of one flat tone, God outlined behind the mass
-crowd, the block throne on a black stepped base, a single file blessed on
-the top step, and turns of blessing and glaring with a grey-edged cone
-(DESIGN.md, "The sky, redrawn flat"). Building on `act3-sky-flat`; the
-load fades in his hands at the blessing (the owner).
+"The serpent eats to heal" in DESIGN.md. Open:
+- **The swallow's swell** is small at the game's scale.
+- **A small window often has nobody on the glass**, so the bolts reach off
+  screen and the orb is hauled in from there (as the rule says).
+- **A meal through the kill** plays out on a dying head, healing nothing.
 
-**Scaffold built** (2026-10-17, branch `acts-scaffold`): the switches, the
-two places and their cameras, the empty steps, the stub modules, the save
-fields, the beat rows and two scenes -- nothing playable (DESIGN.md, the
-section's first paragraph). Blocker for anything past it is unchanged: the
-mocks, then lifespans and lineage.
+### A phase has a mechanic and a class answers it -- BUILT, TUNING OPEN (2026-09-28)
 
-**Connective tissue built as placeholders** (2026-10-17 night, branch
-`acts-connective`; DESIGN.md, "The portals and the mansion"): the two
-portals, the go-on card, every act beat as a placeholder cutscene from its
-trigger, the ghosts' road, the mansion ending and its sheet. Open: every
-word (plain labels in locales/en.ftl), the mocks of the tear, the slit, the
-souls and the mansion, and boards for the acts' stations on a pointer (A's
-`cardAt`/`afterBoard`, B's `hellBoardAt` exist; no STATIONS rows open them).
+"A phase has a mechanic and a class answers it" in DESIGN.md. Open:
+- **The answers are capstones**, so the warded phase's surge is mostly
+  unanswered at the pace the model plays. A rung-4 answer, or a later
+  surge, if that reads as unfair.
+- **The lash's bump reads as a dip** at the belly's girth; a deeper
+  `LASH_H` if it wants to read as a whip.
 
-**Act 4's loop built on placeholder art** (2026-10-17, branch `hell-loop`;
-DESIGN.md, act 4's first paragraph): mine, smelt, forge, barriers, flares,
-ghosts, four cards. Open on it: the hifi mocks to replace every drawing,
-the input and beat wiring (`clickHell`, `hellBoardAt`, `hellWallDue`,
-`cageBroken` -- Track C), a tuning pass on config/hell.js, and the
-placeholder sources (black water, builders, the stair, flux).
+### The deep is paced by its purse -- BUILT, TUNING OPEN (2026-09-28)
 
-"Acts 3 and 4: the afterlife and hell (design, not built)" in DESIGN.md,
-reworked for the owner's story (God forces the dead to work forever; the
-pair take God down; God is Satan unmasked; the dead travel back to the
-surface; act 4 frees the real God in hell; lives returned, home) and the
-owner's rule that neither act's loop is combat and each act feels distinct.
-Sixteen beats, cutscene by cutscene; lifespans and lineage as the ground.
-The owner's calls of 2026-10-17 are in: **everything keeps running** (the
-yard and the deep run and age while the pair are dead -- worked through:
-the yard runs on its last rungs to the brim, lines grow generations so the
-ghosts come down among descendants, souls keep rising into the crowd and
-nudge the strike's bar, four places a frame paid for by off-screen places
-not drawing and the crowd stepped as data, gated on PERF.md); **act 3 is
-the union**, and its loop is **the owner's grove and press** (given later
-the same day, replacing D's rim-a-click loop, which is kept as a note with
-E and F): the click is a cloud, which puffs faith down to the camp's
-plate (a grey storm cloud -- the yard's smog risen -- gives ink), and
-after `CHOP_CLICKS` cloud hits a member hands the pair an axe and a click
-on a tree is a chop (`TREE_CHOPS` to fell it, logs for the haulers); faith
-buys permanent volunteers (members hired out of God's yard) and saplings;
-the grove (God's untended trees, old growth then replanted) gives logs,
-the saw mill timber plus sawdust (a nuisance heap until the paper mill),
-the workshop signs (timber and ink), the paper mill paper, the press
-posters (paper and ink); carriers plant signs in the crowd (close, to the
-full rim) and pasters paste posters on heaven's walls (wide, to half), and
-word of mouth fills between; a soul's lean is its eight-piece rim, so the
-pale field going to ink is the support meter; God's speech and wardens
-take down what is spent; the mill's fence (timber against sawdust) is the
-act's standing decision; gates at the first meeting (the grove opens),
-the slowdown (the paper branch opens, wardens double) and the strike;
-bands faith, +timber, +paper, then a pledge (a member) in the spark's
-place. The heaven/hell parallel (trees to mill to signs; ore to forge to
-tools) is intentional -- the owner: "heaven and hell symmetry but
-different" -- and the differences are spelled out: act 3's wide,
-by-product web spread into a crowd against act 4's deep, single-file tool
-tiers, with tweaks against the overlap (no tiers in act 3, no by-product
-in act 4). **act 4 is the mine and the
-forge**, replacing expeditions -- a descending run of five chambers, each
-with one ore (dross, cinder iron, pitch copper, obsidian glass, adamant;
-working names), smelted with brimstone in furnaces whose heat is their
-chamber's depth, forged at the anvil into five tool tiers; each tier's
-tool breaks the barrier at its chamber's far side (rubble, a bone wall, a
-lava gate, the anchor chains, the cage itself), worked down over time by a
-wall gang, which opens the next chamber and ore; every fall ends with the
-next barrier ringing the tool off, so a failed attempt names the next
-ore; the union's members come down as the crew; the yard sends sparks for
-the last band, ore as flux, the deep's water to quench. Spelled out how it
-differs from act 1's boulder and bought shields. Still open (calls 3-8):
-one defeat in heaven or two; Satan in hell or gone, five barriers or four,
-the cage worked or a cutscene; what the dead can do on the surface and
-when the yard's boards reopen; who gets their lives back; how it ships
-(lifespans first, what sets off the fall); the ending and a tail. Act 3's
-own (calls 9-15): does faith stay the clicked coin late; trees finite or
-replanted; where ink comes from (storm clouds, tree galls, or the glare's
-soot); the top band (a pledge or a thunderhead drop); a picket mark for
-where signs go, and the fence a control or a fixed split; members stay at
-their posts until the strike or walk out on joining; the axe unlocked by
-a click count or a faith rung. The owner's order:
-spec only, no code ("lets not build anything for act 3 yet"). Mocks of
-God, the unmasking, a cloud's puff, the grove, the camp's mills, signs and
-posters in the crowd going to ink, hell's chambers, the barriers and the
-forge before any build.
+"The deep is paced by its purse" in DESIGN.md; the model is
+`tools/node/deep-pace.mjs`. Heals 8 / 86 / 176 / 238, depths 32k / 73k /
+191k / 350k. Open:
+- **The model's hour**: 4 scales a second banked, two clicks a second, and
+  each class's move worth a guessed multiple of its hit (`MOVE` in the
+  tool). Bills in dust, ore and sparks, build time and the fang's carry are
+  left out.
+- **The banked rate is the load-bearing guess.** Four gatherers bank about
+  5 a second off a thick floor, falling to 3; 3 a second makes it 71
+  minutes, 5 makes it 52.
+- **A party halved in one stage walls there.** Sword, Assassin and Sapper
+  all take half in the split; that party reaches the fourth stage at 50
+  minutes and frees him at 70.
 
-## Who you are: Steam names, translations -- WAITING ON THE OWNER (2026-10-16)
+### Fighters in slots -- BUILT, TUNING OPEN (2026-09-28)
 
-"Who you are (built)" in DESIGN.md. The English words were read and approved
-by the owner (2026-10-16). Open:
-- **Steamworks:** ACH_GOTOUT's display name to "complete act 1"; and ACH_FREED to "complete act 2", by
-  hand on the dashboard (the game's own notice already says it).
-- **Translations** of the `-who` lines and the role word: deferred by the
-  owner ("lets not worry about other languages"). Until a language writes
-  them it keeps its older line (lang.js, `msgOr`), so de/fr/es/pt-BR/ru/ja/
-  ko/zh-CN still say wife or husband whatever role was chosen and never say
-  a name; the new `ward-*` labels show in English there.
+DESIGN.md, "A fighter branches at rung 4". Open: whether rung 4's jump (a
+whole class at once) is too big a step in the ladder book.
 
-## A stirrer stood 21px over the yard -- SEEN, NOT FIXED (2026-10-16)
+### The deep's bench -- DESIGNED, AWAITING THE VOTE (2026-09-24)
 
-Found while building the wardrobe: with the meeting's digger sent as the
-sqhusband rather than the nearest body (`sendDigger(true)` in `startMeet`,
-intro.js), test/scenes-stand-d.test.mjs goes red on the `everything` scene
-after its reload: "a body is standing on nothing: wick (stirrer) at
-4077,1959 has its feet 21px over the yard (goal in ...) for 61 frames". The
-digger was changed back, so the suite is green, but the stirrer's footing is
-a real hole that a different crew history reaches. Repro: put
-`sendDigger(true)` back in `startMeet` and run that one file. Not diagnosed.
+"The deep's bench" in DESIGN.md; mocks `docs/mocks/deep-bench-2026-09-24.html`
+and `docs/mocks/deep-bench/`. The altar's board sells the brawlers' two
+ladders and all four doors. Blocked on the owner's calls: (a) a deep bench
+holding the doors (a1 beside the pods, recommended, or a2 under the portal;
+standing from the snatch or raised with its first door) or (b) the altar
+redrawn generic; and which drawing (A, B, C or b1, b2, b3). No game code yet.
 
-## Feedback form -- DEPLOYED, FIRST SHIPS WITH THE NEXT RELEASE (2026-10-13)
+### The deep's crew at rest -- BUILT, TUNING OPEN (2026-09-23)
 
-"Feedback form (built)" in DESIGN.md. The worker is live at
-`https://pebble-feedback.graham-things.com` (D1 created, its secrets set,
-each stored report also mailed to the game's inbox through the `NOTIFY_TO`
-secret), the `FEEDBACK_URL` repository variable is set, and the words are
-written. No released build carries the button yet: v0.5.2 predates it.
-Open:
-- **One report from a released build.** After the next release, send one
-  from the itch page and one from a desk app, a save ticked, and see each
-  land in D1 and in the inbox. Every check so far stubs the network.
+"The deep's crew at rest" in DESIGN.md. Open: **the landing silt is the
+builders' grit**, drawn by `difference`, so it shows as bright white flecks
+on the dark floor, brighter than the bed.
 
-## Localization, phase two -- PICKER BUILT, LAUNCH ENGLISH ONLY (2026-10-13)
+---
+
+## Release, store and language
+
+### Steamworks and the paid build -- AWAITING THE OWNER (2026-10-12)
+
+"Three builds", "Controller support" and "Who you are" in DESIGN.md. Open:
+- **App ids**: none exist. `APPS` in electron/steam.cjs is null for both
+  (placeholders); the release workflow needs the repository variables and
+  secrets listed at the top of release.yml before its Steam jobs run, and
+  `ITCH_FULL_TARGET` before the paid page gets a push. Nothing has been
+  uploaded through SteamPipe yet, so the jobs are unproven.
+- **The serpent ships only in the paid build**: `SERPENT_ON`
+  (src/config/deep.js) is `VITE_FULL=1`, and no paid build has shipped.
+  CHANGELOG.md's "Held back" lines move under Unreleased in the release that
+  first ships one.
+- **Steam Input**: electron/steam-input/controller_neptune.vdf is the Deck's
+  default config, unproven: there is no app id to upload it under. Its
+  binding names are from the published format, not from a Steamworks export.
+- **Steam achievements** are wired (src/achievements.js): the owner creates
+  the 49 in Steamworks from `node tools/steam-achievements.mjs`, writes their
+  text and draws their icons; ACH_GOTOUT's display name is "complete act 1"
+  and ACH_FREED's "complete act 2", by hand on the dashboard.
+- **Mac**: the Steam build has no mac depot until the mac app is notarized.
+
+### Feedback form -- SHIPPED IN v0.6.0, NOT PROVEN END TO END (2026-10-16)
+
+"Feedback form (built)" in DESIGN.md; the worker is live at
+`https://pebble-feedback.graham-things.com`. Open: **one report from a
+released build** -- one from the itch page and one from a desk app, a save
+ticked, each seen to land in D1 and in the inbox. Every check so far stubs
+the network.
+
+### Localization, phase two -- PICKER BUILT, LAUNCH ENGLISH ONLY (2026-10-13)
 
 "Localization phase two (design, part built)" in DESIGN.md. Built: the
 language table (locales/languages.json, only English `ready`), the
@@ -441,6 +358,11 @@ feedback form and the store page). Open, in order:
 - **A native reader a language.** Blocked on finding them. A language goes
   `ready` when its file is approved and its overflow survey is clean; the
   guard then holds it complete.
+- **The `-who` lines and the role word** are deferred by the owner ("lets
+  not worry about other languages"). Until a language writes them it keeps
+  its older line (lang.js, `msgOr`), so the other eight still say wife or
+  husband whatever role was chosen and never say a name; the `ward-*`
+  labels show in English there.
 - **The CJK look** is decided, "as today" with bold headings, and not
   built: `--track` under `:lang(zh|ja|ko)` stays 1, and the
   `TODO(mock vote)` notes in src/style.css go with the build. It only shows
@@ -454,230 +376,31 @@ feedback form and the store page). Open, in order:
 - The rest of the section: measure (`long`/`wide`, `l10nfit`), sync, the
   sign, numbers and `list-sep`, the objective card's cap, Steam's ticks.
 
-## Endless serpent -- BUILT, THE WALL OPEN (2026-10-13)
-
-"Endless serpent (built)" in DESIGN.md: after the story's kill the serpent
-returns once onto its last defense, one bar a level, each emptied bar a
-near-death and a power-up. Its words are written and big numbers read short
-(`sayNum`, render/numfont.js). Open:
-- **The wall**: measured on the old loop at level 3 for seven stations at
-  rung 8 (the constrict stops breaking at 4), far under the level-25
-  notice; the fight is now the constrict alone, so re-measure it there
-  (`tools/node/deep-pace.mjs --stood 7 --wall`) before moving the notices.
-  Another agent is measuring it now (2026-10-13); its numbers decide where
-  the notices go.
-
-## Controller support -- BUILT, STEAMWORKS OPEN (2026-10-12)
-
-"Controller support" in DESIGN.md (built); the pad rows' words
-(`ctl-pad-*`) are written. Open:
-- **Steam Input**: electron/steam-input/controller_neptune.vdf is the Deck's
-  default config, unproven: there is no app id to upload it under (see
-  "Three builds" below). Its binding names are from the published format,
-  not from a Steamworks export.
-- **Nobody has held a pad**: every check drives a stand-in pad; the feel of
-  the glide, the hand's speed (`PAD_HAND_SPEED`) and the repeat
-  (`PAD_REPEAT_*`, config/pad.js) are first guesses.
-
-## The index -- BUILT, DRAWINGS OPEN (2026-10-13)
-
-"The index" in DESIGN.md (built); the owner's short descriptions are in
-(`idx-*`). Open:
-- **Drawings**: 26 entries in src/config/index.js have `glyph: null` and
-  show no picture (muck, poop, birds, pollution, the hole, the rift, the
-  bench, the crews, the sqwife, the serpent and the rest); each wants one
-  in glyphs.html. DESIGN.md's list of the undrawn is older than the table
-  and names entries that have since gone.
-- **The `i` key** has no line on the controls page, which the landing page
-  shares and where there is no index to open; the owner's words if it
-  gets one.
-
-## Three builds: itch, Steam, and the Steam demo -- BUILT, AWAITING STEAMWORKS (2026-10-12)
-
-"Three builds" in DESIGN.md: the demo (2026-10-11) and the Steam build,
-Steam Cloud, the carry-over and the release jobs (2026-10-12) are built,
-and the carry-over's words (`shell-carry-*`) and the demo's last sheet are
-written. Open:
-- **App ids**: none exist. `APPS` in electron/steam.cjs is null for both
-  (placeholders); the release workflow needs the repository variables and
-  secrets listed at the top of release.yml before its Steam jobs run, and
-  `ITCH_FULL_TARGET` before the paid page gets a push. Nothing has been
-  uploaded through SteamPipe yet, so the jobs are unproven.
-- **Mac**: the Steam build has no mac depot until the mac app is notarized.
-- **Steam achievements** are wired (src/achievements.js): the owner creates the
-  49 in Steamworks from `node tools/steam-achievements.mjs` (API name, in-game
-  id, in-game title), writes their text and draws their icons.
-- The demo's Steam Cloud is not read by the full game's carry-over: the SDK
-  reaches only the running app's remote storage. The demo's disk copy, which
-  the demo itself keeps in step with its cloud, is what is offered.
-
-## The serpent hardens against its strongest foes -- BUILT (2026-10-07)
-
-"The serpent hardens against its strongest foes" in DESIGN.md. Open:
-- **The barrier's flare sits under where the charge hit the hide**: the
-  Sapper's charge still flies to the hide, not to the barrier under it.
-- **A fang's station's first four rungs ask 500k dust each**
-  (`FANG_RUNG_DUST`, 2026-10-07), and the depths measured again on it:
-  5970 / 5070 / 5560 / 5670 / 9210. Unforced, four parties free him in 71
-  to 94 minutes; of their twenty phases fifteen run 12 to 25 minutes. Left:
-  a party whose first fighter reached rung 7 in a long first phase breaks
-  the second in 3 minutes (its depth is under the first's, since the
-  second resists that fighter), and one party's last two run 28 and 23.
-
-## A fifth phase: the constrict -- BUILT (2026-10-04)
-
-"A fifth phase: the constrict" in DESIGN.md. Open:
-- **Nobody has played it.** Depth 9,000 and the orb's 15% are the model's.
-
-## The serpent heals whole: a phase is a window -- BUILT (2026-10-04)
-
-"The serpent heals whole: a phase is a window" in DESIGN.md. Open:
-- **Nobody has played it.** Depths 4300 / 9400 / 6700 / 5100 are deep-pace's
-  for a four-fighter party; tune them in play.
-- **The driven runs** (`speedrun.mjs --fight --hand 2`, 2026-10-07, yard
-  buying off). The rungs' dust climbs gently now (100k to 2.5M, the yard
-  banking about 145k a minute), and the depths are the median party's best
-  window 17.5 minutes into each phase (`--paced 17.5`, eight parties, the
-  strongest and weakest dropped). Unforced, four parties all free him about
-  71 minutes after the portal; the Mage-first party's phases run 15 / 14 /
-  14 / 17 / 12 minutes, but a phase still falls in 2 to 4 minutes when the
-  next station's first cheap rungs land just short of its depth, and the
-  cloak's phase then runs 28 to 38.
-- **The meal scenes** commit their creature and run on; the shot no longer
-  pins the moment once it has turned.
-
-## The story's objectives -- BUILT (2026-09-30)
-
-"The story's objectives" in DESIGN.md. Open: nobody has read the line
-through a whole game.
-
-## The serpent eats to heal -- BUILT (2026-09-30; the constrict 2026-10-15)
-
-"The serpent eats to heal" in DESIGN.md; the meal is the constrict on the
-nearest creature, the owner's B of `docs/mocks/serpent-constrict-meal-2026-10-15.html`;
-scenes `deep-meal`, `meal-bolts`, `meal-reel`, `meal-gulp`, `meal-swallow`,
-`meal-land`. Open:
-- **Nobody has watched it in play.** The timings are the mock's first guesses;
-  the swallow's swell is small at the game's scale.
-- **A small window often has nobody on the glass**, so the bolts reach off
-  screen and the orb is hauled in from there (as the rule says).
-- **A meal through the kill** plays out on a dying head, healing nothing.
-
-## Cloud saves -- BUILT AND RELEASED (2026-09-28)
-
-Built as `docs/wave-cloud.md`; "Cloud saves" in DESIGN.md. The worker is
-deployed at `https://pebble-saves.graham-things.com` (Workers Free, D1
-`pebble-cloud`) and shipped in v0.5.0 on the page, linux and mac; the
-windows app first carries it in the next release (the workflow wrote its
-address through pwsh, which never reached the build; fixed 2026-10-13).
-Every player opts in: nothing is sent until they press *enable cloud
-syncing* or enter a code.
-Open:
-- **The `behind` card and *take it* / *keep this one*** have node checks
-  but no browser check and have never been clicked by hand.
-
-## Resists: magic in the ward, physical in the split -- BUILT (2026-09-29)
-
-"Resists: magic in the ward, physical in the split, both in the fading" in
-DESIGN.md. Open: nobody has watched the fading switch in play (the plates
-flicker in `RESIST_WARN_S` before it).
-
-## A phase has a mechanic and a class answers it -- BUILT, TUNING OPEN (2026-09-28)
-
-"A phase has a mechanic and a class answers it" in DESIGN.md. The surge,
-the lash and the sink, each warned and answered. Open:
-- **Nobody has watched a whole turn in play.** Scenes `phase-surge`,
-  `phase-surging`, `phase-taut`, `phase-lash`, `phase-sink`; the periods are
-  on the dev panel.
-- **The answers are capstones**, so the warded phase's surge is mostly
-  unanswered at the pace the model plays. A rung-4 answer, or a later
-  surge, if that reads as unfair.
-- **The lash's bump reads as a dip** at the belly's girth; a deeper
-  `LASH_H` if it wants to read as a whip.
-
-## The deep is paced by its purse -- BUILT, TUNING OPEN (2026-09-28)
-
-"The deep is paced by its purse" in DESIGN.md; the model is
-`tools/node/deep-pace.mjs`. Heals 8 / 86 / 176 / 238, depths 32k / 73k /
-191k / 350k, the shed cap gone, gatherers taking the nearest load. Open:
-- **Nobody has played it.** The hour is the model's: 4 scales a second
-  banked, two clicks a second, and each class's move worth a guessed
-  multiple of its hit (`MOVE` in the tool). Bills in dust, ore and sparks,
-  build time and the fang's carry are left out.
-- **The shed is the log of the damage** (`SCALE_PER_DECADE`, 2026-09-28):
-  a full party sheds 12 to 16 a second against the gatherers' 4 to 5, down
-  from about 500. Nobody has watched a rung-8 party's floor with it.
-- **The banked rate is the load-bearing guess.** Four gatherers bank about
-  5 a second off a thick floor, falling to 3; 3 a second makes it 71
-  minutes, 5 makes it 52.
-- **A party halved in one stage walls there.** Sword, Assassin and Sapper
-  all take half in the split; that party reaches the fourth stage at 50
-  minutes and frees him at 70.
-
-## The serpent: the second half of the game -- BUILT, TUNING OPEN (2026-09-23)
-
-Built as `docs/wave-serpent.md`; "The serpent" at the end of DESIGN.md.
-Open:
-- **Only in the paid full game**: `SERPENT_ON` (src/config/deep.js) is
-  `VITE_FULL=1`, which only `--mode full` and the full Steam cut set (.env.full, .env.steam), and no
-  paid build has shipped (no `ITCH_FULL_TARGET`, no Steam app id). A dev
-  build and the node yard play it. CHANGELOG.md's "Held back" lines move
-  under Unreleased in the release that first ships a paid build.
-- **Glyphs.** The fifteen deep rows and the hop's five arrows borrow
-  drawings (`GLYPH_OF` in glyphs.js); they want their own in the glyph editor.
-
-## Fighters in slots -- BUILT, TUNING OPEN (2026-09-28)
-
-The party is on main (docs/wave-party.md), with the branch at rung 4
-(DESIGN.md, "A fighter branches at rung 4"): a base unit a station forking
-into its two classes, the station picked on an empty lot's board. Open:
-whether rung 4's jump (a whole class at once) is too big a step in the
-ladder book.
-
-## The deep's bench -- DESIGNED, AWAITING THE VOTE (2026-09-24)
-
-"The deep's bench" in DESIGN.md; mocks `docs/mocks/deep-bench-2026-09-24.html`
-and `docs/mocks/deep-bench/`. The altar's board sells the brawlers' two
-ladders and all four doors. Blocked on the owner's calls: (a) a deep bench
-holding the doors (a1 beside the pods, recommended, or a2 under the portal;
-standing from the snatch or raised with its first door) or (b) the altar
-redrawn generic; and which drawing (A, B, C or b1, b2, b3). No game code yet.
-
-## The deep's crew at rest -- BUILT, TUNING OPEN (2026-09-23)
-
-"The deep's crew at rest" in DESIGN.md, option D of the mocks. Open:
-- **Nobody has watched it with forty bodies down there.** The pace, float
-  height, pull and rests (`DEEP_REST_*` in config/deep.js, four on the dev
-  panel) are the mock's numbers; the `deep-rest` scene is six gatherers.
-- **The landing silt is the builders' grit**, drawn by `difference`, so it
-  shows as bright white flecks on the dark floor, brighter than the bed.
-
-## The janitors' roomba -- BUILT, TUNING OPEN (2026-09-23)
-
-"The janitors' roomba" at the end of DESIGN.md, option B of the mocks. Up to
-three roombas on a dock by the closet take the poop and the sky's muck off
-the open yard; one janitor minds them and tips their bins. Open:
-- **Nobody has watched a front with them.** `ROOMBA_BIN` (24), `ROOMBA_PACE`
-  (2.5x a walk) and `ROOMBA_TIP_MS` are first guesses on the dev panel; after
-  a heavy rain the bins fill in a patch or two and the trips home are most of
-  the work. The soot (`MACHINE_FOUL` a grain) is unmeasured against the air
-  filter.
-- **The suck is silent** (`roomba-suck` maps to null in `SOUNDS`).
-
 ---
 
-## Defects
+## Sound and music
 
-### `wayAt` and `onBridge` still read the ground line to a pixel (2026-10-14)
+### The yard's sound set, by lanes -- BUILT, NOT LISTENED TO IN THE GAME (2026-10-18)
 
-`inWorking` now uses `HOLE_DEPTH` (config/crew.js: the furthest a body's own
-sway and swing carry its feet below its footing), but `wayAt` (route.js, a
-body inside a working's span) and `onBridge` (crew/dance.js) still ask
-`feet > S.groundY + 1`, which the same bob crosses. A body mid-bob at ground
-level over a span, e.g. the bridge deck over the cut, reads as in the cut.
-8e16327f measured it as rare (drop zones never reach a mouth). Blocker: both
-steer routing everywhere, so it is its own change with its own check, like
-test/hole-depth.test.mjs.
+DESIGN.md, "The yard's sound set, by lanes". Open: the owner's ear on every
+lane (the review page and `shots/sound/endgame-lanes.ogg`), the levels of the
+takes against the tuned recipes, and the rest of the beats list (farm, stir,
+weather, the deep, the story, acts 3-4). `node tools/node/sound-audition.mjs`
+is the check for every round.
+
+### The score and the music bench -- BENCH BUILT, GAME PLAYBACK DESIGNED, AWAITING THE OWNER'S EAR (2026-10-17)
+
+DESIGN.md, "The score, and the bench it is written on": `music.html`, the
+preview, Surge live, the render and chords first are on main. Next: "The
+score in the game, and the menu filter" (DESIGN.md), the in-game playback
+(one loop a place, its own slider). Blocked on two by-ear picks: which of the
+three crushed sketches is the yard, and how deep the menus sink it
+(shots/music/menu-filter-demo.ogg); then the go-ahead. loopMIDI must be
+installed by hand for the live switch. The effects chain is built; open on
+it: pedalboard's Limiter seems to raise the mix to 0 dBFS whatever its
+threshold (the render's report, 2026-10-17), so the master limits about
+3 dB harder than it needs to -- a by-ear call on `MASTER_GAIN_DB` in
+tools/music/mix.py.
 
 ---
 
@@ -721,6 +444,9 @@ The craft flies, crewed, and pulls from the clouds. Left:
 - The sky: murk depth, the hand-foul rate, the first storm's feel; the swelled
   clouds read faintly in the base tones (a tone deepening with the swell is the
   one-line option).
+- The janitors' roombas: `ROOMBA_BIN` (24), `ROOMBA_PACE` (2.5x a walk) and
+  `ROOMBA_TIP_MS` are first guesses on the dev panel; the soot (`MACHINE_FOUL`
+  a grain) is unmeasured against the air filter.
 
 ---
 
@@ -740,13 +466,55 @@ The craft flies, crewed, and pulls from the clouds. Left:
 
 ## Drawing and listening
 
+- **The index's drawings**: 26 entries in src/config/index.js have
+  `glyph: null` and show no picture (muck, poop, birds, pollution, the hole,
+  the rift, the bench, the crews, the sqwife, the serpent and the rest); each
+  wants one in glyphs.html. DESIGN.md's list of the undrawn is older than the
+  table and names entries that have since gone. The `i` key has no line on
+  the controls page, which the landing page shares and where there is no
+  index to open; the owner's words if it gets one.
+- **The serpent's glyphs**: the fifteen deep rows and the hop's five arrows
+  borrow drawings (`GLYPH_OF` in glyphs.js); they want their own in the glyph
+  editor.
 - The forklift (`drawLiftBox`, render/crew.js) and its `lift` shelf glyph are
   first sketches; want a pass in `glyphs.html` and a shot.
 - The farm shed, the quarry shed and the bench share one silhouette at 1x. One
   feature of three cells or more apiece: a pit-prop A-frame roof on the quarry's,
   a lean-to with the trough on the farm's, an anvil or vice on the bench. Shoot
   the options before drawing one.
-- The casino: nobody has listened to its audio; the spark bin's fanfare and the
-  converting bins' blinking feet are not drawn.
-- The queue: nobody has watched a refund's grains fly on a real window, and a
-  big dust refund is one `bankDust` a grain in one frame, untimed.
+- The casino: the spark bin's fanfare and the converting bins' blinking feet
+  are not drawn.
+- The roomba's suck is silent (`roomba-suck` maps to null in `SOUNDS`).
+- The queue: a big dust refund is one `bankDust` a grain in one frame, untimed.
+
+---
+
+## Not yet played or watched
+
+Each of these is built and checked, and nobody has seen it in play; the
+numbers named are first guesses until someone has.
+
+- **A pad held in hand**: every check drives a stand-in pad; the glide,
+  `PAD_HAND_SPEED` and `PAD_REPEAT_*` (config/pad.js).
+- **The constrict** (the fifth phase): depth 9,000 and the orb's 15% are the
+  model's.
+- **The serpent's phase depths** 4300 / 9400 / 6700 / 5100 (deep-pace's,
+  four fighters).
+- **The serpent's meal**: the timings are the mock's.
+- **A whole turn of a phase's mechanic** (scenes `phase-surge`,
+  `phase-surging`, `phase-taut`, `phase-lash`, `phase-sink`).
+- **The resists' fading switch** (the plates flicker in `RESIST_WARN_S`
+  before it).
+- **The deep's purse-paced hour**, and a rung-8 party's floor under the shed
+  (`SCALE_PER_DECADE`).
+- **The deep's crew at rest with forty bodies down there** (`DEEP_REST_*`;
+  the `deep-rest` scene is six gatherers).
+- **The story's objective line** through a whole game.
+- **The roombas through a front**: after a heavy rain the bins fill in a
+  patch or two and the trips home are most of the work.
+- **Cloud saves' `behind` card** and *take it* / *keep this one*: node checks
+  only, no browser check, never clicked by hand.
+- **The casino's audio**: nobody has listened.
+- **The music bench's preview patterns and the render's mix**: nobody has
+  listened.
+- **A refund's grains flying** on a real window.
