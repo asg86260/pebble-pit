@@ -50,7 +50,7 @@ import { faith } from './after/faith.js';   // MOCK faith16   // MOCK faith5
 // The window's middle at the camera's last window over act 3: God in it,
 // his stage square under him.
 const godView = () => godFront();
-import { CROWD_X0, CROWD_FILES, AFTER_COIN_UNDER_S, STRIKE_SHARE, AFTER_PODIUM_CLIMB, AFTER_PLANT_S, AFTER_PILES } from './config.js';
+import { CROWD_X0, CROWD_FILES, AFTER_COIN_UNDER_S, STRIKE_SHARE, AFTER_PODIUM_CLIMB, AFTER_PLANT_S, AFTER_PILES, AFTER_SPEECH_WARN_S } from './config.js';
 import { millView, bedWants } from './after/mill.js';
 import { gestureDown, gestureMove, gestureUp, partsOf } from './after/gestures.js';
 import { STEPS } from './game.js';
@@ -745,6 +745,18 @@ function levelAt(share, at, won = null) {
     window.__look(cx() - S.viewW / 2); window.__fast(1 / 60);
   }
   window.__holdShot();
+}
+
+// God glaring at a tenth of the strike, framed on him, the speech warned
+// a couple of seconds on, left running: his sweep, then his gaze settling
+// onto the first sign and narrowing on it.
+function godGlaring() {
+  levelAt(0.1, 'god');
+  window.__holdShot(0);
+  for (let k = 0; k < 800; k++) { const m = skyMoment(); if (m && m.glare === 1) break; window.__fast(0.1); }
+  const A = S.after;
+  A.speech = { next: A.t + AFTER_SPEECH_WARN_S + 2.5, target: { kind: 'sign', id: 96000 + LEVEL_SIGNS[0][0] }, burnt: null };
+  window.__look(godView() - S.viewW / 2); window.__fast(1 / 60);
 }
 
 // The pair's podium at rung `n` (0 the soapbox) with the union's crowd at
@@ -3653,6 +3665,29 @@ export const SCENES = {
     run: () => pushback('warned') },
   'act3-speech-burn': { about: 'the acts', say: "the throne's speech fallen: the sign it was aimed at charring and burning away, embers rising",
     run: () => pushback('burn') },
+  // His gaze as it moves, framed on him: glaring, sweeping his crowd, with
+  // the speech warned a couple of seconds on, so a film from here sees the
+  // sweep, then the settle onto a sign and the narrowing on it.
+  'act3-gaze': { about: 'the acts', say: "God glaring: his gaze sweeping his crowd, then settling on a sign and narrowing on it as the speech is warned",
+    run: () => { godGlaring(); window.__holdShot(); } },
+  // How God moves, on the bench: the same glaring God under each take of
+  // the rays round his crown (GOD_RAY_MOTION), left running. The gaze is
+  // the one smooth gaze in all three; C keeps main's stepped rays beside it.
+  'god-motion-turn': { about: 'the acts', review: 'act 3: how God moves', option: 'A the rays turn',
+    stage: 'built: review-god-motion, not on main yet', branch: 'review-god-motion', bare: true,
+    knobs: { GOD_RAY_MOTION: 0 }, swap: () => {},
+    say: 'the ring of rays turning smoothly, each ray one rigid run of cells; his gaze sweeps the crowd, then settles and narrows on a sign',
+    run: () => godGlaring() },
+  'god-motion-pulse': { about: 'the acts', review: 'act 3: how God moves', option: 'B the rays pulse',
+    stage: 'built: review-god-motion, not on main yet', branch: 'review-god-motion', bare: true,
+    knobs: { GOD_RAY_MOTION: 1 }, swap: () => {},
+    say: 'the ring standing on the grid, the rays breathing in length and a swell of light running out from the crown; the same gaze',
+    run: () => godGlaring() },
+  'god-motion-main': { about: 'the acts', review: 'act 3: how God moves', option: 'C stepped, as on main',
+    stage: 'built: review-god-motion, not on main yet', branch: 'review-god-motion', bare: true,
+    knobs: { GOD_RAY_MOTION: 2 }, swap: () => {},
+    say: "main's rays for comparison: the ring turning a step four times a second, each cell re-snapped; the gaze is the new smooth one",
+    run: () => godGlaring() },
   'mansion': { about: 'the acts', say: 'the mansion going up on the house\'s ground: the scaffold, a floor and a half set, the rock half broken up',
     run: () => { actsYard('mansion', 34); window.__fast(3); pinCamera(0); window.__holdShot(); } },
   'mansion-end': { about: 'the acts', say: 'the mansion finished, the two of them in, the freed souls down the stair in their files',
