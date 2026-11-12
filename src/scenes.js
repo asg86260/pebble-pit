@@ -280,7 +280,10 @@ const firstMuck = (rockhands, haulers) => {
 
 // A pointer put on a spot of the yard. Not a hook: standing at a thing is
 // what opens it, and there is no handle that puts the mark up.
+// The node yard has no pointer, so there the scene's setup stands and the
+// hover is the shot tool's alone.
 const hover = (x, y) => {
+  if (typeof PointerEvent === 'undefined') return;
   const s = st();
   document.getElementById('c').dispatchEvent(new PointerEvent('pointermove', {
     clientX: (x - s.camX) * s.zoom, clientY: (y - s.camY) * s.zoom,

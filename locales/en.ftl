@@ -3627,6 +3627,18 @@ after-board-pedestal = pedestal
 # act 3 board title (placeholder): the construction shack's board, every station to build
 after-board-shack = construction shack
 
+# the name of a counted pile in act 3 (the logs of the saw mill and grove); never a hover
+after-pile-logs = log pile
+
+# the name of a counted pile in act 3 (the timber at the saw mill and the workshop's bench); never a hover
+after-pile-planks = plank pile
+
+# the name of a counted pile in act 3 (the workshop's signs); never a hover
+after-pile-signs = sign pile
+
+# the name of a counted pile in act 3 (the grove's seed basket by the forestry shack); never a hover
+after-pile-seeds = seed basket
+
 # act 3 board title (placeholder): the grove's board, the saw and the trees
 after-board-grove = grove
 
