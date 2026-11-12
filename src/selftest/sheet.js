@@ -53,16 +53,16 @@ const atRest = () => {
 const settled = async () => { was = ''; alike = 0; await frames(1); await until(atRest, 180); };
 
 // The handle in hand: a press at its middle, moved `dy` down (up when
-// negative) over a few moves, and let go.
+// negative) over six moves a sixtieth of a second apart, and let go while
+// still moving. On the finger's own clock (`finger`, below): the sheet reads
+// the speed it is let go at off the events' times, and a drag stamped with
+// the page's frames was a slow one whenever the frames were late -- a drag
+// up from the seat that coasts to tall on a quick machine settled back at
+// the seat on a slow one.
 async function dragHandle(dy, el = handle()) {
-  const r = el.getBoundingClientRect();
-  const x = r.left + r.width / 2, y = r.top + r.height / 2;
-  const ev = (type, at, buttons = 1) => el.dispatchEvent(new PointerEvent(type, {
-    clientX: x, clientY: at, pointerId: 5, isPrimary: true, pointerType: 'touch', button: 0, buttons, bubbles: true }));
-  ev('pointerdown', y);
-  for (let i = 1; i <= 6; i++) { ev('pointermove', y + dy * i / 6); await raf(); }
-  ev('pointerup', y + dy, 0);
-  await settled();
+  const f = finger(el);
+  await f.move(dy, 100);
+  await f.up();
 }
 
 // A touch that begins somewhere and ends somewhere else, through the pointer
