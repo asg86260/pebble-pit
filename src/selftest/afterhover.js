@@ -5,12 +5,14 @@
 // opened nor shut by a pointer passing over.
 
 import { S } from '../state.js';
-import { newRun, settle, until, ok, point, canvas, raf, runUntil } from './kit.js';
+import { newRun, settle, until, ok, point, canvas, raf, run, runUntil } from './kit.js';
+import { hushNotices } from '../notices.js';
+import { toastUp } from '../toast.js';
 import { PLACES } from '../acts.js';
 import { openBoard } from '../board.js';
 import { shopBoxOf } from '../roster.js';
 import { msg } from '../lang.js';
-import { P } from '../config.js';
+import { P, TOAST_MS } from '../config.js';
 import { stationBox, stationParts } from '../after/place.js';
 import { toScreen } from '../world.js';
 
@@ -151,6 +153,13 @@ export const TESTS = [
     window.__fast(1);
     window.__hell({ brimstone: 1e5 });
     window.__fast(30);
+    // The notices the setup earned said and gone. A face's board seats under
+    // the notice card while one is up (board.js, `place`), and at a short
+    // window that brings it down over the ghost at the face, which a board
+    // over the spot leaves unnamed (input.js, `askedAbout`): the check would
+    // be reading how tall the story's card had wrapped, not the ghost.
+    hushNotices();
+    if (toastUp()) { run(TOAST_MS / 1000); await raf(); }
     const crew = PLACES.hell.crew;
     const got = await standingBody(crew);
     const ghost = got ? await tipOver(got.box.x + got.box.w / 2, got.box.y + got.box.h / 2) : '';
