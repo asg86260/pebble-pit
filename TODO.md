@@ -145,12 +145,6 @@ approval; parked by the owner for later.
 
 ## Tests and CI
 
-### Browser shard "1920,1080 5/8" fails on CI -- FIX IN PROGRESS (2026-11-11)
-
-The shard fails on timing-sensitive checks: the pad marker's travel and the
-deep right-button veil. A fix is in progress on branch `fix-ci-shard5`.
-Blocker: that fix landing.
-
 ### Every part of the game stands on its own -- PHASE A APPROVED, BUILDING (2026-10-25)
 
 docs/wave-tests.md. Merged: step 1 (CI shards by measured time, #11), step 2
