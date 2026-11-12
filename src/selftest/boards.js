@@ -1937,11 +1937,16 @@ export const TESTS = [
     const words = !!block()?.querySelector('.name')?.textContent && !block()?.querySelector('.note') && !!card.querySelector('.say')?.textContent;
     const unticked = !!dust() && !dust().classList.contains('done');
     const dim = buyBtn()?.disabled === true;
-    // each line is a bar: its fill is have over need of the line's own width
+    // each line is a bar: its fill is have over need of the line's own width.
+    // The share is written on a frame of the page's and the fill slides to it
+    // on the page's clock (`.fill` in style.css): waited for written, then
+    // for the slide to land, not for a stretch of the wall that a late write
+    // can eat into.
     const fillOf = async li => {
-      const t = performance.now();
-      while (performance.now() - t < 700) await new Promise(r => requestAnimationFrame(r));
-      const [h, n] = li.querySelector('.num').textContent.split('/').map(x => parseFloat(x));
+      const said = () => li.querySelector('.num').textContent.split('/').map(x => parseFloat(x));
+      await onPage(() => { const [h, n] = said(); return Math.abs(parseFloat(li.style.getPropertyValue('--p')) - Math.min(1, h / n)) < 1e-6; });
+      await landed(li);
+      const [h, n] = said();
       return { want: h / n, got: parseFloat(getComputedStyle(li, '::before').width) / li.getBoundingClientRect().width, line: li.textContent };
     };
     const fillA = dust() ? await fillOf(dust()) : null;
