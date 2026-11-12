@@ -842,5 +842,6 @@ AFTER_SHRINE_HEART.heart16 = HEART16;
 // (after/rows.js, `raiseRow`), rising a course at a time over the look
 // standing, which fades out over `fade` seconds once the new one stands.
 // `tops` how many cells up each look reaches, which the ring rides two cells
-// over; `hold` how long a look stands in a review scene's loop.
-export const AFTER_SHRINE_LOOKS = { tops: [11, 11, 18, 23, 24], fade: 2.4, hold: 4 };
+// over; `hold` how long each rung takes in a review scene's loop and `rise`
+// how long of it the next look takes to be laid there.
+export const AFTER_SHRINE_LOOKS = { tops: [11, 11, 18, 23, 24], fade: 2.4, hold: 6, rise: 2.5 };

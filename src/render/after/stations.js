@@ -30,7 +30,7 @@ import { ringCells } from '../cellring.js';
 import { faith } from '../../after/faith.js';
 import { prayerRung, prayerRaise, prayerMult } from '../../after/levels.js';   // REVIEW faith18
 import { progressOf } from '../../works.js';
-import { withRise } from '../rise.js';
+import { withRise, layCourses } from '../rise.js';
 import { S } from '../../state.js';
 import { darkPage, raw } from '../../ink.js';
 import { coinAt } from '../aftercoins.js';
@@ -547,57 +547,70 @@ const LOOKS = [
   }
 ];
 const TOP = LOOKS.length - 1;
-// The look standing at the scene's time `tl`, the one fading out behind it,
-// and the next going up on the yard's works:
-//   n     the look standing, whole
+// What of the shrine stands at the scene's time `tl`:
+//   n     the look standing, whole, or null (nothing yet, in a scene's loop)
 //   from  the look it replaced, fading out `fade` (1 to 0) once the new one
 //         stands, or null
-//   up    the next look and how far its work is along (`p`, 0..1), or null
+//   up    the next look and how far it is laid (`p`, 0..1), or null: in the
+//         game, how far along its work on the yard's works is
 //   top   the cells the ring rides over: the standing look's, or as far as
 //         the rising one has been laid, whichever is higher
-// A review scene's loop (`SHRINE.loop`) steps through the five on its own
-// clock, each whole, the last fading out as the next stands.
+// A review scene's loop (`SHRINE.loop`) climbs the five on its own clock as
+// the game does: each next look laid over the one standing, then the old
+// fading; back round to the foot, the church fades out first and the cross
+// is laid on bare ground.
 function lookNow(tl) {
   const L = AFTER_SHRINE_LOOKS, tops = L.tops;
-  let n, from = null, fade = 0, up = null;
+  let n = null, from = null, fade = 0, up = null, top;
   if (SHRINE.loop) {
-    n = Math.floor(tl / L.hold) % LOOKS.length;
-    from = tl < L.hold ? null : (n + TOP) % LOOKS.length;
-    fade = 1 - clamp01((tl % L.hold) / L.fade);
+    const k = Math.floor(tl / L.hold), u = tl % L.hold, next = k % LOOKS.length;
+    const prev = k === 0 ? null : (next + TOP) % LOOKS.length;
+    if (prev != null && next > prev) {
+      if (u < L.rise) { n = prev; up = { n: next, p: u / L.rise }; }
+      else { n = next; from = prev; fade = 1 - clamp01((u - L.rise) / L.fade); }
+      top = up ? Math.max(tops[n], tops[up.n] * up.p) : Math.max(tops[n], tops[from] * fade);
+    } else {
+      const lead = prev == null ? 0 : L.fade;
+      if (u < lead) { from = prev; fade = 1 - u / lead; }
+      else if (u - lead < L.rise) up = { n: next, p: (u - lead) / L.rise };
+      else n = next;
+      // the ring eases down to the cross's height as the church goes, and waits there
+      top = tops[next] + (from != null ? (tops[from] - tops[next]) * ease3(fade) : 0);
+    }
   } else {
     n = Math.min(TOP, prayerRung());
     const at = S.after?.upAt?.['after-prayer'];
     if (n > 0 && at != null) { from = n - 1; fade = 1 - clamp01((S.after.t - at) / L.fade); }
     const w = prayerRaise();
     if (w && n < TOP) up = { n: n + 1, p: progressOf(w) };
+    top = up ? Math.max(tops[n], tops[up.n] * up.p) : tops[n];
   }
   if (fade <= 0) from = null;
-  const top = up ? Math.max(tops[n], tops[up.n] * up.p) : tops[n];
   return { n, from, fade, up, top };
 }
-// A look laid on the frame, at `alpha`.
-function drawLook(d, x0, fn, alpha = 1) {
+// A look's ink on the frame.
+function inkLook(d, x0, fn) {
   const r = (x, y, w, h, tone = K) => d.r(x0 + x, y, w, h, tone);
-  d.fade(alpha, () => fn(r, (y, a, b, tone = K) => r(a, y, b - a + 1, 1, tone)));
+  fn(r, (y, a, b, tone = K) => r(a, y, b - a + 1, 1, tone));
 }
-// Each look's paper backing (kit.js, `silhouette`), read once a look; the
-// station's backing is the look standing now (`backOf`).
+// Each look's paper backing (kit.js, `silhouette`), read once a look. The
+// shrine lays its own (`backOf` hands the station none), each look's with it
+// and at its opacity, so a look fading out takes its paper with it.
 const LOOK_BACKS = [];
-const lookBack = n => LOOK_BACKS[n] || (LOOK_BACKS[n] = silhouette(d => drawLook(d, SH.x, LOOKS[n])));
-const shrineBack = () => lookBack(lookNow(Math.max(0, (S.after?.t || 0) - SHRINE.t0)).n);
+const lookBack = n => LOOK_BACKS[n] || (LOOK_BACKS[n] = silhouette(d => inkLook(d, SH.x, LOOKS[n])));
+const drawLook = (d, x0, n, alpha = 1) => d.fade(alpha, () => { backing(d, lookBack(n)); inkLook(d, x0, LOOKS[n]); });
 // The shrine's looks: the one fading out, the one standing, and the next as
-// far as its builders have laid it, a course at a time from the floor up
-// (render/rise.js, `withRise`, the clip every building on the works goes up
-// through), its own paper laid under it so it stands in front of the old.
+// far as it is laid, a course at a time from the floor up, its own paper
+// under it so it stands in front of the old: in the game the clip every
+// building on the yard's works goes up through (render/rise.js, `withRise`),
+// in a scene's loop the same clip off the loop's clock (`layCourses`).
 function drawLooks(d, x0, LK) {
-  if (LK.from != null) drawLook(d, x0, LOOKS[LK.from], LK.fade);
-  drawLook(d, x0, LOOKS[LK.n]);
+  if (LK.from != null) drawLook(d, x0, LK.from, LK.fade);
+  if (LK.n != null) drawLook(d, x0, LK.n);
   if (!LK.up || d.sinking) return;
-  const tops = AFTER_SHRINE_LOOKS.tops;
-  withRise('after-shrine-look', d.ox + x0 * P, d.oy, SH.w * P, tops[LK.up.n] * P, () => {
-    backing(d, lookBack(LK.up.n));
-    drawLook(d, x0, LOOKS[LK.up.n]);
-  });
+  const x = d.ox + x0 * P, w = SH.w * P, h = AFTER_SHRINE_LOOKS.tops[LK.up.n] * P, fn = () => drawLook(d, x0, LK.up.n);
+  if (SHRINE.loop) layCourses(LK.up.p, x, d.oy, w, h, fn);
+  else withRise('after-shrine-look', x, d.oy, w, h, fn);
 }
 function shrine(d, work, t) {
   const x0 = SH.x;
@@ -717,7 +730,8 @@ export const DRAW = { shrine, mill, workshop, shack, forestry };
 // drawing once: the moving parts swing inside it, and what they carry is
 // solid ink of its own.
 const BACKS = {};
-export const backOf = key => (key === 'shrine' ? shrineBack() : BACKS[key]) || (BACKS[key] = silhouette(d => DRAW[key](d, false, 0, null)));
+const NO_BACK = [];   // REVIEW faith18: the shrine lays each look's paper itself (`drawLook`)
+export const backOf = key => (key === 'shrine' ? NO_BACK : BACKS[key]) || (BACKS[key] = silhouette(d => DRAW[key](d, false, 0, null)));
 
 // Where the worker at a working station stands and how, in its frame's
 // cells: its left column and top row, a lean in px, and whether it squats.
