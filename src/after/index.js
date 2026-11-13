@@ -30,6 +30,8 @@ import { handRecord, settleHand } from './hand.js';
 import './roster.js';                   // the act's posts, stood on the yard's roster
 import { stepBubbles, forgetBubbles } from './bubbles.js';
 import { secs } from './util.js';
+// REVIEW faith-fill
+import { stepFaith, clickFaith } from './faith.js';
 import { settleHeld } from '../placebodies.js';
 import { readOver } from '../placesave.js';
 
@@ -73,6 +75,10 @@ export const blankAfter = () => ({
   seed: 1,
   begun: 0,
   sawBought: false,
+  // the shrine's faith (faith.js): the share of the ring the prayers have
+  // filled, and the act's clock at the last collect, null before the first
+  faith: 0,
+  took: null,
   sawHanded: false,
   // the grove's seeds (DESIGN.md, "Act 3's grove, rebuilt"; after/seeds.js):
   // acorns bought and not yet fetched from the gates, and the self-seed debt
@@ -140,6 +146,7 @@ export function stepAfter(c) {
   stepUnion(c);
   stepStrike(c);
   stepBubbles(c);
+  stepFaith(c);
 }
 
 // A click on the place, in world pixels: true if it was the afterlife's (a
@@ -147,7 +154,7 @@ export function stepAfter(c) {
 // input.js calls it with the camera up here.
 export function clickAfter(wx, wy) {
   if (!afterlifeOn() || !S.after) return false;
-  return clickPlace(wx, wy);
+  return clickFaith(wx, wy) || clickPlace(wx, wy);
 }
 // Act 3's hand on the shared pointer (acts.js, `placeHand`): its stations'
 // moving parts worked where they stand (after/gestures.js), asked before the

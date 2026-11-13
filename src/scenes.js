@@ -45,6 +45,7 @@ import { goDeep, goUp, poseGlide } from './view.js';
 import { floorAt, stationX0, stationBox, signBox, soulX, afterFloor, afterOpenX, workshopsX1, unionJoinAt, campEdges, plotX, groundOf, AP } from './after/place.js';
 import { godFront } from './after/sky.js';
 import { prayerRaise } from './after/levels.js';
+import { ringBox } from './after/faith.js';
 // The window's middle at the camera's last window over act 3: God in it,
 // his stage square under him.
 const godView = () => godFront();
@@ -3445,6 +3446,12 @@ export const SCENES = {
   'shrine-look-4': { about: 'the acts', say: 'the shrine with 4 prayer rungs built, its look standing', run: () => shrineAt(4) },
   'shrine-raise-0': { about: 'the acts', say: 'the first prayer rung half built: the builders hammering the altar up over the wayside cross', run: () => shrineRaise(w => progressOf(w) >= 0.5) },
   'shrine-raise-2': { about: 'the acts', say: 'the third prayer rung going up: its timber carried, the builders hammering the bell tower up beside the chapel, the ring riding up as it rises', run: () => shrineRaise(w => progressOf(w) >= 0.6, 2) },
+  'faith-fill': { about: 'the acts', review: 'act 3: faith', option: 'A the ring fills, a click collects', stage: 'built: faith-fill, not on main yet', branch: 'faith-fill',
+    say: 'the ring a few seconds from full: it beats once full, the ghost hand over it; click it to collect, and it unwinds and fills again',
+    run: () => shrineAt(0, () => { S.after.faith = 0.93; }) },
+  'faith-full': { about: 'the acts', say: 'the faith ring full: beating, each prayer turned away off its tip, the ghost hand over it', run: () => shrineAt(0, () => { S.after.faith = 1; window.__fast(4); }) },
+  'faith-collect': { about: 'the acts', say: 'the full faith ring clicked: its arc unwinding, the faith streaming off to the corner, motes bursting out',
+    run: () => shrineAt(0, () => { S.after.faith = 1; window.__fast(1); const b = ringBox(); window.__afterClick(b.x + b.w / 2, b.y + b.h / 2); window.__fast(1.2); }) },
   'shrine-board': { about: 'the acts', say: 'the shrine board open: its prayer row', run: () => { shrineAt(0); window.__afterGrant({ rebel: 400, timber: 20 }); window.__fast(0.2); window.__openAfterBoard('shrine'); window.__holdShot(); } },
 
   'level-carry': { about: 'the acts', say: "the chain running: a carrier with a sign over the cloud, climbing the stage's plinth or out on its top",

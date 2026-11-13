@@ -788,3 +788,22 @@ export const AFTER_SHRINE_MOTES = { puffs: 12, size: 1, life: 3, out: 6, up: 4, 
 // `fade` seconds once the new one stands. `tops` how many cells up each look
 // reaches, which the ring rides two cells over.
 export const AFTER_SHRINE_LOOKS = { tops: [11, 11, 18, 23, 24], fade: 2.4 };
+// REVIEW faith-fill
+// The faith ring over the shrine (after/faith.js): its left `x` cells off
+// the shrine's frame, floating `gap` cells over the look standing, `size`
+// cells across, its cells those between `inner` and `outer` off the hub.
+export const AFTER_SHRINE_RING = { x: 13, gap: 2, size: 19, inner: 7.5, outer: 9.6 };
+// Faith: the prayers fill the ring in `fillS` seconds at the ladder's foot
+// (the review's fill, 0.4 of the ring in 37 s), a click on the full ring
+// collects it -- held full `press` seconds, unwound over `unwind`, empty
+// `empty` before the prayers fill it again -- and the faith streams off the
+// tip a mote every `every` seconds to the counter's corner, `to` screen px
+// in from the window's lower left (render/counter.js), bursting out of the
+// ring as it lets go (`burst`).
+export const AFTER_FAITH = {
+  fillS: 92.5, press: 0.5, unwind: 3, empty: 1.5, every: 0.1, to: [26, 22],
+  burst: { puffs: 18, size: 1, life: 1.8, fadeIn: 8, peak: 0.95, greyAt: 0.5, greyFade: 0.1, tones: ['ink', 'ink'], r0: 10.5, r1: 11, ease: true }
+};
+// What the shrine's prayer ladder is worth (after/levels.js, `prayerMult`):
+// how many times faster the prayers fill the ring, the foot first.
+export const AFTER_PRAYER_MULT = [1, 2, 3, 4, 6];
