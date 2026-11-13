@@ -80,7 +80,7 @@ export const TESTS = [
       const click = () => { point('pointerdown', cx, cy); point('pointerup', cx, cy); };
       click();                                           // goes on from the first line, which fades out
       await frames(3);
-      const fading = !!lineShown() && lineShown().id === 'act-meet-god' && lineShown().out != null;
+      const fading = !!lineShown() && lineShown().id === 'act-meet-god-1' && lineShown().out != null;
       click();                                           // a second click, quick: the line's, nothing else
       const skipped = S.heard.includes('act-hell-told');
       await frames(90);
@@ -116,11 +116,11 @@ export const TESTS = [
     const off = b && !(cx - r.left >= b.x && cx - r.left < b.x + b.w && cy - r.top >= b.y && cy - r.top < b.y + b.h);
     point('pointerdown', cx, cy);
     point('pointerup', cx, cy);
-    const went = !!lineShown() && lineShown().out != null && S.heard.includes('act-meet-god');
+    const went = !!lineShown() && lineShown().out != null && S.heard.includes('act-meet-god-1');
     await frames(40);
-    const gone = !lineShown() || lineShown().id !== 'act-meet-god';
+    const gone = !lineShown() || lineShown().id !== 'act-meet-god-1';
     return [
-      ok(line && line.id === 'act-meet-god' && line.who === 'god' && line.out == null, 'God\'s line is up and waiting', JSON.stringify(line)),
+      ok(line && line.id === 'act-meet-god-1' && line.who === 'god' && line.out == null, 'God\'s line is up and waiting', JSON.stringify(line)),
       ok(near, 'its tail\'s tip is at his head', JSON.stringify({ tip, head, dir: b && b.dir })),
       ok(inked, 'and the tip is drawn there, ink on the frame', String(b && lum(tip.x, tip.y))),
       ok(off && went, 'a real click away from the bubble goes on from the line, read at once', `${off} ${went}`),

@@ -15,16 +15,29 @@
 // crown's top, the face's side) so it never lands on one of the rays round
 // God; a speaker past the window's edge speaks from that edge.
 
+// The owner's marks round words (dialog.js, `lineRuns`) are taken out before
+// the line is wrapped and measured, so the bubble is the plain line's size;
+// a line with none is drawn a row at a time, as it always was. A marked word
+// is drawn a letter at a time by its true offset: the wave a sine along the
+// word, the shake held poses a pixel either way, the glow a see-through halo
+// of the bubble's ink behind the word, swinging in opacity, and bold; a slow
+// word fades in on its own after the rest of the line is in. Under reduced
+// motion nothing moves or swings and every marked word is only bold.
+
 // REVIEW dialog-built
+// REVIEW god-speaks
 import { S } from '../state.js';
 import { CELL, ACT_CAPTION_FONT_PX, DIALOG_STROKE_PX, DIALOG_PAD_CELLS, DIALOG_WIDE_PX, DIALOG_LINE_PX,
-         DIALOG_TAIL } from '../config.js';
+         DIALOG_TAIL, DIALOG_FADE_S, DIALOG_FX as FX } from '../config.js';
 import { ctx } from './ctx.js';
 import { msg, FACE } from '../lang.js';
 import { raw, paper, ink } from '../ink.js';
 import { bandCells } from '../shot.js';
 import { toScreen } from '../world.js';
 import { godHead } from './aftercrowd.js';
+import { lineRuns } from '../dialog.js';
+import { now } from '../clock.js';
+import { reducedMotion } from '../prefs.js';
 
 const FONT = ACT_CAPTION_FONT_PX, U = DIALOG_STROKE_PX;
 let seen = null; // cache: the bubble as last drawn, for the checks (`bubbleSeen`)
@@ -84,14 +97,71 @@ function tailCells(span, at, side) {
   return { paperCells, inkCells };
 }
 
-// A line with a speaker: `{ id, args, a, who }` (actbeats.js, `actCaption`).
+const hash = (a, b) => { const v = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return v - Math.floor(v); };
+
+// The wrapped `rows` of a marked line, from (x, y) down, `lh` a row: unmarked
+// stretches a string at a time, marked letters one at a time with their
+// effect. `fxs` is the effect of each letter of `plain`, the rows' source;
+// `u` seconds since the line went up.
+function drawMarked(rows, plain, fxs, x, y, lh, u, a, INK) {
+  const calm = reducedMotion(), t = now() / 1000;
+  let at = 0;
+  rows.forEach((row, r) => {
+    at = Math.max(at, plain.indexOf(row, at));
+    const cy = y + r * lh, left = k => x + ctx.measureText(row.slice(0, k)).width;
+    // the glow's halo first, behind its word
+    for (let k = 0; k < row.length;) {
+      if (fxs[at + k] !== 'glow') { k++; continue; }
+      let e = k;
+      while (e < row.length && fxs[at + e] === 'glow') e++;
+      const swing = calm ? 0.5 : 0.5 + 0.5 * Math.sin(t * Math.PI * 2 * FX.glowHz);
+      ctx.globalAlpha = a * (FX.glowA[0] + (FX.glowA[1] - FX.glowA[0]) * swing);
+      ctx.fillStyle = INK;
+      const x0 = left(k);
+      ctx.fillRect(Math.round(x0 - 2), cy - 1, Math.round(left(e) - x0 + 4), lh - 1);
+      k = e;
+    }
+    ctx.fillStyle = INK;
+    for (let k = 0; k < row.length;) {
+      const fx = fxs[at + k];
+      if (!fx) {
+        let e = k;
+        while (e < row.length && !fxs[at + e]) e++;
+        ctx.globalAlpha = a;
+        ctx.fillText?.(row.slice(k, e), left(k), cy);
+        k = e;
+        continue;
+      }
+      const i = at + k, ch = row[k];
+      let dx = 0, dy = 0, o = 1;
+      if (!calm && fx === 'wave') dy = -Math.sin(t * Math.PI * 2 * FX.waveHz + i * FX.waveStep) * FX.waveH;
+      if (!calm && fx === 'shake') {
+        const n = Math.floor(t / FX.shakeHoldS);
+        dx = Math.round(hash(i, n) * 2 - 1) * FX.shake; dy = Math.round(hash(n, i) * 2 - 1) * FX.shake;
+      }
+      if (fx === 'slow') o = Math.max(0, Math.min(1, (u - DIALOG_FADE_S) / FX.slowS));
+      ctx.globalAlpha = a * o;
+      const px = left(k);
+      ctx.fillText?.(ch, px + dx, cy + dy);
+      // a glowing word, or any marked one held still, is bold: struck again a pixel over
+      if (fx === 'glow' || calm) ctx.fillText?.(ch, px + dx + 1, cy + dy);
+      k++;
+    }
+    at += row.length;
+  });
+  ctx.globalAlpha = a;
+}
+
+// A line with a speaker: `{ id, args, a, u, who }` (actbeats.js, `actCaption`).
 export function drawLine(c) {
   ctx.save();
   ctx.setTransform(S.dpr, 0, 0, S.dpr, 0, 0);
   ctx.globalAlpha = c.a;
   ctx.font = `${FONT}px ${FACE}`;
   const pad = CELL * DIALOG_PAD_CELLS, lh = FONT + DIALOG_LINE_PX;
-  const lines = wrap(c.args ? msg(c.id, c.args) : msg(c.id), Math.min(S.W - CELL * 8, DIALOG_WIDE_PX));
+  const runs = lineRuns(c.args ? msg(c.id, c.args) : msg(c.id));
+  const plain = runs.map(n => n.text).join(''), marked = runs.some(n => n.fx);
+  const lines = wrap(plain, Math.min(S.W - CELL * 8, DIALOG_WIDE_PX));
   // a whole number of cells across and down, so the box's corners and the
   // tail's cells sit on one lattice
   const more = U * 6;
@@ -119,7 +189,8 @@ export function drawLine(c) {
     // the words, and a still wedge in the corner: there is a click to go on
     ctx.fillStyle = INK;
     ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-    lines.forEach((s, k) => ctx.fillText?.(s, x + pad, y + pad + k * lh));
+    if (marked) drawMarked(lines, plain, runs.flatMap(n => n.text.split('').map(() => n.fx)), x + pad, y + pad, lh, c.u || 0, c.a, INK);
+    else lines.forEach((s, k) => ctx.fillText?.(s, x + pad, y + pad + k * lh));
     const mx = x + w - pad / 2 - U * 5, my = y + h - pad / 2 - U * 3;
     for (let r = 0; r < 3; r++) ctx.fillRect(Math.round(mx) + r * U, Math.round(my) + r * U, (5 - 2 * r) * U, U);
     seen = { x, y, w, h, dir: b.dir, at: b.at, head: b.sp };

@@ -3403,8 +3403,18 @@ ach-freed-note = finish act 2
 # the card over the house after the finale: pressing it begins act 3 (call 7)
 act-goon = go on
 
-# act beat line, placeholder: God at the throne
-act-meet-god = God holds out a pick
+# God's opening lines at the throne, the owner's own words (script D)
+act-meet-god-1 = come, and be ^welcome^
+
+act-meet-god-2 = to the afterlife, an *eternal paradise*
+
+act-meet-god-3 = your *eternal* ^paradise^
+
+act-meet-god-4 = you've worked so hard, all the way to the ~end~
+
+act-meet-god-5 = so _work_ for me now
+
+act-meet-god-6 = _eternally_
 
 # act beat line, placeholder: the saw handed to the woodcutter
 act-saw = a saw

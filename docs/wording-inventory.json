@@ -7868,11 +7868,46 @@
   "text": "go on"
  },
  {
-  "id": "act-meet-god",
+  "id": "act-meet-god-1",
   "group": "The shell",
   "where": "src/actbeats.js",
-  "context": "act beat line, placeholder: God at the throne",
-  "text": "God holds out a pick"
+  "context": "God's opening lines at the throne, the owner's own words (script D)",
+  "text": "come, and be ^welcome^"
+ },
+ {
+  "id": "act-meet-god-2",
+  "group": "The shell",
+  "where": "src/actbeats.js",
+  "context": "",
+  "text": "to the afterlife, an *eternal paradise*"
+ },
+ {
+  "id": "act-meet-god-3",
+  "group": "The shell",
+  "where": "src/actbeats.js",
+  "context": "",
+  "text": "your *eternal* ^paradise^"
+ },
+ {
+  "id": "act-meet-god-4",
+  "group": "The shell",
+  "where": "src/actbeats.js",
+  "context": "",
+  "text": "you've worked so hard, all the way to the ~end~"
+ },
+ {
+  "id": "act-meet-god-5",
+  "group": "The shell",
+  "where": "src/actbeats.js",
+  "context": "",
+  "text": "so _work_ for me now"
+ },
+ {
+  "id": "act-meet-god-6",
+  "group": "The shell",
+  "where": "src/actbeats.js",
+  "context": "",
+  "text": "_eternally_"
  },
  {
   "id": "act-saw",
