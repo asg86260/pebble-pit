@@ -1,5 +1,6 @@
 // The air filter: a louvered shed with the balloons' gauge on its wall.
 
+import { ringCells, ringFace } from './cellring.js';
 import { DIAL_CELLS, DIAL_STEPS, DIAL_STUB, DIAL_ZONES, DIAL_ZONE_NAMES, DOOR_H, DOOR_W,
          FILTER_VENT, FILTER_WALL, HOUSE_CURTAIN, MUCK_TONE, P } from '../config.js';
 import { CLODS } from '../smog.js';
@@ -114,15 +115,10 @@ function needle(step) {
     .filter(([i, j]) => DIAL[j][i] !== '#');
 }
 
-// A ring cell's band: its angle from the hub as a share of the sweep, clean
-// at the lower left round to brim at the lower right, in thirds.
-function zoneOf(i, j) {
-  let a = Math.atan2(j - HUB, i - HUB);
-  if (a < Math.PI * 0.75 - 1e-6) a += Math.PI * 2;
-  const share = (a - Math.PI * 0.75) / (Math.PI * 1.5);
-  if (share < 0 || share > 1) return '#000';
-  return DIAL_ZONES[Math.min(DIAL_ZONES.length - 1, Math.floor(share * DIAL_ZONES.length))];
-}
+// A ring cell's band: its share of the sweep (render/cellring.js), clean at
+// the lower left round to brim at the lower right, in thirds.
+const zoneAt = share => (share == null ? '#000'
+  : DIAL_ZONES[Math.min(DIAL_ZONES.length - 1, Math.floor(share * DIAL_ZONES.length))]);
 
 function drawDial(wall, r, row) {
   const x0 = wall + P * DIAL_STUB, y0 = r(row);
@@ -130,18 +126,13 @@ function drawDial(wall, r, row) {
   // the stub it hangs on, one cell out of the wall at the hub's height
   ctx.fillRect(wall, y0 + P * HUB, P * DIAL_STUB, P);
   ctx.fillStyle = '#fff';
-  for (let j = 1; j < DIAL.length - 1; j++) {
-    const row = DIAL[j], from = row.indexOf('#') + 1, to = row.lastIndexOf('#');
-    ctx.fillRect(x0 + P * from, y0 + P * j, P * (to - from), P);
-  }
+  for (const { j, from, n } of ringFace(DIAL)) ctx.fillRect(x0 + P * from, y0 + P * j, P * n, P);
   // The ring in its three bands, by where each cell of it sits along the
   // sweep; the cells under the hub, outside the sweep, stay black.
-  for (let j = 0; j < DIAL.length; j++)
-    for (let i = 0; i < DIAL[j].length; i++) {
-      if (DIAL[j][i] !== '#') continue;
-      ctx.fillStyle = zoneOf(i, j);
-      ctx.fillRect(x0 + P * i, y0 + P * j, P, P);
-    }
+  for (const { i, j, share } of ringCells(DIAL, Math.PI * 0.75, Math.PI * 1.5)) {
+    ctx.fillStyle = zoneAt(share);
+    ctx.fillRect(x0 + P * i, y0 + P * j, P, P);
+  }
   ctx.fillStyle = '#000';
   ctx.fillRect(x0 + P * HUB, y0 + P * HUB, P, P);
   for (const [i, j] of needle(S.dialStep)) ctx.fillRect(x0 + P * i, y0 + P * j, P, P);

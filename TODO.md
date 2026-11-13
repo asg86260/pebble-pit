@@ -6,13 +6,27 @@ and CHANGELOG.md; the old entries are in git history.
 
 ## Acts 3 and 4
 
-### Act 3's faith shrine -- BUILT ON A BRANCH, ON THE REVIEW BENCH (2026-11-11)
+### Act 3's faith shrine -- PATH A LANDED, FAITH NOT COUNTED (2026-11-12)
 
-Built on branch `review-faith-full`, not on main; on the review bench as
-round 18. Path A is signed off: each prayer rung's look is put up by the
-yard's builders. Open: faith has no count in the sim, so `prayerMult()` only
-drives the ring's fill rate, and the arc jumps once when a rung lands in fill
-mode. Blocker: those two, then the landing.
+The shrine stands from the act's first frame; its prayer ladder (four rungs
+on its board) is carried, then hammered up by the builders, each rung a new
+look (render/after/stations.js, `LOOKS`). The faith ring over it is drawn
+full and beating, the faithful drawn kneeling, the ghost hand tapping over
+the ring. Open, all because faith has no count in the sim yet:
+
+- The ring is always full. The review's fill mode (a demo cycle 0.3 to 0.7,
+  sped by the rung) went with the other options; the rung's worth was
+  `AFTER_PRAYER_MULT = [1, 2, 3, 4, 6]`, the faith one prayer adds, and
+  comes back with the count. In fill mode the arc jumped once as a rung
+  landed (the multiple changed the fill rate under a running clock); a
+  counted fill reads the count, so the jump has nowhere to happen.
+- The ghost hand invites a click that collects nothing: there is no click
+  on the ring and nothing to collect into.
+- The six faithful are drawn in place, not walked there (breaks "nothing
+  teleports"): members should walk to kneel at the shrine's door, and the
+  prayers come only from those through it.
+
+Blocker: the owner's design for faith as a counted coin.
 
 ### Act 3's stair and act 2's abyssal sword -- DESIGNED, AWAITING APPROVAL (2026-11-09)
 

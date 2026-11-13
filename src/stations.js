@@ -312,11 +312,12 @@ export const YARD_BOARDS = STATIONS.filter(r => r.board && worldOf(r.place) === 
 
 // Every station that is a site for works, and its ground, handed to works.js
 // (which the boards import, and so cannot import this back). An act's
-// station is a site while it has a lot to be built on: raised on the yard's
-// works by the act's own builders (works.js, `registerPlaceCrew`), on its
-// own floor (`lot.floor`).
-const isSite = r => (worldOf(r.place) === 'yard' ? !!(r.board || r.site) : !!r.lot);
-registerSites(STATIONS.filter(isSite).map(r => [r.key, r.builtBy || JOB.BUILD, r.place || 'yard', worldOf(r.place) === 'yard' ? null : r.lot.floor]),
+// station is a site while it has a lot to be built on, or while it says it
+// is one (`site`: a standing station whose rungs are built on it): raised on
+// the yard's works by the act's own builders (works.js, `registerPlaceCrew`),
+// on its own floor (`lot.floor`, `site.floor`).
+const isSite = r => (worldOf(r.place) === 'yard' ? !!(r.board || r.site) : !!(r.lot || r.site));
+registerSites(STATIONS.filter(isSite).map(r => [r.key, r.builtBy || JOB.BUILD, r.place || 'yard', worldOf(r.place) === 'yard' ? null : (r.lot || r.site).floor]),
               key => byKey.get(key)?.stand?.() || null);
 
 // The row for a key, or undefined for a thing that is not a station (the

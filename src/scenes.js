@@ -44,6 +44,7 @@ import { SAVE as CREW_SAVE } from './crew/records.js';
 import { goDeep, goUp, poseGlide } from './view.js';
 import { floorAt, stationX0, stationBox, signBox, soulX, afterFloor, afterOpenX, workshopsX1, unionJoinAt, campEdges, plotX, groundOf, AP } from './after/place.js';
 import { godFront } from './after/sky.js';
+import { prayerRaise } from './after/levels.js';
 // The window's middle at the camera's last window over act 3: God in it,
 // his stage square under him.
 const godView = () => godFront();
@@ -586,6 +587,30 @@ function afterSite(until) {
     for (let k = 0; k < 2400 && !(workOn('after-build-workshop') && until(workOn('after-build-workshop'))); k++) window.__fast(0.1);
   }
   window.__look(b.x + b.w / 2 - S.viewW / 2); window.__holdShot();
+}
+
+// The shrine with `had` prayer rungs standing, its look whole, framed with
+// the ring over it; `run` the setup a scene adds before the shot is held.
+function shrineAt(had = 0, run = null) {
+  window.__reset(); window.__actsOn(null); window.__goPlace('after'); window.__fast(1);
+  for (let k = 0; k < 90 && window.__afterRead().walking > 0; k++) window.__fast(1);
+  S.after.ups['after-prayer'] = had; S.after.upAt['after-prayer'] = S.after.t - 1e3;
+  run?.();
+  const b = stationBox('shrine');
+  window.__look(b.x + b.w / 2 - S.viewW / 2); window.__fast(0); window.__holdShot();
+}
+// The same with the next rung bought on its board as a player buys it,
+// members in the camp to carry its timber and build it, run on until
+// `until(work)` holds of the work putting its look up and a builder is at
+// it, hammering.
+function shrineRaise(until, had = 0) {
+  shrineAt(had, () => {
+    S.after.camp = 4;
+    window.__afterGrant({ rebel: 400, timber: 40 });
+    window.__buy('after-prayer');
+    const at = () => S.after.bodies.some(b => b.goal === 'at' && b.jigAt != null && b.site === 'after-shrine');
+    for (let k = 0; k < 3000 && !(prayerRaise() && until(prayerRaise()) && at()); k++) window.__fast(0.1);
+  });
 }
 
 // The review "act 3: building through the yard's construction": the camp
@@ -3411,6 +3436,16 @@ export const SCENES = {
       window.__look(godView() - S.viewW / 2); window.__fast(1 / 60);
       window.__holdShot();
     } },
+  // The shrine at each prayer rung, its look standing whole (render/after/stations.js, `LOOKS`).
+  'shrine-look-0': { about: 'the acts', say: 'the shrine with 0 prayer rungs built, its look standing', run: () => shrineAt(0) },
+  'shrine-look-1': { about: 'the acts', say: 'the shrine with 1 prayer rung built, its look standing', run: () => shrineAt(1) },
+  'shrine-look-2': { about: 'the acts', say: 'the shrine with 2 prayer rungs built, its look standing', run: () => shrineAt(2) },
+  'shrine-look-3': { about: 'the acts', say: 'the shrine with 3 prayer rungs built, its look standing', run: () => shrineAt(3) },
+  'shrine-look-4': { about: 'the acts', say: 'the shrine with 4 prayer rungs built, its look standing', run: () => shrineAt(4) },
+  'shrine-raise-0': { about: 'the acts', say: 'the first prayer rung half built: the builders hammering the altar up over the wayside cross', run: () => shrineRaise(w => progressOf(w) >= 0.5) },
+  'shrine-raise-2': { about: 'the acts', say: 'the third prayer rung going up: its timber carried, the builders hammering the bell tower up beside the chapel, the ring riding up as it rises', run: () => shrineRaise(w => progressOf(w) >= 0.6, 2) },
+  'shrine-board': { about: 'the acts', say: 'the shrine board open: its prayer row', run: () => { shrineAt(0); window.__afterGrant({ rebel: 400, timber: 20 }); window.__fast(0.2); window.__openAfterBoard('shrine'); window.__holdShot(); } },
+
   'level-carry': { about: 'the acts', say: "the chain running: a carrier with a sign over the cloud, climbing the stage's plinth or out on its top",
     run: () => {
       afterChain(true);

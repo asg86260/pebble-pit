@@ -64,7 +64,7 @@ export const setCrowdAt = at => { crowdAt = at; };
 
 const NAMES = {
   pedestal: () => msg('after-board-pedestal'), shack: () => msg('after-board-shack'), grove: () => msg('after-board-grove'),
-  mill: () => msg('after-build-mill'), workshop: () => msg('after-build-workshop'), crowd: () => msg('after-board-crowd')
+  shrine: () => msg('after-board-shrine'), mill: () => msg('after-build-mill'), workshop: () => msg('after-build-workshop'), crowd: () => msg('after-board-crowd')
 };
 
 const row = (card, more) => {
@@ -111,13 +111,16 @@ const lotOf = card => ({
 });
 
 // In the order a press asks them: the standing stations, the grove, God's camp.
-const STATION_CARDS = ['mill', 'workshop', 'shack', 'pedestal'];
+const STATION_CARDS = ['mill', 'workshop', 'shack', 'pedestal', 'shrine'];
 export const AFTER_STATION_ROWS = [
   ...STATION_CARDS.map(card => row(card, {
     // Standing only once built: a station not yet built has no board and no
     // button, and its drawing opens nothing; its build sign is the way in.
     open: () => live() && built(card),
     ...(card in AFTER_BUILDS ? { lot: lotOf(card) } : {}),
+    // the shrine's prayer rungs are built on it, each a new look put up by
+    // the builders (rows.js, `raiseRow`)
+    ...(card === 'shrine' ? { site: { floor: floorAt } } : {}),
     // The construction shack sells nothing (the owner, 2026-11-10): it
     // stands, with no board and no button, and the pointer opens nothing on
     // it (`hit`), but names it over its drawing (`over`).

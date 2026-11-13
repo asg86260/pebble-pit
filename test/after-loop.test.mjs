@@ -546,7 +546,8 @@ group('a speech burns a sign after its warning, and knocks no soul back', async 
 });
 
 // Act 3 is outside the eight-rungs rule (call 12, settled): no card is a
-// ladder. Every station's upgrades are a short list of named ones.
+// ladder. Every station's upgrades are a short list of named ones; the
+// shrine's prayer ladder is the second exception, four rungs, each a new look.
 group('every act-3 card sells two or three named upgrades, none of them a ladder but the podium', async () => {
   up();
   const rows = window.__afterRows();
@@ -555,7 +556,7 @@ group('every act-3 card sells two or three named upgrades, none of them a ladder
     .map(c => [c, ups.filter(([, u]) => u.card === c).length]);
   // The podium is the one ladder (DESIGN.md, "The level, the two crowds and
   // the flags"): a rung a support mark, not the yard's bands.
-  const long = ups.filter(([k, u]) => u.bills.length > (k === 'after-plot' ? AFTER_PLOT_MAX - AFTER_PLOTS0 : k === 'after-selfseed' ? AFTER_SELF_SEED.length : u.marks ? u.marks.length : 1)).map(([k]) => k);
+  const long = ups.filter(([k, u]) => u.bills.length > (k === 'after-plot' ? AFTER_PLOT_MAX - AFTER_PLOTS0 : k === 'after-selfseed' ? AFTER_SELF_SEED.length : k === 'after-prayer' ? 4 : u.marks ? u.marks.length : 1)).map(([k]) => k);
   const coins = new Set(ups.flatMap(([, u]) => u.bills.flat().map(([c]) => c)));
   window.__actsOn(null);
   return [

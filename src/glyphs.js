@@ -181,6 +181,7 @@ export const GLYPH_OF = {
   'after-seat-joiner': ['cap', 'plus'], 'after-seat-carrier': ['cart', 'plus'],
   'after-podium': ['bell', 'up'], 'after-saw': ['blade'], 'after-plot': ['furrow', 'plus'], 'after-grow': ['ear', 'up'],
   'after-seeds': ['ear', 'plus'], 'after-selfseed': ['ear', 'crop'], 'after-stumps': ['shovel'], 'after-blade': ['blade', 'plus'],
+  'after-prayer': ['bell', 'plus'], 'after-prayer-raise': ['bell', 'plus'],   // the rung's look going up wears the row's own mark
   'after-bench': ['bench', 'plus'], 'after-signreach': ['planks', 'up'],
   'after-build-mill': ['blade'], 'after-build-workshop': ['bench'],
 };
