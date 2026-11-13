@@ -3562,7 +3562,7 @@ after-row-stumps = stump removal
 # act 3 card row (placeholder): the saw mill's second blade, two logs a cut
 after-row-blade = second blade
 
-# act 3 card row (placeholder): the shrine's prayer ladder, each rung a new look of the shrine's, built by the builders
+# act 3 card row (placeholder): the shrine's prayer ladder, each rung a new look of the shrine's, built by the builders, and the prayers filling the faith ring faster
 after-row-prayer = prayer
 
 # act 3 card row (placeholder): the workshop's second bench, two signs at once
