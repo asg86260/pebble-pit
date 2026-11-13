@@ -21,6 +21,8 @@ import { layGood } from '../after/grove.js';
 import { handHolds } from '../hands.js';
 import { source } from '../flow.js';
 import { goodsRead } from '../after/piles.js';
+import { workOn } from '../works.js';
+import { raiseKey } from '../after/levels.js';
 
 const OPENING = ['house-fall', 'arrive', 'meet-god', 'refuse'];
 async function upThere() {
@@ -75,8 +77,9 @@ export const TESTS = [
         await settle(0.05);
         b.click();
         // A row billed in timber is an order: it lands once members have
-        // carried its blocks to its station (after/orders.js).
-        for (let k = 0; k < 240 && S.after.orders.length; k++) window.__fast(1);
+        // carried its blocks to its station (after/orders.js); a rung that is
+        // a new look lands only once the builders have put it up (after/rows.js).
+        for (let k = 0; k < 480 && (S.after.orders.length || workOn(raiseKey(key))); k++) window.__fast(1);
         await until(() => bought(key, was));
         if (!bought(key, was)) missed.push(key);
       }
