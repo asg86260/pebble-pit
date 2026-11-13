@@ -3552,6 +3552,24 @@ export const SCENES = {
       for (let i = 0; i < 60 * 30 && !window.__goOn(); i++) window.__fast(1 / 60);
       for (let i = 0; i < 60 * 600 && !(window.__line() && window.__line().out == null); i++) window.__fast(1 / 60);
     } },
+  // God's opening lines with the owner's marks drawn (dialog.js `lineRuns`,
+  // render/dialog.js): the opening played to the meeting and gone on from
+  // line by line, as clicks do, until line `n` is up and waiting, just in.
+  ...Object.fromEntries([
+    ['glow on "welcome"'], ['wave on "eternal paradise"'], ['wave on "eternal", glow on "paradise"'],
+    ['"end" fading in slowly after the rest'], ['shake on "work"'], ['shake on the whole line']
+  ].map(([what], k) => [`god-speaks-${k + 1}`, { about: 'the acts', review: 'act 3: God speaks', option: `${k + 1} ${what}`,
+    stage: 'built: god-lines-sauce, not on main yet', branch: 'god-lines-sauce',
+    say: `God's line ${k + 1} of 6 at the meeting, waiting for a click: ${what}. The marks in your script are drawn as effects, never as letters. Press r to see it come in again.`,
+    run: () => {
+      actsYard('home');
+      for (let i = 0; i < 60 * 30 && !window.__goOn(); i++) window.__fast(1 / 60);
+      const id = `act-meet-god-${k + 1}`, up = () => window.__line() && window.__line().out == null;
+      for (let i = 0; i < 60 * 600 && !(up() && window.__line().id === id); i++) {
+        if (up()) window.__goOnLine();
+        window.__fast(1 / 60);
+      }
+    } }])),
   'act3-mid': { about: 'the acts', say: 'act 3 mid: the camp built (saw mill, workshop, posts filled), a fifth of God\'s yard walked out, the saw handed over',
     run: act3Mid },
   // Track C: each of act 3's boards open in the yard's sheet over the act-3-mid

@@ -11,6 +11,8 @@ const S = yard.S;
 const { ACT_GOON_WAIT_S, ACT_GOON_FADE_S, SKIP_HOLD_MS, DIALOG_FADE_S } = await import('../src/config.js');
 const { sayGoOn, goOnAlpha } = await import('../src/actbeats.js');
 const { beatDone } = await import('../src/beats.js');
+const { lineRuns } = await import('../src/dialog.js');
+const { msg } = await import('../src/lang.js');
 
 const waiting = () => { const l = window.__line(); return l && l.out == null ? l : null; };
 
@@ -67,5 +69,27 @@ group('the held space bar reads every line at once and lets the beat go on', () 
     ok(up, 'God\'s line is up', String(up)),
     ok(read && gone, 'the hold reads it and takes it down', `${read} ${gone}`),
     ok(done, 'and the meeting ends without another press', S.beatsDone.join(' '))
+  ];
+});
+
+// The owner's marks round words in God's lines (locales/en.ftl) come out of
+// the words drawn, each run carrying its effect (dialog.js, `lineRuns`); a
+// line with none is one plain run, drawn as it always was.
+group('a line\'s marks are taken out and give their words an effect; a line with none is one plain run', () => {
+  const got = [1, 2, 3, 4, 5, 6].map(n => lineRuns(msg(`act-meet-god-${n}`)).map(r => [r.text, r.fx]));
+  const want = [
+    [['come, and be ', null], ['welcome', 'glow']],
+    [['to the afterlife, an ', null], ['eternal paradise', 'wave']],
+    [['your ', null], ['eternal', 'wave'], [' ', null], ['paradise', 'glow']],
+    [['you\'ve worked so hard, all the way to the ', null], ['end', 'slow']],
+    [['so ', null], ['work', 'shake'], [' for me now', null]],
+    [['eternally', 'shake']]
+  ];
+  const plain = lineRuns('a line with no marks, plain');
+  const marksLeft = got.flat().some(([t]) => /[*_^~]/.test(t));
+  return [
+    ok(JSON.stringify(got) === JSON.stringify(want), 'each of God\'s lines parses to its runs, the right effect on each', JSON.stringify(got)),
+    ok(!marksLeft, 'no mark is left in the words drawn', JSON.stringify(got)),
+    ok(plain.length === 1 && plain[0].fx === null && plain[0].text === 'a line with no marks, plain', 'an unmarked line is one plain run', JSON.stringify(plain))
   ];
 });

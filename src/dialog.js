@@ -16,6 +16,7 @@
 // this session's.
 
 // REVIEW dialog-built
+// REVIEW god-speaks
 import { S } from './state.js';
 import { held } from './reset.js';
 import { now } from './clock.js';
@@ -69,7 +70,25 @@ export function lineLook(t = now()) {
   if (!shown) return null;
   const k = (t - shown.at) / 1000 / DIALOG_FADE_S;
   const o = shown.out == null ? 1 : 1 - (t - shown.out) / 1000 / DIALOG_FADE_S;
-  return { id: shown.id, who: shown.who, args: shown.args, a: Math.max(0, Math.min(1, k, o)) };
+  return { id: shown.id, who: shown.who, args: shown.args, a: Math.max(0, Math.min(1, k, o)), u: (t - shown.at) / 1000 };
+}
+
+// The marks the owner writes round words in a line (locales/en.ftl), the
+// same mark either side, and the effect the words between are drawn with
+// (render/dialog.js). The marks themselves are never drawn.
+export const LINE_MARKS = { '*': 'wave', '_': 'shake', '^': 'glow', '~': 'slow' };
+
+// A line's words as runs [{ text, fx }], the marks taken out: `fx` the
+// effect a run is under, or null. A line with no marks is one plain run.
+export function lineRuns(text) {
+  const runs = [];
+  let fx = null;
+  for (const ch of String(text)) {
+    if (LINE_MARKS[ch]) { fx = fx === LINE_MARKS[ch] ? null : LINE_MARKS[ch]; continue; }
+    const last = runs[runs.length - 1];
+    if (last && last.fx === fx) last.text += ch; else runs.push({ text: ch, fx });
+  }
+  return runs;
 }
 
 // A new game, or a save read in: nothing on show.

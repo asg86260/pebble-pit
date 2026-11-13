@@ -369,3 +369,11 @@ export const DIALOG_LINE_PX = 3;           // the gap between two wrapped lines
 // cells, row by row out from the box, tapering a cell a side every two rows
 // to a middle point. The first row lies over the box's own stroke.
 export const DIALOG_TAIL = [5, 5, 3, 3, 1, 1];
+// REVIEW god-speaks
+// The marked words' effects (dialog.js `LINE_MARKS`, the mock "dialog: sauce"
+// ported): the wave's height in px, its rate (Hz) and its step along the word
+// (radians a letter); the shake's reach in px and how long it holds a pose;
+// the glow's halo opacity, swinging between the two at its rate, in the
+// bubble's ink; a slow word's own fade in, begun once the line is in.
+export const DIALOG_FX = { waveH: 2, waveHz: 1.1, waveStep: 0.7, shake: 1, shakeHoldS: 0.07,
+                           glowA: [0.04, 0.1], glowHz: 0.6, slowS: 0.7 };
