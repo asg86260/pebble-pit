@@ -23238,6 +23238,70 @@ the path never shows a notch of night. By night that surface is the cloud
 palette's haze, so it reads as the lit top of cloud and not as a gap
 (CLOUDS_ACT3.path).
 
+## Clouds move as one body, placed as one sky (built 2026-11-09)
+
+The owner, on the act 3 sky: "the clouds right now are almost good, but they
+move/morph too quickly, they morph in unnatural ways, background clouds look
+off." Diagnosed by measurement before anything changed: every lobe rode a
+current of its own (CLOUDS_FLOW, 0.2-0.45 of its radius over 120-300 s), a
+mean of 0.096 cells a second on the near layer against a wind of 0.060 --
+the lobes slid through each other faster than the cloud moved, so the
+shadows between them migrated across the body while the silhouette stood.
+Three options went to the review bench in the real game (`review-clouds`);
+the owner chose B, "a cloud moves as one body", then asked for a polish
+round on the look ("unnecessary separation ... some are lumped close
+together, theres differing heights"), and chose E of that round. What is
+built:
+
+- **One current a cloud** (CLOUDS_BODY). Every lobe of a cloud rides the
+  same slow sines and advects with its layer's wind and stray, so the lobes
+  keep their places and the shading stays put. The shape changes only at
+  the edges: a share of the turrets billow -- swell and rise off the body,
+  then slump (CLOUDS_TURRET) -- and the crust's lumps condense and dissipate
+  on clocks of their own (CLOUDS_LUMP). Kid turrets and lumps ride their
+  lobe rigidly. The cloud sea and the horizon's bank keep CLOUDS_FLOW: there
+  a billow rolling against its neighbors is the point.
+- **One sky a layer.** A layer was groups of clouds packed 1.1-1.8 R apart
+  (a cumulus is ~4 R wide, so a group was one overlapping mass) with
+  exponential 6 R gaps between (dead stretches of 200 cells), every base
+  jittered 4-5 cells across its lane, and towers 2-4 levels tall (150 cells
+  beside 7-cell neighbors). Now every cloud of a layer stands on the layer's
+  one base line and is set down after the last by its drawn width plus
+  0.4-1.6 R of open sky (CLOUDS_SKY.gap), sizes close round the layer's R
+  (spread 0.3, tail 1.6), cumulus only. Measured gaps 9-30 cells on the near
+  layer, none negative; test/clouds.test.mjs holds it.
+- **Fewer, bigger forms.** Two or three turrets, one generation of kids, a
+  sparser crust and none on the rear, the lobe-meet shadow only on lobes of
+  ten cells (CLOUDS_CORE_MIN): the interior read as holes before.
+- **No ruled line under a cloud.** Two things drew one: the underside band
+  (CLOUDS_VOLUME_BANDS.base, the darkest tone across the whole flat cut) and
+  the "shadowed side" test, which looked a step away from the light -- down
+  and right -- and so found open sky under every cell above the cut. The
+  base band is gone and the side test looks sideways (CLOUDS_SHADE_DIR), so
+  the underside takes only each lobe's own shadow. Measured at 1440x900: the
+  longest run of the core tone under a near cloud went from 355 px to 0.
+- **The background.** The middle-distance layer is drawn in shape but as a
+  flat haze silhouette on both pages (CLOUDS_DEPTH_BANDS; by night, in the
+  near cloud's shadow tone, it fused with the undersides into a notched
+  strip), the far layer's plain blobs are long and low, and the lanes put
+  the middle distance at the near layer's own base, behind it, the far banks
+  a few cells under (CLOUDS_ACT3.sky.lanes).
+
+The palette is unchanged. The option that gave the far haze a tone of its
+own by day (C's re-spaced ladder) was shown and not chosen.
+
+The yard's sky draws through the same renderer (the next section), and the
+owner had this landed for both (2026-11-11). What reaches the yard: every
+cloud moves as one body, and its storm buds ride the lobe they open out of
+rather than a current of their own; no base band and the sideways shade test,
+so no ruled line under a yard cloud either; the middle depth band flat, so
+the yard's far and middle sheets are flat silhouettes in their tones; the
+fewer, bigger forms. What does not: where a yard cloud stands is still
+weather.js's (its sheet's lane, its own base, the swell, the sink), so the
+one base line and the gaps are act 3's alone, and the clear, brew, rain and
+settle cycle, the far sheets' `every` and the sky's own stream are as they
+were.
+
 ## The yard's sky on the cloud renderer (built)
 
 The clouds bench (`clouds.html`, `render/clouds.js`, `render/cloudgl.js`)

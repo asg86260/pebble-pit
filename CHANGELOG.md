@@ -180,6 +180,7 @@ this section; the release that switches it on moves these under Unreleased.
 ## Unreleased
 
 **New this release**
+- The clouds, in the yard and in the afterlife, drift as whole bodies on the wind, billowing only at their edges (a yard cloud's storm buds riding it), with no dark line ruled under a cloud and the far ones a flat haze; in the afterlife each layer's clouds stand on one base line with sky between them instead of lumped masses and empty stretches (test/clouds.test.mjs).
 - The yard's clouds are drawn the way act 3's are, rounder and lit from one side; before a storm each one grows, darkens and buds new puffs out of its top, and they sink back in once it has rained (test/weather.test.mjs).
 - Hovering the furnace in the deep shows the last minute of the party's damage a second against the pace that breaks the serpent, with a bar and a number for each fighter, highest on top, and one for your own clicks (test/furnace-dps.test.mjs).
 - Act 3 opens with a meteor onto the house that leaves a crater, the two souls floating up out of it to heaven's gates, which now stand over the house with no stairway, and ends on God's line before the two of them walk to the pedestal (test/act3-intro.test.mjs, test/heaven-over-house-save.test.mjs).

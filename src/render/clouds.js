@@ -975,6 +975,9 @@ function budPuffs(rnd, puffs, B, flat) {
     const r = on.r * lerp(rnd(), B.r), out = on.r * B.out;
     const b = flowPuff(rnd, on.x + Math.cos(a) * out, on.y + Math.sin(a) * out * on.flat, r, flat, on.tier, on.life, on.stray, F);
     b.kind = on.kind; b.cut = on.cut;
+    // it rides its lobe, as a kid turret does: a cloud moves as one body
+    // (CLOUDS_BODY), and a bud on a current of its own slid through it
+    if (on.body) { b.follow = on; b.body = on.body; }
     b.bud = (k / n) * (1 - B.span); b.budSpan = B.span;
     puffs.push(b);
   }
