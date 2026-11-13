@@ -45,6 +45,9 @@ const DRAWN = {
   // stovepipe's cap its top (after/cabin.js), so a press anywhere on it opens it.
   // Its door is its way in's middle, where a body at it stands.
   forestry:  { box: [8, CABIN_W, CABIN_H], door: 8 + CABIN_DOOR, pile: { seeds: 'left', grovelogs: 'left' }, turned: true },
+  // The shrine: its look by prayer rung, a wayside cross to a church, the
+  // faithful kneeling either side, and over it the faith ring.
+  shrine:    { box: [0, 47, 25], door: 22, pile: {} },
   // Its board's ground on the workshops' side, between the last workshop and
   // the union's crowd: laid there off both by after/place.js, which overrides
   // this column (God's side holds the rebel pile).
@@ -129,9 +132,9 @@ export const ART = Object.fromEntries(Object.entries(DRAWN).map(([k, a]) => {
 }));
 
 // The camp's order, left to right off the grove: the forestry shack in front
-// of the trees, the saw mill and the workshop, then the shack that sells
-// them, and the pedestal nearest God's yard.
-export const CAMP_ORDER = ['forestry', 'mill', 'workshop', 'shack', 'pedestal'];
+// of the trees, the saw mill and the workshop, the shrine, then the shack
+// that sells them, and the pedestal nearest God's yard.
+export const CAMP_ORDER = ['forestry', 'mill', 'workshop', 'shrine', 'shack', 'pedestal'];
 
 
 // The camp laid off cell `x0` (the grove's end): each station's ground's left

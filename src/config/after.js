@@ -62,7 +62,7 @@ export const AFTER_LIP = { seed: 17, r: [5, 8], round: 0.45, step: 0.8, drop: 2,
 // The grove and the forestry shack stand on a floor raised 3 cells, so a
 // plot's soil bed reads above the cloud's lip (DESIGN.md, "Act 3's grove,
 // rebuilt", call 2).
-export const AFTER_SHELF = { grove: 3, forestry: 3, mill: 9, workshop: 18, shack: 6, pedestal: 0 };
+export const AFTER_SHELF = { grove: 3, forestry: 3, mill: 9, workshop: 18, shrine: 12, shack: 6, pedestal: 0 };
 
 // --- the click: the pair's speech, and rebel ------------------------------------
 // The act's coin is rebel (the owner, 2026-10-18; a working name, the label
@@ -92,12 +92,13 @@ export const STRIKE_SHARE = 0.8;           // default
 export const AFTER_GATES = ['meeting', 'slowdown', 'strike'];
 
 // --- the camp's cards and the chain ----------------------------------------------
-// The four cards: the pedestal (the speech and the agitators), the grove
-// (the saw and the trees), the saw mill and the workshop. The construction
+// The five cards: the pedestal (the speech and the agitators), the grove
+// (the saw and the trees), the saw mill, the workshop and the shrine (its
+// prayer ladder). The construction
 // shack sells nothing: a station is bought at the build sign in its lot
 // (the owner, 2026-11-10). Keys, not words: every
 // name a player reads is the owner's, in locales/en.ftl.
-export const AFTER_CARDS = ['pedestal', 'grove', 'mill', 'workshop'];
+export const AFTER_CARDS = ['pedestal', 'grove', 'mill', 'workshop', 'shrine'];
 
 // --- act 3's loop, placeholder (track A, 2026-10-17; reworked 2026-10-18) ----------
 // The grove and the press on the scaffold, every drawing a placeholder of
@@ -212,8 +213,9 @@ export const AFTER_PODIUM_PILE = 9;
 // `step[0]` to `step[1]`.
 export const AFTER_PODIUM_CLIMB = { s: 10, fade: 0.8, rise: [0.2, 0.8], step: [0.8, 0.9] };
 // The stations standing from the act's first frame: the pedestal the pair
-// speak from and the construction shack that sells every other.
-export const AFTER_START_BUILT = ['pedestal', 'shack', 'forestry'];
+// speak from, the construction shack that sells every other, the forestry
+// shack and the shrine.
+export const AFTER_START_BUILT = ['pedestal', 'shack', 'forestry', 'shrine'];
 // The camp's other stations stand whole from the start, closed until they are
 // built: the build sign staked in each (buildsign.js) and the shack's board
 // sell its build, and the station works once it is built. The ground each station's board stands
@@ -444,6 +446,12 @@ export const AFTER_UPGRADES = {
   'after-podium':      { card: 'pedestal',  bills: [[['rebel', 30], ['timber', 2]], [['rebel', 80], ['timber', 6]],
                                                     [['rebel', 200], ['timber', 15]], [['rebel', 500], ['timber', 18]]],
                          marks: [0.1, 0.25, 0.45, 0.7] },
+  // the shrine's prayer ladder, the podium's shape without its marks: `raise`,
+  // each rung a new look of the shrine's, put up by the builders once its
+  // timber is carried (rows.js, `raiseRow`)
+  'after-prayer':      { card: 'shrine',    raise: true,
+                         bills: [[['rebel', 60], ['timber', 3]], [['rebel', 150], ['timber', 8]],
+                                 [['rebel', 350], ['timber', 15]], [['rebel', 700], ['timber', 18]]] },
   'after-saw':         { card: 'grove',     bills: [[['rebel', 50], ['dust', 8000]]] },                  // the saw: the woodcutter fells (the owner, 2026-10-30)
   'after-plot':        { card: 'grove',     bills: [[['rebel', 60], ['dust', 15000]],
                                                     [['rebel', 200], ['timber', 5], ['dust', 40000], ['spore', 10000]],
@@ -742,3 +750,41 @@ export const AFTER_BASKET = {
 // and out over the rest, and from the mid grey to the pale over `greyFade` of
 // its life about `greyAt`: a fade, never a step (the mock's numbers).
 export const AFTER_CABIN_SMOKE = { puffs: 4, size: 2, life: 4.8, rise: 8, drift: 1.6, sway: 0.35, swayRate: 0.9, swayPhase: 2.1, fadeIn: 5, peak: 0.85, greyAt: 0.45, greyFade: 0.15 };
+
+
+// --- the shrine (render/after/stations.js, `shrine`) ------------------------------
+// Its faithful: `n` kneeling either side, each hopping `lift` cells over
+// `hop` seconds as its prayer leaves, `launch` seconds into a cycle of
+// `every`, each on its own phase.
+export const AFTER_SHRINE_PRAY = { n: 6, every: 5.4, launch: 0.3, hop: 0.6, lift: 1.5 };
+// The faith ring, in seconds and cells: a prayer's trail (its lags) and how
+// it is turned away off the full ring (`bounce`, over `s` out `r` cells),
+// how long the tip glints as one lands, and the glint lapping the ring
+// every `turnS`, `glintCells` long at `glintInk`.
+export const AFTER_SHRINE_SAUCE = { glintS: 0.9, trail: [0.07, 0.14, 0.21], bounce: { s: 0.7, r: 5 }, turnS: 7, glintCells: 8, glintInk: 0.8 };
+// The full ring's heartbeat (`heartAt`): a cycle `every` seconds; two beats
+// in it, the lub strong and the dub its softer echo, each peaking `at`
+// seconds in, rising over `rise` and easing back over `fall`, to `amp` cells
+// of tremor at `hz` (x and y at different rates, so the ring traces a small
+// loop, never a jump; y seen `ySeen` as much), `pulse` more of scale (0.045:
+// the ring swells to 104.5%) and `shed` motes thrown off its cells, a
+// `burst` each. `vary` is how far a beat strays from its mean, by seeded hash
+// so a scene is repeatable: `str` the strength, `shed` the mote count, and
+// per mote `speed`, `ang` (radians off straight out) and `up`. Every onset
+// slow and every swing small, so nothing snaps.
+export const AFTER_SHRINE_HEART = {
+  every: 2.8, hz: [7, 9], ySeen: 0.6,
+  beats: [{ at: 0.4, rise: 0.4, fall: 0.9, amp: 0.2, pulse: 0.045, shed: 14 }, { at: 0.95, rise: 0.3, fall: 0.7, amp: 0.13, pulse: 0.028, shed: 9 }],
+  vary: { str: 0.12, shed: 0.25, speed: 0.3, ang: 0.35, up: 0.4 },
+  burst: { size: 1, life: 2.8, out: 8, up: 5, fadeIn: 2.5, peak: 0.85, greyAt: 0.55, greyFade: 0.2, tones: ['ink', 'ink'], ease: true }
+};
+// The steady few motes off the ring's cells between beats, `out` cells
+// outward and `up` cells up over their life.
+export const AFTER_SHRINE_MOTES = { puffs: 12, size: 1, life: 3, out: 6, up: 4, fadeIn: 5, peak: 0.8, greyAt: 0.55, greyFade: 0.2, tones: ['ink', 'ink'], ease: true };
+// The shrine's looks by prayer rung (`LOOKS`): a wayside cross, an altar, a
+// chapel, the chapel with its bell tower, the church. A rung's look is put
+// up by the act's builders on the yard's works (after/rows.js, `raiseRow`),
+// rising a course at a time over the look standing, which fades out over
+// `fade` seconds once the new one stands. `tops` how many cells up each look
+// reaches, which the ring rides two cells over.
+export const AFTER_SHRINE_LOOKS = { tops: [11, 11, 18, 23, 24], fade: 2.4 };

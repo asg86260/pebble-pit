@@ -37,6 +37,11 @@ export const bigSigns = () => has('after-signreach');
 // Woodcutters dig stumps out too, once stump removal is bought.
 export const stumpsOn = () => has('after-stumps');
 export const bladeLogs = () => (has('after-blade') ? AFTER_BLADE_LOGS : 1);
+// The rung the shrine's look stands at, and the work putting up the next
+// (rows.js, `raiseRow`), a raised rung's work keyed `<row>-raise`.
+export const raiseKey = key => `${key}-raise`;
+export const prayerRung = () => upCount('after-prayer');
+export const prayerRaise = () => workOn(raiseKey('after-prayer'));
 export const benchSigns = () => (has('after-bench') ? AFTER_BENCH_SIGNS : 1);
 export const signReach = big => (big ? SIGN_REACH_UP : SIGN_REACH);
 
