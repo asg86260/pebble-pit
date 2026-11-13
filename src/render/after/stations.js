@@ -324,6 +324,7 @@ function forestry(d, work, t) {
   wayIn(d, CAB_X + H.door);
   for (const p of [...H.round, H.small]) b.box(p, W);
   b.box([...H.cross, 1, 1]);
+  cabinSmoke(b, t || 0);
 }
 
 // --- the shrine ------------------------------------------------------------------------
