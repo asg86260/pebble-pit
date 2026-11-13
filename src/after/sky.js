@@ -19,8 +19,7 @@
 import { S } from '../state.js';
 import { P, SKY_FIT, GOD_CELLS, GOD_FIT, GOD_UP, GOD_RATE, GOD_FOOT, GOD_CROWD, GOD_SIGN_DEEP, GOD_STAGE, AFTER_HORIZON,
          GOD_N, GOD_THRONE, WALK_BODY, WORKER,
-         CROWD_X0, CROWD_FILES, CROWD_PITCH, CROWD_NEAR, CROWD_ROW, CROWD_FAR_ROW, GOD_BACK, UNION_CROWD, AFTER_SLICE_GAP,
-         GOD_DEPTH_ON, GOD_DEPTH, GOD_TAKE, GOD_TAKES } from '../config.js';
+         CROWD_X0, CROWD_FILES, CROWD_PITCH, CROWD_NEAR, CROWD_ROW, CROWD_FAR_ROW, GOD_BACK, UNION_CROWD, AFTER_SLICE_GAP } from '../config.js';
 import { yardCell } from '../world.js';
 import { actPlace } from '../acts.js';
 import { afterFloor, afterTop, afterOpenX, campEdges, podiumMid, unionHalf, stationBox, speakerAt, reachTo } from './place.js';
@@ -29,11 +28,6 @@ import { smoothstep } from '../motion.js';
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const lerp = (a, b, k) => a + (b - a) * k;
 const snap = (v, q) => Math.round(v / q) * q;
-
-// God's frame as the take in play lays it (config, GOD_TAKES): his foot
-// over the path, his size, the stage's front, a soul's cells, the crowd's
-// run past the stage -- GOD_BACK's and GOD_DEPTH's with no take.
-export const godTake = () => GOD_TAKES[GOD_TAKE] || { foot: GOD_BACK.foot, size: GOD_BACK.size, front: GOD_DEPTH_ON ? GOD_DEPTH.front : GOD_BACK.front, soul: GOD_DEPTH.soul, beyond: GOD_BACK.beyond };
 
 // The window the place has at rest, in world px, and its top.
 export const restW = () => S.W * P / yardCell();
@@ -53,13 +47,13 @@ const frames = new Map();
 export function skyFrame(far = true) {
   // The window's top at rest, or the place's own where the window shows past
   // it: the camera is never let above the place.
-  const top = Math.max(restTop(), afterTop()), W = restW(), T = godTake(), key = `${top}|${W}|${T.size}|${T.foot}`, back = far;
+  const top = Math.max(restTop(), afterTop()), W = restW(), key = `${top}|${W}|${GOD_BACK.size}`, back = far;
   const kept = frames.get(far);
   if (kept && kept.key === key) return kept.frame;
-  const floor = afterFloor(), bank = floor - (back ? T.foot : GOD_FOOT) * P;
+  const floor = afterFloor(), bank = floor - (back ? GOD_BACK.foot : GOD_FOOT) * P;
   // Far, he is laid out in a sky `size` as tall standing on his foot: the
   // same picture, further off.
-  const sky = (bank - top) * (back ? T.size : 1), sTop = bank - sky;
+  const sky = (bank - top) * (back ? GOD_BACK.size : 1), sTop = bank - sky;
   const gc = GOD_CELLS.find(c => c * GOD_FIT <= sky) || GOD_CELLS[GOD_CELLS.length - 1];
   // God's square's top, its crown's spikes GOD_UP of the sky down off the top.
   const gy0 = sTop + snap(sky * GOD_UP + 19 * gc, gc);
@@ -84,14 +78,14 @@ export const faceY = () => { const f = skyFrame(); return f.gy0 + 9 * f.gc; };
 // is { dx, y }: world px across from the middle at y, and world y.
 let stageMemo = null, stageKey = ''; // cache: keyed by the sky frame (horizon, cell, floor)
 export function stage() {
-  const f = skyFrame(), G = GOD_STAGE, key = `${f.hor}|${f.h}|${f.floor}|${f.bank}|${GOD_DEPTH_ON ? 1 : 0}|${GOD_TAKE}`;
+  const f = skyFrame(), G = GOD_STAGE, key = `${f.hor}|${f.h}|${f.floor}`;
   if (stageMemo && key === stageKey) return stageMemo;
   // its front stands up among the far cloud's rows, not on the plane
-  const T = godTake(), mx = G.mx * f.h, yf = afterFloor() - T.front * P;
+  const mx = G.mx * f.h, yf = afterFloor() - GOD_BACK.front * P;
   const steps = Math.max(1, Math.ceil((f.bank - f.gy0 - (GOD_N + GOD_THRONE.seatH) * f.h) / (GOD_THRONE.step * f.h)));
   stageMemo = {
     // from behind his foot forward to the main plane's line, which is its foot
-    mx, yb: Math.round((f.bank - G.back * P) / P) * P, yf, hb: (T.hb ?? G.hb) * mx, hf: (T.hf ?? G.hf) * mx, foot: yf,
+    mx, yb: Math.round((f.bank - G.back * P) / P) * P, yf, hb: G.hb * mx, hf: G.hf * mx, foot: yf,
     // the throne's base at its bottom step, across the half, and its foot
     throne: (GOD_THRONE.baseHalf + GOD_THRONE.step * (steps - 1)) * f.h, throneY: f.bank
   };
@@ -105,7 +99,7 @@ export const stageFore = (st, y) => clamp((y - st.yb) / (st.yf - st.yb), 0, 1);
 
 // His crowd across the half at world y: the stage's top and `beyond` stage
 // cells more out over the cloud either side of it (config, GOD_BACK).
-export const crowdHalf = (st, y) => stageHalf(st, y) + godTake().beyond * st.mx;
+export const crowdHalf = (st, y) => stageHalf(st, y) + GOD_BACK.beyond * st.mx;
 // The camp's widest reach either side of its middle, world px: the crowd's
 // front row, a soul past it, or the stage's side faces, whichever is out
 // further.
@@ -137,7 +131,7 @@ export const campHalf = () => {
 // widest, laid off the near frame, as it stood before his camp stood back.
 const fronts = { key: '', x: 0 };
 export const godFront = () => {
-  const V = restW(), r = GOD_RATE, f = skyFrame(), [lo, hi] = unionSpan(), key = `${V}|${f.h}|${f.top}|${lo}|${hi}|${GOD_TAKE}`;
+  const V = restW(), r = GOD_RATE, f = skyFrame(), [lo, hi] = unionSpan(), key = `${V}|${f.h}|${f.top}|${lo}|${hi}`;
   if (key === fronts.key) return fronts.x;
   const clear = hi + AFTER_SLICE_GAP * P - V / 2 + (campHalf() + V / 2) / r;
   const mx = GOD_STAGE.mx * skyFrame(false).h;
@@ -189,15 +183,7 @@ export function stageSpot(f, r) {
 // row and between two rows: every soul one size, in whole cells, so the
 // crowd stays on the cell grid and a soul keeps its rim and its middle at
 // any window.
-// With depth on (config, GOD_DEPTH) a soul grows from the back row's cells to
-// the front's by where its row stands, still in whole cells; asked with no
-// row it is the front's.
-export const stageSoul = (st = null, y = null) => {
-  if (!GOD_DEPTH_ON) return GOD_BACK.soul * P;
-  const s = st || stage(), fore = y == null ? 1 : stageFore(s, y);
-  const [a, b] = godTake().soul;
-  return Math.round(lerp(a, b, fore)) * P;
-};
+export const stageSoul = () => GOD_BACK.soul * P;
 export const stageGap = () => GOD_BACK.gap * P;
 // A body of the sim's on the top: a soul of its row's size, but no wider
 // than most of a file's spacing there, so the members standing side by side

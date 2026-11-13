@@ -310,7 +310,6 @@ export const here = row => !!row && (row.place || 'yard') === S.view;
 // stations alone (their flags, the snapshot's offers).
 export const YARD_BOARDS = STATIONS.filter(r => r.board && worldOf(r.place) === 'yard').map(r => r.key);
 
-// REVIEW faith18
 // Every station that is a site for works, and its ground, handed to works.js
 // (which the boards import, and so cannot import this back). An act's
 // station is a site while it has a lot to be built on, or while it says it
