@@ -370,10 +370,23 @@ export const DIALOG_LINE_PX = 3;           // the gap between two wrapped lines
 // to a middle point. The first row lies over the box's own stroke.
 export const DIALOG_TAIL = [5, 5, 3, 3, 1, 1];
 // REVIEW god-speaks
-// The marked words' effects (dialog.js `LINE_MARKS`, the mock "dialog: sauce"
-// ported): the wave's height in px, its rate (Hz) and its step along the word
+// The typewriter and the marked words' effects (dialog.js `LINE_MARKS`, the
+// mock "dialog: sauce" ported, its `steady` pace). The typing: `cps` letters
+// a second, `comma` / `stop` held after a comma and a full stop (or ? !),
+// `fade` a letter's own fade in; a slow letter fades in over `slow`, a drop
+// falls in over `dropS`, a boom word comes in whole over `boomS` and the line
+// holds `boomHold` after it, a trail word's letters come `trail` times the
+// pace apart, each `trailGrow` slower again, fading in over `trailFade`.
+// The effects: the wave's height in px, rate (Hz) and step along the word
 // (radians a letter); the shake's reach in px and how long it holds a pose;
-// the glow's halo opacity, swinging between the two at its rate, in the
-// bubble's ink; a slow word's own fade in, begun once the line is in.
-export const DIALOG_FX = { waveH: 2, waveHz: 1.1, waveStep: 0.7, shake: 1, shakeHoldS: 0.07,
-                           glowA: [0.04, 0.1], glowHz: 0.6, slowS: 0.7 };
+// the nervous letters' reach and their hold, each its own between the two;
+// the tone run's rate and step along the word (the mock's rainbow's, in its
+// five steps a round), and how far toward the paper it goes; the pulse's
+// swell (a share of the size) and rate; the drop's height in px; the boom's
+// size as it lands.
+export const DIALOG_FX = { cps: 26, comma: 0, stop: 0, fade: 0.08, slow: 0.7,
+                           dropS: 0.28, boomS: 0.16, boomHold: 0.45, trail: 2.5, trailGrow: 0.18, trailFade: 0.3,
+                           waveH: 2, waveHz: 1.1, waveStep: 0.7, shake: 1, shakeHoldS: 0.07,
+                           nervous: 1, nervousHoldS: [0.05, 0.16],
+                           toneHz: 0.8, toneStep: 0.35, toneRun: 5, toneReach: 0.6,
+                           pulse: 0.14, pulseHz: 0.5, dropH: 12, boomK: 1.8 };
