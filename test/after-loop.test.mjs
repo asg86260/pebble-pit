@@ -547,7 +547,8 @@ group('a speech burns a sign after its warning, and knocks no soul back', async 
 
 // MOCK faith16: the shrine's prayer ladder is the second, four rungs, each a multiple of a prayer's faith (AFTER_PRAYER_MULT).
 // Act 3 is outside the eight-rungs rule (call 12, settled): no card is a
-// ladder. Every station's upgrades are a short list of named ones.
+// ladder. Every station's upgrades are a short list of named ones; the
+// shrine's prayer ladder is the second exception, four rungs, each a new look.
 group('every act-3 card sells two or three named upgrades, none of them a ladder but the podium', async () => {
   up();
   const rows = window.__afterRows();

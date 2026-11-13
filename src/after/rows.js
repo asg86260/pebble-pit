@@ -109,7 +109,7 @@ const UP_NAMES = {
   'after-plot': () => msg('after-row-plot'), 'after-grow': () => msg('after-row-grow'),
   'after-selfseed': () => msg('after-row-selfseed'), 'after-stumps': () => msg('after-row-stumps'),
   'after-blade': () => msg('after-row-blade'),
-  'after-prayer': () => msg('after-row-prayer'),   // MOCK faith16
+  'after-prayer': () => msg('after-row-prayer'),
   'after-bench': () => msg('after-row-bench'), 'after-signreach': () => msg('after-row-signreach')
 };
 // What a purchase does beyond counting itself: a plot cleared, its bed bare
@@ -141,7 +141,6 @@ function orderOr(key, card, bill) {
   if (n > 0) placeOrder(key, card, n); else LAND[key]();
 }
 
-// REVIEW faith18
 // A rung that is a new look of its station's (`raise` in AFTER_UPGRADES: the
 // shrine's prayer ladder, a wayside cross grown into a church) is put up on
 // the yard's works by the act's builders, as a station is (`buildRow`): its

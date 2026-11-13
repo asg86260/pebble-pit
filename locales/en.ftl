@@ -3403,18 +3403,8 @@ ach-freed-note = finish act 2
 # the card over the house after the finale: pressing it begins act 3 (call 7)
 act-goon = go on
 
-# God's opening lines at the throne, the owner's own words (script D)
-act-meet-god-1 = come, and be ^welcome^
-
-act-meet-god-2 = to the afterlife, an *eternal paradise*
-
-act-meet-god-3 = your *eternal* ^paradise^
-
-act-meet-god-4 = you've worked so hard, all the way to the ~end~
-
-act-meet-god-5 = so _work_ for me now
-
-act-meet-god-6 = _eternally_
+# act beat line, placeholder: God at the throne
+act-meet-god = God holds out a pick
 
 # act beat line, placeholder: the saw handed to the woodcutter
 act-saw = a saw
@@ -3572,7 +3562,7 @@ after-row-stumps = stump removal
 # act 3 card row (placeholder): the saw mill's second blade, two logs a cut
 after-row-blade = second blade
 
-# act 3 card row (placeholder): the shrine's prayer ladder, each rung multiplying the faith a prayer adds
+# act 3 card row (placeholder): the shrine's prayer ladder, each rung a new look of the shrine's, built by the builders
 after-row-prayer = prayer
 
 # act 3 card row (placeholder): the workshop's second bench, two signs at once
@@ -3643,8 +3633,6 @@ after-board-shack = construction shack
 # act 3 board title (placeholder): the shrine's board, its prayer ladder
 after-board-shrine = shrine
 
-# hover tip (placeholder): the full faith ring over the shrine, a click collects it
-hover-faith-ring = collect faith
 # the name of a counted pile in act 3 (the logs of the saw mill and grove); never a hover
 after-pile-logs = log pile
 

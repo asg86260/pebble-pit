@@ -1,4 +1,4 @@
-﻿// The camp's ground plan: each station's drawing as ground, and the camp laid
+// The camp's ground plan: each station's drawing as ground, and the camp laid
 // out left to right off it (the owner, 2026-10-20: "the stations are a bit
 // too far apart": one gap of open floor between every two neighbors). A pure
 // table and one function over it, with no import but the piles' sizes
@@ -45,12 +45,12 @@ const DRAWN = {
   // stovepipe's cap its top (after/cabin.js), so a press anywhere on it opens it.
   // Its door is its way in's middle, where a body at it stands.
   forestry:  { box: [8, CABIN_W, CABIN_H], door: 8 + CABIN_DOOR, pile: { seeds: 'left', grovelogs: 'left' }, turned: true },
+  // The shrine: its look by prayer rung, a wayside cross to a church, the
+  // faithful kneeling either side, and over it the faith ring.
+  shrine:    { box: [0, 47, 25], door: 22, pile: {} },
   // Its board's ground on the workshops' side, between the last workshop and
   // the union's crowd: laid there off both by after/place.js, which overrides
   // this column (God's side holds the rebel pile).
-  // MOCK faith8
-  // The shrine: a pointed gable with an arch cut in it, the faithful kneeling either side, and over its cross the faith ring.
-  shrine:    { box: [0, 47, 25], door: 22, pile: {} },
   pedestal:  { box: [1, 10, 4], door: 6, pile: {}, ground: 16, sign: -8 }
 };
 // Every station's board stands beside it, over a column of its own ground
@@ -132,8 +132,8 @@ export const ART = Object.fromEntries(Object.entries(DRAWN).map(([k, a]) => {
 }));
 
 // The camp's order, left to right off the grove: the forestry shack in front
-// of the trees, the saw mill and the workshop, then the shack that sells
-// them, and the pedestal nearest God's yard.
+// of the trees, the saw mill and the workshop, the shrine, then the shack
+// that sells them, and the pedestal nearest God's yard.
 export const CAMP_ORDER = ['forestry', 'mill', 'workshop', 'shrine', 'shack', 'pedestal'];
 
 

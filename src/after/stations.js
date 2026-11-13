@@ -21,7 +21,6 @@ import { afterlifeOn } from '../acts.js';
 import { built } from './levels.js';
 import { stationBox, groundOf, afterFloor, closed, pilePlace, pileOwner, floorAt } from './place.js';
 import { afterRow } from './rows.js';
-import { faith, overFaith } from './faith.js';   // MOCK faith16
 import { boardFlag } from '../stations.js';
 import { PILED, pileFull } from './piles.js';
 import { godCampAt, godMid, faceY } from './sky.js';
@@ -119,18 +118,14 @@ export const AFTER_STATION_ROWS = [
     // button, and its drawing opens nothing; its build sign is the way in.
     open: () => live() && built(card),
     ...(card in AFTER_BUILDS ? { lot: lotOf(card) } : {}),
-    // REVIEW faith18: the shrine's prayer rungs are built on it, each a new
-    // look put up by the builders (rows.js, `raiseRow`)
+    // the shrine's prayer rungs are built on it, each a new look put up by
+    // the builders (rows.js, `raiseRow`)
     ...(card === 'shrine' ? { site: { floor: floorAt } } : {}),
     // The construction shack sells nothing (the owner, 2026-11-10): it
     // stands, with no board and no button, and the pointer opens nothing on
     // it (`hit`), but names it over its drawing (`over`).
     ...(card === 'shack' ? { board: null, line: null, boardAnchor: null, hit: () => false, over: () => stationBox(card) } : {})
   })),
-  // MOCK faith16: the full faith ring, asked about where it is drawn: the hover tip's "collect faith" under the pointer, for the option that shows it
-  { key: 'after-faith', place: 'after', glyph: 'crate', after: [], needs: () => false,
-    get name() { return msg('hover-faith-ring'); },
-    open: () => live() && faith.full && faith.cue === 'hand+', stand: () => faith.box, hit: (x, y) => overFaith(x, y) },
   // A press on a tree is the saw's (after/gestures.js).
   row('grove', { open: live }),
   // The counted piles at their brims (after/piles.js): each wears the same

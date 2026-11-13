@@ -1,4 +1,3 @@
-// REVIEW faith18
 // The shrine's prayer rungs are built, not had (the owner, 2026-11-11: "yes use
 // the builders"): a rung bought on the shrine's board has its timber carried
 // to the shrine, then is a work on the yard's works at the shrine, and the

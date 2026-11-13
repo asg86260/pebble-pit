@@ -1,4 +1,4 @@
-﻿// --- act 3: the afterlife --------------------------------------------------------
+// --- act 3: the afterlife --------------------------------------------------------
 // DESIGN.md, "Acts 3 and 4: the afterlife and hell (design, not built)", act 3:
 // the union, its loop the owner's grove and press (2026-10-17), reworked to
 // the owner's settled calls (2026-10-18). Every name below is the spec's own;
@@ -92,12 +92,13 @@ export const STRIKE_SHARE = 0.8;           // default
 export const AFTER_GATES = ['meeting', 'slowdown', 'strike'];
 
 // --- the camp's cards and the chain ----------------------------------------------
-// The four cards: the pedestal (the speech and the agitators), the grove
-// (the saw and the trees), the saw mill and the workshop. The construction
+// The five cards: the pedestal (the speech and the agitators), the grove
+// (the saw and the trees), the saw mill, the workshop and the shrine (its
+// prayer ladder). The construction
 // shack sells nothing: a station is bought at the build sign in its lot
 // (the owner, 2026-11-10). Keys, not words: every
 // name a player reads is the owner's, in locales/en.ftl.
-export const AFTER_CARDS = ['pedestal', 'grove', 'mill', 'workshop', 'shrine'];   // MOCK faith16: the shrine sells its upgrade
+export const AFTER_CARDS = ['pedestal', 'grove', 'mill', 'workshop', 'shrine'];
 
 // --- act 3's loop, placeholder (track A, 2026-10-17; reworked 2026-10-18) ----------
 // The grove and the press on the scaffold, every drawing a placeholder of
@@ -212,8 +213,9 @@ export const AFTER_PODIUM_PILE = 9;
 // `step[0]` to `step[1]`.
 export const AFTER_PODIUM_CLIMB = { s: 10, fade: 0.8, rise: [0.2, 0.8], step: [0.8, 0.9] };
 // The stations standing from the act's first frame: the pedestal the pair
-// speak from and the construction shack that sells every other.
-export const AFTER_START_BUILT = ['pedestal', 'shack', 'forestry', 'shrine'];   // MOCK faith8
+// speak from, the construction shack that sells every other, the forestry
+// shack and the shrine.
+export const AFTER_START_BUILT = ['pedestal', 'shack', 'forestry', 'shrine'];
 // The camp's other stations stand whole from the start, closed until they are
 // built: the build sign staked in each (buildsign.js) and the shack's board
 // sell its build, and the station works once it is built. The ground each station's board stands
@@ -444,8 +446,9 @@ export const AFTER_UPGRADES = {
   'after-podium':      { card: 'pedestal',  bills: [[['rebel', 30], ['timber', 2]], [['rebel', 80], ['timber', 6]],
                                                     [['rebel', 200], ['timber', 15]], [['rebel', 500], ['timber', 18]]],
                          marks: [0.1, 0.25, 0.45, 0.7] },
-  // MOCK faith16: the shrine's prayer ladder: each rung multiplies the faith a prayer adds (AFTER_PRAYER_MULT), the podium's shape without its marks
-  // REVIEW faith18: `raise`, each rung a new look of its station's, put up by the builders once its timber is carried (rows.js, `raiseRow`)
+  // the shrine's prayer ladder, the podium's shape without its marks: `raise`,
+  // each rung a new look of the shrine's, put up by the builders once its
+  // timber is carried (rows.js, `raiseRow`)
   'after-prayer':      { card: 'shrine',    raise: true,
                          bills: [[['rebel', 60], ['timber', 3]], [['rebel', 150], ['timber', 8]],
                                  [['rebel', 350], ['timber', 15]], [['rebel', 700], ['timber', 18]]] },
@@ -748,100 +751,40 @@ export const AFTER_BASKET = {
 // its life about `greyAt`: a fade, never a step (the mock's numbers).
 export const AFTER_CABIN_SMOKE = { puffs: 4, size: 2, life: 4.8, rise: 8, drift: 1.6, sway: 0.35, swayRate: 0.9, swayPhase: 2.1, fadeIn: 5, peak: 0.85, greyAt: 0.45, greyFade: 0.15 };
 
-// MOCK faith8
-// The shrine's faith ring (render/after/stations.js): motes rising off it,
-// drawn as the stump house's smoke is (`risePuffs`), up to `puffs` of them
-// as full as the ring is, each a cell, its start spread `spread` cells across.
-export const AFTER_SHRINE_MOTES = { puffs: 22, size: 1, life: 3.6, rise: 12, drift: 0, sway: 0.5, swayRate: 1.1, swayPhase: 2.1, fadeIn: 4, peak: 0.75, greyAt: 0.55, greyFade: 0.2, spread: 28, tones: ['ink', 'ink'], ease: true, big: { puffs: 8, size: 2, seed: 50, life: 4.2 } };
-// What more the faith ring does (render/after/stations.js, `shrine`), in seconds
-// and cells: `fly` how often a prayer sets out and how long the tip glints, the
-// fill's slow rise and its drop; `turn` the glint's lap, its length in cells and
-// ink; `click` the full hold, the pressed
-// beat, the unwind, the empty wait, the refill, how often a mote leaves the tip,
-// and the burst.
-export const AFTER_SHRINE_SAUCE = {
-  flyEvery: 0.4, glintS: 0.9, trail: [0.07, 0.14, 0.21], bounce: { s: 0.7, r: 5 },
-  fillFrom: 0.3, fillTo: 0.7, fillRise: 40, fillDrop: 3,
-  turnS: 7, glintCells: 8, glintInk: 0.8,
-  click: { hold: 5, press: 0.5, unwind: 3, empty: 1.5, refill: 8, every: 0.1,
-    burst: { puffs: 18, size: 1, life: 1.8, rise: 0, drift: 0, sway: 0, swayRate: 0, swayPhase: 0, fadeIn: 8, peak: 0.95, greyAt: 0.5, greyFade: 0.1, spread: 0, tones: ['ink', 'ink'], r0: 10.5, r1: 11, ease: true } }
-};
 
-// MOCK faith13
-// The full faith ring (render/after/stations.js, `shrine`): `shake` the poses
-// it jumps through, each [cells right, cells down] held `hold` seconds, the
-// last the rest, begun every `every` seconds while the ring is full; `stream`
-// the stronger run of motes over the usual ones, both fading in as the ring
-// closes (`risePuffs`, the same as the half-full motes).
-export const AFTER_SHRINE_FULL = {
-  shake: { poses: [[-1, 0], [1, 0], [-1, -1], [1, 0], [-1, 0], [0, 0]], hold: 0.07, every: 3 },
-  stream: { puffs: 34, size: 1, life: 2.6, rise: 14, spread: 20, seed: 20, peak: 0.9, big: { puffs: 14, size: 2, seed: 70, life: 3.2, spread: 16, peak: 0.85 } }
-};
-
-// MOCK faith14
-// The full ring's tremor, pulse and motes by feel (`SHRINE.feel`, render/after/stations.js
-// `feelAt`), all in seconds and cells. A cycle is `every` long; `base` is the
-// hum between beats, in cells of tremor; each beat peaks `at` seconds in, rising
-// over `rise` along `curve` (1 steady, 2 slow then fast) and easing off over
-// `fall`, to `amp` cells of tremor and `pulse` more of scale (0.05: the ring
-// swells to 105%) in a window `win` wide round the peak, and sheds `shed` motes
-// off its cells. `hz` the tremor's rate: x and y at different rates, so the ring
-// traces a small loop, never a jump.
-export const AFTER_SHRINE_FEEL = {
-  hz: [13, 17], ySeen: 0.6, win: 0.5,
-  slow: { every: 4, base: 0, beats: [{ at: 1.5, rise: 1.5, fall: 0.6, curve: 2, amp: 0.4, pulse: 0.06, shed: 26 }] },
-  hum: { every: 3, base: 0.07, beats: [{ at: 0.6, rise: 0.6, fall: 0.8, curve: 1.5, amp: 0.4, pulse: 0.06, shed: 26 }] },
-  beat: { every: 3, base: 0, beats: [{ at: 0.2, rise: 0.2, fall: 0.2, curve: 1, amp: 0.3, pulse: 0.05, shed: 14 }, { at: 0.65, rise: 0.15, fall: 0.35, curve: 1, amp: 0.4, pulse: 0.06, shed: 18 }] },
-  // the motes off the ring's cells: the steady few, and each burst
-  motes: { puffs: 12, size: 1, life: 3, out: 6, up: 4, fadeIn: 5, peak: 0.8, greyAt: 0.55, greyFade: 0.2, tones: ['ink', 'ink'], ease: true, sway: 0, swayRate: 0, swayPhase: 0, drift: 0, rise: 0 },
-  burst: { size: 1, life: 1.9, out: 9, up: 5, fadeIn: 8, peak: 0.95, greyAt: 0.55, greyFade: 0.2, tones: ['ink', 'ink'], ease: true, sway: 0, swayRate: 0, swayPhase: 0, drift: 0, rise: 0 }
-};
-
-// MOCK faith15
-// The heartbeat of the full ring (render/after/stations.js, `heartAt`), three
-// ways. A cycle is `every` seconds with `breathe` (a share, 0 for none) of
-// slack in its rest swelling and shrinking over `breatheEvery` cycles; two
-// beats in it, the lub strong and the dub its softer echo, each peaking `at`
-// seconds in, rising over `rise` and easing back over `fall`; the tremor, the
-// swell (`pulse`, a share of scale) and the motes shed (`shed`) all follow
-// the beat's own envelope. `vary` is how far a beat strays from its mean, by
-// seeded hash so a scene is repeatable: `str` the strength, `shed` the mote
-// count, and per mote `speed`, `ang` (radians off straight out) and `up`.
-const HEART = {
-  every: 2.4, breathe: 0, breatheEvery: 9, hz: [11, 14], ySeen: 0.6, tremorScale: 1, pulseScale: 1,
-  beats: [{ at: 0.18, rise: 0.18, fall: 0.5, amp: 0.4, pulse: 0.06, shed: 20 }, { at: 0.62, rise: 0.14, fall: 0.4, amp: 0.26, pulse: 0.035, shed: 12 }],
-  vary: { str: 0.12, shed: 0.25, speed: 0.3, ang: 0.35, up: 0.4 },
-  burst: { size: 1, life: 1.5, out: 9, up: 5, fadeIn: 8, peak: 0.95, greyAt: 0.55, greyFade: 0.2, tones: ['ink', 'ink'], ease: true, sway: 0, swayRate: 0, swayPhase: 0, drift: 0, rise: 0 }
-};
+// --- the shrine (render/after/stations.js, `shrine`) ------------------------------
+// Its faithful: `n` kneeling either side, each hopping `lift` cells over
+// `hop` seconds as its prayer leaves, `launch` seconds into a cycle of
+// `every`, each on its own phase.
+export const AFTER_SHRINE_PRAY = { n: 6, every: 5.4, launch: 0.3, hop: 0.6, lift: 1.5 };
+// The faith ring, in seconds and cells: a prayer's trail (its lags) and how
+// it is turned away off the full ring (`bounce`, over `s` out `r` cells),
+// how long the tip glints as one lands, and the glint lapping the ring
+// every `turnS`, `glintCells` long at `glintInk`.
+export const AFTER_SHRINE_SAUCE = { glintS: 0.9, trail: [0.07, 0.14, 0.21], bounce: { s: 0.7, r: 5 }, turnS: 7, glintCells: 8, glintInk: 0.8 };
+// The full ring's heartbeat (`heartAt`): a cycle `every` seconds; two beats
+// in it, the lub strong and the dub its softer echo, each peaking `at`
+// seconds in, rising over `rise` and easing back over `fall`, to `amp` cells
+// of tremor at `hz` (x and y at different rates, so the ring traces a small
+// loop, never a jump; y seen `ySeen` as much), `pulse` more of scale (0.045:
+// the ring swells to 104.5%) and `shed` motes thrown off its cells, a
+// `burst` each. `vary` is how far a beat strays from its mean, by seeded hash
+// so a scene is repeatable: `str` the strength, `shed` the mote count, and
+// per mote `speed`, `ang` (radians off straight out) and `up`. Every onset
+// slow and every swing small, so nothing snaps.
 export const AFTER_SHRINE_HEART = {
-  heartA: HEART,
-  heartB: { ...HEART, breathe: 0.08 },
-  heartC: { ...HEART, tremorScale: 0.65, pulseScale: 1.3, burst: { ...HEART.burst, life: 2.3, fadeIn: 3, out: 10 } }
-};
-
-// MOCK faith16
-// What the shrine's prayer ladder is worth (after/levels.js, `prayerMult`):
-// the faith one prayer adds, a multiple a rung, the foot first.
-export const AFTER_PRAYER_MULT = [1, 2, 3, 4, 6];
-// The full ring's heartbeat, softened (render/after/stations.js `heartAt`): the
-// round-15 heartbeat with every onset slowed and every swing smaller, so
-// nothing snaps -- a longer rise and fall, a slower, fainter tremor, a soft
-// swell, fewer motes that drift further and fade out slower.
-const HEART16 = {
-  every: 2.8, breathe: 0, breatheEvery: 9, hz: [7, 9], ySeen: 0.6, tremorScale: 1, pulseScale: 1,
+  every: 2.8, hz: [7, 9], ySeen: 0.6,
   beats: [{ at: 0.4, rise: 0.4, fall: 0.9, amp: 0.2, pulse: 0.045, shed: 14 }, { at: 0.95, rise: 0.3, fall: 0.7, amp: 0.13, pulse: 0.028, shed: 9 }],
   vary: { str: 0.12, shed: 0.25, speed: 0.3, ang: 0.35, up: 0.4 },
-  burst: { size: 1, life: 2.8, out: 8, up: 5, fadeIn: 2.5, peak: 0.85, greyAt: 0.55, greyFade: 0.2, tones: ['ink', 'ink'], ease: true, sway: 0, swayRate: 0, swayPhase: 0, drift: 0, rise: 0 }
+  burst: { size: 1, life: 2.8, out: 8, up: 5, fadeIn: 2.5, peak: 0.85, greyAt: 0.55, greyFade: 0.2, tones: ['ink', 'ink'], ease: true }
 };
-AFTER_SHRINE_HEART.heart16 = HEART16;
-
-// REVIEW faith18
-// The shrine's looks by prayer rung (render/after/stations.js, `LOOKS`): a
-// wayside cross, an altar, a chapel, the chapel with its bell tower, the
-// church. A rung's look is put up by the act's builders on the yard's works
-// (after/rows.js, `raiseRow`), rising a course at a time over the look
-// standing, which fades out over `fade` seconds once the new one stands.
-// `tops` how many cells up each look reaches, which the ring rides two cells
-// over; `hold` how long each rung takes in a review scene's loop and `rise`
-// how long of it the next look takes to be laid there.
-export const AFTER_SHRINE_LOOKS = { tops: [11, 11, 18, 23, 24], fade: 2.4, hold: 6, rise: 2.5 };
+// The steady few motes off the ring's cells between beats, `out` cells
+// outward and `up` cells up over their life.
+export const AFTER_SHRINE_MOTES = { puffs: 12, size: 1, life: 3, out: 6, up: 4, fadeIn: 5, peak: 0.8, greyAt: 0.55, greyFade: 0.2, tones: ['ink', 'ink'], ease: true };
+// The shrine's looks by prayer rung (`LOOKS`): a wayside cross, an altar, a
+// chapel, the chapel with its bell tower, the church. A rung's look is put
+// up by the act's builders on the yard's works (after/rows.js, `raiseRow`),
+// rising a course at a time over the look standing, which fades out over
+// `fade` seconds once the new one stands. `tops` how many cells up each look
+// reaches, which the ring rides two cells over.
+export const AFTER_SHRINE_LOOKS = { tops: [11, 11, 18, 23, 24], fade: 2.4 };

@@ -7868,46 +7868,11 @@
   "text": "go on"
  },
  {
-  "id": "act-meet-god-1",
+  "id": "act-meet-god",
   "group": "The shell",
   "where": "src/actbeats.js",
-  "context": "God's opening lines at the throne, the owner's own words (script D)",
-  "text": "come, and be ^welcome^"
- },
- {
-  "id": "act-meet-god-2",
-  "group": "The shell",
-  "where": "src/actbeats.js",
-  "context": "",
-  "text": "to the afterlife, an *eternal paradise*"
- },
- {
-  "id": "act-meet-god-3",
-  "group": "The shell",
-  "where": "src/actbeats.js",
-  "context": "",
-  "text": "your *eternal* ^paradise^"
- },
- {
-  "id": "act-meet-god-4",
-  "group": "The shell",
-  "where": "src/actbeats.js",
-  "context": "",
-  "text": "you've worked so hard, all the way to the ~end~"
- },
- {
-  "id": "act-meet-god-5",
-  "group": "The shell",
-  "where": "src/actbeats.js",
-  "context": "",
-  "text": "so _work_ for me now"
- },
- {
-  "id": "act-meet-god-6",
-  "group": "The shell",
-  "where": "src/actbeats.js",
-  "context": "",
-  "text": "_eternally_"
+  "context": "act beat line, placeholder: God at the throne",
+  "text": "God holds out a pick"
  },
  {
   "id": "act-saw",
@@ -8270,7 +8235,7 @@
   "id": "after-row-prayer",
   "group": "Act 4 (placeholder)",
   "where": "src/after/rows.js",
-  "context": "act 3 card row (placeholder): the shrine's prayer ladder, each rung multiplying the faith a prayer adds",
+  "context": "act 3 card row (placeholder): the shrine's prayer ladder, each rung a new look of the shrine's, built by the builders",
   "text": "prayer"
  },
  {
@@ -8440,13 +8405,6 @@
   "where": "src/after/stations.js",
   "context": "act 3 board title (placeholder): the shrine's board, its prayer ladder",
   "text": "shrine"
- },
- {
-  "id": "hover-faith-ring",
-  "group": "Act 3 boards (track C, placeholder)",
-  "where": "src/after/stations.js",
-  "context": "hover tip (placeholder): the full faith ring over the shrine, a click collects it",
-  "text": "collect faith"
  },
  {
   "id": "after-pile-logs",

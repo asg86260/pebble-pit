@@ -33,7 +33,7 @@ import { plantable } from '../after/grove.js';
 import { plotX, groundOf } from '../after/place.js';
 import { heldGoods } from '../hands.js';
 import { line as inkLine } from '../ink.js';
-import { faith } from '../after/faith.js';   // MOCK faith16
+import { faith } from '../after/faith.js';
 const pulledBy = i => S.after.bodies.some(b => b.dig && b.target === i && b.pull && PULL_HOLDS.includes(b.pull.ph));
 
 const D = GESTURE_CUE_DOT;
@@ -201,19 +201,18 @@ export const cueShown = () => shown;
 // drawn over the place as the ghost hand is, and the ghost kept off while it is.
 export const demoHand = { x: 0, y: 0, pose: null };
 
-// MOCK faith16: the full faith ring's click cue, the yard's own ghost hand
-// (`handOn`, the pointing mitten, tapping as `cueAt` has it): shown over the
-// ring while it is full ('hand'), or only at the hover's share of its ink
-// while the pointer is over it ('hover'), eased in and out on the cue's own
-// fade, never popped.
-let faithInk = 0, faithT = null;   // page: the hand's ink over the ring, 0..1, eased on the act's clock
+// The full faith ring's click cue, the yard's own ghost hand (`handOn`, the
+// pointing mitten, tapping as `cueAt` has it), over the ring wherever it is
+// drawn, eased in and out on the cue's own fade, never popped.
+// Gone, the hand fades out where the ring last stood.
+let faithInk = 0, faithT = null, faithAt = null;   // page: the hand's ink over the ring, 0..1, eased on the act's clock, and where it last stood
 function drawFaithCue() {
-  const t = now(), dt = faithT == null || t < faithT ? 0 : Math.min(0.25, t - faithT), m = S.mouse, b = faith.box;
+  const t = now(), dt = faithT == null || t < faithT ? 0 : Math.min(0.25, t - faithT);
   faithT = t;
-  const over = !!(m && b && m.x >= b.x && m.x <= b.x + b.w && m.y >= b.y && m.y <= b.y + b.h);
-  const want = faith.full && b ? (faith.cue === 'hover' ? (over ? GESTURE_CUE_HOVER * GESTURE_CUE_ALPHA : 0) : GESTURE_CUE_ALPHA) : 0;
-  faithInk = ease(faithInk, want, dt);
-  if (faithInk <= 0.01) return;
+  if (faith.box) faithAt = faith.box;
+  faithInk = ease(faithInk, faith.box ? GESTURE_CUE_ALPHA : 0, dt);
+  const b = faithAt;
+  if (faithInk <= 0.01 || !b) return;
   ctx.globalAlpha = faithInk;
   handOn(ctx, b.x + b.w / 2, b.y + b.h / 2 + (tapDown() ? D * 2 : 0), 'point');
   ctx.globalAlpha = 1;
@@ -225,7 +224,7 @@ export function drawAfterCues() {
   const t = now();
   drawHeldSaws();   // track B
   drawPlantCue();
-  drawFaithCue();   // MOCK faith16
+  drawFaithCue();
   shown = {};
   for (const r of view) {
     // One hand: the first uses' cue, or the same hand faint while the

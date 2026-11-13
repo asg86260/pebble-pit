@@ -1,6 +1,6 @@
-﻿// The air filter: a louvered shed with the balloons' gauge on its wall.
+// The air filter: a louvered shed with the balloons' gauge on its wall.
 
-import { ringCells, ringFace } from './cellring.js';   // MOCK faith8
+import { ringCells, ringFace } from './cellring.js';
 import { DIAL_CELLS, DIAL_STEPS, DIAL_STUB, DIAL_ZONES, DIAL_ZONE_NAMES, DOOR_H, DOOR_W,
          FILTER_VENT, FILTER_WALL, HOUSE_CURTAIN, MUCK_TONE, P } from '../config.js';
 import { CLODS } from '../smog.js';
