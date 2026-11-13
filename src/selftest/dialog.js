@@ -70,7 +70,7 @@ async function skipHintInDark() {
 export const TESTS = [
   ["a quick second click while a line fades out is the line's, and never skips the rest of the speech", async () => {
     SCENES.dialog.run();
-    await settle(0.6);
+    await settle(1.5);                                // the line typed all in
     // God's speech, two lines long for this check (the second a real message)
     const phase = BODIES['meet-god'][0];
     phase.lines.push({ who: 'god', id: 'act-hell-told' });
@@ -99,7 +99,7 @@ export const TESTS = [
   ["the skip hint's words are readable on its card and on the bar, in the dark page", skipHintInDark],
   ["God's line stands in a bubble whose tail points at his head, and a click on the game goes on from it", async () => {
     SCENES.dialog.run();
-    await settle(0.6);                                // the line's fade in, done
+    await settle(1.5);                                // the line faded and typed all in
     await frames(2);
     draw();
     const line = lineShown() && { ...lineShown() }, b = bubbleSeen();

@@ -59,6 +59,7 @@ import { afterGround } from './state.js';
 import { FINALE_HOUSE_W, APOTH_POTS_MAX } from './config.js';
 import { houseX } from './home.js';
 import { goOnAlpha } from './actbeats.js';
+import { tryMark, retype, autoRead } from './dialog.js';
 import { beginGathering } from './mansion.js';
 import { HELL_JOB } from './jobs.js';
 import { chamberFloor, chamberX1, ladderX } from './hell/place.js';
@@ -3587,24 +3588,37 @@ export const SCENES = {
       for (let i = 0; i < 60 * 30 && !window.__goOn(); i++) window.__fast(1 / 60);
       for (let i = 0; i < 60 * 600 && !(window.__line() && window.__line().out == null); i++) window.__fast(1 / 60);
     } },
-  // God's opening lines with the owner's marks drawn (dialog.js `lineRuns`,
-  // render/dialog.js): the opening played to the meeting and gone on from
-  // line by line, as clicks do, until line `n` is up and waiting, just in.
+  // God's opening lines typed in with the owner's marks drawn (dialog.js
+  // `lineTyping`, render/dialog.js), the opening played to the meeting. The
+  // options try each effect the script does not already use on "welcome" in
+  // line 1, where `^` stands until the owner picks (`tryMark`; the swap sets
+  // it and types the line in again without standing the beat again); the
+  // last plays all six lines through, each going on by itself once typed.
   ...Object.fromEntries([
-    ['glow on "welcome"'], ['wave on "eternal paradise"'], ['wave on "eternal", glow on "paradise"'],
-    ['"end" fading in slowly after the rest'], ['shake on "work"'], ['shake on the whole line']
-  ].map(([what], k) => [`god-speaks-${k + 1}`, { about: 'the acts', review: 'act 3: God speaks', option: `${k + 1} ${what}`,
-    stage: 'built: god-lines-sauce, not on main yet', branch: 'god-lines-sauce',
-    say: `God's line ${k + 1} of 6 at the meeting, waiting for a click: ${what}. The marks in your script are drawn as effects, never as letters. Press r to see it come in again.`,
+    [null, 'plain, no effect'], ['tone', 'tone run (=)'], ['pulse', 'pulse (+)'], ['nervous', 'nervous (%)'],
+    ['drop', 'drop (|)'], ['boom', 'boom (#)'], ['trail', 'trail (@)']
+  ].map(([fx, what], k) => [`god-speaks-${fx || 'plain'}`, { about: 'the acts', review: 'act 3: God speaks',
+    option: `${k + 1} welcome: ${what}`, stage: 'built: god-lines-sauce, not on main yet', branch: 'god-lines-sauce',
+    say: `"come, and be welcome" typed in, "welcome" with ${what}. The glow is gone; pick what ^welcome^ (and ^paradise^ in line 3) should be. r types it in again.`,
     run: () => {
       actsYard('home');
       for (let i = 0; i < 60 * 30 && !window.__goOn(); i++) window.__fast(1 / 60);
-      const id = `act-meet-god-${k + 1}`, up = () => window.__line() && window.__line().out == null;
-      for (let i = 0; i < 60 * 600 && !(up() && window.__line().id === id); i++) {
-        if (up()) window.__goOnLine();
-        window.__fast(1 / 60);
-      }
-    } }])),
+      for (let i = 0; i < 60 * 600 && !(window.__line() && window.__line().out == null); i++) window.__fast(1 / 60);
+      tryMark(fx);
+      retype();
+    },
+    swap: () => { tryMark(fx); retype(); } }])),
+  'god-speaks-all': { about: 'the acts', review: 'act 3: God speaks', option: '8 all six lines',
+    stage: 'built: god-lines-sauce, not on main yet', branch: 'god-lines-sauce',
+    say: 'All six of God\'s lines typed in as they stand, each going on by itself a moment after it is in (a click finishes a line or goes on sooner). ^welcome^ and ^paradise^ are drawn plain until you pick their effect. r plays it again.',
+    run: () => {
+      actsYard('home');
+      for (let i = 0; i < 60 * 30 && !window.__goOn(); i++) window.__fast(1 / 60);
+      for (let i = 0; i < 60 * 600 && !(window.__line() && window.__line().out == null); i++) window.__fast(1 / 60);
+      tryMark(null);
+      autoRead(1.6);
+      retype();
+    } },
   'act3-mid': { about: 'the acts', say: 'act 3 mid: the camp built (saw mill, workshop, posts filled), a fifth of God\'s yard walked out, the saw handed over',
     run: act3Mid },
   // Track C: each of act 3's boards open in the yard's sheet over the act-3-mid
